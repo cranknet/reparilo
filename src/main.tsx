@@ -8,27 +8,27 @@ import i18n from "./i18n";
 import "./app.css";
 
 const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      retry: 1,
-    },
-  },
+	defaultOptions: {
+		queries: {
+			staleTime: 30_000,
+			retry: 1,
+		},
+	},
 });
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
-  throw new Error("Root element not found");
+	throw new Error("Root element not found");
 }
 
 ReactDOM.createRoot(rootElement).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <I18nextProvider i18n={i18n}>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </I18nextProvider>
-    </QueryClientProvider>
-  </React.StrictMode>
+	<React.StrictMode>
+		<QueryClientProvider client={queryClient}>
+			<I18nextProvider i18n={i18n}>
+				<BrowserRouter>
+					<App />
+				</BrowserRouter>
+			</I18nextProvider>
+		</QueryClientProvider>
+	</React.StrictMode>,
 );

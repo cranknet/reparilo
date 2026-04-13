@@ -3,10 +3,10 @@ export type { CurrencyCode } from "./currencies";
 export { CURRENCIES } from "./currencies";
 export type { JobStatusType } from "./job-statuses";
 export {
-  ACTIVE_STATUSES,
-  INACTIVE_STATUSES,
-  JOB_STATUS_FLOW,
-  JobStatus,
+	ACTIVE_STATUSES,
+	INACTIVE_STATUSES,
+	JOB_STATUS_FLOW,
+	JobStatus,
 } from "./job-statuses";
 export type { RoleType } from "./roles";
 export { ROLE_LABELS, ROLE_PERMISSIONS, Role } from "./roles";
