@@ -8,5 +8,7 @@ export {
 	JOB_STATUS_FLOW,
 	JobStatus,
 } from "./job-statuses";
+export type { PartCategoryType } from "./part-categories";
+export { PartCategory } from "./part-categories";
 export type { RoleType } from "./roles";
 export { ROLE_LABELS, ROLE_PERMISSIONS, Role } from "./roles";
