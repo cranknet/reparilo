@@ -1,0 +1,30 @@
+{
+  "app_name": "Reparilo",
+  "dashboard": "Tableau de bord",
+  "jobs": "Réparations",
+  "customers": "Clients",
+  "settings": "Paramètres",
+  "ai_analyst": "Analyste IA",
+  "search": "Rechercher...",
+  "save": "Enregistrer",
+  "cancel": "Annuler",
+  "delete": "Supprimer",
+  "edit": "Modifier",
+  "create": "Créer",
+  "back": "Retour",
+  "status": {
+    "INTAKE": "Réception",
+    "WAITING_FOR_PARTS": "En attente de pièces",
+    "IN_REPAIR": "En réparation",
+    "ON_HOLD": "En pause",
+    "DONE": "Terminé",
+    "DELIVERED": "Livré",
+    "RETURNED": "Retourné",
+    "CANCELLED": "Annulé"
+  },
+  "role": {
+    "OWNER": "Propriétaire",
+    "TECHNICIAN": "Technicien",
+    "FRONT_DESK": "Accueil"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "app_name": "Reparilo",
+  "dashboard": "Dashboard",
+  "jobs": "Jobs",
+  "customers": "Customers",
+  "settings": "Settings",
+  "ai_analyst": "AI Analyst",
+  "search": "Search...",
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "edit": "Edit",
+  "create": "Create",
+  "back": "Back",
+  "status": {
+    "INTAKE": "Intake",
+    "WAITING_FOR_PARTS": "Waiting for Parts",
+    "IN_REPAIR": "In Repair",
+    "ON_HOLD": "On Hold",
+    "DONE": "Done",
+    "DELIVERED": "Delivered",
+    "RETURNED": "Returned",
+    "CANCELLED": "Cancelled"
+  },
+  "role": {
+    "OWNER": "Owner",
+    "TECHNICIAN": "Technician",
+    "FRONT_DESK": "Front Desk"
+  }
+}

@@ -1,0 +1,465 @@
+// Reparilo — Prisma Schema
+// Version: 4.0 — Production-ready
+// Database: PostgreSQL 17
+// All DateTime fields use @db.Timestamptz for timezone safety.
+// CHECK constraints, triggers, and partial indexes applied via migrations.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum Role {
+  OWNER
+  TECHNICIAN
+  FRONT_DESK
+}
+
+enum JobStatus {
+  INTAKE
+  WAITING_FOR_PARTS
+  IN_REPAIR
+  ON_HOLD
+  DONE
+  DELIVERED
+  RETURNED
+  CANCELLED
+}
+
+enum PartCategory {
+  SCREEN
+  BATTERY
+  CHARGING_PORT
+  CAMERA
+  SPEAKER
+  MICROPHONE
+  MOTHERBOARD
+  HOUSING
+  BUTTON
+  OTHER
+}
+
+enum RepairCategory {
+  HARDWARE
+  SOFTWARE
+  DIAGNOSTIC
+  OTHER
+}
+
+enum NotifyChannel {
+  WHATSAPP
+  SMS
+}
+
+enum AuditAction {
+  JOB_CREATED
+  STATUS_CHANGED
+  TECHNICIAN_ASSIGNED
+  COST_UPDATED
+  PART_ADDED
+  PART_REMOVED
+  REPAIR_ADDED
+  REPAIR_REMOVED
+  NOTE_ADDED
+  PHOTO_ADDED
+  WARRANTY_RETURN_CREATED
+  NOTIFICATION_SENT
+}
+
+enum AiRole {
+  USER
+  ASSISTANT
+}
+
+// ─────────────────────────────────────────────
+// USER
+// password stores Argon2id hash (~97 chars).
+// email is required and unique for account identification.
+// Auth is username + password via Better Auth.
+// ─────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  role      Role
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt      @db.Timestamptz
+
+  assignedJobs   Job[]           @relation("AssignedTechnician")
+  createdJobs    Job[]           @relation("CreatedBy")
+  updatedJobs    Job[]           @relation("UpdatedBy")
+  notes          JobNote[]
+  jobParts       JobPart[]
+  jobRepairs     JobRepair[]
+  auditLogs      AuditLog[]
+  chatHistory    AiChatHistory[]
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────
+// CUSTOMER
+// ─────────────────────────────────────────────
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String   @unique
+  email     String?
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt      @db.Timestamptz
+
+  jobs      Job[]
+
+  @@map("customers")
+}
+
+// ─────────────────────────────────────────────
+// DEVICE
+// Color removed from Device — moved to Job.
+// ─────────────────────────────────────────────
+
+model Device {
+  id        String   @id @default(cuid())
+  brand     String
+  model     String
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt      @db.Timestamptz
+
+  jobs      Job[]
+
+  @@unique([brand, model])
+  @@index([brand])
+  @@map("devices")
+}
+
+// ─────────────────────────────────────────────
+// JOB COUNTER
+// year is the natural key. Use serializable $transaction
+// when incrementing lastSeq to prevent race conditions.
+// @@unique([year]) constraint provides a safety net.
+// ─────────────────────────────────────────────
+
+model JobCounter {
+  year    Int @id
+  lastSeq Int @default(0)
+
+  @@map("job_counters")
+}
+
+// ─────────────────────────────────────────────
+// JOB
+// estimatedCost is required per PRD intake form.
+// finalCost is computed on read: Sum(JobRepair.price) + Sum(JobPart.totalCost).
+// accessCode should be generated with crypto.randomBytes(8).toString('hex').
+// ─────────────────────────────────────────────
+
+model Job {
+  id         String    @id @default(cuid())
+  jobCode    String    @unique
+  accessCode String
+
+  customerId      String
+  customer        Customer  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  deviceId        String
+  device          Device    @relation(fields: [deviceId], references: [id], onDelete: Restrict)
+  color           String?
+
+  reportedProblem String   @db.Text
+  conditionNotes  String?  @db.Text
+  status          JobStatus @default(INTAKE)
+
+  estimatedCost   Decimal   @db.Decimal(10, 2)
+  depositAmount   Decimal?  @db.Decimal(10, 2)
+
+  estimatedDate   DateTime? @db.Date
+  createdAt       DateTime  @default(now()) @db.Timestamptz
+  updatedAt       DateTime  @updatedAt      @db.Timestamptz
+
+  isWarrantyReturn Boolean  @default(false)
+  warrantyForJobId String?
+  warrantyForJob   Job?     @relation("WarrantyReturn", fields: [warrantyForJobId], references: [id], onDelete: SetNull)
+  warrantyReturns  Job[]    @relation("WarrantyReturn")
+
+  createdById     String
+  createdBy       User      @relation("CreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedById     String?
+  updatedBy       User?     @relation("UpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  technicianId    String?
+  technician      User?     @relation("AssignedTechnician", fields: [technicianId], references: [id], onDelete: SetNull)
+
+  photos          JobPhoto[]
+  notes           JobNote[]
+  partsUsed       JobPart[]
+  partsWaiting    JobPartsWaiting[]
+  repairs         JobRepair[]
+  auditLogs       AuditLog[]
+
+  @@index([customerId])
+  @@index([deviceId])
+  @@index([status])
+  @@index([technicianId])
+  @@index([createdById])
+  @@index([warrantyForJobId])
+  @@index([status, createdAt])
+  @@index([status, estimatedDate])
+  @@map("jobs")
+}
+
+// ─────────────────────────────────────────────
+// JOB PHOTOS
+// Max 5 per job enforced via DB trigger (see migration).
+// path points to file on local VPS disk.
+// ─────────────────────────────────────────────
+
+model JobPhoto {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  path      String
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  @@index([jobId])
+  @@map("job_photos")
+}
+
+// ─────────────────────────────────────────────
+// JOB NOTES
+// ─────────────────────────────────────────────
+
+model JobNote {
+  id                String   @id @default(cuid())
+  jobId             String
+  job               Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  content           String   @db.Text
+  isCustomerVisible Boolean  @default(false)
+  createdById       String
+  createdBy         User     @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt         DateTime @default(now()) @db.Timestamptz
+
+  @@index([jobId, isCustomerVisible])
+  @@map("job_notes")
+}
+
+// ─────────────────────────────────────────────
+// JOB PARTS WAITING
+// ─────────────────────────────────────────────
+
+model JobPartsWaiting {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  partName  String
+  supplier  String?
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  @@index([jobId])
+  @@map("job_parts_waiting")
+}
+
+// ─────────────────────────────────────────────
+// PARTS CATALOG
+// ─────────────────────────────────────────────
+
+model PartsCatalog {
+  id           String       @id @default(cuid())
+  name         String
+  category     PartCategory
+  defaultPrice Decimal      @db.Decimal(10, 2)
+  supplier     String?
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now()) @db.Timestamptz
+  updatedAt    DateTime     @updatedAt      @db.Timestamptz
+
+  jobParts     JobPart[]
+
+  @@index([name])
+  @@map("parts_catalog")
+}
+
+// ─────────────────────────────────────────────
+// JOB PARTS (CONSUMED)
+// All fields are snapshotted at time of use.
+// partId is nullable to support ad-hoc parts.
+// ─────────────────────────────────────────────
+
+model JobPart {
+  id          String        @id @default(cuid())
+  jobId       String
+  job         Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  partId      String?
+  part        PartsCatalog? @relation(fields: [partId], references: [id], onDelete: SetNull)
+
+  partName    String
+  category    PartCategory
+  unitPrice   Decimal       @db.Decimal(10, 2)
+  quantity    Int           @default(1)
+  supplier    String?
+  totalCost   Decimal       @db.Decimal(10, 2)
+
+  createdById String
+  createdBy   User          @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime      @default(now()) @db.Timestamptz
+
+  @@index([jobId])
+  @@map("job_parts")
+}
+
+// ─────────────────────────────────────────────
+// REPAIR CATALOG
+// ─────────────────────────────────────────────
+
+model RepairCatalog {
+  id           String         @id @default(cuid())
+  name         String
+  category     RepairCategory
+  defaultPrice Decimal        @db.Decimal(10, 2)
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now()) @db.Timestamptz
+  updatedAt    DateTime       @updatedAt      @db.Timestamptz
+
+  jobRepairs   JobRepair[]
+
+  @@index([name])
+  @@map("repair_catalog")
+}
+
+// ─────────────────────────────────────────────
+// JOB REPAIRS (PERFORMED)
+// All fields are snapshotted at time of use.
+// repairId is nullable to support ad-hoc repairs.
+// ─────────────────────────────────────────────
+
+model JobRepair {
+  id          String          @id @default(cuid())
+  jobId       String
+  job         Job             @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  repairId    String?
+  repair      RepairCatalog?  @relation(fields: [repairId], references: [id], onDelete: SetNull)
+
+  repairName  String
+  category    RepairCategory
+  price       Decimal         @db.Decimal(10, 2)
+
+  createdById String
+  createdBy   User            @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime        @default(now()) @db.Timestamptz
+
+  @@index([jobId])
+  @@map("job_repairs")
+}
+
+// ─────────────────────────────────────────────
+// AUDIT LOG
+// Audit logs survive job deletion (Restrict, not Cascade).
+// metadata holds structured payload (enums, IDs).
+// fromValue/toValue are human-readable display strings.
+// ─────────────────────────────────────────────
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  jobId     String
+  job       Job         @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  action    AuditAction
+  fromValue String?     @db.Text
+  toValue   String?     @db.Text
+  note      String?     @db.Text
+  metadata  Json?
+  createdAt DateTime    @default(now()) @db.Timestamptz
+
+  @@index([jobId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ─────────────────────────────────────────────
+// NOTIFICATION TEMPLATES
+// ─────────────────────────────────────────────
+
+model NotificationTemplate {
+  id        String        @id @default(cuid())
+  name      String
+  channel   NotifyChannel
+  body      String        @db.Text
+  isDefault Boolean       @default(false)
+  createdAt DateTime      @default(now()) @db.Timestamptz
+  updatedAt DateTime      @updatedAt      @db.Timestamptz
+
+  @@unique([name, channel])
+  @@index([channel])
+  @@map("notification_templates")
+}
+
+// ─────────────────────────────────────────────
+// AI SETTINGS (single row)
+// apiKeyEncrypted: AES-256 encrypted at rest.
+// Fixed id for single-row upsert pattern.
+// ─────────────────────────────────────────────
+
+model AiSettings {
+  id              String   @id
+  endpointUrl     String   @default("")
+  apiKeyEncrypted String   @default("")
+  model           String?
+  temperature     Float    @default(0.7)
+  createdAt       DateTime @default(now()) @db.Timestamptz
+  updatedAt       DateTime @updatedAt      @db.Timestamptz
+
+  @@map("ai_settings")
+}
+
+// ─────────────────────────────────────────────
+// AI CHAT HISTORY
+// Capped at 20 messages per user.
+// Oldest pruned on new message (enforced app-layer + trigger).
+// ─────────────────────────────────────────────
+
+model AiChatHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      AiRole
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("ai_chat_history")
+}
+
+// ─────────────────────────────────────────────
+// SHOP SETTINGS (single row)
+// Fixed id for single-row upsert pattern.
+// ─────────────────────────────────────────────
+
+model ShopSettings {
+  id            String   @id
+  shopName      String   @default("")
+  logoPath      String?
+  address       String?
+  phone         String?
+  currency      String   @default("DZD")
+  receiptFooter String?  @db.Text
+  createdAt     DateTime @default(now()) @db.Timestamptz
+  updatedAt     DateTime @updatedAt      @db.Timestamptz
+
+  @@map("shop_settings")
+}

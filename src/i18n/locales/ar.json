@@ -1,0 +1,30 @@
+{
+  "app_name": "Reparilo",
+  "dashboard": "لوحة التحكم",
+  "jobs": "أعمال الإصلاح",
+  "customers": "الزبائن",
+  "settings": "الإعدادات",
+  "ai_analyst": "المحلل الذكي",
+  "search": "بحث...",
+  "save": "حفظ",
+  "cancel": "إلغاء",
+  "delete": "حذف",
+  "edit": "تعديل",
+  "create": "إنشاء",
+  "back": "رجوع",
+  "status": {
+    "INTAKE": "استلام",
+    "WAITING_FOR_PARTS": "بانتظار القطع",
+    "IN_REPAIR": "قيد الإصلاح",
+    "ON_HOLD": "معلق",
+    "DONE": "مكتمل",
+    "DELIVERED": "تم التسليم",
+    "RETURNED": "مرتجع",
+    "CANCELLED": "ملغى"
+  },
+  "role": {
+    "OWNER": "المالك",
+    "TECHNICIAN": "فني",
+    "FRONT_DESK": "استقبال"
+  }
+}

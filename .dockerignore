@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+*.env.local
+uploads/
+*.log
+android/
+.turbo
+docs/
+.agents/
