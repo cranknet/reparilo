@@ -1,17 +1,4 @@
-allowBuilds:
-  ' ': true
-  /: true
-  '@': true
-  a: true
-  b: true
-  d: true
-  e: true
-  g: true
-  i: true
-  l: true
-  m: true
-  n: true
-  p: true
-  r: true
-  s: true
-  u: true
+onlyBuiltDependencies:
+  - "@prisma/engines"
+  - esbuild
+  - prisma

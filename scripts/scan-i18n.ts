@@ -5,4 +5,4 @@
 console.log(
   "scan-i18n: not yet implemented. Build src/lib/i18n-scanner/ first, then update this script."
 );
-process.exit(0);
+process.exit(1);

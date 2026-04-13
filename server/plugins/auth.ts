@@ -5,12 +5,13 @@ export const authPlugin: FastifyPluginAsync = async (app) => {
   app.decorate(
     "authenticate",
     // biome-ignore lint/suspicious/noExplicitAny: Fastify decorate requires loose typing
-    async (_request: any, _reply: any) => {
-      // TODO: Implement Better Auth session validation
-      if (process.env.NODE_ENV === "development") {
+    async (request: any, reply: any) => {
+      if (process.env.AUTH_BYPASS === "true") {
+        request.user = { id: "dev", role: "OWNER", username: "dev" };
         return;
       }
-      await _reply.status(401).send({ error: "Unauthorized" });
+      // TODO: Implement Better Auth session validation (next task)
+      await reply.status(401).send({ error: "Unauthorized" });
     }
   );
 };
