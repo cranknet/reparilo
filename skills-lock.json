@@ -1,6 +1,11 @@
 {
   "version": 1,
   "skills": {
+    "brand-guidelines": {
+      "source": "getsentry/skills",
+      "sourceType": "github",
+      "computedHash": "592a5ebea7cd94f9ca3347b3c3f00e2ed54333be5cd5a9278ff098767ebb08d0"
+    },
     "prisma-expert": {
       "source": "sickn33/antigravity-awesome-skills",
       "sourceType": "github",

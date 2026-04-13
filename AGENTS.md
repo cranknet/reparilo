@@ -16,7 +16,7 @@ Single-location mobile phone repair shop management. Web + Android (Capacitor). 
 | `pnpm db:studio` | Prisma Studio GUI |
 
 | `pnpm db:seed` | Seed database with initial data |
-| `pnpm scan-i18n` | Scan for missing i18n keys |
+| `pnpm scan-i18n` | Scan for missing i18n keys, copy to en.json then run this |
 | `pnpm sync-locales` | Sync and auto-translate locale files |
 
 ## Tech Stack

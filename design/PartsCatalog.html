@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Parts Catalog | Engineering Atelier</title>
+    <script
+      src="https://cdn.tailwindcss.com?plugins=forms,container-queries"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap"
+      rel="stylesheet"
+    >
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    >
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    >
+    <script id="tailwind-config">
+    "use strict";
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "tertiary-fixed-dim": "#ffb59b",
+            "tertiary-container": "#a93802",
+            "inverse-primary": "#b2c5ff",
+            "outline-variant": "#c3c6d6",
+            "error-container": "#ffdad6",
+            background: "#f7f9ff",
+            "primary-fixed": "#dae2ff",
+            "inverse-on-surface": "#eef1f7",
+            error: "#ba1a1a",
+            "primary-fixed-dim": "#b2c5ff",
+            "on-secondary": "#ffffff",
+            "surface-container-lowest": "#ffffff",
+            "on-primary": "#ffffff",
+            "surface-container-high": "#e5e8ee",
+            "on-secondary-fixed-variant": "#2d4867",
+            "secondary-fixed": "#d1e4ff",
+            "on-tertiary-fixed-variant": "#812800",
+            "surface-variant": "#dfe3e8",
+            "surface-container-highest": "#dfe3e8",
+            "on-tertiary-fixed": "#380d00",
+            outline: "#737785",
+            "on-primary-fixed-variant": "#0040a1",
+            "surface-container": "#ebeef4",
+            surface: "#f7f9ff",
+            "surface-dim": "#d7dae0",
+            "on-primary-fixed": "#001847",
+            "on-error-container": "#93000a",
+            primary: "#0040a1",
+            secondary: "#456080",
+            "on-primary-container": "#ccd8ff",
+            "on-secondary-fixed": "#001d36",
+            "on-secondary-container": "#445f7f",
+            "on-surface-variant": "#424654",
+            "secondary-fixed-dim": "#adc9ed",
+            "surface-tint": "#0056d2",
+            "surface-bright": "#f7f9ff",
+            "on-tertiary": "#ffffff",
+            "on-background": "#181c20",
+            "on-surface": "#181c20",
+            "tertiary-fixed": "#ffdbcf",
+            "on-tertiary-container": "#ffcebd",
+            "inverse-surface": "#2d3135",
+            "secondary-container": "#bed9ff",
+            "primary-container": "#0056d2",
+            "on-error": "#ffffff",
+            tertiary: "#822800",
+            "surface-container-low": "#f1f4fa",
+          },
+          borderRadius: {
+            DEFAULT: "0.125rem",
+            lg: "0.25rem",
+            xl: "0.5rem",
+            full: "0.75rem",
+          },
+          fontFamily: {
+            headline: ["Manrope"],
+            body: ["Inter"],
+            label: ["Inter"],
+          },
+        },
+      },
+    };
+    </script>
+    <style>
+    .material-symbols-outlined {
+      font-variation-settings:
+        "FILL" 0,
+        "wght" 400,
+        "GRAD" 0,
+        "opsz" 24;
+      vertical-align: middle;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    </style>
+  </head>
+  <body class="bg-background font-body text-on-surface">
+    <!-- TopNavBar -->
+    <header
+      class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-slate-50 dark:bg-slate-950 bg-slate-100 dark:bg-slate-900"
+    >
+      <div class="flex items-center gap-4">
+        <span
+          class="text-xl font-bold text-blue-800 dark:text-blue-300 font-headline"
+          >Parts Catalog</span
+        >
+      </div>
+      <div class="flex-1 max-w-md mx-8 hidden md:block">
+        <div class="relative flex items-center">
+          <span class="material-symbols-outlined absolute left-3 text-outline"
+            >search</span
+          >
+          <input
+            class="w-full pl-10 pr-4 py-2 bg-surface-container-highest border-none rounded-xl focus:ring-2 focus:ring-primary/20 text-sm"
+            placeholder="Search inventory..."
+            type="text"
+          >
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <button
+          class="p-2 rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors"
+        >
+          <span class="material-symbols-outlined text-slate-500"
+            >notifications</span
+          >
+        </button>
+        <button
+          class="p-2 rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors"
+        >
+          <span class="material-symbols-outlined text-slate-500">settings</span>
+        </button>
+        <div class="w-8 h-8 rounded-full bg-primary-fixed overflow-hidden">
+          <img
+            alt="User profile"
+            class="w-full h-full object-cover"
+            data-alt="professional portrait of a service manager in a clean engineering workshop setting"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBk9JOta-zY-Wm35X7mxDSogtS68HzpOastqMB-heImIYNjJ53Gaug8ozgls5jjlHKOmw1Ssbg17fatHk5D6O_Jyb2G0CR08-vZLAGirbDHlyybzEgwWcVe5bFwiHdPq3cagiSrdaS07a3xEJynxY8gKww1C1Vl6JiMuKHS5cmUywdPGpWuhxaHT6OpKx-s5CcQAcN2T07hpDe65WQVQtmEcm9wV3XZR6vchWXqhpjCjE9-aQ7nVZ1-oPdB54sMRQ0o8nHaymANPzFg"
+          >
+        </div>
+      </div>
+    </header>
+    <!-- SideNavBar -->
+    <nav
+      class="fixed left-0 top-0 h-full py-6 flex flex-col h-screen w-64 hidden md:flex border-r-0 bg-slate-100 dark:bg-slate-900 z-40"
+    >
+      <div class="px-6 mb-10">
+        <h1
+          class="text-lg font-black tracking-tight text-blue-900 dark:text-blue-200 font-headline uppercase"
+        >
+          Engineering Atelier
+        </h1>
+        <p
+          class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold"
+        >
+          Master Mechanic Suite
+        </p>
+      </div>
+      <div class="flex-1 space-y-1 px-4">
+        <a
+          class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ease-linear text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="dashboard"
+            >dashboard</span
+          >
+          <span class="font-medium">Dashboard</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ease-linear text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="build">build</span>
+          <span class="font-medium">Work Orders</span>
+        </a>
+        <!-- Active State: Inventory (Parts Catalog mapping) -->
+        <a
+          class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ease-linear bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-r-4 border-blue-600"
+          href="#"
+        >
+          <span
+            class="material-symbols-outlined"
+            data-icon="inventory_2"
+            style="font-variation-settings: 'FILL' 1;"
+            >inventory_2</span
+          >
+          <span class="font-semibold">Inventory</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ease-linear text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="local_shipping"
+            >local_shipping</span
+          >
+          <span class="font-medium">Suppliers</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ease-linear text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="analytics"
+            >analytics</span
+          >
+          <span class="font-medium">Reports</span>
+        </a>
+      </div>
+      <div class="px-4 mt-auto space-y-1">
+        <div
+          class="p-4 mb-4 bg-gradient-to-br from-primary to-primary-container rounded-2xl text-white"
+        >
+          <p class="text-xs opacity-80 mb-2">Replenishment needed</p>
+          <button
+            class="w-full py-2 bg-white/20 backdrop-blur-md rounded-lg text-sm font-bold hover:bg-white/30 transition-colors"
+          >
+            Order Parts
+          </button>
+        </div>
+        <a
+          class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-200 transition-colors"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="help">help</span>
+          <span class="text-sm">Support</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-200 transition-colors"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="logout"
+            >logout</span
+          >
+          <span class="text-sm">Sign Out</span>
+        </a>
+      </div>
+    </nav>
+    <!-- Main Content Canvas -->
+    <main class="md:ml-64 pt-16 pb-24 md:pb-8 px-4 md:px-8">
+      <div class="max-w-7xl mx-auto py-8">
+        <!-- Metrics Section: Engineering Atelier Bento Style -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div class="bg-surface-container-low p-6 rounded-2xl">
+            <span
+              class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-1"
+              >Total SKUs</span
+            >
+            <div class="flex items-baseline gap-2">
+              <span class="text-3xl font-extrabold font-headline text-primary"
+                >1,482</span
+              >
+              <span class="text-xs text-green-600 font-medium">+12%</span>
+            </div>
+          </div>
+          <div
+            class="bg-surface-container-low p-6 rounded-2xl border-l-4 border-error"
+          >
+            <span
+              class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-1"
+              >Low Stock Alerts</span
+            >
+            <div class="flex items-baseline gap-2">
+              <span class="text-3xl font-extrabold font-headline text-error"
+                >24</span
+              >
+              <span class="material-symbols-outlined text-error text-lg"
+                >warning</span
+              >
+            </div>
+          </div>
+          <div class="bg-surface-container-low p-6 rounded-2xl">
+            <span
+              class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-1"
+              >Inventory Value</span
+            >
+            <div class="flex items-baseline gap-2">
+              <span
+                class="text-3xl font-extrabold font-headline text-on-surface"
+                >3.2M</span
+              >
+              <span class="text-xs text-on-surface-variant font-medium"
+                >DZD</span
+              >
+            </div>
+          </div>
+          <div class="bg-surface-container-low p-6 rounded-2xl">
+            <span
+              class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant block mb-1"
+              >Active Suppliers</span
+            >
+            <div class="flex items-baseline gap-2">
+              <span
+                class="text-3xl font-extrabold font-headline text-on-surface"
+                >18</span
+              >
+            </div>
+          </div>
+        </div>
+        <!-- Action Bar -->
+        <div
+          class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6"
+        >
+          <div>
+            <h2 class="text-2xl font-bold font-headline text-on-surface">
+              Parts Inventory
+            </h2>
+            <p class="text-sm text-on-surface-variant">
+              Manage and track precision components
+            </p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button
+              class="flex items-center gap-2 px-4 py-2.5 bg-surface-container-high rounded-xl text-sm font-semibold text-on-surface-variant hover:bg-surface-container-highest transition-colors"
+            >
+              <span class="material-symbols-outlined text-sm">filter_list</span>
+              Advanced Filters
+            </button>
+            <button
+              class="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-primary to-primary-container text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-opacity"
+            >
+              <span class="material-symbols-outlined text-sm">add</span>
+              Add New Part
+            </button>
+          </div>
+        </div>
+        <!-- Data Table / List -->
+        <div class="bg-surface-container-low rounded-3xl overflow-hidden">
+          <!-- Desktop Table -->
+          <div class="hidden md:block overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-surface-container-high/50">
+                  <th
+                    class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant"
+                  >
+                    Part Details
+                  </th>
+                  <th
+                    class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant"
+                  >
+                    Category
+                  </th>
+                  <th
+                    class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant"
+                  >
+                    Supplier
+                  </th>
+                  <th
+                    class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant"
+                  >
+                    Unit Cost
+                  </th>
+                  <th
+                    class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant"
+                  >
+                    Stock Level
+                  </th>
+                  <th
+                    class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant"
+                  >
+                    Last Used
+                  </th>
+                  <th class="px-6 py-4"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-outline-variant/10">
+                <!-- Row 1 -->
+                <tr
+                  class="hover:bg-surface-container-lowest transition-colors group"
+                >
+                  <td class="px-6 py-5">
+                    <div class="flex flex-col">
+                      <span class="text-sm font-bold text-on-surface"
+                        >Super Retina XDR Display</span
+                      >
+                      <span
+                        class="text-[10px] font-mono text-outline uppercase tracking-tight"
+                        >ID: LCD-IP14-001</span
+                      >
+                    </div>
+                  </td>
+                  <td class="px-6 py-5">
+                    <span
+                      class="px-3 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded-full uppercase"
+                      >Screen</span
+                    >
+                  </td>
+                  <td class="px-6 py-5">
+                    <span class="text-sm text-on-surface-variant"
+                      >Global Tech Parts</span
+                    >
+                  </td>
+                  <td class="px-6 py-5">
+                    <span class="text-sm font-semibold font-mono"
+                      >42,500 DZD</span
+                    >
+                  </td>
+                  <td class="px-6 py-5 min-w-[160px]">
+                    <div class="flex flex-col gap-1">
+                      <div class="flex justify-between text-[10px] font-bold">
+                        <span>42 Units</span>
+                        <span class="text-primary">84%</span>
+                      </div>
+                      <div
+                        class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden"
+                      >
+                        <div
+                          class="h-full bg-primary rounded-full"
+                          style="width: 84%"
+                        ></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-5">
+                    <span class="text-sm text-on-surface-variant"
+                      >Oct 24, 2023</span
+                    >
+                  </td>
+                  <td class="px-6 py-5 text-right">
+                    <button
+                      class="material-symbols-outlined text-outline hover:text-primary transition-colors"
+                    >
+                      more_vert
+                    </button>
+                  </td>
+                </tr>
+                <!-- Row 2 (Low Stock) -->
+                <tr
+                  class="hover:bg-surface-container-lowest transition-colors group"
+                >
+                  <td class="px-6 py-5">
+                    <div class="flex flex-col">
+                      <span class="text-sm font-bold text-on-surface"
+                        >Li-Ion Battery (4323mAh)</span
+                      >
+                      <span
+                        class="text-[10px] font-mono text-outline uppercase tracking-tight"
+                        >ID: BATT-IP14PM-92</span
+                      >
+                    </div>
+                  </td>
+                  <td class="px-6 py-5">
+                    <span
+                      class="px-3 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded-full uppercase"
+                      >Battery</span
+                    >
+                  </td>
+                  <td class="px-6 py-5">
+                    <span class="text-sm text-on-surface-variant"
+                      >Energetic Logistics</span
+                    >
+                  </td>
+                  <td class="px-6 py-5">
+                    <span class="text-sm font-semibold font-mono"
+                      >8,200 DZD</span
+                    >
+                  </td>
+                  <td class="px-6 py-5 min-w-[160px]">
+                    <div class="flex flex-col gap-1">
+                      <div class="flex justify-between text-[10px] font-bold">
+                        <span class="text-error">3 Units</span>
+                        <span class="text-error">6%</span>
+                      </div>
+                      <div
+                        class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden"
+                      >
+                        <div
+                          class="h-full bg-error rounded-full"
+                          style="width: 6%"
+                        ></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-5">
+                    <span class="text-sm text-on-surface-variant"
+                      >Oct 25, 2023</span
+                    >
+                  </td>
+                  <td class="px-6 py-5 text-right">
+                    <button
+                      class="material-symbols-outlined text-outline hover:text-primary transition-colors"
+                    >
+                      more_vert
+                    </button>
+                  </td>
+                </tr>
+                <!-- Row 3 -->
+                <tr
+                  class="hover:bg-surface-container-lowest transition-colors group"
+                >
+                  <td class="px-6 py-5">
+                    <div class="flex flex-col">
+                      <span class="text-sm font-bold text-on-surface"
+                        >Mainboard Flex Cable</span
+                      >
+                      <span
+                        class="text-[10px] font-mono text-outline uppercase tracking-tight"
+                        >ID: FLEX-MB-S22-04</span
+                      >
+                    </div>
+                  </td>
+                  <td class="px-6 py-5">
+                    <span
+                      class="px-3 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded-full uppercase"
+                      >Internal</span
+                    >
+                  </td>
+                  <td class="px-6 py-5">
+                    <span class="text-sm text-on-surface-variant"
+                      >Component Hub</span
+                    >
+                  </td>
+                  <td class="px-6 py-5">
+                    <span class="text-sm font-semibold font-mono"
+                      >1,450 DZD</span
+                    >
+                  </td>
+                  <td class="px-6 py-5 min-w-[160px]">
+                    <div class="flex flex-col gap-1">
+                      <div class="flex justify-between text-[10px] font-bold">
+                        <span>112 Units</span>
+                        <span class="text-primary">92%</span>
+                      </div>
+                      <div
+                        class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden"
+                      >
+                        <div
+                          class="h-full bg-primary rounded-full"
+                          style="width: 92%"
+                        ></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-5">
+                    <span class="text-sm text-on-surface-variant"
+                      >Oct 20, 2023</span
+                    >
+                  </td>
+                  <td class="px-6 py-5 text-right">
+                    <button
+                      class="material-symbols-outlined text-outline hover:text-primary transition-colors"
+                    >
+                      more_vert
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Mobile List -->
+          <div class="md:hidden divide-y divide-outline-variant/10">
+            <div class="p-4 space-y-4">
+              <!-- Mobile Card 1 -->
+              <div class="bg-surface-container-lowest p-4 rounded-2xl">
+                <div class="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 class="text-sm font-bold text-on-surface">
+                      Super Retina XDR Display
+                    </h3>
+                    <span class="text-[10px] font-mono text-outline"
+                      >LCD-IP14-001</span
+                    >
+                  </div>
+                  <span
+                    class="px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded-full uppercase"
+                    >Screen</span
+                  >
+                </div>
+                <div class="flex justify-between items-end">
+                  <div class="flex flex-col">
+                    <span
+                      class="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest"
+                      >Stock Level</span
+                    >
+                    <span class="text-sm font-bold">42 Units (84%)</span>
+                  </div>
+                  <span class="text-sm font-bold text-primary font-mono"
+                    >42,500 DZD</span
+                  >
+                </div>
+              </div>
+              <!-- Mobile Card 2 -->
+              <div
+                class="bg-surface-container-lowest p-4 rounded-2xl border-l-4 border-error"
+              >
+                <div class="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 class="text-sm font-bold text-on-surface">
+                      Li-Ion Battery (4323mAh)
+                    </h3>
+                    <span class="text-[10px] font-mono text-outline"
+                      >BATT-IP14PM-92</span
+                    >
+                  </div>
+                  <span
+                    class="px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded-full uppercase"
+                    >Battery</span
+                  >
+                </div>
+                <div class="flex justify-between items-end">
+                  <div class="flex flex-col">
+                    <span
+                      class="text-[10px] text-error uppercase font-bold tracking-widest"
+                      >Low Stock</span
+                    >
+                    <span class="text-sm font-bold text-error"
+                      >3 Units (6%)</span
+                    >
+                  </div>
+                  <span class="text-sm font-bold text-primary font-mono"
+                    >8,200 DZD</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Pagination Placeholder -->
+          <div
+            class="px-6 py-4 bg-surface-container-high/30 border-t border-outline-variant/5 flex items-center justify-between"
+          >
+            <span
+              class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant"
+              >Showing 1-15 of 1,482</span
+            >
+            <div class="flex gap-2">
+              <button
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-container-highest text-on-surface disabled:opacity-50"
+                disabled=""
+              >
+                <span class="material-symbols-outlined text-sm"
+                  >chevron_left</span
+                >
+              </button>
+              <button
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-white"
+              >
+                <span class="text-xs font-bold">1</span>
+              </button>
+              <button
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-container-highest text-on-surface"
+              >
+                <span class="text-xs font-bold">2</span>
+              </button>
+              <button
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-container-highest text-on-surface"
+              >
+                <span class="material-symbols-outlined text-sm"
+                  >chevron_right</span
+                >
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <!-- BottomNavBar -->
+    <nav
+      class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pt-2 pb-6 md:hidden z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0_-4px_20px_rgba(0,64,161,0.06)] rounded-t-3xl"
+    >
+      <a
+        class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-4 py-1 active:bg-slate-100 dark:active:bg-slate-800 scale-95 transition-transform"
+        href="#"
+      >
+        <span class="material-symbols-outlined" data-icon="home">home</span>
+        <span class="text-[10px] font-medium Inter">Home</span>
+      </a>
+      <a
+        class="flex flex-col items-center justify-center bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-100 rounded-2xl px-4 py-1 scale-95 transition-transform"
+        href="#"
+      >
+        <span
+          class="material-symbols-outlined"
+          data-icon="inventory_2"
+          style="font-variation-settings: 'FILL' 1;"
+          >inventory_2</span
+        >
+        <span class="text-[10px] font-medium Inter">Inventory</span>
+      </a>
+      <a
+        class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-4 py-1 active:bg-slate-100 dark:active:bg-slate-800 scale-95 transition-transform"
+        href="#"
+      >
+        <span class="material-symbols-outlined" data-icon="search">search</span>
+        <span class="text-[10px] font-medium Inter">Search</span>
+      </a>
+      <a
+        class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-4 py-1 active:bg-slate-100 dark:active:bg-slate-800 scale-95 transition-transform"
+        href="#"
+      >
+        <span class="material-symbols-outlined" data-icon="menu">menu</span>
+        <span class="text-[10px] font-medium Inter">Menu</span>
+      </a>
+    </nav>
+  </body>
+</html>

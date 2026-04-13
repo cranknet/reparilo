@@ -42,37 +42,37 @@ app.register(settingsRoutes, { prefix: "/api/settings" });
 app.register(aiRoutes, { prefix: "/api/ai" });
 
 if (process.env.NODE_ENV === "production") {
-	await app.register(staticPlugin, {
-		root: path.resolve("dist"),
-		wildcard: false,
-	});
-	app.setNotFoundHandler((_req, reply) => {
-		return reply.sendFile("index.html");
-	});
+  await app.register(staticPlugin, {
+    root: path.resolve("dist"),
+    wildcard: false,
+  });
+  app.setNotFoundHandler((_req, reply) => {
+    return reply.sendFile("index.html");
+  });
 }
 
 process.on("uncaughtException", (err) => {
-	app.log.fatal({ err }, "Uncaught exception");
-	process.exit(1);
+  app.log.fatal({ err }, "Uncaught exception");
+  process.exit(1);
 });
 
 process.on("unhandledRejection", (err) => {
-	app.log.fatal({ err }, "Unhandled rejection");
-	process.exit(1);
+  app.log.fatal({ err }, "Unhandled rejection");
+  process.exit(1);
 });
 
 for (const signal of ["SIGINT", "SIGTERM"]) {
-	process.on(signal, async () => {
-		app.log.info(`Received ${signal}, shutting down...`);
-		await app.close();
-		process.exit(0);
-	});
+  process.on(signal, async () => {
+    app.log.info(`Received ${signal}, shutting down...`);
+    await app.close();
+    process.exit(0);
+  });
 }
 
 try {
-	await app.listen({ port: PORT, host: HOST });
-	app.log.info(`Reparilo server running on ${HOST}:${PORT}`);
+  await app.listen({ port: PORT, host: HOST });
+  app.log.info(`Reparilo server running on ${HOST}:${PORT}`);
 } catch (err) {
-	app.log.error(err);
-	process.exit(1);
+  app.log.error(err);
+  process.exit(1);
 }

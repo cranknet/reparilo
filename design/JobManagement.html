@@ -1,382 +1,744 @@
 <!DOCTYPE html>
-
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Job Management | Engineering Atelier</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "tertiary-fixed": "#ffdbcf",
-                        "on-primary": "#ffffff",
-                        "inverse-surface": "#2d3135",
-                        "surface": "#f7f9ff",
-                        "tertiary": "#822800",
-                        "surface-container": "#ebeef4",
-                        "surface-bright": "#f7f9ff",
-                        "on-tertiary-container": "#ffcebd",
-                        "surface-variant": "#dfe3e8",
-                        "on-secondary-fixed": "#001d36",
-                        "inverse-primary": "#b2c5ff",
-                        "on-error": "#ffffff",
-                        "secondary": "#456080",
-                        "secondary-fixed-dim": "#adc9ed",
-                        "outline-variant": "#c3c6d6",
-                        "on-tertiary": "#ffffff",
-                        "surface-container-high": "#e5e8ee",
-                        "on-secondary-fixed-variant": "#2d4867",
-                        "on-secondary": "#ffffff",
-                        "on-primary-fixed": "#001847",
-                        "secondary-fixed": "#d1e4ff",
-                        "background": "#f7f9ff",
-                        "inverse-on-surface": "#eef1f7",
-                        "primary-fixed": "#dae2ff",
-                        "primary": "#0040a1",
-                        "tertiary-container": "#a93802",
-                        "error-container": "#ffdad6",
-                        "on-error-container": "#93000a",
-                        "surface-container-highest": "#dfe3e8",
-                        "on-tertiary-fixed-variant": "#812800",
-                        "on-tertiary-fixed": "#380d00",
-                        "primary-container": "#0056d2",
-                        "on-surface": "#181c20",
-                        "on-primary-container": "#ccd8ff",
-                        "primary-fixed-dim": "#b2c5ff",
-                        "on-primary-fixed-variant": "#0040a1",
-                        "on-background": "#181c20",
-                        "surface-tint": "#0056d2",
-                        "surface-dim": "#d7dae0",
-                        "surface-container-lowest": "#ffffff",
-                        "secondary-container": "#bed9ff",
-                        "on-surface-variant": "#424654",
-                        "error": "#ba1a1a",
-                        "tertiary-fixed-dim": "#ffb59b",
-                        "outline": "#737785",
-                        "on-secondary-container": "#445f7f"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.125rem",
-                        "lg": "0.25rem",
-                        "xl": "0.5rem",
-                        "full": "0.75rem"
-                    },
-                    "fontFamily": {
-                        "headline": ["Manrope"],
-                        "body": ["Inter"],
-                        "label": ["Inter"]
-                    }
-                },
-            },
-        }
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Atelier Repair | Job Management</title>
+    <script
+      src="https://cdn.tailwindcss.com?plugins=forms,container-queries"
+    ></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap"
+      rel="stylesheet"
+    >
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    >
+    <script id="tailwind-config">
+    "use strict";
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-container-highest": "#dfe3e8",
+            "surface-container-low": "#f1f4fa",
+            outline: "#737785",
+            secondary: "#456080",
+            "on-background": "#181c20",
+            "surface-tint": "#0056d2",
+            "tertiary-container": "#a93802",
+            "on-secondary": "#ffffff",
+            "on-tertiary-container": "#ffcebd",
+            "tertiary-fixed-dim": "#ffb59b",
+            "on-secondary-fixed": "#001d36",
+            "on-primary-fixed": "#001847",
+            "inverse-on-surface": "#eef1f7",
+            "tertiary-fixed": "#ffdbcf",
+            "surface-container-lowest": "#ffffff",
+            tertiary: "#822800",
+            primary: "#0040a1",
+            "secondary-fixed-dim": "#adc9ed",
+            "on-primary": "#ffffff",
+            background: "#f7f9ff",
+            "outline-variant": "#c3c6d6",
+            "secondary-fixed": "#d1e4ff",
+            "surface-container-high": "#e5e8ee",
+            "primary-fixed-dim": "#b2c5ff",
+            "on-secondary-container": "#445f7f",
+            "error-container": "#ffdad6",
+            "surface-dim": "#d7dae0",
+            "surface-container": "#ebeef4",
+            "primary-fixed": "#dae2ff",
+            "on-surface": "#181c20",
+            "on-tertiary-fixed-variant": "#812800",
+            "on-tertiary": "#ffffff",
+            "inverse-primary": "#b2c5ff",
+            error: "#ba1a1a",
+            "surface-bright": "#f7f9ff",
+            "on-error": "#ffffff",
+            "surface-variant": "#dfe3e8",
+            "on-primary-fixed-variant": "#0040a1",
+            "on-primary-container": "#ccd8ff",
+            "on-secondary-fixed-variant": "#2d4867",
+            "on-error-container": "#93000a",
+            "on-surface-variant": "#424654",
+            "inverse-surface": "#2d3135",
+            "on-tertiary-fixed": "#380d00",
+            surface: "#f7f9ff",
+            "primary-container": "#0056d2",
+            "secondary-container": "#bed9ff",
+          },
+          borderRadius: {
+            DEFAULT: "0.125rem",
+            lg: "0.25rem",
+            xl: "0.5rem",
+            full: "0.75rem",
+          },
+          fontFamily: {
+            headline: ["Manrope"],
+            body: ["Inter"],
+            label: ["Inter"],
+          },
+        },
+      },
+    };
     </script>
-<style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        body { font-family: 'Inter', sans-serif; }
-        h1, h2, h3, .headline { font-family: 'Manrope', sans-serif; }
+    <style>
+    .material-symbols-outlined {
+      font-variation-settings:
+        "FILL" 0,
+        "wght" 400,
+        "GRAD" 0,
+        "opsz" 24;
+    }
+    body {
+      font-family: "Inter", sans-serif;
+    }
+    h1,
+    h2,
+    h3,
+    .font-manrope {
+      font-family: "Manrope", sans-serif;
+    }
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+    }
+    /* Mobile scrollbar hide */
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
     </style>
-</head>
-<body class="bg-background text-on-background min-h-screen">
-<!-- SideNavBar -->
-<aside class="h-screen w-64 fixed left-0 top-0 bg-slate-100 dark:bg-slate-900 flex flex-col p-4 z-50">
-<div class="mb-8 px-2">
-<h1 class="text-blue-700 dark:text-blue-400 font-bold tracking-tighter text-2xl font-headline">Engineering Atelier</h1>
-<p class="text-xs text-on-surface-variant opacity-70">Tech Hub v2.1</p>
-</div>
-<nav class="flex-grow space-y-1">
-<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg group" href="#">
-<span class="material-symbols-outlined">dashboard</span>
-<span class="font-medium">Dashboard</span>
-</a>
-<!-- Active Tab: Job Management -->
-<a class="flex items-center gap-3 px-3 py-2 text-blue-700 dark:text-blue-400 font-bold bg-slate-200 dark:bg-slate-800 rounded-lg group" href="#">
-<span class="material-symbols-outlined">build</span>
-<span class="font-medium">Job Management</span>
-</a>
-<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg group" href="#">
-<span class="material-symbols-outlined">inventory_2</span>
-<span class="font-medium">Parts Catalog</span>
-</a>
-<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg group" href="#">
-<span class="material-symbols-outlined">history_edu</span>
-<span class="font-medium">Repair Catalog</span>
-</a>
-<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg group" href="#">
-<span class="material-symbols-outlined">psychology</span>
-<span class="font-medium">AI Analyst</span>
-</a>
-<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg group" href="#">
-<span class="material-symbols-outlined">settings</span>
-<span class="font-medium">Shop Settings</span>
-</a>
-</nav>
-<div class="mt-auto pt-4 border-t border-slate-200 dark:border-slate-800">
-<div class="flex items-center gap-3 px-2 mb-4">
-<img alt="Shop Owner Profile" class="w-10 h-10 rounded-full bg-surface-container-high object-cover" data-alt="Portrait of a professional workshop manager in a clean shop environment, soft cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEdZ1Z9LDey0NftNqK5b6JTN9vewvjDxpTNEzxLt_CijnlFJBgIIwBttrGUgiKRFv7dQ7-59YEAY-9uzGpJqfNQUejfmmM6efYdSPfo7HUPj1o4AECPJw_xtAqzYabJjbXcuLMAYMoLeVGqbQ9Qc_dl_NvJVq64l588qvlQNT5mfnjgkSDarcko4gGwHFABoYN804stGE7vMurILzJescPGyR5R6ZmBuDu85y7xHUJ_K975rCTJDT4wZEFqsaQ2_J-FEU31afyunRd"/>
-<div>
-<p class="text-sm font-bold text-on-surface">Alex Chen</p>
-<p class="text-xs text-on-surface-variant">Admin Access</p>
-</div>
-</div>
-<button class="w-full py-2.5 bg-gradient-to-br from-primary to-primary-container text-white font-bold rounded-lg scale-95 active:opacity-80 transition-all flex items-center justify-center gap-2">
-<span class="material-symbols-outlined text-sm">add</span>
-                New Intake
-            </button>
-</div>
-</aside>
-<!-- TopNavBar -->
-<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between px-8">
-<div class="flex items-center gap-4 flex-1">
-<div class="relative w-full max-w-md focus-within:ring-2 focus-within:ring-blue-500/20 rounded-lg">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg text-sm focus:ring-0 focus:bg-surface-container-lowest transition-all" placeholder="Search Repair Dashboard..." type="text"/>
-</div>
-</div>
-<div class="flex items-center gap-4">
-<button class="p-2 text-slate-500 hover:text-blue-600 transition-all relative">
-<span class="material-symbols-outlined">notifications</span>
-<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span>
-</button>
-<button class="p-2 text-slate-500 hover:text-blue-600 transition-all">
-<span class="material-symbols-outlined">help_outline</span>
-</button>
-<div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-800 mx-2"></div>
-<span class="text-slate-900 dark:text-white font-black text-lg tracking-tight">Repair Dashboard</span>
-</div>
-</header>
-<!-- Main Content -->
-<main class="ml-64 pt-16 p-8 min-h-screen">
-<!-- Header -->
-<div class="flex justify-between items-end mb-8">
-<div>
-<h2 class="text-3xl font-extrabold font-headline text-on-surface tracking-tight">Job Management</h2>
-<p class="text-on-surface-variant font-medium">Track and manage all shop repair jobs.</p>
-</div>
-<button class="px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-white font-bold rounded-lg shadow-lg hover:shadow-primary/20 transition-all flex items-center gap-2">
-<span class="material-symbols-outlined">add_circle</span>
-                New Intake
-            </button>
-</div>
-<!-- Filter Bar -->
-<section class="bg-surface-container-low p-4 rounded-xl mb-6 flex flex-wrap items-center gap-4">
-<div class="flex-1 min-w-[240px]">
-<div class="relative">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
-<input class="w-full bg-surface-container-lowest border-none rounded-lg text-sm pl-10 pr-4 py-2.5 focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Quick search Job ID, Customer, or Device..." type="text"/>
-</div>
-</div>
-<div class="w-48">
-<select class="w-full bg-surface-container-lowest border-none rounded-lg text-sm py-2.5 focus:ring-2 focus:ring-primary/20 cursor-pointer">
-<option>All Statuses</option>
-<option>Intake</option>
-<option>In Repair</option>
-<option>Waiting for Parts</option>
-<option>Done</option>
-</select>
-</div>
-<div class="w-64">
-<div class="relative">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">calendar_today</span>
-<input class="w-full bg-surface-container-lowest border-none rounded-lg text-sm pl-10 pr-4 py-2.5 focus:ring-2 focus:ring-primary/20" placeholder="Date Range: Last 30 Days" type="text"/>
-</div>
-</div>
-<button class="px-4 py-2.5 text-primary font-bold text-sm flex items-center gap-2 hover:bg-primary-container/10 rounded-lg transition-all">
-<span class="material-symbols-outlined text-sm">filter_list</span>
-                Advanced Filters
-            </button>
-</section>
-<!-- Job Table Container -->
-<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
-<div class="overflow-x-auto">
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="bg-surface-container-high text-on-surface-variant uppercase text-[10px] font-bold tracking-widest">
-<th class="px-6 py-4">Job ID</th>
-<th class="px-6 py-4">Device Details</th>
-<th class="px-6 py-4">Customer Info</th>
-<th class="px-6 py-4">Status</th>
-<th class="px-6 py-4">Assigned Tech</th>
-<th class="px-6 py-4">Est. Ready</th>
-<th class="px-6 py-4 text-right">Actions</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-surface-container">
-<!-- Row 1 -->
-<tr class="hover:bg-surface-container-low transition-colors group">
-<td class="px-6 py-5 font-mono text-xs font-bold text-primary">REP-2026-0042-X7K</td>
-<td class="px-6 py-5">
-<p class="text-sm font-bold text-on-surface">iPhone 15 Pro Max</p>
-<p class="text-xs text-on-surface-variant">Broken Digitizer</p>
-</td>
-<td class="px-6 py-5">
-<p class="text-sm font-semibold text-on-surface">Sarah Jenkins</p>
-<p class="text-xs text-on-surface-variant">+1 (555) 012-3456</p>
-</td>
-<td class="px-6 py-5">
-<span class="px-3 py-1 bg-blue-100 text-blue-700 text-[10px] font-extrabold uppercase rounded-full">Intake</span>
-</td>
-<td class="px-6 py-5">
-<div class="flex items-center gap-2">
-<div class="w-6 h-6 rounded-full bg-slate-200 overflow-hidden">
-<img alt="Tech" class="w-full h-full object-cover" data-alt="Close up of a technician's face in a workshop setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaow2P7v_8z69V7JcX7AnKEgT4Z3kzB85c4vduIdgIvSmiHP36iRj7ie7cmbG_eAcfPXD64f0B0AzPDUSF4SFgpldPpykbl-dkbxtO8MGji88rXm3o7O-_-WTSSYPJaTBgpalY2z3O5rBA7VVxS4gzSGjX1P928WSjfAU9mjm-y_G7UFhDV9c1DrCIrqM3R4S_o3L9Wa-7t2Ap-mbbp_zKc7e1Axb1h3Qf6SQeDQh5e7z_vehX6h129QrlnGet5lEvJM1RjR0jgwP2"/>
-</div>
-<span class="text-xs font-medium">M. Rivera</span>
-</div>
-</td>
-<td class="px-6 py-5">
-<p class="text-xs font-bold text-on-surface">Oct 12, 2026</p>
-<p class="text-[10px] text-error font-medium">In 2 days</p>
-</td>
-<td class="px-6 py-5 text-right">
-<button class="p-2 text-on-surface-variant hover:text-primary transition-all">
-<span class="material-symbols-outlined">visibility</span>
-</button>
-</td>
-</tr>
-<!-- Row 2 -->
-<tr class="hover:bg-surface-container-low transition-colors group">
-<td class="px-6 py-5 font-mono text-xs font-bold text-primary">REP-2026-0043-L9P</td>
-<td class="px-6 py-5">
-<p class="text-sm font-bold text-on-surface">MacBook Pro M3</p>
-<p class="text-xs text-on-surface-variant">Logic Board Diagnostic</p>
-</td>
-<td class="px-6 py-5">
-<p class="text-sm font-semibold text-on-surface">Tech Corp Ltd.</p>
-<p class="text-xs text-on-surface-variant">+1 (555) 987-6543</p>
-</td>
-<td class="px-6 py-5">
-<span class="px-3 py-1 bg-indigo-100 text-indigo-700 text-[10px] font-extrabold uppercase rounded-full">In Repair</span>
-</td>
-<td class="px-6 py-5">
-<div class="flex items-center gap-2">
-<div class="w-6 h-6 rounded-full bg-slate-200 overflow-hidden">
-<img alt="Tech" class="w-full h-full object-cover" data-alt="Portrait of a female technician in a modern lab coat" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQJtWMmgTHqFQ6H9OSLEfVSCEy2t3BTUQDEoMS6KgniLBbpyxoA5XTReh6RuvOL7l9FIN-cTgesW6VlEtSV5eAIQiwjDX5hX1fiK8PID_km8r4KFb9he7MgXH3n0XV1UO5klxl4u8cO1g2uj9CtKMa6PchpQVo5LXEJX5EkIKAGAhAI7-M68TSQhRag4-ckm4wol6-nrF9hcUIO4mlmpdQYcPrQFRV4n_1ja3p4V1r_MUgu9mDS2zu-Y9BtvzpsMQo3wGmGEcfoQ4O"/>
-</div>
-<span class="text-xs font-medium">K. Tanaka</span>
-</div>
-</td>
-<td class="px-6 py-5">
-<p class="text-xs font-bold text-on-surface">Oct 15, 2026</p>
-<p class="text-[10px] text-on-surface-variant font-medium">In 5 days</p>
-</td>
-<td class="px-6 py-5 text-right">
-<button class="p-2 text-on-surface-variant hover:text-primary transition-all">
-<span class="material-symbols-outlined">visibility</span>
-</button>
-</td>
-</tr>
-<!-- Row 3 -->
-<tr class="hover:bg-surface-container-low transition-colors group">
-<td class="px-6 py-5 font-mono text-xs font-bold text-primary">REP-2026-0038-M2D</td>
-<td class="px-6 py-5">
-<p class="text-sm font-bold text-on-surface">Sony PS5 Console</p>
-<p class="text-xs text-on-surface-variant">HDMI Port Replacement</p>
-</td>
-<td class="px-6 py-5">
-<p class="text-sm font-semibold text-on-surface">James Wilson</p>
-<p class="text-xs text-on-surface-variant">+1 (555) 444-2211</p>
-</td>
-<td class="px-6 py-5">
-<span class="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-extrabold uppercase rounded-full">Waiting for Parts</span>
-</td>
-<td class="px-6 py-5">
-<span class="text-xs italic text-on-surface-variant">Unassigned</span>
-</td>
-<td class="px-6 py-5">
-<p class="text-xs font-bold text-on-surface">Pending</p>
-<p class="text-[10px] text-amber-600 font-medium">Part: SKU-882</p>
-</td>
-<td class="px-6 py-5 text-right">
-<button class="p-2 text-on-surface-variant hover:text-primary transition-all">
-<span class="material-symbols-outlined">visibility</span>
-</button>
-</td>
-</tr>
-<!-- Row 4 -->
-<tr class="hover:bg-surface-container-low transition-colors group">
-<td class="px-6 py-5 font-mono text-xs font-bold text-primary">REP-2026-0035-Z1A</td>
-<td class="px-6 py-5">
-<p class="text-sm font-bold text-on-surface">iPad Air (5th Gen)</p>
-<p class="text-xs text-on-surface-variant">Battery Service</p>
-</td>
-<td class="px-6 py-5">
-<p class="text-sm font-semibold text-on-surface">Emily Thorne</p>
-<p class="text-xs text-on-surface-variant">+1 (555) 667-8899</p>
-</td>
-<td class="px-6 py-5">
-<span class="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-extrabold uppercase rounded-full">Done</span>
-</td>
-<td class="px-6 py-5">
-<div class="flex items-center gap-2">
-<div class="w-6 h-6 rounded-full bg-slate-200 overflow-hidden">
-<img alt="Tech" class="w-full h-full object-cover" data-alt="Technician working on small electronics" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9Fxhj9e8gBXdppwAoBa__1a74w7mj7hQYVmIpXoV0wC-EYi7vFVtuk7tcqNgdRQZxdL_gjERLK1v_8SzChpCxYsEZovlkvivkYeLExB86xDxOKzNK7BXWOyKTE8wUo8ROmGvqrwCOWc9q5eTJWZMBy2nJBLKiFQKeibJMbQku_1P_MmmW7fLxgY88e6VzVLtnvZmth4Lvwr3fzIyB_k2woxCoGVQ20n0K5ZaQXJpF7SdVIBkK9ZAkPSTkaC8PVJ8qaVH3U-94j-4K"/>
-</div>
-<span class="text-xs font-medium">M. Rivera</span>
-</div>
-</td>
-<td class="px-6 py-5">
-<p class="text-xs font-bold text-on-surface">Oct 09, 2026</p>
-<p class="text-[10px] text-green-600 font-bold uppercase">Ready</p>
-</td>
-<td class="px-6 py-5 text-right">
-<button class="p-2 text-on-surface-variant hover:text-primary transition-all">
-<span class="material-symbols-outlined">visibility</span>
-</button>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-<!-- Pagination -->
-<div class="px-6 py-4 bg-surface-container-low border-t border-surface-container flex items-center justify-between">
-<p class="text-xs text-on-surface-variant font-medium">
-                    Showing <span class="font-bold text-on-surface">1 - 4</span> of <span class="font-bold text-on-surface">128</span> repair jobs
-                </p>
-<div class="flex gap-1">
-<button class="p-1 rounded hover:bg-surface-container-high text-on-surface-variant transition-all">
-<span class="material-symbols-outlined text-sm">chevron_left</span>
-</button>
-<button class="px-3 py-1 rounded bg-primary text-white text-xs font-bold">1</button>
-<button class="px-3 py-1 rounded hover:bg-surface-container-high text-on-surface-variant text-xs font-medium transition-all">2</button>
-<button class="px-3 py-1 rounded hover:bg-surface-container-high text-on-surface-variant text-xs font-medium transition-all">3</button>
-<span class="px-2 py-1 text-on-surface-variant text-xs">...</span>
-<button class="px-3 py-1 rounded hover:bg-surface-container-high text-on-surface-variant text-xs font-medium transition-all">32</button>
-<button class="p-1 rounded hover:bg-surface-container-high text-on-surface-variant transition-all">
-<span class="material-symbols-outlined text-sm">chevron_right</span>
-</button>
-</div>
-</div>
-</div>
-<!-- System Status Summary Footer -->
-<div class="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
-<div class="p-4 bg-blue-50/50 rounded-lg border border-blue-100 flex flex-col">
-<span class="text-[10px] uppercase font-bold text-blue-700 tracking-wider">Queue Priority</span>
-<span class="text-2xl font-black text-blue-900 font-headline">12</span>
-<span class="text-[10px] text-blue-600">Pending intake validation</span>
-</div>
-<div class="p-4 bg-indigo-50/50 rounded-lg border border-indigo-100 flex flex-col">
-<span class="text-[10px] uppercase font-bold text-indigo-700 tracking-wider">On Bench</span>
-<span class="text-2xl font-black text-indigo-900 font-headline">24</span>
-<span class="text-[10px] text-indigo-600">Active repairs in progress</span>
-</div>
-<div class="p-4 bg-amber-50/50 rounded-lg border border-amber-100 flex flex-col">
-<span class="text-[10px] uppercase font-bold text-amber-700 tracking-wider">Awaiting Parts</span>
-<span class="text-2xl font-black text-amber-900 font-headline">08</span>
-<span class="text-[10px] text-amber-600">Average delay: 3.2 days</span>
-</div>
-<div class="p-4 bg-green-50/50 rounded-lg border border-green-100 flex flex-col">
-<span class="text-[10px] uppercase font-bold text-green-700 tracking-wider">Quality Checked</span>
-<span class="text-2xl font-black text-green-900 font-headline">42</span>
-<span class="text-[10px] text-green-600">Ready for pickup today</span>
-</div>
-</div>
-</main>
-</body></html>
+  </head>
+  <body
+    class="bg-background text-on-background min-h-screen flex flex-col md:flex-row pb-20 md:pb-0"
+  >
+    <!-- SideNavBar (Desktop/Large Tablet) -->
+    <aside
+      class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 z-50 bg-slate-100 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800"
+    >
+      <div class="p-6 flex flex-col gap-1">
+        <h2 class="font-manrope font-bold text-lg text-primary">
+          Workshop Alpha
+        </h2>
+        <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">
+          Master Technician
+        </p>
+      </div>
+      <nav class="flex-1 mt-4 px-2 space-y-1">
+        <a
+          class="text-slate-600 dark:text-slate-400 px-4 py-3 flex items-center gap-3 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all font-inter text-sm font-medium"
+          href="#"
+        >
+          <span class="material-symbols-outlined">dashboard</span>
+          Dashboard
+        </a>
+        <a
+          class="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-4 border-blue-600 px-4 py-3 flex items-center gap-3 translate-x-1 duration-200 font-inter text-sm font-medium"
+          href="#"
+        >
+          <span class="material-symbols-outlined">build</span>
+          Jobs
+        </a>
+        <a
+          class="text-slate-600 dark:text-slate-400 px-4 py-3 flex items-center gap-3 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all font-inter text-sm font-medium"
+          href="#"
+        >
+          <span class="material-symbols-outlined">inventory_2</span>
+          Inventory
+        </a>
+        <a
+          class="text-slate-600 dark:text-slate-400 px-4 py-3 flex items-center gap-3 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all font-inter text-sm font-medium"
+          href="#"
+        >
+          <span class="material-symbols-outlined">settings</span>
+          Settings
+        </a>
+      </nav>
+      <div class="p-4">
+        <button
+          class="w-full py-3 px-4 rounded-xl bg-gradient-to-br from-primary to-primary-container text-white font-manrope font-bold text-sm shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+        >
+          <span class="material-symbols-outlined text-sm">add</span>
+          New Intake
+        </button>
+      </div>
+    </aside>
+    <!-- Main Content Area -->
+    <main
+      class="flex-1 md:ml-64 flex flex-col min-h-screen w-full overflow-x-hidden"
+    >
+      <!-- TopNavBar -->
+      <header
+        class="bg-slate-50/80 backdrop-blur-md dark:bg-slate-950/80 flex justify-between items-center w-full px-4 md:px-6 py-3 sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800"
+      >
+        <div class="flex items-center gap-3">
+          <h1
+            class="text-lg md:text-xl font-bold tracking-tight text-blue-800 dark:text-blue-300 font-manrope"
+          >
+            Atelier Repair
+          </h1>
+        </div>
+        <div
+          class="hidden sm:flex items-center bg-surface-container-high rounded-full px-4 py-1.5 w-64 lg:w-96 gap-2"
+        >
+          <span class="material-symbols-outlined text-outline text-sm"
+            >search</span
+          >
+          <input
+            class="bg-transparent border-none focus:ring-0 text-sm w-full font-inter"
+            placeholder="Search VIN, Job ID..."
+            type="text"
+          >
+        </div>
+        <div class="flex items-center gap-2 md:gap-4">
+          <button class="sm:hidden p-2 text-slate-500">
+            <span class="material-symbols-outlined">search</span>
+          </button>
+          <button
+            class="p-2 rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors relative"
+          >
+            <span class="material-symbols-outlined text-slate-500"
+              >notifications</span
+            >
+            <span
+              class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-slate-50"
+            ></span>
+          </button>
+          <div class="flex items-center gap-2 pl-2 border-l border-slate-200">
+            <span class="material-symbols-outlined text-slate-500 text-3xl"
+              >account_circle</span
+            >
+          </div>
+        </div>
+      </header>
+      <!-- Page Canvas -->
+      <div class="p-4 md:p-6 space-y-6 md:space-y-8">
+        <!-- Operational Metrics -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div
+            class="bg-surface-container-lowest p-5 rounded-xl flex flex-col justify-between group transition-all border border-outline-variant/10 shadow-sm"
+          >
+            <div class="flex justify-between items-start">
+              <span
+                class="text-xs font-bold uppercase tracking-widest text-on-surface-variant font-inter"
+                >Queue Priority</span
+              >
+              <span class="material-symbols-outlined text-primary opacity-50"
+                >priority_high</span
+              >
+            </div>
+            <div class="mt-4 flex items-baseline gap-2">
+              <span
+                class="text-3xl md:text-4xl font-extrabold font-manrope text-on-surface"
+                >12</span
+              >
+              <span class="text-xs text-error font-bold">+2 high</span>
+            </div>
+          </div>
+          <div
+            class="bg-surface-container-lowest p-5 rounded-xl flex flex-col justify-between group border border-outline-variant/10 shadow-sm"
+          >
+            <div class="flex justify-between items-start">
+              <span
+                class="text-xs font-bold uppercase tracking-widest text-on-surface-variant font-inter"
+                >On Bench</span
+              >
+              <span class="material-symbols-outlined text-primary opacity-50"
+                >engineering</span
+              >
+            </div>
+            <div class="mt-4 flex items-baseline gap-2">
+              <span
+                class="text-3xl md:text-4xl font-extrabold font-manrope text-on-surface"
+                >08</span
+              >
+              <span class="text-xs text-primary font-bold">In progress</span>
+            </div>
+          </div>
+          <div
+            class="bg-surface-container-lowest p-5 rounded-xl flex flex-col justify-between group border border-outline-variant/10 shadow-sm"
+          >
+            <div class="flex justify-between items-start">
+              <span
+                class="text-xs font-bold uppercase tracking-widest text-on-surface-variant font-inter"
+                >Awaiting Parts</span
+              >
+              <span class="material-symbols-outlined text-tertiary opacity-50"
+                >shopping_cart</span
+              >
+            </div>
+            <div class="mt-4 flex items-baseline gap-2">
+              <span
+                class="text-3xl md:text-4xl font-extrabold font-manrope text-tertiary"
+                >04</span
+              >
+              <span class="text-xs text-on-surface-variant font-medium"
+                >Pending deliv.</span
+              >
+            </div>
+          </div>
+          <div
+            class="bg-surface-container-lowest p-5 rounded-xl flex flex-col justify-between group border border-outline-variant/10 shadow-sm"
+          >
+            <div class="flex justify-between items-start">
+              <span
+                class="text-xs font-bold uppercase tracking-widest text-on-surface-variant font-inter"
+                >Quality Check</span
+              >
+              <span class="material-symbols-outlined text-secondary opacity-50"
+                >verified</span
+              >
+            </div>
+            <div class="mt-4 flex items-baseline gap-2">
+              <span
+                class="text-3xl md:text-4xl font-extrabold font-manrope text-on-surface"
+                >03</span
+              >
+              <span class="text-xs text-on-surface-variant font-medium"
+                >Ready today</span
+              >
+            </div>
+          </div>
+        </section>
+        <!-- Jobs Queue Section -->
+        <section class="flex flex-col gap-4">
+          <div
+            class="flex flex-col md:flex-row md:items-center justify-between gap-4"
+          >
+            <div>
+              <h2
+                class="text-xl md:text-2xl font-extrabold font-manrope text-on-surface tracking-tight"
+              >
+                Jobs Queue
+              </h2>
+              <p class="text-xs md:text-sm text-on-surface-variant font-body">
+                Manage and track active repair lifecycle
+              </p>
+            </div>
+            <div
+              class="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 hide-scrollbar"
+            >
+              <button
+                class="bg-surface-container-high px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[10px] md:text-xs font-bold text-on-surface-variant flex items-center gap-1.5 whitespace-nowrap"
+              >
+                <span class="material-symbols-outlined text-sm md:text-base"
+                  >filter_list</span
+                >
+                Filter
+              </button>
+              <button
+                class="bg-surface-container-high px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[10px] md:text-xs font-bold text-on-surface-variant flex items-center gap-1.5 whitespace-nowrap"
+              >
+                Status: All
+              </button>
+              <button
+                class="bg-surface-container-high px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[10px] md:text-xs font-bold text-on-surface-variant flex items-center gap-1.5 whitespace-nowrap"
+              >
+                Technician: All
+              </button>
+            </div>
+          </div>
+          <!-- Desktop/Tablet Table View (Hidden on mobile) -->
+          <div
+            class="hidden sm:block bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/15 shadow-sm"
+          >
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse min-w-[640px]">
+                <thead>
+                  <tr class="bg-surface-container-high/30">
+                    <th
+                      class="p-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant font-inter"
+                    >
+                      Job ID
+                    </th>
+                    <th
+                      class="p-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant font-inter"
+                    >
+                      Device / Vehicle
+                    </th>
+                    <th
+                      class="hidden lg:table-cell p-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant font-inter"
+                    >
+                      Customer
+                    </th>
+                    <th
+                      class="p-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant font-inter text-center"
+                    >
+                      Status
+                    </th>
+                    <th
+                      class="p-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant font-inter"
+                    >
+                      Tech
+                    </th>
+                    <th
+                      class="p-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant font-inter text-right"
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/10">
+                  <!-- Row 1 -->
+                  <tr
+                    class="hover:bg-surface-container-low transition-colors group"
+                  >
+                    <td class="p-4">
+                      <span
+                        class="font-manrope font-bold text-primary text-xs lg:text-sm tracking-tight"
+                        >REP-2026-0042-X7K</span
+                      >
+                    </td>
+                    <td class="p-4">
+                      <div class="flex items-center gap-3">
+                        <div
+                          class="w-8 h-8 lg:w-10 lg:h-10 rounded-lg bg-surface-container-high flex items-center justify-center shrink-0"
+                        >
+                          <span
+                            class="material-symbols-outlined text-secondary text-lg lg:text-xl"
+                            >directions_car</span
+                          >
+                        </div>
+                        <div>
+                          <p class="text-xs lg:text-sm font-bold font-manrope">
+                            BMW X5 M-Sport
+                          </p>
+                          <p
+                            class="text-[10px] text-on-surface-variant font-inter"
+                          >
+                            Silver | 2022
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="hidden lg:table-cell p-4">
+                      <p class="text-sm font-semibold font-inter">
+                        Alexander Thorne
+                      </p>
+                      <p class="text-xs text-on-surface-variant">
+                        Standard Client
+                      </p>
+                    </td>
+                    <td class="p-4">
+                      <div class="flex justify-center">
+                        <span
+                          class="px-2 py-0.5 lg:px-3 lg:py-1 rounded-full text-[9px] lg:text-[10px] font-extrabold uppercase bg-primary/10 text-primary border border-primary/20 whitespace-nowrap"
+                          >In Repair</span
+                        >
+                      </div>
+                    </td>
+                    <td class="p-4">
+                      <div class="flex items-center gap-2">
+                        <div
+                          class="w-6 h-6 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden shrink-0"
+                        >
+                          <img
+                            class="w-full h-full object-cover"
+                            data-alt="professional technician headshot"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtV_g_P_VzDSHUuflwTPl_hIULYrr4onOTrASnIBxR2Y9hmcJadqA66l1QbMwZ-Je_HEKxddlMQxkEXPoKhVM4SnN8LicDITJalOdOYyS1eQA_07-p66zCDlonG_XgL_VPXfJTRtLLopPLcskAL_IteWdX19xUVDkbloLK6tBTH6wKsG_h4oHxwbZcqP2v8mJzxQkzfXy0YwCoZEJEgs8npMBqJxG5fH_JmEia75hhN1J1mPCPyrG_o3BaQfrCKfeOE5nBhby7qmZV"
+                          >
+                        </div>
+                        <span class="text-xs lg:text-sm font-medium"
+                          >Marc K.</span
+                        >
+                      </div>
+                    </td>
+                    <td class="p-4 text-right">
+                      <button
+                        class="p-2 text-on-surface-variant hover:text-primary transition-colors"
+                      >
+                        <span class="material-symbols-outlined">more_vert</span>
+                      </button>
+                    </td>
+                  </tr>
+                  <!-- Row 2 -->
+                  <tr
+                    class="hover:bg-surface-container-low transition-colors group"
+                  >
+                    <td class="p-4">
+                      <span
+                        class="font-manrope font-bold text-primary text-xs lg:text-sm tracking-tight"
+                        >REP-2026-0045-L9Q</span
+                      >
+                    </td>
+                    <td class="p-4">
+                      <div class="flex items-center gap-3">
+                        <div
+                          class="w-8 h-8 lg:w-10 lg:h-10 rounded-lg bg-surface-container-high flex items-center justify-center shrink-0"
+                        >
+                          <span
+                            class="material-symbols-outlined text-secondary text-lg lg:text-xl"
+                            >laptop_mac</span
+                          >
+                        </div>
+                        <div>
+                          <p class="text-xs lg:text-sm font-bold font-manrope">
+                            MacBook Pro 16"
+                          </p>
+                          <p
+                            class="text-[10px] text-on-surface-variant font-inter"
+                          >
+                            M2 Max | Space Grey
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="hidden lg:table-cell p-4">
+                      <p class="text-sm font-semibold font-inter">
+                        Elena Rodriguez
+                      </p>
+                      <p class="text-xs text-on-surface-variant">
+                        VIP / Priority
+                      </p>
+                    </td>
+                    <td class="p-4">
+                      <div class="flex justify-center">
+                        <span
+                          class="px-2 py-0.5 lg:px-3 lg:py-1 rounded-full text-[9px] lg:text-[10px] font-extrabold uppercase bg-tertiary-fixed text-on-tertiary-fixed-variant border border-tertiary/20 whitespace-nowrap"
+                          >Waiting Parts</span
+                        >
+                      </div>
+                    </td>
+                    <td class="p-4">
+                      <div class="flex items-center gap-2">
+                        <div
+                          class="w-6 h-6 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden shrink-0"
+                        >
+                          <img
+                            class="w-full h-full object-cover"
+                            data-alt="focused male technician portrait"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0xqCJgVNtCd1cTvbCkNbNa32iLkJPUgg8a3uZg4H7DFXpNY8GatALgGOyFqISJCwh2DUi07o9UsI8u6JznEXKLPc80A5dOL1L6BU4h7Eh5N3-N6sOm9QLXa9TsK9RiRpkNIm4cqNpgdaluBpUQcjsoZvZCKay_OyJ8ePV9p6gYcYV6_sDY9FU3MTcdz0AXiZ04A2aq2Pkh8fWyW2bQOvYSIH0CQpiZc8iKC0QVVpydM7VzKdtekn9jsVhQHFtk1bepfpF4d_0Qrsc"
+                          >
+                        </div>
+                        <span class="text-xs lg:text-sm font-medium"
+                          >Sarah J.</span
+                        >
+                      </div>
+                    </td>
+                    <td class="p-4 text-right">
+                      <button
+                        class="p-2 text-on-surface-variant hover:text-primary transition-colors"
+                      >
+                        <span class="material-symbols-outlined">more_vert</span>
+                      </button>
+                    </td>
+                  </tr>
+                  <!-- Row 3 -->
+                  <tr
+                    class="hover:bg-surface-container-low transition-colors group"
+                  >
+                    <td class="p-4">
+                      <span
+                        class="font-manrope font-bold text-primary text-xs lg:text-sm tracking-tight"
+                        >REP-2026-0051-P2S</span
+                      >
+                    </td>
+                    <td class="p-4">
+                      <div class="flex items-center gap-3">
+                        <div
+                          class="w-8 h-8 lg:w-10 lg:h-10 rounded-lg bg-surface-container-high flex items-center justify-center shrink-0"
+                        >
+                          <span
+                            class="material-symbols-outlined text-secondary text-lg lg:text-xl"
+                            >precision_manufacturing</span
+                          >
+                        </div>
+                        <div>
+                          <p class="text-xs lg:text-sm font-bold font-manrope">
+                            Robot Arm
+                          </p>
+                          <p
+                            class="text-[10px] text-on-surface-variant font-inter"
+                          >
+                            Unit 7-B | Calibration
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="hidden lg:table-cell p-4">
+                      <p class="text-sm font-semibold font-inter">
+                        Core Dynamics Inc.
+                      </p>
+                      <p class="text-xs text-on-surface-variant">
+                        Corporate Account
+                      </p>
+                    </td>
+                    <td class="p-4">
+                      <div class="flex justify-center">
+                        <span
+                          class="px-2 py-0.5 lg:px-3 lg:py-1 rounded-full text-[9px] lg:text-[10px] font-extrabold uppercase bg-secondary-container text-on-secondary-container border border-secondary/20 whitespace-nowrap"
+                          >Intake</span
+                        >
+                      </div>
+                    </td>
+                    <td class="p-4">
+                      <span
+                        class="text-xs lg:text-sm font-medium italic text-on-surface-variant"
+                        >Unassigned</span
+                      >
+                    </td>
+                    <td class="p-4 text-right">
+                      <button
+                        class="p-2 text-on-surface-variant hover:text-primary transition-colors"
+                      >
+                        <span class="material-symbols-outlined">more_vert</span>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <!-- Mobile Card List View (Visible only on smallest screens) -->
+          <div class="sm:hidden space-y-4">
+            <!-- Mobile Card 1 -->
+            <div
+              class="bg-surface-container-lowest p-4 rounded-xl shadow-sm border border-outline-variant/10"
+            >
+              <div class="flex justify-between items-start mb-3">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center"
+                  >
+                    <span class="material-symbols-outlined text-secondary"
+                      >directions_car</span
+                    >
+                  </div>
+                  <div>
+                    <span
+                      class="font-manrope font-bold text-primary text-[10px] tracking-tight"
+                      >REP-0042-X7K</span
+                    >
+                    <h3 class="font-manrope font-bold text-sm">
+                      BMW X5 M-Sport
+                    </h3>
+                  </div>
+                </div>
+                <span
+                  class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-primary/10 text-primary border border-primary/20"
+                  >In Repair</span
+                >
+              </div>
+              <div
+                class="flex items-center justify-between mt-3 border-t border-outline-variant/10 pt-3"
+              >
+                <div class="flex items-center gap-2">
+                  <div
+                    class="w-6 h-6 rounded-full bg-slate-200 overflow-hidden"
+                  >
+                    <img
+                      class="w-full h-full object-cover"
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtV_g_P_VzDSHUuflwTPl_hIULYrr4onOTrASnIBxR2Y9hmcJadqA66l1QbMwZ-Je_HEKxddlMQxkEXPoKhVM4SnN8LicDITJalOdOYyS1eQA_07-p66zCDlonG_XgL_VPXfJTRtLLopPLcskAL_IteWdX19xUVDkbloLK6tBTH6wKsG_h4oHxwbZcqP2v8mJzxQkzfXy0YwCoZEJEgs8npMBqJxG5fH_JmEia75hhN1J1mPCPyrG_o3BaQfrCKfeOE5nBhby7qmZV"
+                    >
+                  </div>
+                  <span class="text-xs font-medium text-on-surface-variant"
+                    >Marc K.</span
+                  >
+                </div>
+                <button
+                  class="text-primary text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"
+                >
+                  Details
+                  <span class="material-symbols-outlined text-sm"
+                    >chevron_right</span
+                  >
+                </button>
+              </div>
+            </div>
+            <!-- Mobile Card 2 -->
+            <div
+              class="bg-surface-container-lowest p-4 rounded-xl shadow-sm border border-outline-variant/10"
+            >
+              <div class="flex justify-between items-start mb-3">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center"
+                  >
+                    <span class="material-symbols-outlined text-secondary"
+                      >laptop_mac</span
+                    >
+                  </div>
+                  <div>
+                    <span
+                      class="font-manrope font-bold text-primary text-[10px] tracking-tight"
+                      >REP-0045-L9Q</span
+                    >
+                    <h3 class="font-manrope font-bold text-sm">
+                      MacBook Pro 16"
+                    </h3>
+                  </div>
+                </div>
+                <span
+                  class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-tertiary-fixed text-on-tertiary-fixed-variant border border-tertiary/20"
+                  >Parts</span
+                >
+              </div>
+              <div
+                class="flex items-center justify-between mt-3 border-t border-outline-variant/10 pt-3"
+              >
+                <div class="flex items-center gap-2">
+                  <div
+                    class="w-6 h-6 rounded-full bg-slate-200 overflow-hidden"
+                  >
+                    <img
+                      class="w-full h-full object-cover"
+                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0xqCJgVNtCd1cTvbCkNbNa32iLkJPUgg8a3uZg4H7DFXpNY8GatALgGOyFqISJCwh2DUi07o9UsI8u6JznEXKLPc80A5dOL1L6BU4h7Eh5N3-N6sOm9QLXa9TsK9RiRpkNIm4cqNpgdaluBpUQcjsoZvZCKay_OyJ8ePV9p6gYcYV6_sDY9FU3MTcdz0AXiZ04A2aq2Pkh8fWyW2bQOvYSIH0CQpiZc8iKC0QVVpydM7VzKdtekn9jsVhQHFtk1bepfpF4d_0Qrsc"
+                    >
+                  </div>
+                  <span class="text-xs font-medium text-on-surface-variant"
+                    >Sarah J.</span
+                  >
+                </div>
+                <button
+                  class="text-primary text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"
+                >
+                  Details
+                  <span class="material-symbols-outlined text-sm"
+                    >chevron_right</span
+                  >
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+    <!-- BottomNavBar (Mobile-only) -->
+    <nav
+      class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-50/95 backdrop-blur-lg dark:bg-slate-950/95 px-4 py-2 flex justify-between items-center z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] border-t border-slate-200 dark:border-slate-800"
+    >
+      <button class="flex-1 flex flex-col items-center gap-1 text-slate-500">
+        <span class="material-symbols-outlined text-2xl">dashboard</span>
+        <span class="text-[9px] font-semibold font-inter uppercase">Home</span>
+      </button>
+      <button
+        class="flex-1 flex flex-col items-center gap-1 text-blue-700 dark:text-blue-400"
+      >
+        <span class="material-symbols-outlined text-2xl">build</span>
+        <span class="text-[9px] font-semibold font-inter uppercase">Jobs</span>
+      </button>
+      <div class="relative px-2">
+        <button
+          class="w-12 h-12 -mt-8 rounded-full bg-primary text-white shadow-lg shadow-primary/40 flex items-center justify-center border-4 border-background"
+        >
+          <span class="material-symbols-outlined text-2xl">add</span>
+        </button>
+      </div>
+      <button class="flex-1 flex flex-col items-center gap-1 text-slate-500">
+        <span class="material-symbols-outlined text-2xl">inventory_2</span>
+        <span class="text-[9px] font-semibold font-inter uppercase">Stock</span>
+      </button>
+      <button class="flex-1 flex flex-col items-center gap-1 text-slate-500">
+        <span class="material-symbols-outlined text-2xl">settings</span>
+        <span class="text-[9px] font-semibold font-inter uppercase">More</span>
+      </button>
+    </nav>
+  </body>
+</html>

@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Repair Catalog | Reparilo Engineering Atelier</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap"
+      rel="stylesheet"
+    >
+    <!-- Icons -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    >
+    <!-- Tailwind CSS -->
+    <script
+      src="https://cdn.tailwindcss.com?plugins=forms,container-queries"
+    ></script>
+    <script id="tailwind-config">
+    "use strict";
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-container-low": "#f1f4fa",
+            "on-primary": "#ffffff",
+            tertiary: "#822800",
+            "on-tertiary-fixed-variant": "#812800",
+            "on-surface-variant": "#424654",
+            "on-secondary-fixed": "#001d36",
+            "surface-tint": "#0056d2",
+            "inverse-on-surface": "#eef1f7",
+            "secondary-container": "#bed9ff",
+            "on-secondary": "#ffffff",
+            "error-container": "#ffdad6",
+            "primary-fixed-dim": "#b2c5ff",
+            "on-primary-fixed-variant": "#0040a1",
+            "on-error": "#ffffff",
+            secondary: "#456080",
+            "on-surface": "#181c20",
+            "surface-container-high": "#e5e8ee",
+            "secondary-fixed-dim": "#adc9ed",
+            "surface-container-highest": "#dfe3e8",
+            "primary-fixed": "#dae2ff",
+            "surface-container-lowest": "#ffffff",
+            "on-background": "#181c20",
+            outline: "#737785",
+            error: "#ba1a1a",
+            "on-error-container": "#93000a",
+            "tertiary-container": "#a93802",
+            "on-primary-container": "#ccd8ff",
+            surface: "#f7f9ff",
+            "primary-container": "#0056d2",
+            "tertiary-fixed": "#ffdbcf",
+            "surface-container": "#ebeef4",
+            "on-tertiary-fixed": "#380d00",
+            "inverse-primary": "#b2c5ff",
+            "surface-bright": "#f7f9ff",
+            "on-tertiary-container": "#ffcebd",
+            "tertiary-fixed-dim": "#ffb59b",
+            "on-secondary-fixed-variant": "#2d4867",
+            primary: "#0040a1",
+            "on-primary-fixed": "#001847",
+            "outline-variant": "#c3c6d6",
+            "inverse-surface": "#2d3135",
+            "surface-dim": "#d7dae0",
+            "on-secondary-container": "#445f7f",
+            "secondary-fixed": "#d1e4ff",
+            background: "#f7f9ff",
+            "surface-variant": "#dfe3e8",
+            "on-tertiary": "#ffffff",
+          },
+          borderRadius: {
+            DEFAULT: "0.125rem",
+            lg: "0.25rem",
+            xl: "0.5rem",
+            full: "0.75rem",
+          },
+          fontFamily: {
+            headline: ["Manrope"],
+            body: ["Inter"],
+            label: ["Inter"],
+          },
+        },
+      },
+    };
+    </script>
+    <style>
+    .material-symbols-outlined {
+      font-variation-settings:
+        "FILL" 0,
+        "wght" 400,
+        "GRAD" 0,
+        "opsz" 24;
+    }
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+    }
+    </style>
+  </head>
+  <body class="bg-background text-on-background font-body antialiased">
+    <!-- Sidebar (Desktop & Tablet) -->
+    <!-- Changed: Adjusted width and behavior for md (tablet) screens to be fixed but thinner or hidden if needed, here we maintain it but ensure it's responsive -->
+    <aside
+      class="hidden lg:flex h-screen w-64 fixed left-0 top-0 flex-col bg-slate-100 dark:bg-slate-900 shadow-[1px_0_0_0_rgba(0,0,0,0.05)] z-40"
+    >
+      <div class="flex flex-col h-full p-4 space-y-2">
+        <div class="px-2 py-6 mb-4">
+          <h1
+            class="text-xl font-black text-blue-700 dark:text-blue-400 font-headline"
+          >
+            Reparilo
+          </h1>
+          <p
+            class="text-xs text-on-surface-variant font-medium tracking-widest uppercase"
+          >
+            Engineering Atelier
+          </p>
+        </div>
+        <!-- SideNav Links -->
+        <nav class="flex-1 space-y-1">
+          <a
+            class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all group"
+            href="#"
+          >
+            <span class="material-symbols-outlined">dashboard</span>
+            <span class="text-sm font-medium">Dashboard</span>
+          </a>
+          <a
+            class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all group"
+            href="#"
+          >
+            <span class="material-symbols-outlined">build</span>
+            <span class="text-sm font-medium">Job Management</span>
+          </a>
+          <a
+            class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all group"
+            href="#"
+          >
+            <span class="material-symbols-outlined">inventory_2</span>
+            <span class="text-sm font-medium">Parts Catalog</span>
+          </a>
+          <a
+            class="flex items-center gap-3 px-3 py-2 bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-400 rounded-lg shadow-sm font-semibold translate-x-1 transition-transform"
+            href="#"
+          >
+            <span class="material-symbols-outlined">menu_book</span>
+            <span class="text-sm font-medium">Repair Catalog</span>
+          </a>
+          <a
+            class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all group"
+            href="#"
+          >
+            <span class="material-symbols-outlined">analytics</span>
+            <span class="text-sm font-medium">AI Analyst</span>
+          </a>
+          <a
+            class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all group"
+            href="#"
+          >
+            <span class="material-symbols-outlined">settings</span>
+            <span class="text-sm font-medium">Shop Settings</span>
+          </a>
+        </nav>
+        <!-- Sidebar Footer -->
+        <div
+          class="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-1"
+        >
+          <a
+            class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-all"
+            href="#"
+          >
+            <span class="material-symbols-outlined">support</span>
+            <span class="text-sm font-medium">Help Center</span>
+          </a>
+          <a
+            class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-all"
+            href="#"
+          >
+            <span class="material-symbols-outlined">logout</span>
+            <span class="text-sm font-medium">Log Out</span>
+          </a>
+        </div>
+      </div>
+    </aside>
+    <!-- Main Content Shell -->
+    <!-- Changed: Adjusted margin-left for tablet (md:ml-0) since sidebar is hidden below lg and replaced by bottom nav or a collapsed version -->
+    <div
+      class="lg:ml-64 min-h-screen flex flex-col transition-all duration-300"
+    >
+      <!-- TopAppBar -->
+      <header
+        class="bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-md flex justify-between items-center w-full px-4 md:px-6 py-3 sticky top-0 z-30 border-b border-slate-200/50"
+      >
+        <div class="flex items-center gap-4 flex-1">
+          <div class="relative max-w-md w-full hidden md:block">
+            <span
+              class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg"
+              >search</span
+            >
+            <input
+              class="w-full pl-10 pr-4 py-2 bg-surface-container-highest/50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-slate-400"
+              placeholder="Search repairs, parts or VINs..."
+              type="text"
+            >
+          </div>
+          <!-- Mobile Logo -->
+          <div class="lg:hidden flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary font-bold"
+              >build_circle</span
+            >
+            <span
+              class="text-sm font-black text-on-surface font-headline uppercase tracking-tighter"
+              >Reparilo</span
+            >
+          </div>
+        </div>
+        <div class="flex items-center gap-2 md:gap-3">
+          <button
+            class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+          >
+            <span class="material-symbols-outlined">notifications</span>
+          </button>
+          <div
+            class="h-8 w-px bg-slate-200 dark:bg-slate-800 mx-1 hidden md:block"
+          ></div>
+          <button
+            class="bg-gradient-to-br from-primary to-primary-container text-white px-3 md:px-4 py-2 rounded-xl text-xs md:text-sm font-semibold shadow-md hover:scale-95 duration-150 ease-in-out"
+          >
+            Intake Vehicle
+          </button>
+          <img
+            alt="Technician profile photo"
+            class="h-8 w-8 md:h-9 md:w-9 rounded-full object-cover border-2 border-white shadow-sm ml-1 md:ml-2"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuChBjpQdfG4fD7pNC8rBZSUKjR5OiXW-HMCo5VNHMuaxQuuDZWLC2pFfWUnWDeCtrkMH4-M6n09AIdWSCTJTV5hz19YWd8OtpZZwXv3nIEGP5ZEzmBFn1hmKqLNn2DRO-4bIxYLnaupbXaZIo07dwaBuUZ4hZ3q3A2puyUKqb8-_qB4mQ19Lse9WjYdM1yZC0zNrAAFoJ8NTLm96dvf8l0ruXijyEGraDRAjN_QhEtT8og7Ov-vd3LUvfsxoupzTtDnh1Hcndp-aV-d"
+          >
+        </div>
+      </header>
+      <!-- Page Canvas -->
+      <main class="p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8 flex-1">
+        <!-- Hero Title & Breadcrumb -->
+        <div
+          class="flex flex-col md:flex-row md:items-center justify-between gap-4"
+        >
+          <div>
+            <nav
+              class="flex text-xs text-on-surface-variant font-medium mb-1 md:mb-2 gap-2"
+            >
+              <span>Reparilo</span>
+              <span class="material-symbols-outlined text-[10px] md:text-xs"
+                >chevron_right</span
+              >
+              <span class="text-primary font-bold">Repair Catalog</span>
+            </nav>
+            <h2
+              class="text-2xl md:text-3xl lg:text-4xl font-extrabold font-headline text-on-surface tracking-tight"
+            >
+              Service Catalog
+            </h2>
+          </div>
+          <button
+            class="bg-primary text-on-primary px-5 py-2.5 md:px-6 md:py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:scale-105 transition-transform w-full md:w-auto text-sm md:text-base"
+          >
+            <span class="material-symbols-outlined">add</span>
+            Add New Repair
+          </button>
+        </div>
+        <!-- Metric Grid -->
+        <!-- Changed: md:grid-cols-2 for tablet 2x2 grid -->
+        <div
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
+        >
+          <div
+            class="bg-surface-container-lowest p-5 md:p-6 rounded-xl border-l-4 border-primary shadow-sm"
+          >
+            <div class="flex justify-between items-start">
+              <div>
+                <p
+                  class="text-[10px] md:text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1"
+                >
+                  Total Services
+                </p>
+                <h3
+                  class="text-2xl md:text-3xl font-extrabold font-headline text-on-surface"
+                >
+                  142
+                </h3>
+              </div>
+              <span
+                class="material-symbols-outlined text-primary p-2 bg-primary-fixed rounded-lg text-xl md:text-2xl"
+                >build_circle</span
+              >
+            </div>
+          </div>
+          <div
+            class="bg-surface-container-lowest p-5 md:p-6 rounded-xl border-l-4 border-secondary shadow-sm"
+          >
+            <div class="flex justify-between items-start">
+              <div>
+                <p
+                  class="text-[10px] md:text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1"
+                >
+                  Most Popular
+                </p>
+                <h3
+                  class="text-2xl md:text-3xl font-extrabold font-headline text-on-surface"
+                >
+                  Hardware
+                </h3>
+              </div>
+              <span
+                class="material-symbols-outlined text-secondary p-2 bg-secondary-fixed rounded-lg text-xl md:text-2xl"
+                >star</span
+              >
+            </div>
+          </div>
+          <div
+            class="bg-surface-container-lowest p-5 md:p-6 rounded-xl border-l-4 border-tertiary shadow-sm md:col-span-2 lg:col-span-1"
+          >
+            <div class="flex justify-between items-start">
+              <div>
+                <p
+                  class="text-[10px] md:text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1"
+                >
+                  Avg. Price
+                </p>
+                <h3
+                  class="text-2xl md:text-3xl font-extrabold font-headline text-on-surface"
+                >
+                  12,500
+                  <span class="text-xs font-normal text-on-surface-variant"
+                    >DZD</span
+                  >
+                </h3>
+              </div>
+              <span
+                class="material-symbols-outlined text-tertiary p-2 bg-tertiary-fixed rounded-lg text-xl md:text-2xl"
+                >payments</span
+              >
+            </div>
+          </div>
+        </div>
+        <!-- Filters & Data Content -->
+        <div class="space-y-4">
+          <div
+            class="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between"
+          >
+            <div class="flex flex-wrap gap-2">
+              <button
+                class="px-3 py-1.5 md:px-4 md:py-2 bg-primary text-on-primary rounded-full text-[10px] md:text-xs font-bold tracking-wide"
+              >
+                All Repairs
+              </button>
+              <button
+                class="px-3 py-1.5 md:px-4 md:py-2 bg-surface-container-high text-on-surface-variant rounded-full text-[10px] md:text-xs font-bold tracking-wide hover:bg-slate-200 transition-colors"
+              >
+                Hardware
+              </button>
+              <button
+                class="px-3 py-1.5 md:px-4 md:py-2 bg-surface-container-high text-on-surface-variant rounded-full text-[10px] md:text-xs font-bold tracking-wide hover:bg-slate-200 transition-colors"
+              >
+                Software
+              </button>
+              <button
+                class="px-3 py-1.5 md:px-4 md:py-2 bg-surface-container-high text-on-surface-variant rounded-full text-[10px] md:text-xs font-bold tracking-wide hover:bg-slate-200 transition-colors"
+              >
+                Diagnostic
+              </button>
+            </div>
+            <div class="flex items-center gap-2 w-full md:w-auto">
+              <div class="relative flex-1 md:flex-initial">
+                <span
+                  class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"
+                  >filter_list</span
+                >
+                <select
+                  class="pl-10 pr-8 py-2 bg-surface-container-low border-none rounded-lg text-sm font-medium focus:ring-0 w-full md:w-48 appearance-none"
+                >
+                  <option>Recently Added</option>
+                  <option>Price: Low to High</option>
+                  <option>Price: High to Low</option>
+                  <option>A-Z</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <!-- High-Density Repair Table -->
+          <div
+            class="bg-surface-container-low rounded-xl overflow-hidden border border-slate-200/50"
+          >
+            <div class="overflow-x-auto scrollbar-hide">
+              <table class="w-full text-left border-collapse min-w-[640px]">
+                <thead>
+                  <tr class="bg-surface-container-highest/30">
+                    <th
+                      class="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest text-on-surface-variant"
+                    >
+                      Repair Name
+                    </th>
+                    <th
+                      class="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest text-on-surface-variant"
+                    >
+                      Category
+                    </th>
+                    <th
+                      class="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest text-on-surface-variant"
+                    >
+                      Base Price
+                    </th>
+                    <th
+                      class="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest text-on-surface-variant"
+                    >
+                      Duration
+                    </th>
+                    <th
+                      class="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest text-on-surface-variant text-right"
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody
+                  class="divide-y divide-slate-200/50 dark:divide-slate-800/50"
+                >
+                  <!-- Row 1 -->
+                  <tr
+                    class="hover:bg-surface-container-lowest/80 transition-all group"
+                  >
+                    <td class="px-4 md:px-6 py-4 md:py-5">
+                      <div class="flex items-center gap-3">
+                        <div
+                          class="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-blue-50 flex items-center justify-center text-primary shrink-0"
+                        >
+                          <span class="material-symbols-outlined text-xl"
+                            >stay_current_portrait</span
+                          >
+                        </div>
+                        <div class="truncate">
+                          <div
+                            class="text-xs md:text-sm font-bold text-on-surface truncate"
+                          >
+                            Screen Replacement Gen 4
+                          </div>
+                          <div
+                            class="text-[9px] md:text-[10px] text-on-surface-variant font-mono uppercase"
+                          >
+                            REP-SCR-004
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-4 md:px-6 py-4 md:py-5">
+                      <span
+                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-bold bg-secondary-container text-on-secondary-container"
+                        >HARDWARE</span
+                      >
+                    </td>
+                    <td class="px-4 md:px-6 py-4 md:py-5">
+                      <div class="text-xs md:text-sm font-bold text-on-surface">
+                        18,500
+                        <span
+                          class="text-[10px] md:text-xs font-normal text-on-surface-variant"
+                          >DZD</span
+                        >
+                      </div>
+                    </td>
+                    <td class="px-4 md:px-6 py-4 md:py-5">
+                      <div
+                        class="flex items-center gap-1.5 text-[10px] md:text-xs text-on-surface-variant font-medium"
+                      >
+                        <span
+                          class="material-symbols-outlined text-xs md:text-sm"
+                          >schedule</span
+                        >
+                        2 - 3 Hours
+                      </div>
+                    </td>
+                    <td class="px-4 md:px-6 py-4 md:py-5 text-right">
+                      <button
+                        class="p-2 text-slate-400 hover:text-primary transition-colors"
+                      >
+                        <span class="material-symbols-outlined text-lg"
+                          >edit</span
+                        >
+                      </button>
+                    </td>
+                  </tr>
+                  <!-- Row 2 -->
+                  <tr
+                    class="hover:bg-surface-container-lowest/80 transition-all group"
+                  >
+                    <td class="px-4 md:px-6 py-4 md:py-5">
+                      <div class="flex items-center gap-3">
+                        <div
+                          class="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600 shrink-0"
+                        >
+                          <span class="material-symbols-outlined text-xl"
+                            >battery_charging_full</span
+                          >
+                        </div>
+                        <div class="truncate">
+                          <div
+                            class="text-xs md:text-sm font-bold text-on-surface truncate"
+                          >
+                            Battery Replacement Standard
+                          </div>
+                          <div
+                            class="text-[9px] md:text-[10px] text-on-surface-variant font-mono uppercase"
+                          >
+                            REP-BAT-001
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-4 md:px-6 py-4 md:py-5">
+                      <span
+                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-bold bg-secondary-container text-on-secondary-container"
+                        >HARDWARE</span
+                      >
+                    </td>
+                    <td class="px-4 md:px-6 py-4 md:py-5">
+                      <div class="text-xs md:text-sm font-bold text-on-surface">
+                        6,200
+                        <span
+                          class="text-[10px] md:text-xs font-normal text-on-surface-variant"
+                          >DZD</span
+                        >
+                      </div>
+                    </td>
+                    <td class="px-4 md:px-6 py-4 md:py-5">
+                      <div
+                        class="flex items-center gap-1.5 text-[10px] md:text-xs text-on-surface-variant font-medium"
+                      >
+                        <span
+                          class="material-symbols-outlined text-xs md:text-sm"
+                          >schedule</span
+                        >
+                        45 Mins
+                      </div>
+                    </td>
+                    <td class="px-4 md:px-6 py-4 md:py-5 text-right">
+                      <button
+                        class="p-2 text-slate-400 hover:text-primary transition-colors"
+                      >
+                        <span class="material-symbols-outlined text-lg"
+                          >edit</span
+                        >
+                      </button>
+                    </td>
+                  </tr>
+                  <!-- Row 3 -->
+                  <tr
+                    class="hover:bg-surface-container-lowest/80 transition-all group"
+                  >
+                    <td class="px-4 md:px-6 py-4 md:py-5">
+                      <div class="flex items-center gap-3">
+                        <div
+                          class="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600 shrink-0"
+                        >
+                          <span class="material-symbols-outlined text-xl"
+                            >terminal</span
+                          >
+                        </div>
+                        <div class="truncate">
+                          <div
+                            class="text-xs md:text-sm font-bold text-on-surface truncate"
+                          >
+                            Software Flash &amp; OS Recovery
+                          </div>
+                          <div
+                            class="text-[9px] md:text-[10px] text-on-surface-variant font-mono uppercase"
+                          >
+                            REP-SFT-012
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-4 md:px-6 py-4 md:py-5">
+                      <span
+                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-bold bg-tertiary-fixed text-on-tertiary-fixed"
+                        >SOFTWARE</span
+                      >
+                    </td>
+                    <td class="px-4 md:px-6 py-4 md:py-5">
+                      <div class="text-xs md:text-sm font-bold text-on-surface">
+                        4,500
+                        <span
+                          class="text-[10px] md:text-xs font-normal text-on-surface-variant"
+                          >DZD</span
+                        >
+                      </div>
+                    </td>
+                    <td class="px-4 md:px-6 py-4 md:py-5">
+                      <div
+                        class="flex items-center gap-1.5 text-[10px] md:text-xs text-on-surface-variant font-medium"
+                      >
+                        <span
+                          class="material-symbols-outlined text-xs md:text-sm"
+                          >schedule</span
+                        >
+                        1.5 Hours
+                      </div>
+                    </td>
+                    <td class="px-4 md:px-6 py-4 md:py-5 text-right">
+                      <button
+                        class="p-2 text-slate-400 hover:text-primary transition-colors"
+                      >
+                        <span class="material-symbols-outlined text-lg"
+                          >edit</span
+                        >
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- Table Pagination/Footer -->
+            <div
+              class="px-4 md:px-6 py-4 flex items-center justify-between bg-surface-container-high/30 border-t border-slate-200 dark:border-slate-800"
+            >
+              <p class="text-[10px] md:text-xs text-on-surface-variant">
+                Showing <span class="font-bold text-on-surface">1 - 5</span> of
+                142
+              </p>
+              <div class="flex gap-1.5 md:gap-2">
+                <button
+                  class="p-1.5 md:p-2 bg-surface-container-lowest border border-outline-variant/30 rounded-lg text-on-surface-variant hover:bg-white transition-all disabled:opacity-50"
+                >
+                  <span class="material-symbols-outlined text-xs md:text-sm"
+                    >chevron_left</span
+                  >
+                </button>
+                <button
+                  class="px-2.5 py-1 md:px-3 md:py-1 bg-primary text-on-primary rounded-lg text-[10px] md:text-xs font-bold"
+                >
+                  1
+                </button>
+                <button
+                  class="px-2.5 py-1 md:px-3 md:py-1 bg-surface-container-lowest text-on-surface-variant rounded-lg text-[10px] md:text-xs font-bold hover:bg-white transition-all"
+                >
+                  2
+                </button>
+                <button
+                  class="p-1.5 md:p-2 bg-surface-container-lowest border border-outline-variant/30 rounded-lg text-on-surface-variant hover:bg-white transition-all"
+                >
+                  <span class="material-symbols-outlined text-xs md:text-sm"
+                    >chevron_right</span
+                  >
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Asymmetric Quick Action Card -->
+        <!-- Changed: md:grid-cols-1 and lg:grid-cols-3. On tablet it stacks vertically like mobile but with better spacing -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Banner -->
+          <div
+            class="lg:col-span-2 bg-gradient-to-br from-slate-900 to-blue-900 rounded-2xl p-6 md:p-8 relative overflow-hidden text-white flex flex-col justify-center min-h-[220px]"
+          >
+            <div class="relative z-10 max-w-lg">
+              <h4
+                class="text-xl md:text-2xl font-bold font-headline mb-2 md:mb-3"
+              >
+                Optimize Your Shop Pricing
+              </h4>
+              <p
+                class="text-blue-100/80 text-xs md:text-sm leading-relaxed mb-6"
+              >
+                Our AI Analyst has identified that "Battery Replacements" are
+                priced 12% below market average in your region. Consider
+                adjusting base rates to increase profitability.
+              </p>
+              <button
+                class="bg-white text-blue-900 px-5 py-2.5 md:px-6 md:py-2.5 rounded-xl font-bold text-xs md:text-sm shadow-xl shadow-black/20 hover:bg-blue-50 transition-colors"
+              >
+                Apply Market Suggestion
+              </button>
+            </div>
+            <!-- Decorative Graphic -->
+            <div
+              class="absolute right-0 top-0 h-full w-1/3 bg-blue-600/10 skew-x-12 translate-x-12 pointer-events-none"
+            ></div>
+            <span
+              class="material-symbols-outlined absolute right-8 top-1/2 -translate-y-1/2 text-7xl md:text-8xl text-blue-500/10 rotate-12 pointer-events-none"
+              >monitoring</span
+            >
+          </div>
+          <!-- Category Health Card -->
+          <div
+            class="bg-surface-container-high rounded-2xl p-6 flex flex-col justify-between border border-slate-200/50"
+          >
+            <div>
+              <h5 class="text-sm font-bold text-on-surface mb-2">
+                Category Health
+              </h5>
+              <div class="space-y-4 mt-4">
+                <div>
+                  <div
+                    class="flex justify-between text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1"
+                  >
+                    <span>Hardware</span>
+                    <span>65%</span>
+                  </div>
+                  <div
+                    class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden"
+                  >
+                    <div class="h-full bg-primary w-[65%]"></div>
+                  </div>
+                </div>
+                <div>
+                  <div
+                    class="flex justify-between text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1"
+                  >
+                    <span>Software</span>
+                    <span>20%</span>
+                  </div>
+                  <div
+                    class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden"
+                  >
+                    <div class="h-full bg-secondary w-[20%]"></div>
+                  </div>
+                </div>
+                <div>
+                  <div
+                    class="flex justify-between text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1"
+                  >
+                    <span>Other</span>
+                    <span>15%</span>
+                  </div>
+                  <div
+                    class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden"
+                  >
+                    <div class="h-full bg-tertiary w-[15%]"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button
+              class="mt-6 text-primary text-[11px] md:text-xs font-bold flex items-center gap-1 hover:underline"
+            >
+              Download Full Catalog Report
+              <span class="material-symbols-outlined text-sm">download</span>
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+    <!-- Bottom Navigation (Mobile & Tablet) -->
+    <!-- Changed: Extended visibility to md (tablet) to provide easy navigation without the large sidebar -->
+    <nav
+      class="lg:hidden fixed bottom-0 left-0 right-0 glass-panel border-t border-slate-200 dark:border-slate-800 flex justify-around items-center px-4 py-2 z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]"
+    >
+      <a
+        class="flex flex-col items-center p-2 text-slate-500 hover:text-primary transition-colors"
+        href="#"
+      >
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="text-[10px] mt-1 font-medium">Dashboard</span>
+      </a>
+      <a
+        class="flex flex-col items-center p-2 text-slate-500 hover:text-primary transition-colors"
+        href="#"
+      >
+        <span class="material-symbols-outlined">build</span>
+        <span class="text-[10px] mt-1 font-medium">Jobs</span>
+      </a>
+      <a class="flex flex-col items-center p-2 text-primary" href="#">
+        <span class="material-symbols-outlined font-bold">menu_book</span>
+        <span class="text-[10px] mt-1 font-bold">Catalog</span>
+      </a>
+      <a
+        class="flex flex-col items-center p-2 text-slate-500 hover:text-primary transition-colors"
+        href="#"
+      >
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="text-[10px] mt-1 font-medium">AI</span>
+      </a>
+      <a
+        class="flex flex-col items-center p-2 text-slate-500 hover:text-primary transition-colors"
+        href="#"
+      >
+        <span class="material-symbols-outlined">settings</span>
+        <span class="text-[10px] mt-1 font-medium">Settings</span>
+      </a>
+    </nav>
+  </body>
+</html>
