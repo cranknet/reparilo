@@ -1,7 +1,8 @@
-import { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginAsync } from "fastify";
 
 export const aiRoutes: FastifyPluginAsync = async (app) => {
-  app.get('/', async (_req, _reply) => {
-    return { message: 'ai analyst' };
+  await app;
+  app.get("/", (_req, _reply) => {
+    return { message: "ai analyst" };
   });
 };

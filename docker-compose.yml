@@ -1,3 +1,4 @@
+# Development only. Production uses nginx + docker compose deploy config.
 services:
   db:
     image: postgres:17-alpine
