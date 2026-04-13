@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently -n frontend,server -c blue,green \"vite\" \"pnpm run server\"",
     "dev:front": "vite",
-    "server": "tsx --env-file=.env watch server/index.ts",
+    "server": "tsx watch --env-file=.env server/index.ts",
     "build": "vite build",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
@@ -40,6 +40,7 @@
     "better-auth": "^1.6.2",
     "escpos": "3.0.0-alpha.6",
     "fastify": "^5.8.4",
+    "fastify-plugin": "^5.1.0",
     "i18next": "^26.0.4",
     "openai": "^6.34.0",
     "pg": "^8.20.0",
