@@ -1,0 +1,98 @@
+import { useTranslation } from "react-i18next";
+
+interface RecentIntake {
+  device: string;
+  id: string;
+  status: JobStatusType;
+  timeAgo: string;
+}
+
+import type { JobStatusType } from "@shared/constants";
+
+const STATUS_DOT_COLORS: Record<string, string> = {
+  INTAKE: "bg-secondary",
+  WAITING_FOR_PARTS: "bg-tertiary",
+  IN_REPAIR: "bg-primary",
+  ON_HOLD: "bg-error",
+  DONE: "bg-on-secondary-container",
+};
+
+interface TodayOverviewProps {
+  completedToday: number;
+  recentIntakes: RecentIntake[];
+  totalToday: number;
+}
+
+export default function TodayOverview({
+  completedToday,
+  totalToday,
+  recentIntakes,
+}: TodayOverviewProps) {
+  const { t } = useTranslation();
+  const remaining = totalToday - completedToday;
+  const progressPercent =
+    totalToday > 0 ? (completedToday / totalToday) * 100 : 0;
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div className="rounded-xl bg-surface-container-low p-6">
+        <h2 className="mb-4 font-bold font-headline text-lg">
+          {t("front_desk.todays_overview")}
+        </h2>
+        <div className="mb-4 flex items-end gap-3">
+          <span className="font-extrabold font-headline text-5xl text-primary">
+            {remaining}
+          </span>
+          <span className="mb-2 font-bold text-on-surface-variant">
+            {t("front_desk.jobs_remaining")}
+          </span>
+        </div>
+        <div className="h-3 w-full overflow-hidden rounded-full bg-surface-container-highest">
+          <div
+            className="h-full rounded-full bg-primary"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+        <div className="mt-2 flex justify-between">
+          <p className="font-bold text-on-surface-variant text-xs">
+            {t("front_desk.completed_count", { count: completedToday })}{" "}
+            {t("front_desk.completed")}
+          </p>
+          <p className="font-bold text-primary text-xs">
+            {t("front_desk.total_count", { count: totalToday })}{" "}
+            {t("front_desk.total")}
+          </p>
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-surface-container-lowest p-6 shadow-premium">
+        <h3 className="mb-4 font-bold font-headline text-lg">
+          {t("front_desk.recent_intakes")}
+        </h3>
+        <div className="space-y-3">
+          {recentIntakes.map((intake) => (
+            <div
+              className="flex items-center justify-between rounded-lg bg-surface-container-low p-3 transition-colors hover:bg-surface-container"
+              key={intake.id}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`h-2.5 w-2.5 rounded-full ${STATUS_DOT_COLORS[intake.status] ?? "bg-primary"}`}
+                />
+                <div>
+                  <p className="font-medium text-sm">{intake.device}</p>
+                  <p className="text-[10px] text-on-surface-variant">
+                    {intake.id}
+                  </p>
+                </div>
+              </div>
+              <span className="font-bold text-[10px] text-on-surface-variant">
+                {intake.timeAgo}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
