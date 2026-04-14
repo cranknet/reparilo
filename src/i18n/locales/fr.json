@@ -328,7 +328,11 @@
     "minutes_abbreviated": "{{minutes}}min",
     "quick_stats": "Statistiques rapides",
     "mttr": "MTTR",
-    "csat": "CSAT"
+    "csat": "CSAT",
+    "no_active_repairs": "Aucune réparation active pour le moment",
+    "no_recent_intakes": "Aucune admission récente",
+    "no_alerts": "Aucune alerte prioritaire",
+    "no_waiting_customers": "Aucun client n'attend"
   },
   "intake": {
     "title": "Nouvelle admission de réparation",

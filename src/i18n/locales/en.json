@@ -328,7 +328,11 @@
     "minutes_abbreviated": "{{minutes}}m",
     "quick_stats": "Quick Stats",
     "mttr": "MTTR",
-    "csat": "CSAT"
+    "csat": "CSAT",
+    "no_active_repairs": "No active repairs right now",
+    "no_recent_intakes": "No recent intakes",
+    "no_alerts": "No priority alerts",
+    "no_waiting_customers": "No customers waiting"
   },
   "intake": {
     "title": "New Repair Intake",

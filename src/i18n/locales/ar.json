@@ -328,7 +328,11 @@
     "minutes_abbreviated": "{{minutes}}م",
     "quick_stats": "إحصائيات سريعة",
     "mttr": "MTTR",
-    "csat": "CSAT"
+    "csat": "CSAT",
+    "no_active_repairs": "لا توجد إصلاحات نشطة في الوقت الحالي",
+    "no_recent_intakes": "لا يوجد مآخذ الأخيرة",
+    "no_alerts": "لا توجد تنبيهات ذات أولوية",
+    "no_waiting_customers": "لا يوجد عملاء ينتظرون"
   },
   "intake": {
     "title": "كمية إصلاح جديدة",

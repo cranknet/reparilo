@@ -1,3 +1,4 @@
+import type { JobStatusType } from "@shared/constants";
 import { useTranslation } from "react-i18next";
 
 interface RecentIntake {
@@ -7,14 +8,15 @@ interface RecentIntake {
   timeAgo: string;
 }
 
-import type { JobStatusType } from "@shared/constants";
-
 const STATUS_DOT_COLORS: Record<string, string> = {
   INTAKE: "bg-secondary",
   WAITING_FOR_PARTS: "bg-tertiary",
   IN_REPAIR: "bg-primary",
   ON_HOLD: "bg-error",
   DONE: "bg-on-secondary-container",
+  DELIVERED: "bg-on-secondary-container",
+  RETURNED: "bg-outline-variant",
+  CANCELLED: "bg-outline-variant",
 };
 
 interface TodayOverviewProps {
@@ -47,7 +49,13 @@ export default function TodayOverview({
             {t("front_desk.jobs_remaining")}
           </span>
         </div>
-        <div className="h-3 w-full overflow-hidden rounded-full bg-surface-container-highest">
+        <div
+          aria-valuemax={totalToday}
+          aria-valuemin={0}
+          aria-valuenow={completedToday}
+          className="h-3 w-full overflow-hidden rounded-full bg-surface-container-highest"
+          role="progressbar"
+        >
           <div
             className="h-full rounded-full bg-primary"
             style={{ width: `${progressPercent}%` }}
@@ -69,29 +77,35 @@ export default function TodayOverview({
         <h3 className="mb-4 font-bold font-headline text-lg">
           {t("front_desk.recent_intakes")}
         </h3>
-        <div className="space-y-3">
-          {recentIntakes.map((intake) => (
-            <div
-              className="flex items-center justify-between rounded-lg bg-surface-container-low p-3 transition-colors hover:bg-surface-container"
-              key={intake.id}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`h-2.5 w-2.5 rounded-full ${STATUS_DOT_COLORS[intake.status] ?? "bg-primary"}`}
-                />
-                <div>
-                  <p className="font-medium text-sm">{intake.device}</p>
-                  <p className="text-[10px] text-on-surface-variant">
-                    {intake.id}
-                  </p>
+        {recentIntakes.length === 0 ? (
+          <p className="font-medium text-on-surface-variant text-sm">
+            {t("front_desk.no_recent_intakes")}
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {recentIntakes.map((intake) => (
+              <div
+                className="flex items-center justify-between rounded-lg bg-surface-container-low p-3 transition-colors hover:bg-surface-container"
+                key={intake.id}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`h-2.5 w-2.5 rounded-full ${STATUS_DOT_COLORS[intake.status] ?? "bg-primary"}`}
+                  />
+                  <div>
+                    <p className="font-medium text-sm">{intake.device}</p>
+                    <p className="text-[10px] text-on-surface-variant">
+                      {intake.id}
+                    </p>
+                  </div>
                 </div>
+                <span className="font-bold text-[10px] text-on-surface-variant">
+                  {intake.timeAgo}
+                </span>
               </div>
-              <span className="font-bold text-[10px] text-on-surface-variant">
-                {intake.timeAgo}
-              </span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

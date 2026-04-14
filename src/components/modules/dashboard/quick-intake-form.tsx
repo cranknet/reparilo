@@ -21,7 +21,12 @@ export default function QuickIntakeForm() {
       </button>
 
       {expanded && (
-        <form className="space-y-4 px-6 pb-6">
+        <form
+          className="space-y-4 px-6 pb-6"
+          onSubmit={(e) => {
+            e.preventDefault();
+          }}
+        >
           <div>
             <label
               className="mb-1 block font-bold text-[10px] text-on-surface-variant uppercase tracking-widest"

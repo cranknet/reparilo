@@ -72,18 +72,21 @@ const MOCK_RECENT_INTAKES: {
 
 const MOCK_ALERTS = [
   {
+    id: "alert-overdue",
     icon: "warning",
     title: "2 Jobs Overdue",
     description: "Action required immediately",
     variant: "error" as const,
   },
   {
+    id: "alert-parts",
     icon: "inventory_2",
     title: "Parts Arrived",
     description: "Screen for #8812 arrived",
     variant: "secondary" as const,
   },
   {
+    id: "alert-warranty",
     icon: "history",
     title: "Warranty Return",
     description: "Customer: Jordan Bates",
@@ -92,8 +95,8 @@ const MOCK_ALERTS = [
 ];
 
 const MOCK_WAITING = [
-  { initials: "BT", name: "Ben Thompson", waitMinutes: 12 },
-  { initials: "MK", name: "Maria Khan", waitMinutes: 5 },
+  { id: "w-1", initials: "BT", name: "Ben Thompson", waitMinutes: 12 },
+  { id: "w-2", initials: "MK", name: "Maria Khan", waitMinutes: 5 },
 ];
 
 export default function FrontDeskPage() {
