@@ -7,7 +7,7 @@
     "dev": "concurrently -n frontend,server -c blue,green \"vite\" \"pnpm run server\"",
     "dev:front": "vite",
     "server": "tsx watch --env-file=.env server/index.ts",
-    "build": "vite build",
+    "build": "vite build && cap sync",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
