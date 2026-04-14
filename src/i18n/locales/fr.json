@@ -2,6 +2,17 @@
   "app_name": "Reparilo",
   "app_tagline": "Atelier Réparation",
   "dashboard": "Tableau de bord",
+  "dashboard_page": {
+    "since_8am": "+{{count}} depuis 8h",
+    "hours_late": "{{hours}}h En retard",
+    "high_priority": "HAUTE PRIORITÉ",
+    "minutes_ago": "il y a {{minutes}} m",
+    "hours_ago": "il y a {{hours}}h",
+    "repair_screen_replace": "Remplacement de l'écran",
+    "repair_battery_swap": "Remplacement de la batterie",
+    "warranty_phantom_touch": "Signalement client du numériseur Phantom Touch après 3 jours.",
+    "warranty_charging_port": "Port de chargement desserré."
+  },
   "jobs": "Réparations",
   "customers": "Clients",
   "settings": "Paramètres",

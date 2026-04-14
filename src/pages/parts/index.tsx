@@ -114,7 +114,12 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 function StockBar({ level, max }: { level: number; max: number }) {
   const pct = Math.round((level / max) * 100);
-  const color = pct < 10 ? "bg-error" : pct < 30 ? "bg-tertiary" : "bg-primary";
+  let color = "bg-primary";
+  if (pct < 10) {
+    color = "bg-error";
+  } else if (pct < 30) {
+    color = "bg-tertiary";
+  }
 
   return (
     <div className="flex flex-col gap-1">
@@ -140,7 +145,7 @@ function formatDzd(value: number): string {
 
 export default function PartsCatalogPage() {
   const { t } = useTranslation();
-  const [search, setSearch] = useState("");
+  const [search] = useState("");
   const [sortBy, setSortBy] = useState<SortField>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [activeFilter, setActiveFilter] = useState<PartCategoryType | "ALL">(
@@ -222,7 +227,7 @@ export default function PartsCatalogPage() {
             <span className="whitespace-nowrap">{t("advanced_filters")}</span>
           </button>
           <button
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#0040a1] to-[#0056d2] px-4 py-2.5 font-bold font-headline text-sm text-white shadow-lg shadow-primary/20 transition-all hover:opacity-90 sm:flex-none md:px-8"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-4 py-2.5 font-bold font-headline text-sm text-white shadow-lg shadow-primary/20 transition-all hover:opacity-90 sm:flex-none md:px-8"
             type="button"
           >
             <span className="material-symbols-outlined text-[18px]">add</span>

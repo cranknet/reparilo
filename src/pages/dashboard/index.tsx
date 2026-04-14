@@ -1,4 +1,5 @@
 import type { JobStatusType } from "@shared/constants";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import AiCallout from "@/components/modules/dashboard/ai-callout";
 import FinancialTrend from "@/components/modules/dashboard/financial-trend";
@@ -27,32 +28,32 @@ const MOCK_FINANCIAL_DATA = [
   { revenue: 30, cost: 20 },
 ];
 
-const MOCK_OVERDUE_JOBS = [
+const MOCK_OVERDUE_JOBS = (t: TFunction) => [
   {
     id: "#REP-8821",
     device: "iPhone 14 Pro",
-    repair: "Screen Replace",
-    lateness: "24h Late",
+    repair: t("dashboard_page.repair_screen_replace"),
+    lateness: t("dashboard_page.hours_late", { hours: 24 }),
   },
   {
     id: "#REP-8835",
     device: "Samsung S23",
-    repair: "Battery Swap",
-    lateness: "4h Late",
+    repair: t("dashboard_page.repair_battery_swap"),
+    lateness: t("dashboard_page.hours_late", { hours: 4 }),
   },
 ];
 
-const MOCK_WARRANTY_RETURNS = [
+const MOCK_WARRANTY_RETURNS = (t: TFunction) => [
   {
     id: "#WAR-012",
-    description: "Customer reporting digitizer phantom touch after 3 days.",
-    priority: "HIGH PRIORITY",
-    timeAgo: "10m ago",
+    description: t("dashboard_page.warranty_phantom_touch"),
+    priority: t("dashboard_page.high_priority"),
+    timeAgo: t("dashboard_page.minutes_ago", { minutes: 10 }),
   },
   {
     id: "#WAR-011",
-    description: "Charging port loose.",
-    timeAgo: "2h ago",
+    description: t("dashboard_page.warranty_charging_port"),
+    timeAgo: t("dashboard_page.hours_ago", { hours: 2 }),
   },
 ];
 
@@ -81,7 +82,7 @@ export default function DashboardPage() {
             <span className="whitespace-nowrap">{t("daily_summary")}</span>
           </button>
           <button
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#0040a1] to-[#0056d2] px-4 py-2.5 font-bold font-headline text-sm text-white shadow-lg shadow-primary/20 transition-all hover:opacity-90 sm:flex-none md:px-8"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-4 py-2.5 font-bold font-headline text-sm text-white shadow-lg shadow-primary/20 transition-all hover:opacity-90 sm:flex-none md:px-8"
             type="button"
           >
             <span className="material-symbols-outlined text-[18px] md:text-[20px]">
@@ -94,7 +95,7 @@ export default function DashboardPage() {
 
       <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
         <MetricCard
-          detail="+3 since 8AM"
+          detail={t("dashboard_page.since_8am", { count: 3 })}
           icon="precision_manufacturing"
           label={t("active_jobs")}
           value="24"
@@ -162,8 +163,8 @@ export default function DashboardPage() {
 
         <div className="md:col-span-12 lg:col-span-3">
           <OverdueJobs
-            jobs={MOCK_OVERDUE_JOBS}
-            warrantyReturns={MOCK_WARRANTY_RETURNS}
+            jobs={MOCK_OVERDUE_JOBS(t)}
+            warrantyReturns={MOCK_WARRANTY_RETURNS(t)}
           />
         </div>
       </div>

@@ -6,17 +6,25 @@ const authPlugin: FastifyPluginAsync = async (app) => {
   app.decorateRequest("user", null);
 
   app.addHook("preHandler", async (request, reply) => {
-    if (process.env.AUTH_BYPASS === "true") {
+    if (
+      process.env.AUTH_BYPASS === "true" &&
+      process.env.NODE_ENV !== "production"
+    ) {
       request.user = { id: "dev", role: "OWNER", username: "dev" };
       return;
     }
     // TODO: Implement Better Auth session validation (next task)
     // Skip auth for health and tracking routes
-    if (request.url === "/health" || request.url.startsWith("/tracking")) {
+    if (
+      request.url === "/health" ||
+      request.url === "/tracking" ||
+      request.url.startsWith("/tracking/")
+    ) {
       return;
     }
     if (!request.user) {
       await reply.status(401).send({ error: "Authentication required" });
+      return;
     }
   });
 };

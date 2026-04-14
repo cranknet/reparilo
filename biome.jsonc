@@ -3,9 +3,7 @@
   "extends": [
     "ultracite/biome/core",
     "ultracite/biome/react",
-    "ultracite/biome/vitest",
-    "ultracite/biome/vue",
-    "ultracite/biome/remix"
+    "ultracite/biome/vitest"
   ],
   "files": {
     "includes": ["src/**", "server/**", "shared/**", "prisma/**", "index.html"]

@@ -3,7 +3,11 @@ import type { FastifyPluginAsync } from "fastify";
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const websocketPlugin: FastifyPluginAsync = async (app) => {
   app.get("/ws", { websocket: true }, (socket, req) => {
-    if (process.env.AUTH_BYPASS !== "true" && !req.headers.cookie) {
+    // TODO: validate actual session cookie once Better Auth is implemented
+    if (
+      process.env.AUTH_BYPASS !== "true" &&
+      !req.headers.cookie?.includes("session")
+    ) {
       app.log.warn("WS connection rejected — no auth");
       socket.close(4001, "Unauthorized");
       return;

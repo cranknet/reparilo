@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
+import { hashPassword } from "better-auth/crypto";
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
@@ -20,7 +21,9 @@ async function main() {
     create: {
       username: SEED_ADMIN_USERNAME,
       email: "admin@reparilo.local",
-      password: "$argon2id$v=19$m=65536,t=3,p=4$placeholder$placeholder",
+      password: await hashPassword(
+        process.env.SEED_ADMIN_PASSWORD || "admin123"
+      ),
       role: "OWNER",
       isActive: true,
     },

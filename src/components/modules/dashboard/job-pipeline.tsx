@@ -40,8 +40,6 @@ interface JobPipelineProps {
   counts: Record<JobStatusType, number>;
 }
 
-// ... existing imports ...
-// ... existing imports ...
 export default function JobPipeline({
   counts,
   benchCapacity,

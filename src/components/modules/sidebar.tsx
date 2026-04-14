@@ -14,7 +14,7 @@ export default function Sidebar() {
   const { t } = useTranslation();
 
   return (
-    <aside className="fixed top-0 left-0 z-40 hidden h-screen w-64 flex-col bg-surface-container-low p-4 lg:flex">
+    <aside className="fixed start-0 top-0 z-40 hidden h-screen w-64 flex-col bg-surface-container-low p-4 lg:flex">
       <div className="mb-8 px-2 py-6">
         <h1 className="font-black font-headline text-primary text-xl tracking-tighter">
           Reparilo
@@ -30,7 +30,7 @@ export default function Sidebar() {
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-200 ${
                 isActive
-                  ? "translate-x-1 bg-white font-semibold text-primary shadow-sm"
+                  ? "translate-x-1 bg-white font-semibold text-primary shadow-sm rtl:-translate-x-1"
                   : "text-slate-600 hover:bg-slate-200 hover:text-primary"
               }`
             }

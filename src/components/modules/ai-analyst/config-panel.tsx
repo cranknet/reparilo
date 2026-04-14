@@ -1,6 +1,19 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+function getPingIcon(status: string) {
+  if (status === "testing") {
+    return "hourglass_top";
+  }
+  if (status === "success") {
+    return "check_circle";
+  }
+  if (status === "failed") {
+    return "error";
+  }
+  return "wifi_tethering";
+}
+
 interface AiConfigPanelProps {
   onClose: () => void;
   open: boolean;
@@ -154,13 +167,7 @@ export default function AiConfigPanel({ open, onClose }: AiConfigPanelProps) {
               type="button"
             >
               <span className="material-symbols-outlined text-lg">
-                {pingStatus === "testing"
-                  ? "hourglass_top"
-                  : pingStatus === "success"
-                    ? "check_circle"
-                    : pingStatus === "failed"
-                      ? "error"
-                      : "wifi_tethering"}
+                {getPingIcon(pingStatus)}
               </span>
               {pingStatus === "testing"
                 ? t("testing_connection")

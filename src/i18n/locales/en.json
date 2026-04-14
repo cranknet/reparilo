@@ -2,6 +2,17 @@
   "app_name": "Reparilo",
   "app_tagline": "Repair Shop",
   "dashboard": "Dashboard",
+  "dashboard_page": {
+    "since_8am": "+{{count}} since 8AM",
+    "hours_late": "{{hours}}h Late",
+    "high_priority": "HIGH PRIORITY",
+    "minutes_ago": "{{minutes}}m ago",
+    "hours_ago": "{{hours}}h ago",
+    "repair_screen_replace": "Screen Replace",
+    "repair_battery_swap": "Battery Swap",
+    "warranty_phantom_touch": "Customer reporting digitizer phantom touch after 3 days.",
+    "warranty_charging_port": "Charging port loose."
+  },
   "jobs": "Jobs",
   "customers": "Customers",
   "settings": "Settings",

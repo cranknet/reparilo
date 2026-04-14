@@ -2,6 +2,17 @@
   "app_name": "Reparilo",
   "app_tagline": "ورشة الإصلاح",
   "dashboard": "لوحة التحكم",
+  "dashboard_page": {
+    "since_8am": "+{{count}} منذ الساعة 8 صباحًا",
+    "hours_late": "{{hours}}ح متأخرة",
+    "high_priority": "أولوية عالية",
+    "minutes_ago": "قبل {{minutes}} دقيقة",
+    "hours_ago": "قبل {{hours}}ساعة",
+    "repair_screen_replace": "استبدال الشاشة",
+    "repair_battery_swap": "تبديل البطارية",
+    "warranty_phantom_touch": "يقوم العميل بالإبلاغ عن جهاز التحويل الرقمي Phantom Touch بعد 3 أيام.",
+    "warranty_charging_port": "منفذ الشحن فضفاض."
+  },
   "jobs": "أعمال الإصلاح",
   "customers": "الزبائن",
   "settings": "الإعدادات",

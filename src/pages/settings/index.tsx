@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import api from "@/lib/api";
@@ -73,6 +73,39 @@ const MOCK_USERS = [
     isActive: false,
   },
 ];
+
+function getTestBg(status: string) {
+  if (status === "success") {
+    return "oklch(0.72 0.19 155)";
+  }
+  if (status === "fail") {
+    return "oklch(0.55 0.2 25)";
+  }
+  return undefined;
+}
+
+function getTestIcon(status: string) {
+  if (status === "loading") {
+    return "progress_activity";
+  }
+  if (status === "success") {
+    return "check_circle";
+  }
+  if (status === "fail") {
+    return "error";
+  }
+  return "network_check";
+}
+
+function getTestLabel(status: string, t: (key: string) => string) {
+  if (status === "success") {
+    return t("connection_success");
+  }
+  if (status === "fail") {
+    return t("connection_failed");
+  }
+  return "";
+}
 
 export default function SettingsPage() {
   const { t } = useTranslation();
@@ -255,33 +288,18 @@ export default function SettingsPage() {
             disabled={testStatus === "loading"}
             onClick={handleTestConnection}
             style={{
-              backgroundColor:
-                testStatus === "success"
-                  ? "oklch(0.72 0.19 155)"
-                  : testStatus === "fail"
-                    ? "oklch(0.55 0.2 25)"
-                    : undefined,
+              backgroundColor: getTestBg(testStatus),
               color: "#fff",
             }}
             type="button"
           >
             <span className="material-symbols-outlined text-[18px]">
-              {testStatus === "loading"
-                ? "progress_activity"
-                : testStatus === "success"
-                  ? "check_circle"
-                  : testStatus === "fail"
-                    ? "error"
-                    : "network_check"}
+              {getTestIcon(testStatus)}
             </span>
             {t("test_connection")}
           </button>
           <span className="text-[11px] text-on-surface-variant">
-            {testStatus === "success"
-              ? t("connection_success")
-              : testStatus === "fail"
-                ? t("connection_failed")
-                : ""}
+            {getTestLabel(testStatus, t)}
           </span>
         </div>
 
@@ -563,7 +581,7 @@ export default function SettingsPage() {
     users: t("users_management_desc"),
   };
 
-  const sectionRenderers: Record<SettingsTab, () => JSX.Element> = {
+  const sectionRenderers: Record<SettingsTab, () => ReactNode> = {
     ai: renderAiSection,
     shop: renderShopSection,
     notifications: renderNotificationsSection,

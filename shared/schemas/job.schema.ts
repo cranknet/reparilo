@@ -1,3 +1,6 @@
+// TODO: i18n — validation messages below are hardcoded English strings.
+// These schemas run on both server and client, so they need a shared
+// i18n strategy before messages can be internationalized.
 import { z } from "zod";
 
 export const createJobSchema = z.object({
