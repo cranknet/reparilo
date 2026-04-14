@@ -17,6 +17,7 @@
     "sourceMap": true,
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
+    "types": ["@testing-library/jest-dom/vitest"],
     "paths": {
       "@/*": ["./src/*"],
       "@server/*": ["./server/*"],
