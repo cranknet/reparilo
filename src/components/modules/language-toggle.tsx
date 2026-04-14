@@ -1,6 +1,5 @@
+import { LANGUAGES } from "@shared/constants";
 import { useTranslation } from "react-i18next";
-
-const LANGUAGES = ["en", "fr", "ar"] as const;
 
 export default function LanguageToggle() {
   const { i18n } = useTranslation();
@@ -10,6 +9,11 @@ export default function LanguageToggle() {
     normalizedLang as (typeof LANGUAGES)[number]
   );
   const resolvedIndex = currentIndex === -1 ? 0 : currentIndex;
+
+  if (currentIndex === -1 && i18n.language !== LANGUAGES[0]) {
+    i18n.changeLanguage(LANGUAGES[0]);
+  }
+
   const nextIndex = (resolvedIndex + 1) % LANGUAGES.length;
 
   const handleClick = () => {

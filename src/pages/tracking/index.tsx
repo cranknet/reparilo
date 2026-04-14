@@ -1,18 +1,18 @@
-import { JobStatus } from "@shared/constants";
+import { JobStatus, LANGUAGES } from "@shared/constants";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
-
-const LANGUAGES = ["en", "fr", "ar"] as const;
 
 function LanguageSwitcher() {
   const { i18n } = useTranslation();
 
   const nextLang = () => {
+    const normalizedLang = i18n.language.split("-")[0];
     const currentIdx = LANGUAGES.indexOf(
-      i18n.language as (typeof LANGUAGES)[number]
+      normalizedLang as (typeof LANGUAGES)[number]
     );
-    const next = LANGUAGES[(currentIdx + 1) % LANGUAGES.length];
+    const resolvedIdx = currentIdx === -1 ? 0 : currentIdx;
+    const next = LANGUAGES[(resolvedIdx + 1) % LANGUAGES.length];
     i18n.changeLanguage(next);
   };
 

@@ -1,3 +1,4 @@
+import { RTL_LANGUAGES } from "@shared/constants";
 import i18next from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
@@ -6,6 +7,16 @@ import en from "./locales/en.json";
 import fr from "./locales/fr.json";
 
 const i18n = i18next.use(LanguageDetector).use(initReactI18next);
+
+function applyDocumentDirection(lng: string) {
+  const normalized = lng.split("-")[0];
+  document.documentElement.dir = RTL_LANGUAGES.includes(
+    normalized as (typeof RTL_LANGUAGES)[number]
+  )
+    ? "rtl"
+    : "ltr";
+  document.documentElement.lang = normalized;
+}
 
 i18n.init({
   resources: {
@@ -21,5 +32,8 @@ i18n.init({
   },
   interpolation: { escapeValue: false },
 });
+
+applyDocumentDirection(i18n.language);
+i18n.on("languageChanged", applyDocumentDirection);
 
 export default i18n;
