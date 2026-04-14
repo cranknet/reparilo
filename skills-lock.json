@@ -11,6 +11,11 @@
       "sourceType": "github",
       "computedHash": "592a5ebea7cd94f9ca3347b3c3f00e2ed54333be5cd5a9278ff098767ebb08d0"
     },
+    "capacitor-best-practices": {
+      "source": "cap-go/capacitor-skills",
+      "sourceType": "github",
+      "computedHash": "9da56403dfd57025245e260d63d5ed3dcd74982ee8858f3b2186c396c25fac3d"
+    },
     "code-review": {
       "source": "coderabbitai/skills",
       "sourceType": "github",
