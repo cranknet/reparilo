@@ -47,6 +47,7 @@
     "fastify": "^5.8.4",
     "fastify-plugin": "^5.1.0",
     "i18next": "^26.0.4",
+    "i18next-browser-languagedetector": "^8.2.1",
     "openai": "^6.34.0",
     "pg": "^8.20.0",
     "qrcode": "^1.5.4",

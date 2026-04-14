@@ -59,6 +59,9 @@ importers:
       i18next:
         specifier: ^26.0.4
         version: 26.0.4(typescript@6.0.2)
+      i18next-browser-languagedetector:
+        specifier: ^8.2.1
+        version: 8.2.1
       openai:
         specifier: ^6.34.0
         version: 6.34.0(ws@8.20.0)(zod@4.3.6)
@@ -1860,6 +1863,9 @@ packages:
     resolution: {integrity: sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==}
     engines: {node: '>=18'}
     hasBin: true
+
+  i18next-browser-languagedetector@8.2.1:
+    resolution: {integrity: sha512-bZg8+4bdmaOiApD7N7BPT9W8MLZG+nPTOFlLiJiT8uzKXFjhxw4v2ierCXOwB5sFDMtuA5G4kgYZ0AznZxQ/cw==}
 
   i18next@26.0.4:
     resolution: {integrity: sha512-gXF7U9bfioXPLv7mw8Qt2nfO7vij5MyINvPgVv99pX3fL1Y01pw2mKBFrlYpRxRCl2wz3ISenj6VsMJT2isfuA==}
@@ -4627,6 +4633,10 @@ snapshots:
   http-status-codes@2.3.0: {}
 
   husky@9.1.7: {}
+
+  i18next-browser-languagedetector@8.2.1:
+    dependencies:
+      '@babel/runtime': 7.29.2
 
   i18next@26.0.4(typescript@6.0.2):
     dependencies:
