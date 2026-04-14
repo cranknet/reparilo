@@ -17,6 +17,8 @@
     "sync-locales": "tsx scripts/sync-locales.ts",
     "setup-worktree": "tsx scripts/setup-worktree.ts",
     "android": "cap sync && cap open android",
+    "cap:sync": "cap sync",
+    "cap:copy": "cap copy",
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "ultracite check",
