@@ -26,11 +26,14 @@ async function main() {
       ),
       role: "OWNER",
       isActive: true,
+      mustChangePassword: true,
     },
   });
 
   console.log(`Admin user seeded: ${ownerRole.username}`);
-  console.log("Seed complete. Set a real password via the app on first login.");
+  console.log(
+    "Seed complete. Login with the seeded credentials and change your password."
+  );
 }
 
 main()

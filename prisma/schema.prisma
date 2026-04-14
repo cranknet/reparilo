@@ -71,6 +71,10 @@ enum AuditAction {
   PHOTO_ADDED
   WARRANTY_RETURN_CREATED
   NOTIFICATION_SENT
+  USER_SIGN_IN
+  USER_SIGN_OUT
+  USER_CREATED
+  PASSWORD_RESET
 }
 
 enum AiRole {
@@ -92,6 +96,7 @@ model User {
   password  String
   role      Role
   isActive  Boolean  @default(true)
+  mustChangePassword Boolean  @default(false)
   createdAt DateTime @default(now()) @db.Timestamptz
   updatedAt DateTime @updatedAt      @db.Timestamptz
 
@@ -103,6 +108,8 @@ model User {
   jobRepairs     JobRepair[]
   auditLogs      AuditLog[]
   chatHistory    AiChatHistory[]
+  sessions       Session[]
+  verifications  Verification[]
 
   @@map("users")
 }
@@ -462,4 +469,40 @@ model ShopSettings {
   updatedAt     DateTime @updatedAt      @db.Timestamptz
 
   @@map("shop_settings")
+}
+
+// ─────────────────────────────────────────────
+// SESSION (Better Auth)
+// ─────────────────────────────────────────────
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime @db.Timestamptz
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt      @db.Timestamptz
+
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+// ─────────────────────────────────────────────
+// VERIFICATION (Better Auth)
+// ─────────────────────────────────────────────
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime @db.Timestamptz
+  createdAt  DateTime @default(now()) @db.Timestamptz
+
+  @@index([identifier])
+  @@index([userId])
+  @@map("verifications")
 }
