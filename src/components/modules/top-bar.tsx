@@ -2,6 +2,7 @@ import type { RoleType } from "@shared/constants";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/auth";
+import LanguageToggle from "./language-toggle";
 
 const DEV_ROLES: RoleType[] = ["OWNER", "TECHNICIAN", "FRONT_DESK"];
 
@@ -50,6 +51,7 @@ export default function TopBar() {
             ))}
           </select>
         )}
+        <LanguageToggle />
         <button
           className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-primary"
           type="button"
