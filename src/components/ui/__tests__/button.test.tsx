@@ -28,7 +28,7 @@ describe("Button", () => {
   it("applies ghost variant", () => {
     render(<Button variant="ghost">Ghost</Button>);
     const el = screen.getByRole("button");
-    expect(el.textContent).toContain("Ghost");
+    expect(el).toHaveClass("bg-transparent");
   });
 
   it("renders icon before children when icon prop provided", () => {
