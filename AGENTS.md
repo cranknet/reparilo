@@ -77,10 +77,11 @@ reparilo/
 - When running tests, build, or lint — always collect output in a single run
 - Check existing code for navigation patterns and follow them
 
-## Design Rules
+## Stitch Design Rules
 
 - Stitch MCP is the only tool for UI design and implementation.
-- always use project "Reparilo" project ID: "17739395020081356283" when working with stitch.
-- when you generate a screen with Stitch, get HTML & Image then convert it to React components.
-- When you use stitch generate screen from text tool, use wait command for about 1 min to let the stitch generate the screen.
-- Do not try to create if stitch is somehow failed, Abort. and try again.
+- always use "Reparilo" project ID: "17739395020081356283" when working with stitch.
+- list all screens first and remember update time before creating a new screen.
+- When you geenrate new screen, get HTML & Image then convert it to React components.
+- After using generate from text tool, wait for 1 min to let the stitch generate the screen.
+- Do not try to create if stitch is somehow failed, wait , check update time.s

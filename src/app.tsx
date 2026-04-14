@@ -1,4 +1,3 @@
-import { useTranslation } from "react-i18next";
 import { Route, Routes } from "react-router";
 import DashboardLayout from "@/components/modules/dashboard-layout";
 import AiAnalystPage from "@/pages/ai-analyst";
@@ -9,9 +8,9 @@ import PartsCatalogPage from "@/pages/parts";
 import RepairsPage from "@/pages/repairs";
 import SettingsPage from "@/pages/settings";
 
-export default function App() {
-  const { t } = useTranslation();
+import TrackingPage from "@/pages/tracking";
 
+export default function App() {
   return (
     <Routes>
       <Route element={<LoginPage />} path="/login" />
@@ -63,10 +62,7 @@ export default function App() {
         }
         path="/ai-analyst"
       />
-      <Route
-        element={<div>{t("tracking_page_title")}</div>}
-        path="/tracking/:jobCode"
-      />
+      <Route element={<TrackingPage />} path="/tracking/:jobCode?" />
     </Routes>
   );
 }
