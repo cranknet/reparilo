@@ -43,6 +43,7 @@ export function Avatar({
 
   return (
     <div
+      aria-label={alt || "User avatar"}
       className={[
         "flex items-center justify-center rounded-full bg-surface-container-high font-bold font-headline text-on-surface-variant",
         SIZE_CLASSES[size],
@@ -50,6 +51,7 @@ export function Avatar({
       ]
         .filter(Boolean)
         .join(" ")}
+      role="img"
     >
       {initials}
     </div>

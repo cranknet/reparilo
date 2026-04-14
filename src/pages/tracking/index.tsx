@@ -3,6 +3,30 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 
+const LANGUAGES = ["en", "fr", "ar"] as const;
+
+function LanguageSwitcher() {
+  const { i18n } = useTranslation();
+
+  const nextLang = () => {
+    const currentIdx = LANGUAGES.indexOf(
+      i18n.language as (typeof LANGUAGES)[number]
+    );
+    const next = LANGUAGES[(currentIdx + 1) % LANGUAGES.length];
+    i18n.changeLanguage(next);
+  };
+
+  return (
+    <button
+      className="material-symbols-outlined rounded-full p-2 text-slate-600 transition-colors hover:bg-slate-200/50"
+      onClick={nextLang}
+      type="button"
+    >
+      language
+    </button>
+  );
+}
+
 const STATUS_FLOW = [
   JobStatus.INTAKE,
   JobStatus.WAITING_FOR_PARTS,
@@ -72,12 +96,7 @@ function LookupForm({ onSearch }: { onSearch: (code: string) => void }) {
           <span className="font-bold font-headline text-2xl text-primary-container tracking-tight">
             Reparilo
           </span>
-          <button
-            className="material-symbols-outlined rounded-full p-2 text-slate-600 transition-colors hover:bg-slate-200/50"
-            type="button"
-          >
-            language
-          </button>
+          <LanguageSwitcher />
         </div>
       </nav>
 
@@ -123,7 +142,7 @@ function LookupForm({ onSearch }: { onSearch: (code: string) => void }) {
                     type="text"
                     value={code}
                   />
-                  <div className="absolute top-1/2 right-4 -translate-y-1/2 text-outline transition-colors group-focus-within:text-primary">
+                  <div className="absolute end-4 top-1/2 -translate-y-1/2 text-outline transition-colors group-focus-within:text-primary">
                     <span className="material-symbols-outlined">search</span>
                   </div>
                 </div>
@@ -198,7 +217,13 @@ function LookupForm({ onSearch }: { onSearch: (code: string) => void }) {
   );
 }
 
-function StatusView({ data }: { data: TrackingData }) {
+function StatusView({
+  data,
+  onBack,
+}: {
+  data: TrackingData;
+  onBack: () => void;
+}) {
   const { t } = useTranslation();
   const currentIdx = STATUS_FLOW.indexOf(
     data.status as (typeof STATUS_FLOW)[number]
@@ -208,15 +233,17 @@ function StatusView({ data }: { data: TrackingData }) {
     <div className="flex min-h-screen flex-col bg-background">
       <nav className="sticky top-0 z-50 w-full bg-background">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4">
-          <span className="font-bold font-headline text-2xl text-primary-container tracking-tight">
-            Reparilo
-          </span>
           <button
-            className="material-symbols-outlined rounded-full p-2 text-slate-600 transition-colors hover:bg-slate-200/50"
+            className="flex items-center gap-1.5 font-bold font-headline text-2xl text-primary-container tracking-tight"
+            onClick={onBack}
             type="button"
           >
-            language
+            <span className="material-symbols-outlined text-xl">
+              arrow_back
+            </span>
+            Reparilo
           </button>
+          <LanguageSwitcher />
         </div>
       </nav>
 
@@ -284,7 +311,7 @@ function StatusView({ data }: { data: TrackingData }) {
                     {t("tracking_repair_lifecycle")}
                   </h3>
                   <div className="relative flex flex-col gap-8">
-                    <div className="absolute top-2 bottom-2 left-[11px] w-[2px] bg-surface-container-high" />
+                    <div className="absolute start-[11px] top-2 bottom-2 w-[2px] bg-surface-container-high" />
 
                     {data.timeline.map((step, idx) => {
                       const isCompleted = idx < currentIdx;
@@ -368,7 +395,7 @@ function StatusView({ data }: { data: TrackingData }) {
                 </h4>
                 <div className="group relative aspect-video overflow-hidden rounded-xl bg-surface-container-highest">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                  <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                  <div className="absolute start-3 bottom-3 flex items-center gap-2">
                     <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
                     <span className="font-bold text-[10px] text-white uppercase tracking-widest">
                       {t("tracking_live_bench")}
@@ -447,12 +474,19 @@ export default function TrackingPage() {
   );
 
   if (trackedJob) {
-    return <StatusView data={trackedJob} />;
+    return (
+      <StatusView
+        data={trackedJob}
+        onBack={() => {
+          setTrackedJob(null);
+        }}
+      />
+    );
   }
 
   return (
     <LookupForm
-      onSearch={() => {
+      onSearch={(_code) => {
         setTrackedJob(MOCK_DATA);
       }}
     />

@@ -5,7 +5,7 @@ interface StockBarProps {
 }
 
 export function StockBar({ level, max, className }: StockBarProps) {
-  const pct = Math.round((level / max) * 100);
+  const pct = max > 0 ? Math.min(100, Math.round((level / max) * 100)) : 0;
 
   let color = "bg-primary";
   let textColor = "text-on-surface";

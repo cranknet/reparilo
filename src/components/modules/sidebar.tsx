@@ -1,17 +1,53 @@
+import type { RoleType } from "@shared/constants";
 import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router";
+import { useAuthStore } from "@/stores/auth";
 
-const NAV_ITEMS = [
+interface NavItem {
+  icon: string;
+  labelKey: string;
+  to: string;
+}
+
+const OWNER_NAV_ITEMS: NavItem[] = [
   { icon: "dashboard", labelKey: "dashboard", to: "/" },
   { icon: "build", labelKey: "jobs", to: "/jobs" },
   { icon: "inventory_2", labelKey: "parts_catalog", to: "/parts" },
   { icon: "menu_book", labelKey: "repairs", to: "/repairs" },
   { icon: "psychology", labelKey: "ai_analyst", to: "/ai-analyst" },
   { icon: "settings", labelKey: "settings", to: "/settings" },
-] as const;
+];
+
+const TECHNICIAN_NAV_ITEMS: NavItem[] = [
+  { icon: "dashboard", labelKey: "dashboard", to: "/" },
+  { icon: "work_history", labelKey: "my_jobs", to: "/jobs" },
+  { icon: "inventory_2", labelKey: "parts_inventory", to: "/parts" },
+  { icon: "build", labelKey: "repairs", to: "/repairs" },
+  { icon: "notifications", labelKey: "notifications", to: "/notifications" },
+];
+
+const NAV_ITEMS_BY_ROLE: Record<RoleType, NavItem[]> = {
+  OWNER: OWNER_NAV_ITEMS,
+  TECHNICIAN: TECHNICIAN_NAV_ITEMS,
+  FRONT_DESK: OWNER_NAV_ITEMS,
+};
+
+const ROLE_LABEL_KEYS: Record<RoleType, string> = {
+  OWNER: "role.OWNER",
+  TECHNICIAN: "role.TECHNICIAN",
+  FRONT_DESK: "role.FRONT_DESK",
+};
+
+const ROLE_SUBTITLE_KEYS: Record<RoleType, string> = {
+  OWNER: "shop_owner",
+  TECHNICIAN: "senior_technician",
+  FRONT_DESK: "shop_owner",
+};
 
 export default function Sidebar() {
   const { t } = useTranslation();
+  const role = useAuthStore((s) => s.role);
+  const navItems = NAV_ITEMS_BY_ROLE[role];
 
   return (
     <aside className="fixed start-0 top-0 z-40 hidden h-screen w-64 flex-col bg-surface-container-low p-4 lg:flex">
@@ -25,7 +61,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-1">
-        {NAV_ITEMS.map(({ icon, labelKey, to }) => (
+        {navItems.map(({ icon, labelKey, to }) => (
           <NavLink
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-200 ${
@@ -48,8 +84,14 @@ export default function Sidebar() {
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-4 py-3 font-bold text-white shadow-lg shadow-primary/20 transition-transform hover:scale-95"
           type="button"
         >
-          <span className="material-symbols-outlined">add_circle</span>
-          <span>{t("new_intake")}</span>
+          <span className="material-symbols-outlined">
+            {role === "TECHNICIAN" ? "swap_horiz" : "add_circle"}
+          </span>
+          <span>
+            {role === "TECHNICIAN"
+              ? t("tech_dashboard.update_job_status")
+              : t("new_intake")}
+          </span>
         </button>
         <div className="mt-6 flex items-center gap-3 px-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-300">
@@ -59,10 +101,10 @@ export default function Sidebar() {
           </div>
           <div>
             <p className="font-bold text-on-surface text-xs">
-              {t("role.OWNER")}
+              {t(ROLE_LABEL_KEYS[role])}
             </p>
             <p className="text-[10px] text-on-surface-variant">
-              {t("shop_owner")}
+              {t(ROLE_SUBTITLE_KEYS[role])}
             </p>
           </div>
         </div>
