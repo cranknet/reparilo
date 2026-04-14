@@ -9,6 +9,7 @@ import FrontDeskPage from "@/pages/dashboard/front-desk";
 import TechnicianDashboardPage from "@/pages/dashboard/technician";
 import JobsPage from "@/pages/jobs";
 import PartsCatalogPage from "@/pages/parts";
+import ProfilePage from "@/pages/profile";
 import RepairsPage from "@/pages/repairs";
 import SettingsPage from "@/pages/settings";
 
@@ -75,6 +76,14 @@ export default function App() {
           </DashboardLayout>
         }
         path="/ai-analyst"
+      />
+      <Route
+        element={
+          <DashboardLayout>
+            <ProfilePage />
+          </DashboardLayout>
+        }
+        path="/profile"
       />
       <Route element={<TrackingPage />} path="/tracking/:jobCode?" />
     </Routes>
