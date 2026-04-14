@@ -20,5 +20,6 @@ export default defineConfig({
       provider: "v8",
       include: ["src/**/*.{ts,tsx}", "server/**/*.ts", "shared/**/*.ts"],
     },
+    setupFiles: ["./vitest.setup.ts"],
   },
 });
