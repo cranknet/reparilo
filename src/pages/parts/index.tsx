@@ -2,6 +2,7 @@ import type { PartCategoryType } from "@shared/constants";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import MetricCard from "@/components/modules/dashboard/metric-card";
+import AddPartModal from "@/components/modules/parts/add-part-modal";
 
 type SortField = "name" | "category" | "defaultPrice" | "supplier";
 
@@ -151,6 +152,7 @@ export default function PartsCatalogPage() {
   const [activeFilter, setActiveFilter] = useState<PartCategoryType | "ALL">(
     "ALL"
   );
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const lowStockCount = MOCK_PARTS.filter(
     (p) => p.stockLevel / p.stockMax < 0.1
@@ -228,6 +230,7 @@ export default function PartsCatalogPage() {
           </button>
           <button
             className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-4 py-2.5 font-bold font-headline text-sm text-white shadow-lg shadow-primary/20 transition-all hover:opacity-90 sm:flex-none md:px-8"
+            onClick={() => setShowAddModal(true)}
             type="button"
           >
             <span className="material-symbols-outlined text-[18px]">add</span>
@@ -486,6 +489,13 @@ export default function PartsCatalogPage() {
           </div>
         </div>
       </div>
+
+      {showAddModal && (
+        <AddPartModal
+          onClose={() => setShowAddModal(false)}
+          onSubmit={() => setShowAddModal(false)}
+        />
+      )}
     </>
   );
 }
