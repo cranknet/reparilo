@@ -17,6 +17,15 @@
       "type": "local",
       "command": ["npx", "@playwright/mcp@latest"],
       "enabled": true
+    },
+    "stitch": {
+      "type": "remote",
+      "url": "https://stitch.googleapis.com/mcp",
+      "headers": {
+        "Accept": "application/json",
+        "X-Goog-Api-Key": "AQ.Ab8RN6L11EFTITl_X3FRCQd1LFYwBZQz-un8_UXkdds3JbVVDw"
+      },
+      "enabled": true
     }
   },
   "agent": {

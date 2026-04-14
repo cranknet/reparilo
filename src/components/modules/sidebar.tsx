@@ -14,7 +14,7 @@ export default function Sidebar() {
   const { t } = useTranslation();
 
   return (
-    <aside className="fixed top-0 left-0 z-40 hidden h-screen w-64 flex-col bg-slate-100 p-4 shadow-[1px_0_0_0_rgba(0,0,0,0.05)] lg:flex">
+    <aside className="fixed top-0 left-0 z-40 hidden h-screen w-64 flex-col bg-surface-container-low p-4 lg:flex">
       <div className="mb-8 px-2 py-6">
         <h1 className="font-black font-headline text-primary text-xl tracking-tighter">
           Reparilo
@@ -43,7 +43,7 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div className="space-y-1 border-slate-200 border-t pt-4">
+      <div className="mt-auto space-y-1 rounded-xl bg-surface-container-high p-2">
         <button
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-4 py-3 font-bold text-white shadow-lg shadow-primary/20 transition-transform hover:scale-95"
           type="button"

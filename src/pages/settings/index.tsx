@@ -151,7 +151,7 @@ export default function SettingsPage() {
                 type="url"
                 value={aiForm.endpointUrl}
               />
-              <span className="material-symbols-outlined absolute top-1/2 right-3 -translate-y-1/2 text-[18px] text-primary/30">
+              <span className="material-symbols-outlined absolute end-3 top-1/2 -translate-y-1/2 text-[18px] text-primary/30">
                 link
               </span>
             </div>
@@ -176,7 +176,7 @@ export default function SettingsPage() {
                 type="password"
                 value={aiForm.apiKey}
               />
-              <span className="material-symbols-outlined absolute top-1/2 right-3 -translate-y-1/2 text-[18px] text-on-surface-variant">
+              <span className="material-symbols-outlined absolute end-3 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant">
                 visibility_off
               </span>
             </div>
@@ -613,7 +613,7 @@ export default function SettingsPage() {
                   {tabs.find((t) => t.key === activeTab)?.label}
                 </h3>
               </div>
-              <p className="mt-1 pl-9 text-on-surface-variant text-sm">
+              <p className="mt-1 ps-9 text-on-surface-variant text-sm">
                 {sectionDescriptions[activeTab]}
               </p>
             </div>

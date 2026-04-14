@@ -6,6 +6,7 @@ interface MetricCardProps {
   icon: string;
   iconColor?: string;
   label: string;
+  onClick?: () => void;
   unit?: string;
   value: string;
 }
@@ -18,9 +19,19 @@ export default function MetricCard({
   icon,
   iconColor = "text-primary",
   children,
+  onClick,
 }: MetricCardProps) {
   return (
-    <div className="relative overflow-hidden rounded-xl bg-surface-container-low p-6">
+    <button
+      className={`relative overflow-hidden rounded-xl p-6 transition-all ${
+        onClick
+          ? "cursor-pointer bg-surface-container-low ring-1 ring-slate-100 hover:bg-white/40 active:scale-[0.98]"
+          : "cursor-default bg-surface-container-low"
+      }`}
+      disabled={!onClick}
+      onClick={onClick}
+      type="button"
+    >
       <div className="mb-4 flex items-start justify-between">
         <p className="font-bold text-on-surface-variant text-xs uppercase tracking-widest">
           {label}
@@ -39,6 +50,6 @@ export default function MetricCard({
       </div>
       <p className="mt-1 font-bold text-on-surface-variant text-xs">{detail}</p>
       {children && <div className="mt-4">{children}</div>}
-    </div>
+    </button>
   );
 }

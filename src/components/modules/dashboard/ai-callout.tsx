@@ -27,7 +27,7 @@ export default function AiCallout({ insight }: AiCalloutProps) {
           &ldquo;{insight}&rdquo;
         </div>
         <button
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-on-surface py-2.5 font-bold text-sm text-white transition-all hover:bg-black/90"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-on-surface py-2.5 font-bold text-sm text-white transition-all hover:bg-[oklch(12%_0.01_250)]/90"
           type="button"
         >
           {t("open_ai_insights")}

@@ -2,6 +2,7 @@ import type { JobStatusType } from "@shared/constants";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import JobsFilters from "@/components/modules/jobs/filters";
+import IntakeModal from "@/components/modules/jobs/intake-modal";
 import type { JobRow } from "@/components/modules/jobs/jobs-table";
 import JobsTable from "@/components/modules/jobs/jobs-table";
 import JobMetricCard from "@/components/modules/jobs/metric-card";
@@ -91,6 +92,7 @@ export default function JobsPage() {
   const [statusFilter, setStatusFilter] = useState<JobStatusType | "ALL">(
     "ALL"
   );
+  const [intakeOpen, setIntakeOpen] = useState(false);
 
   const filteredJobs =
     statusFilter === "ALL"
@@ -120,6 +122,7 @@ export default function JobsPage() {
           </button>
           <button
             className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#0040a1] to-[#0056d2] px-4 py-2.5 font-bold font-headline text-sm text-white shadow-lg shadow-primary/20 transition-all hover:opacity-90 sm:flex-none md:px-8"
+            onClick={() => setIntakeOpen(true)}
             type="button"
           >
             <span className="material-symbols-outlined text-[18px] md:text-[20px]">
@@ -191,6 +194,14 @@ export default function JobsPage() {
           </div>
         )}
       </section>
+
+      <IntakeModal
+        onClose={() => setIntakeOpen(false)}
+        onSubmit={(data) => {
+          console.log("Intake submitted:", data);
+        }}
+        open={intakeOpen}
+      />
     </>
   );
 }

@@ -1,10 +1,20 @@
 {
   "version": 1,
   "skills": {
+    "autofix": {
+      "source": "coderabbitai/skills",
+      "sourceType": "github",
+      "computedHash": "2962bde0a90a52a211f7f752013b0e66997539841da2361e8ca8d14fc8fc20fd"
+    },
     "brand-guidelines": {
       "source": "getsentry/skills",
       "sourceType": "github",
       "computedHash": "592a5ebea7cd94f9ca3347b3c3f00e2ed54333be5cd5a9278ff098767ebb08d0"
+    },
+    "code-review": {
+      "source": "coderabbitai/skills",
+      "sourceType": "github",
+      "computedHash": "a73a8b85ccc0898d759f204a4d90c97d65341b6c972b36037bb96cf828074e93"
     },
     "prisma-expert": {
       "source": "sickn33/antigravity-awesome-skills",

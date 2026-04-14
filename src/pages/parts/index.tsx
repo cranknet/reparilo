@@ -293,7 +293,7 @@ export default function PartsCatalogPage() {
                 >
                   {t("part_details")}
                   {sortBy === "name" && (
-                    <span className="ml-1 text-primary">
+                    <span className="ms-1 text-primary">
                       {sortDir === "asc" ? "↑" : "↓"}
                     </span>
                   )}
@@ -304,7 +304,7 @@ export default function PartsCatalogPage() {
                 >
                   {t("category")}
                   {sortBy === "category" && (
-                    <span className="ml-1 text-primary">
+                    <span className="ms-1 text-primary">
                       {sortDir === "asc" ? "↑" : "↓"}
                     </span>
                   )}
@@ -315,7 +315,7 @@ export default function PartsCatalogPage() {
                 >
                   {t("supplier")}
                   {sortBy === "supplier" && (
-                    <span className="ml-1 text-primary">
+                    <span className="ms-1 text-primary">
                       {sortDir === "asc" ? "↑" : "↓"}
                     </span>
                   )}
@@ -326,7 +326,7 @@ export default function PartsCatalogPage() {
                 >
                   {t("unit_cost")}
                   {sortBy === "defaultPrice" && (
-                    <span className="ml-1 text-primary">
+                    <span className="ms-1 text-primary">
                       {sortDir === "asc" ? "↑" : "↓"}
                     </span>
                   )}

@@ -145,7 +145,7 @@ export default function AiAnalystPage() {
         {configOpen && (
           <button
             aria-label="Close settings"
-            className="fixed inset-0 z-30 bg-black/20 backdrop-blur-sm xl:hidden"
+            className="fixed inset-0 z-30 bg-[oklch(12%_0.01_250)]/20 backdrop-blur-sm xl:hidden"
             onClick={() => setConfigOpen(false)}
             type="button"
           />

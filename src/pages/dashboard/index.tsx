@@ -72,7 +72,7 @@ export default function DashboardPage() {
         </div>
         <div className="flex w-full flex-wrap gap-3 sm:w-auto">
           <button
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-surface-container-highest px-4 py-2.5 font-bold font-headline text-on-secondary-fixed-variant text-sm transition-all hover:bg-slate-300 sm:flex-none md:px-6"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-surface-container-highest px-4 py-2.5 font-bold font-headline text-on-secondary-fixed-variant text-sm transition-all hover:bg-surface-container-highest-container sm:flex-none md:px-6"
             type="button"
           >
             <span className="material-symbols-outlined text-[18px] md:text-[20px]">
@@ -99,7 +99,7 @@ export default function DashboardPage() {
           label={t("active_jobs")}
           value="24"
         >
-          <div className="h-1 w-full overflow-hidden rounded-full bg-slate-200">
+          <div className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
             <div className="h-full w-3/4 bg-primary" />
           </div>
         </MetricCard>
@@ -111,7 +111,7 @@ export default function DashboardPage() {
           label={t("completed_today")}
           value="12"
         >
-          <div className="h-1 w-full overflow-hidden rounded-full bg-slate-200">
+          <div className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
             <div className="h-full w-4/5 bg-on-secondary-container" />
           </div>
         </MetricCard>
@@ -142,7 +142,7 @@ export default function DashboardPage() {
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((i) => (
               <div
-                className={`h-1 flex-1 rounded-full ${i <= 3 ? "bg-primary" : "bg-slate-300"}`}
+                className={`h-1 flex-1 rounded-full ${i <= 3 ? "bg-primary" : "bg-surface-container-highest"}`}
                 key={i}
               />
             ))}
