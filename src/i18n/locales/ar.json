@@ -109,6 +109,7 @@
     "TECHNICIAN": "فني",
     "FRONT_DESK": "استقبال"
   },
+  "front_desk_role_subtitle": "موظف استقبال",
   "my_jobs": "وظائفي",
   "notifications": "إشعارات",
   "senior_technician": "فني أول",

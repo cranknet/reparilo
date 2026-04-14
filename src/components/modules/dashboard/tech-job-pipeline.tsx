@@ -68,7 +68,7 @@ export default function TechJobPipeline({
       <div className="space-y-3">
         {PIPELINE_ITEMS.map(({ status, color, descriptionKey }) => (
           <button
-            className={`flex w-full cursor-pointer items-center justify-between rounded-lg p-3 text-left transition-all hover:bg-white/50 ${
+            className={`flex w-full cursor-pointer items-center justify-between rounded-lg p-3 text-left transition-all hover:bg-surface-container-high ${
               status === JobStatus.IN_REPAIR
                 ? "bg-surface-container-highest ring-1 ring-surface-container-low"
                 : ""
@@ -106,7 +106,7 @@ export default function TechJobPipeline({
         <div className="h-2 w-full overflow-hidden rounded-full bg-white/50">
           <div
             className="h-full rounded-full bg-primary transition-all duration-500"
-            style={{ width: `${benchCapacity}%` }}
+            style={{ width: `${Math.min(100, Math.max(0, benchCapacity))}%` }}
           />
         </div>
       </div>

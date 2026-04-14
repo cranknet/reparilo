@@ -20,12 +20,16 @@ function getStockStatus(item: PartsAlertItem) {
       width: "0%",
     };
   }
+  const pct = Math.min(
+    100,
+    Math.max(0, (item.quantity / item.stockLevel) * 100)
+  );
   if (item.quantity <= item.threshold) {
     return {
       color: "bg-error",
       labelKey: "tech_dashboard.left",
       textColor: "text-error",
-      width: `${(item.quantity / item.stockLevel) * 100}%`,
+      width: `${pct}%`,
     };
   }
   if (item.quantity <= item.threshold * 2) {
@@ -33,7 +37,7 @@ function getStockStatus(item: PartsAlertItem) {
       color: "bg-amber-500",
       labelKey: "tech_dashboard.left",
       textColor: "text-amber-500",
-      width: `${(item.quantity / item.stockLevel) * 100}%`,
+      width: `${pct}%`,
     };
   }
   return {
@@ -81,7 +85,7 @@ export default function PartsAlert({ items }: PartsAlertProps) {
         })}
       </div>
       <button
-        className="mt-8 w-full rounded-xl bg-surface-container-highest py-3 font-bold text-on-surface-variant text-xs transition-colors hover:bg-slate-300"
+        className="mt-8 w-full rounded-xl bg-surface-container-highest py-3 font-bold text-on-surface-variant text-xs transition-colors hover:bg-surface-container-high"
         type="button"
       >
         {t("tech_dashboard.open_full_inventory")}

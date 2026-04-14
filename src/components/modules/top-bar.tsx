@@ -36,18 +36,20 @@ export default function TopBar() {
         </div>
       </div>
       <div className="flex items-center gap-2 md:gap-3">
-        <select
-          className="rounded-lg border border-amber-400 bg-amber-50 px-2 py-1 font-bold text-[10px] text-amber-800 uppercase"
-          onChange={(e) => setRole(e.target.value as RoleType)}
-          title="DEV: Switch role"
-          value={role}
-        >
-          {DEV_ROLES.map((r) => (
-            <option key={r} value={r}>
-              DEV: {r}
-            </option>
-          ))}
-        </select>
+        {import.meta.env.DEV && (
+          <select
+            className="rounded-lg border border-amber-400 bg-amber-50 px-2 py-1 font-bold text-[10px] text-amber-800 uppercase"
+            onChange={(e) => setRole(e.target.value as RoleType)}
+            title="DEV: Switch role"
+            value={role}
+          >
+            {DEV_ROLES.map((r) => (
+              <option key={r} value={r}>
+                DEV: {r}
+              </option>
+            ))}
+          </select>
+        )}
         <button
           className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-primary"
           type="button"

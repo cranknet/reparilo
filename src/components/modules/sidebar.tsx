@@ -41,7 +41,7 @@ const ROLE_LABEL_KEYS: Record<RoleType, string> = {
 const ROLE_SUBTITLE_KEYS: Record<RoleType, string> = {
   OWNER: "shop_owner",
   TECHNICIAN: "senior_technician",
-  FRONT_DESK: "shop_owner",
+  FRONT_DESK: "front_desk_role_subtitle",
 };
 
 export default function Sidebar() {

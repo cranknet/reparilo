@@ -9,7 +9,7 @@ const SIZE_CLASSES: Record<IconSize, string> = {
 };
 
 interface IconProps {
-  "aria-hidden"?: boolean | "true" | "false";
+  "aria-hidden"?: boolean;
   "aria-label"?: string;
   className?: string;
   color?: string;
@@ -22,12 +22,13 @@ export function Icon({
   size = "md",
   color,
   className,
-  ...props
+  "aria-hidden": ariaHidden,
+  "aria-label": ariaLabel,
 }: IconProps) {
-  const isDecorative = !props["aria-label"];
+  const isDecorative = !ariaLabel;
   return (
     <span
-      aria-hidden={isDecorative ? "true" : undefined}
+      aria-hidden={ariaHidden ?? (isDecorative ? true : undefined)}
       className={[
         "material-symbols-outlined",
         SIZE_CLASSES[size],
@@ -37,7 +38,6 @@ export function Icon({
         .filter(Boolean)
         .join(" ")}
       role={isDecorative ? undefined : "img"}
-      {...props}
     >
       {name}
     </span>

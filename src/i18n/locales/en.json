@@ -109,6 +109,7 @@
     "TECHNICIAN": "Technician",
     "FRONT_DESK": "Front Desk"
   },
+  "front_desk_role_subtitle": "Receptionist",
   "my_jobs": "My Jobs",
   "notifications": "Notifications",
   "senior_technician": "Senior Technician",
