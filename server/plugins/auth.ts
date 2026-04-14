@@ -12,40 +12,46 @@ const authPlugin: FastifyPluginAsync = async (app) => {
   app.decorate("auth", auth);
   app.decorateRequest("user", null);
 
-  // Mount Better Auth handler at /api/auth/*
-  app.route({
-    method: ["GET", "POST"],
-    url: "/api/auth/*",
-    async handler(request, reply) {
-      try {
-        const url = new URL(request.url, `http://${request.headers.host}`);
-        const headers = fromNodeHeaders(request.headers);
+  app.all("/api/auth/*", async (request, reply) => {
+    try {
+      const url = new URL(request.url, `http://${request.headers.host}`);
+      const headers = fromNodeHeaders(request.headers);
 
-        const req = new Request(url.toString(), {
-          method: request.method,
-          headers,
-          ...(request.method === "POST" && request.body
-            ? { body: JSON.stringify(request.body) }
-            : {}),
-        });
-
-        const response = await auth.handler(req);
-
-        reply.status(response.status);
-        for (const [key, value] of response.headers.entries()) {
-          reply.header(key, value);
-        }
-        reply.send(response.body ? await response.text() : null);
-      } catch (error) {
-        app.log.error(error, "Better Auth handler error");
-        reply.status(500).send({ error: "Internal authentication error" });
+      let body: string | undefined;
+      if (
+        request.method === "POST" ||
+        request.method === "PUT" ||
+        request.method === "PATCH"
+      ) {
+        body = request.body ? JSON.stringify(request.body) : undefined;
       }
-    },
+
+      const req = new Request(url.toString(), {
+        method: request.method,
+        headers,
+        ...(body ? { body } : {}),
+      });
+
+      const response = await auth.handler(req);
+
+      app.log.info(
+        { status: response.status, path: url.pathname, method: request.method },
+        "Better Auth handler response"
+      );
+
+      reply.status(response.status);
+      for (const [key, value] of response.headers.entries()) {
+        reply.header(key, value);
+      }
+      const text = await response.text();
+      reply.send(text || null);
+    } catch (err) {
+      app.log.error(err, "Better Auth handler error");
+      reply.status(500).send({ error: "Internal authentication error" });
+    }
   });
 
-  // Pre-handler: auth bypass, session validation, inactive check
   app.addHook("preHandler", async (request, reply) => {
-    // Dev bypass
     if (
       process.env.AUTH_BYPASS === "true" &&
       process.env.NODE_ENV !== "production"
@@ -60,7 +66,6 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       return;
     }
 
-    // Skip auth for health, tracking, and /api/auth routes
     if (
       request.url === "/health" ||
       request.url.startsWith("/tracking") ||

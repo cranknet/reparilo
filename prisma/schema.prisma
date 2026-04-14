@@ -90,15 +90,19 @@ enum AiRole {
 // ─────────────────────────────────────────────
 
 model User {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  email     String   @unique
-  password  String
-  role      Role
-  isActive  Boolean  @default(true)
-  mustChangePassword Boolean  @default(false)
-  createdAt DateTime @default(now()) @db.Timestamptz
-  updatedAt DateTime @updatedAt      @db.Timestamptz
+  id              String    @id @default(cuid())
+  name            String    @default("")
+  username        String   @unique
+  displayUsername  String?
+  email           String    @unique
+  emailVerified   Boolean   @default(false)
+  image           String?
+  password        String?
+  role            Role
+  isActive        Boolean   @default(true)
+  mustChangePassword Boolean @default(false)
+  createdAt       DateTime  @default(now()) @db.Timestamptz
+  updatedAt       DateTime  @updatedAt      @db.Timestamptz
 
   assignedJobs   Job[]           @relation("AssignedTechnician")
   createdJobs    Job[]           @relation("CreatedBy")
@@ -109,9 +113,35 @@ model User {
   auditLogs      AuditLog[]
   chatHistory    AiChatHistory[]
   sessions       Session[]
+  accounts       Account[]
   verifications  Verification[]
 
   @@map("users")
+}
+
+// ─────────────────────────────────────────────
+// ACCOUNT (Better Auth — OAuth/social accounts)
+// ─────────────────────────────────────────────
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @db.Timestamptz
+  updatedAt             DateTime  @updatedAt      @db.Timestamptz
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("accounts")
 }
 
 // ─────────────────────────────────────────────
@@ -481,6 +511,8 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   token     String   @unique
   expiresAt DateTime @db.Timestamptz
+  ipAddress String?
+  userAgent String?
   createdAt DateTime @default(now()) @db.Timestamptz
   updatedAt DateTime @updatedAt      @db.Timestamptz
 

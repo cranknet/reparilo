@@ -54,7 +54,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (username, password) => {
     set({ isLoading: true, error: null });
     try {
-      await api.post("/auth/sign-in", { username, password });
+      await api.post("/auth/sign-in/username", { username, password });
       const res = await api.get("/auth/session");
       const user = res.data.user;
       set({
