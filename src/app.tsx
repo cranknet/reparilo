@@ -1,8 +1,11 @@
 import type { RoleType } from "@shared/constants";
 import { Role } from "@shared/constants";
+import { useEffect } from "react";
 import { Route, Routes } from "react-router";
 import DashboardLayout from "@/components/modules/dashboard-layout";
+import ProtectedRoute from "@/components/modules/protected-route";
 import AiAnalystPage from "@/pages/ai-analyst";
+import ChangePasswordPage from "@/pages/auth/change-password";
 import LoginPage from "@/pages/auth/login";
 import DashboardPage from "@/pages/dashboard";
 import FrontDeskPage from "@/pages/dashboard/front-desk";
@@ -24,67 +27,76 @@ const DASHBOARD_MAP: Record<RoleType, React.ComponentType> = {
 
 export default function App() {
   const role = useAuthStore((s) => s.role);
+  const checkSession = useAuthStore((s) => s.checkSession);
+
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
+
   const DashboardComponent = DASHBOARD_MAP[role];
 
   return (
     <Routes>
       <Route element={<LoginPage />} path="/login" />
-      <Route
-        element={
-          <DashboardLayout>
-            <DashboardComponent />
-          </DashboardLayout>
-        }
-        path="/"
-      />
-      <Route
-        element={
-          <DashboardLayout>
-            <JobsPage />
-          </DashboardLayout>
-        }
-        path="/jobs"
-      />
-      <Route
-        element={
-          <DashboardLayout>
-            <PartsCatalogPage />
-          </DashboardLayout>
-        }
-        path="/parts"
-      />
-      <Route
-        element={
-          <DashboardLayout>
-            <RepairsPage />
-          </DashboardLayout>
-        }
-        path="/repairs"
-      />
-      <Route
-        element={
-          <DashboardLayout>
-            <SettingsPage />
-          </DashboardLayout>
-        }
-        path="/settings"
-      />
-      <Route
-        element={
-          <DashboardLayout>
-            <AiAnalystPage />
-          </DashboardLayout>
-        }
-        path="/ai-analyst"
-      />
-      <Route
-        element={
-          <DashboardLayout>
-            <ProfilePage />
-          </DashboardLayout>
-        }
-        path="/profile"
-      />
+      <Route element={<ChangePasswordPage />} path="/change-password" />
+      <Route element={<ProtectedRoute />}>
+        <Route
+          element={
+            <DashboardLayout>
+              <DashboardComponent />
+            </DashboardLayout>
+          }
+          path="/"
+        />
+        <Route
+          element={
+            <DashboardLayout>
+              <JobsPage />
+            </DashboardLayout>
+          }
+          path="/jobs"
+        />
+        <Route
+          element={
+            <DashboardLayout>
+              <PartsCatalogPage />
+            </DashboardLayout>
+          }
+          path="/parts"
+        />
+        <Route
+          element={
+            <DashboardLayout>
+              <RepairsPage />
+            </DashboardLayout>
+          }
+          path="/repairs"
+        />
+        <Route
+          element={
+            <DashboardLayout>
+              <SettingsPage />
+            </DashboardLayout>
+          }
+          path="/settings"
+        />
+        <Route
+          element={
+            <DashboardLayout>
+              <AiAnalystPage />
+            </DashboardLayout>
+          }
+          path="/ai-analyst"
+        />
+        <Route
+          element={
+            <DashboardLayout>
+              <ProfilePage />
+            </DashboardLayout>
+          }
+          path="/profile"
+        />
+      </Route>
       <Route element={<TrackingPage />} path="/tracking/:jobCode?" />
     </Routes>
   );

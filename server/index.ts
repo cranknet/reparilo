@@ -10,6 +10,7 @@ import authPlugin from "./plugins/auth.js";
 import prismaPlugin from "./plugins/prisma.js";
 import { websocketPlugin } from "./plugins/websocket.js";
 import { aiRoutes } from "./routes/ai.js";
+import { authRoutes } from "./routes/auth.js";
 import { customersRoutes } from "./routes/customers.js";
 import { healthRoutes } from "./routes/health.js";
 import { jobRoutes } from "./routes/jobs.js";
@@ -29,6 +30,7 @@ await app.register(multipart, { limits: { fileSize: 5 * 1024 * 1024 } });
 await app.register(websocket);
 
 await app.register(prismaPlugin);
+app.register(authRoutes);
 await app.register(authPlugin);
 await app.register(websocketPlugin);
 
