@@ -16,7 +16,7 @@ const STATUS_STYLES: Record<JobStatusType, string> = {
 
 const SIZE_CLASSES: Record<BadgeSize, string> = {
   sm: "px-2 py-0.5 text-[10px]",
-  md: "px-2.5 py-0.5 text-[10px]",
+  md: "px-3 py-1 text-xs",
 };
 
 interface StatusBadgeProps {

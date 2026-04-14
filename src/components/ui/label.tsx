@@ -1,10 +1,9 @@
-interface LabelProps {
+interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
   children: React.ReactNode;
-  className?: string;
   htmlFor: string;
 }
 
-export function Label({ children, className, htmlFor }: LabelProps) {
+export function Label({ children, className, htmlFor, ...props }: LabelProps) {
   return (
     <label
       className={[
@@ -14,6 +13,7 @@ export function Label({ children, className, htmlFor }: LabelProps) {
         .filter(Boolean)
         .join(" ")}
       htmlFor={htmlFor}
+      {...props}
     >
       {children}
     </label>
