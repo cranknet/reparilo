@@ -99,7 +99,7 @@ export default function Sidebar() {
               person
             </span>
           </div>
-          <div>
+          <div className="flex-1">
             <p className="font-bold text-on-surface text-xs">
               {t(ROLE_LABEL_KEYS[role])}
             </p>
@@ -107,6 +107,14 @@ export default function Sidebar() {
               {t(ROLE_SUBTITLE_KEYS[role])}
             </p>
           </div>
+          <button
+            className="flex items-center gap-1 rounded-xl px-2 py-1.5 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
+            onClick={useAuthStore.getState().logout}
+            title={t("auth_sign_out_instead")}
+            type="button"
+          >
+            <span className="material-symbols-outlined text-lg">logout</span>
+          </button>
         </div>
       </div>
     </aside>
