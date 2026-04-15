@@ -2,7 +2,47 @@ import type { PrismaClient } from "@prisma/client";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { fromNodeHeaders } from "better-auth/node";
-import { username } from "better-auth/plugins";
+import { admin, createAccessControl, username } from "better-auth/plugins";
+
+const ac = createAccessControl({
+  user: [
+    "create",
+    "list",
+    "set-role",
+    "ban",
+    "impersonate",
+    "delete",
+    "set-password",
+    "get",
+    "update",
+  ],
+  session: ["list", "revoke", "delete"],
+});
+
+const ownerRole = ac.newRole({
+  user: [
+    "create",
+    "list",
+    "set-role",
+    "ban",
+    "impersonate",
+    "delete",
+    "set-password",
+    "get",
+    "update",
+  ],
+  session: ["list", "revoke", "delete"],
+});
+
+const technicianRole = ac.newRole({
+  user: ["list", "get"],
+  session: [],
+});
+
+const frontDeskRole = ac.newRole({
+  user: ["create", "list", "get", "update"],
+  session: [],
+});
 
 /**
  * Creates a Better Auth instance configured for Reparilo.
@@ -55,7 +95,18 @@ export function createAuth(prisma: PrismaClient) {
         },
       },
     },
-    plugins: [username()],
+    plugins: [
+      username(),
+      admin({
+        adminRoles: ["OWNER"],
+        ac,
+        roles: {
+          OWNER: ownerRole,
+          TECHNICIAN: technicianRole,
+          FRONT_DESK: frontDeskRole,
+        },
+      }),
+    ],
   });
 }
 

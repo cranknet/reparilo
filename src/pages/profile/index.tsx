@@ -155,6 +155,7 @@ export default function ProfilePage() {
     confirmPassword: "",
   });
 
+  const [personalError, setPersonalError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -170,12 +171,13 @@ export default function ProfilePage() {
 
   async function handlePersonalSubmit(e: FormEvent) {
     e.preventDefault();
+    setPersonalError("");
     try {
       await api.put("/users/me", personalForm);
       setPersonalInitial(personalForm);
       setPersonalDirty(false);
     } catch {
-      setPasswordError(t("profile_update_failed"));
+      setPersonalError(t("profile_update_failed"));
     }
   }
 
@@ -237,6 +239,13 @@ export default function ProfilePage() {
         onSubmit={handlePersonalSubmit}
         ref={personalFormRef}
       >
+        {personalError && (
+          <div className="rounded-xl bg-error-container p-4">
+            <p className="font-bold text-on-error-container text-xs">
+              {personalError}
+            </p>
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           <div className="space-y-2">
             <label className={LABEL_CLS} htmlFor="profile-username">

@@ -262,6 +262,12 @@
   "auth_username": "اسم المستخدم",
   "auth_password": "كلمة المرور",
   "auth_forgot_password": "إعادة تعيين كلمة المرور",
+  "auth_forgot_password_desc": "أدخل عنوان بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور الخاصة بك.",
+  "auth_send_reset": "إرسال رابط إعادة التعيين",
+  "auth_reset_sent": "تحقق من بريدك الإلكتروني",
+  "auth_reset_sent_desc": "إذا كان هناك حساب بهذا البريد الإلكتروني، فستتلقى رابط إعادة تعيين كلمة المرور قريبًا.",
+  "auth_back_to_sign_in": "العودة لتسجيل الدخول",
+  "auth_login_failed_hint": "تحقق من اسم المستخدم وكلمة المرور وحاول مرة أخرى.",
   "auth_authorize": "تسجيل الدخول",
   "auth_terms": "بالمتابعة، أنت توافق على",
   "auth_terms_link": "شروط الخدمة",
@@ -444,6 +450,6 @@
   "profile_activity_settings_update": "تم تحديث إعدادات المتجر",
   "profile_password_mismatch": "كلمات المرور غير متطابقة",
   "profile_current_password_required": "كلمة المرور الحالية مطلوبة لتعيين كلمة مرور جديدة",
-  "profile_update_failed": "فشل في تحديث الملف الشخصي. ",
-  "profile_password_update_failed": "فشل تحديث كلمة المرور. "
+  "profile_update_failed": "فشل في تحديث الملف الشخصي.",
+  "profile_password_update_failed": "فشل تحديث كلمة المرور."
 }

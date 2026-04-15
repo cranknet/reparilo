@@ -262,6 +262,12 @@
   "auth_username": "Nom d'utilisateur",
   "auth_password": "Mot de passe",
   "auth_forgot_password": "Réinitialiser le mot de passe",
+  "auth_forgot_password_desc": "Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+  "auth_send_reset": "Envoyer le lien de réinitialisation",
+  "auth_reset_sent": "Vérifiez votre courrier électronique",
+  "auth_reset_sent_desc": "Si un compte existe avec cet e-mail, vous recevrez sous peu un lien de réinitialisation du mot de passe.",
+  "auth_back_to_sign_in": "Retour pour vous connecter",
+  "auth_login_failed_hint": "Vérifiez votre nom d'utilisateur et votre mot de passe et réessayez.",
   "auth_authorize": "Connexion",
   "auth_terms": "En continuant, vous acceptez les",
   "auth_terms_link": "Conditions d'utilisation",
@@ -444,6 +450,6 @@
   "profile_activity_settings_update": "Paramètres de la boutique mis à jour",
   "profile_password_mismatch": "Les mots de passe ne correspondent pas",
   "profile_current_password_required": "Le mot de passe actuel est requis pour en définir un nouveau",
-  "profile_update_failed": "Échec de la mise à jour du profil. ",
-  "profile_password_update_failed": "Échec de la mise à jour du mot de passe. "
+  "profile_update_failed": "Échec de la mise à jour du profil.",
+  "profile_password_update_failed": "Échec de la mise à jour du mot de passe."
 }

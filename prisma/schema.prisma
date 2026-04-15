@@ -101,6 +101,9 @@ model User {
   role            Role
   isActive        Boolean   @default(true)
   mustChangePassword Boolean @default(false)
+  banned          Boolean   @default(false)
+  banReason       String?
+  banExpires      DateTime? @db.Timestamptz
   createdAt       DateTime  @default(now()) @db.Timestamptz
   updatedAt       DateTime  @updatedAt      @db.Timestamptz
 
@@ -513,6 +516,7 @@ model Session {
   expiresAt DateTime @db.Timestamptz
   ipAddress String?
   userAgent String?
+  impersonatedBy String?
   createdAt DateTime @default(now()) @db.Timestamptz
   updatedAt DateTime @updatedAt      @db.Timestamptz
 

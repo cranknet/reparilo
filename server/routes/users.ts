@@ -55,27 +55,26 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
         });
       }
 
-      const signUpResult = await app.auth.api.signUpEmail({
+      const created = await app.auth.api.createUser({
+        headers: request.headers as unknown as Headers,
         body: {
           email,
           password,
           name: username,
-          username,
+          role: role as RoleType,
+          data: {
+            username,
+            mustChangePassword: true,
+          },
         },
       });
 
-      if (signUpResult && "id" in signUpResult) {
-        await app.prisma.user.update({
-          where: { id: (signUpResult as { id: string }).id },
-          data: {
-            role: role as RoleType,
-            mustChangePassword: true,
-          },
-        });
+      if (!created?.user?.id) {
+        return reply.status(500).send({ error: "Failed to create user" });
       }
 
       const user = await app.prisma.user.findUnique({
-        where: { email },
+        where: { id: created.user.id },
         select: {
           id: true,
           username: true,
