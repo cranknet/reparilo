@@ -1,4 +1,5 @@
 import type { RoleType } from "@shared/constants";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router";
 import { useAuthStore } from "@/stores/auth";
@@ -44,12 +45,26 @@ const ROLE_SUBTITLE_KEYS: Record<RoleType, string> = {
   FRONT_DESK: "front_desk_role_subtitle",
 };
 
+const FOCUS_VISIBLE =
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+
+function getInitials(username: string): string {
+  return username.slice(0, 2).toUpperCase();
+}
+
 export default function Sidebar() {
   const { t } = useTranslation();
   const role = useAuthStore((s) => s.role);
+  const username = useAuthStore((s) => s.user?.username ?? "");
   const navItems = NAV_ITEMS_BY_ROLE[role] ?? [];
+  const [logoutPending, setLogoutPending] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
+    if (!logoutPending) {
+      setLogoutPending(true);
+      setTimeout(() => setLogoutPending(false), 3000);
+      return;
+    }
     useAuthStore.getState().logout();
   };
 
@@ -64,11 +79,11 @@ export default function Sidebar() {
         </p>
       </div>
 
-      <nav className="flex-1 space-y-1">
+      <nav className="flex-1 space-y-1.5">
         {navItems.map(({ icon, labelKey, to }) => (
           <NavLink
             className={({ isActive }) =>
-              `flex items-center gap-3 rounded-lg px-3 py-3 transition-all duration-200 ${
+              `flex items-center gap-3 rounded-lg px-3 py-3 transition-all duration-200 ${FOCUS_VISIBLE} ${
                 isActive
                   ? "translate-x-1 bg-surface-container-lowest font-semibold text-primary shadow-sm rtl:-translate-x-1"
                   : "text-on-surface-variant hover:bg-surface-container hover:text-primary"
@@ -87,7 +102,7 @@ export default function Sidebar() {
 
       <div className="mt-auto space-y-3">
         <button
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-on-primary transition-all duration-200 active:scale-[0.98]"
+          className={`flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-on-primary transition-all duration-200 active:scale-[0.98] ${FOCUS_VISIBLE}`}
           type="button"
         >
           <span aria-hidden="true" className="material-symbols-outlined">
@@ -102,16 +117,11 @@ export default function Sidebar() {
 
         <div className="rounded-xl bg-surface-container-high p-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-container">
-              <span
-                aria-hidden="true"
-                className="material-symbols-outlined text-on-surface-variant text-xl"
-              >
-                person
-              </span>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-on-primary text-sm">
+              {username ? getInitials(username) : ""}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate font-bold text-on-surface text-xs">
+              <p className="truncate font-bold text-on-surface text-sm">
                 {t(ROLE_LABEL_KEYS[role])}
               </p>
               <p className="truncate text-on-surface-variant text-xs">
@@ -119,18 +129,34 @@ export default function Sidebar() {
               </p>
             </div>
             <button
-              aria-label={t("auth_sign_out_instead")}
-              className="flex items-center justify-center rounded-xl px-3 py-3 text-on-surface-variant transition-all duration-200 hover:bg-surface-container hover:text-on-surface"
-              onClick={handleLogout}
-              title={t("auth_sign_out_instead")}
+              aria-label={
+                logoutPending
+                  ? t("auth_sign_out_confirm")
+                  : t("auth_sign_out_instead")
+              }
+              className={`flex items-center justify-center rounded-xl px-3 py-3 transition-all duration-200 ${FOCUS_VISIBLE} ${
+                logoutPending
+                  ? "bg-error-container font-medium text-on-error-container text-xs"
+                  : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+              }`}
+              onClick={handleLogoutClick}
+              title={
+                logoutPending
+                  ? t("auth_sign_out_confirm")
+                  : t("auth_sign_out_instead")
+              }
               type="button"
             >
-              <span
-                aria-hidden="true"
-                className="material-symbols-outlined text-lg"
-              >
-                logout
-              </span>
+              {logoutPending ? (
+                t("auth_sign_out_confirm")
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className="material-symbols-outlined text-lg"
+                >
+                  logout
+                </span>
+              )}
             </button>
           </div>
         </div>

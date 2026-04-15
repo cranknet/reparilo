@@ -35,7 +35,7 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
     isActive: true,
   });
   const [errors, setErrors] = useState<
-    Partial<Record<"name" | "category", string>>
+    Partial<Record<"name" | "category" | "defaultPrice", string>>
   >({});
 
   function update<K extends keyof AddPartFormData>(
@@ -49,16 +49,29 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
     if (key === "category" && value) {
       setErrors((prev) => ({ ...prev, category: undefined }));
     }
+    if (
+      key === "defaultPrice" &&
+      value &&
+      Number.parseInt(String(value), 10) > 0
+    ) {
+      setErrors((prev) => ({ ...prev, defaultPrice: undefined }));
+    }
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const newErrors: Partial<Record<"name" | "category", string>> = {};
+    const newErrors: Partial<
+      Record<"name" | "category" | "defaultPrice", string>
+    > = {};
     if (!form.name.trim()) {
       newErrors.name = t("add_part_modal.error_name_required");
     }
     if (!form.category) {
       newErrors.category = t("add_part_modal.error_category_required");
+    }
+    const priceVal = Number.parseInt(form.defaultPrice, 10);
+    if (!form.defaultPrice || Number.isNaN(priceVal) || priceVal <= 0) {
+      newErrors.defaultPrice = t("add_part_modal.error_price_invalid");
     }
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -67,7 +80,7 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
     onSubmit({
       name: form.name,
       category: form.category as PartCategoryType,
-      defaultPrice: Number.parseInt(form.defaultPrice, 10) || 0,
+      defaultPrice: priceVal,
       supplier: form.supplier,
       isActive: form.isActive,
     });
@@ -165,7 +178,7 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
               </Label>
               <div className="relative">
                 <span className="absolute start-4 top-1/2 -translate-y-1/2 font-mono text-on-surface-variant text-sm">
-                  DA
+                  {t("currency_dzd")}
                 </span>
                 <Input
                   className="ps-10 font-mono"
@@ -178,6 +191,11 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
                   type="number"
                   value={form.defaultPrice}
                 />
+                {errors.defaultPrice && (
+                  <p className="mt-1.5 text-error text-sm">
+                    {errors.defaultPrice}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -216,10 +234,10 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
                 type="button"
               >
                 <span
-                  className={`inline-start-[3px] absolute top-[3px] h-[22px] w-[22px] rounded-full bg-white shadow-sm transition-transform ltr:translate-x-[22px] rtl:-translate-x-[22px] ${
+                  className={`inline-start-[3px] absolute top-[3px] h-[22px] w-[22px] rounded-full bg-white shadow-sm transition-transform ${
                     form.isActive
                       ? "ltr:translate-x-[22px] rtl:-translate-x-[22px]"
-                      : "translate-x-0 ltr:translate-x-0 rtl:-translate-x-0"
+                      : "translate-x-0"
                   }`}
                 />
               </button>

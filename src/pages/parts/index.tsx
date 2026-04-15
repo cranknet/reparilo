@@ -653,16 +653,27 @@ export default function PartsCatalogPage() {
                         <span className="font-bold font-mono text-primary text-sm">
                           {formatDzd(part.defaultPrice)} {t("currency_dzd")}
                         </span>
-                        {isLow && (
-                          <button
-                            aria-label={t("reorder")}
-                            className="flex h-8 items-center gap-1 rounded-lg bg-error px-2 font-bold text-[11px] text-on-error transition-all hover:opacity-90"
-                            type="button"
-                          >
-                            <Icon name="replay" size="xs" />
-                          </button>
-                        )}
                       </div>
+                    </div>
+                    <div className="-mx-1 mt-3 flex items-center gap-2 rounded-xl bg-surface-container-lowest px-1 py-1">
+                      <button
+                        aria-label={t("edit_part")}
+                        className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
+                        type="button"
+                      >
+                        <Icon name="edit" size="sm" />
+                        <span className="text-xs">{t("edit")}</span>
+                      </button>
+                      {isLow && (
+                        <button
+                          aria-label={t("reorder")}
+                          className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-error font-bold text-on-error text-xs transition-all hover:opacity-90"
+                          type="button"
+                        >
+                          <Icon name="replay" size="xs" />
+                          <span>{t("reorder")}</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
