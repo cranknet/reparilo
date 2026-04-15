@@ -91,7 +91,7 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <button
-        aria-label="Close modal"
+        aria-hidden="true"
         className="absolute inset-0 bg-on-surface/40 backdrop-blur-[20px]"
         onClick={onClose}
         onKeyDown={(e) => {
@@ -99,14 +99,24 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
             onClose();
           }
         }}
+        tabIndex={-1}
         type="button"
       />
-      <div className="relative z-10 mx-4 w-full max-w-[560px] overflow-hidden rounded-2xl bg-surface-container-lowest shadow-[0_40px_64px_-12px_rgba(0,64,161,0.06)]">
+      <div
+        aria-labelledby="add-part-modal-title"
+        aria-modal="true"
+        className="relative z-10 mx-4 w-full max-w-[560px] overflow-hidden rounded-2xl bg-surface-container-lowest shadow-2xl"
+        id="add-part-modal"
+        role="dialog"
+      >
         <form onSubmit={handleSubmit}>
           <div className="bg-surface-container-low px-6 py-5">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="font-bold font-headline text-on-surface text-xl tracking-tight">
+                <h2
+                  className="font-bold font-headline text-on-surface text-xl tracking-tight"
+                  id="add-part-modal-title"
+                >
                   {t("add_part_modal.title")}
                 </h2>
                 <p className="mt-0.5 text-on-surface-variant text-sm">
@@ -226,7 +236,7 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
               <button
                 aria-checked={form.isActive}
                 aria-label={t("add_part_modal.active_status")}
-                className={`relative h-7 w-12 rounded-full transition-colors ${
+                className={`relative h-[34px] w-[52px] rounded-full transition-colors ${
                   form.isActive ? "bg-primary" : "bg-surface-container-highest"
                 }`}
                 onClick={() => update("isActive", !form.isActive)}
@@ -234,9 +244,9 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
                 type="button"
               >
                 <span
-                  className={`inline-start-[3px] absolute top-[3px] h-[22px] w-[22px] rounded-full bg-white shadow-sm transition-transform ${
+                  className={`inline-start-[4px] absolute top-[4px] h-[26px] w-[26px] rounded-full bg-surface-container-lowest shadow-sm transition-transform ${
                     form.isActive
-                      ? "ltr:translate-x-[22px] rtl:-translate-x-[22px]"
+                      ? "ltr:translate-x-[18px] rtl:-translate-x-[18px]"
                       : "translate-x-0"
                   }`}
                 />

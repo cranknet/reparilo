@@ -94,12 +94,12 @@ export default function TodayOverview({
                   />
                   <div>
                     <p className="font-medium text-sm">{intake.device}</p>
-                    <p className="text-[10px] text-on-surface-variant">
+                    <p className="text-on-surface-variant text-xs">
                       {intake.id}
                     </p>
                   </div>
                 </div>
-                <span className="font-bold text-[10px] text-on-surface-variant">
+                <span className="font-bold text-on-surface-variant text-xs">
                   {intake.timeAgo}
                 </span>
               </div>

@@ -25,7 +25,7 @@ export default function OverdueJobs({
 
   return (
     <div className="space-y-6">
-      <div className="relative overflow-hidden rounded-xl bg-white p-6 shadow-sm ring-1 ring-surface-container-low transition-all">
+      <div className="relative overflow-hidden rounded-xl bg-surface-container-lowest p-6 shadow-sm ring-1 ring-surface-container-low transition-all">
         <div className="mb-6 flex items-center gap-2">
           <span className="material-symbols-outlined animate-pulse text-error">
             alarm_on
@@ -34,7 +34,7 @@ export default function OverdueJobs({
             {t("overdue_jobs")}
           </h3>
           {jobs.length > 0 && (
-            <span className="ms-auto rounded-full bg-error px-2 py-0.5 font-black text-[10px] text-white shadow-sm">
+            <span className="ms-auto rounded-full bg-error px-2 py-0.5 font-black text-on-error text-xs shadow-sm">
               {String(jobs.length).padStart(2, "0")}
             </span>
           )}
@@ -46,12 +46,12 @@ export default function OverdueJobs({
                 <span className="font-bold text-on-surface text-xs">
                   {job.device}
                 </span>
-                <span className="start-0 ms-auto font-black text-[10px] text-error uppercase">
+                <span className="start-0 ms-auto font-black text-error text-xs uppercase">
                   {job.lateness}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] text-on-surface-variant uppercase tracking-wider">
+                <span className="text-on-surface-variant text-xs uppercase tracking-wider">
                   {job.id} &bull; {job.repair}
                 </span>
                 <div className="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
@@ -91,10 +91,10 @@ export default function OverdueJobs({
         </div>
         {warrantyReturns.map((wr, i) => (
           <div
-            className={`mb-3 rounded-lg p-3 transition-all hover:bg-white/30 ${
+            className={`mb-3 rounded-lg p-3 transition-all hover:bg-surface-container-low/30 ${
               i > 0
                 ? "opacity-60"
-                : "bg-white/50 opacity-100 ring-1 ring-surface-container-low"
+                : "bg-surface-container-low/50 opacity-100 ring-1 ring-surface-container-low"
             }`}
             key={wr.id}
           >
@@ -111,7 +111,7 @@ export default function OverdueJobs({
                 <p className="font-bold text-on-surface text-xs">{wr.id}</p>
               </div>
             )}
-            <p className="mb-3 text-[10px] text-on-surface-variant">
+            <p className="mb-3 text-on-surface-variant text-xs">
               {wr.description}
             </p>
             <div className="flex items-center justify-between">

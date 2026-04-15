@@ -4,8 +4,8 @@ import { useTranslation } from "react-i18next";
 import AiCallout from "@/components/modules/dashboard/ai-callout";
 import FinancialTrend from "@/components/modules/dashboard/financial-trend";
 import JobPipeline from "@/components/modules/dashboard/job-pipeline";
-import MetricCard from "@/components/modules/dashboard/metric-card";
 import OverdueJobs from "@/components/modules/dashboard/overdue-jobs";
+import MetricCard from "@/components/ui/metric-card";
 
 const MOCK_PIPELINE_COUNTS: Record<JobStatusType, number> = {
   INTAKE: 5,

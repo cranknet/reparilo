@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 function getPingIcon(status: string) {
   if (status === "testing") {
-    return "hourglass_top";
+    return "progress_activity";
   }
   if (status === "success") {
     return "check_circle";
@@ -12,6 +12,16 @@ function getPingIcon(status: string) {
     return "error";
   }
   return "wifi_tethering";
+}
+
+function getTemperatureLabel(temp: number): string {
+  if (temp <= 0.3) {
+    return "precise";
+  }
+  if (temp <= 0.6) {
+    return "balanced";
+  }
+  return "creative";
 }
 
 interface AiConfigPanelProps {
@@ -35,9 +45,29 @@ export default function AiConfigPanel({ open, onClose }: AiConfigPanelProps) {
     setTimeout(() => setPingStatus("success"), 1500);
   };
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (window.matchMedia("(min-width: 1280px)").matches) {
+          return;
+        }
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => {
+      document.removeEventListener("keydown", handler);
+    };
+  }, [open, onClose]);
+
   return (
     <aside
-      className={`fixed top-0 right-0 z-40 h-full w-80 overflow-y-auto bg-surface-container-high transition-transform duration-300 md:w-96 xl:static xl:z-auto xl:h-auto xl:translate-x-0 ${open ? "translate-x-0" : "translate-x-full"}`}
+      aria-label={t("ai_configuration")}
+      className={`fixed end-0 top-0 z-40 h-full w-80 max-w-[85vw] overflow-y-auto bg-surface-container-high transition-transform duration-300 md:w-96 md:max-w-none xl:static xl:z-auto xl:h-auto xl:translate-x-0 ${open ? "translate-x-0" : "translate-x-full rtl:-translate-x-full"}`}
+      role={open ? "dialog" : undefined}
     >
       <div className="p-6">
         <div className="mb-8 flex items-center justify-between">
@@ -45,7 +75,8 @@ export default function AiConfigPanel({ open, onClose }: AiConfigPanelProps) {
             {t("ai_configuration")}
           </h3>
           <button
-            className="p-2 text-on-surface-variant transition-colors hover:text-primary xl:hidden"
+            aria-label={t("close")}
+            className="p-3 text-on-surface-variant transition-colors hover:text-primary focus-visible:rounded-lg focus-visible:ring-2 focus-visible:ring-primary/30 xl:hidden"
             onClick={onClose}
             type="button"
           >
@@ -56,131 +87,155 @@ export default function AiConfigPanel({ open, onClose }: AiConfigPanelProps) {
           </span>
         </div>
 
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <label
-              className="block font-bold text-on-surface-variant text-xs uppercase tracking-wider"
-              htmlFor="ai-endpoint"
-            >
-              {t("api_endpoint_url")}
-            </label>
-            <div className="relative">
-              <input
-                className="w-full rounded-xl border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-xs transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                id="ai-endpoint"
-                onChange={(e) => setEndpoint(e.target.value)}
-                type="text"
-                value={endpoint}
-              />
-              <span className="material-symbols-outlined absolute top-2.5 right-3 text-primary/40 text-sm">
-                link
-              </span>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+          }}
+        >
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <label
+                className="block font-bold text-on-surface-variant text-xs uppercase tracking-wider"
+                htmlFor="ai-api-key"
+              >
+                {t("master_api_key")}
+              </label>
+              <div className="relative">
+                <input
+                  className="w-full rounded-xl bg-surface-container-lowest px-4 py-3 text-xs transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  id="ai-api-key"
+                  onChange={(e) => setApiKey(e.target.value)}
+                  type={showKey ? "text" : "password"}
+                  value={apiKey}
+                />
+                <button
+                  aria-label={
+                    showKey ? t("auth_hide_password") : t("auth_show_password")
+                  }
+                  className="absolute end-3 top-2.5 rounded-lg p-2 text-on-surface-variant text-sm focus-visible:ring-2 focus-visible:ring-primary/30"
+                  onClick={() => setShowKey((v) => !v)}
+                  type="button"
+                >
+                  <span className="material-symbols-outlined">
+                    {showKey ? "visibility" : "visibility_off"}
+                  </span>
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-3">
-            <label
-              className="block font-bold text-on-surface-variant text-xs uppercase tracking-wider"
-              htmlFor="ai-api-key"
-            >
-              {t("master_api_key")}
-            </label>
-            <div className="relative">
-              <input
-                className="w-full rounded-xl border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-xs transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                id="ai-api-key"
-                onChange={(e) => setApiKey(e.target.value)}
-                type={showKey ? "text" : "password"}
-                value={apiKey}
-              />
+            <div className="space-y-3">
+              <label
+                className="block font-bold text-on-surface-variant text-xs uppercase tracking-wider"
+                htmlFor="ai-model"
+              >
+                {t("analytical_model")}
+              </label>
+              <div className="relative">
+                <select
+                  className="w-full cursor-pointer appearance-none rounded-xl bg-surface-container-lowest px-4 py-3 text-xs transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  id="ai-model"
+                  onChange={(e) => setModel(e.target.value)}
+                  value={model}
+                >
+                  <option value="gpt-4o">{t("gpt_4o_default")}</option>
+                  <option value="gpt-4o-mini">{t("gpt_4o_mini")}</option>
+                  <option value="gpt-3.5-turbo">{t("gpt_3_5_turbo")}</option>
+                </select>
+                <span className="material-symbols-outlined pointer-events-none absolute end-3 top-2.5 text-on-surface-variant text-sm">
+                  expand_more
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-6">
               <button
-                className="absolute top-2.5 right-3 text-on-surface-variant text-sm"
-                onClick={() => setShowKey((v) => !v)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-secondary-fixed px-4 py-3 font-bold text-on-secondary-fixed text-sm transition-all hover:bg-secondary-fixed-dim"
+                onClick={handleTestConnection}
                 type="button"
               >
-                <span className="material-symbols-outlined">
-                  {showKey ? "visibility" : "visibility_off"}
+                <span
+                  className={`material-symbols-outlined text-lg ${pingStatus === "testing" ? "animate-spin" : ""}`}
+                >
+                  {getPingIcon(pingStatus)}
                 </span>
+                {pingStatus === "testing"
+                  ? t("testing_connection")
+                  : t("test_connection")}
               </button>
+              <p className="mt-3 text-center text-on-surface-variant text-xs">
+                {pingStatus === "success" &&
+                  t("last_ping", { time: t("just_now") })}
+                {pingStatus === "failed" && t("connection_failed")}
+                {pingStatus === "idle" && t("last_ping", { time: "—" })}
+              </p>
             </div>
-          </div>
 
-          <div className="space-y-3">
-            <label
-              className="block font-bold text-on-surface-variant text-xs uppercase tracking-wider"
-              htmlFor="ai-model"
-            >
-              {t("analytical_model")}
-            </label>
-            <select
-              className="w-full cursor-pointer appearance-none rounded-xl border-outline-variant/30 bg-surface-container-lowest px-4 py-3 text-xs transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-              id="ai-model"
-              onChange={(e) => setModel(e.target.value)}
-              value={model}
-            >
-              <option value="gpt-4o">GPT-4o (Default)</option>
-              <option value="gpt-4o-mini">GPT-4o Mini</option>
-              <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-            </select>
-          </div>
+            <details>
+              <summary className="cursor-pointer rounded-lg font-bold text-on-surface-variant text-xs uppercase tracking-wider focus-visible:ring-2 focus-visible:ring-primary/30">
+                {t("advanced_settings")}
+              </summary>
+              <div className="mt-4 space-y-6">
+                <div className="space-y-3">
+                  <label
+                    className="block font-bold text-on-surface-variant text-xs uppercase tracking-wider"
+                    htmlFor="ai-endpoint"
+                  >
+                    {t("api_endpoint_url")}
+                  </label>
+                  <div className="relative">
+                    <input
+                      className="w-full rounded-xl bg-surface-container-lowest px-4 py-3 text-xs transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      id="ai-endpoint"
+                      onChange={(e) => setEndpoint(e.target.value)}
+                      type="text"
+                      value={endpoint}
+                    />
+                    <span className="material-symbols-outlined absolute end-3 top-2.5 text-primary/40 text-sm">
+                      link
+                    </span>
+                  </div>
+                </div>
 
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center justify-between">
-              <label
-                className="font-bold text-on-surface-variant text-xs uppercase tracking-wider"
-                htmlFor="ai-temperature"
-              >
-                {t("inference_temperature")}
-              </label>
-              <span className="font-bold font-mono text-primary text-xs">
-                {temperature.toFixed(1)}
-              </span>
-            </div>
-            <input
-              className="h-1.5 w-full cursor-pointer appearance-none rounded-lg accent-primary"
-              id="ai-temperature"
-              max="1"
-              min="0"
-              onChange={(e) =>
-                setTemperature(Number.parseFloat(e.target.value))
-              }
-              step="0.1"
-              type="range"
-              value={temperature}
-            />
-            <div className="flex justify-between font-bold text-[10px] text-on-surface-variant uppercase">
-              <span>{t("precise")}</span>
-              <span>{t("creative")}</span>
-            </div>
-            <div className="rounded-lg border border-outline-variant/10 bg-surface-container-lowest/50 p-3 text-[11px] text-on-surface-variant leading-relaxed">
-              <span className="font-bold text-primary italic">
-                {t("note")}:
-              </span>{" "}
-              {t("temperature_note")}
-            </div>
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center justify-between">
+                    <label
+                      className="font-bold text-on-surface-variant text-xs uppercase tracking-wider"
+                      htmlFor="ai-temperature"
+                    >
+                      {t("inference_temperature")}
+                    </label>
+                    <span className="font-bold font-mono text-primary text-xs">
+                      {temperature.toFixed(1)}
+                    </span>
+                  </div>
+                  <input
+                    aria-valuetext={t(getTemperatureLabel(temperature))}
+                    className="h-1.5 w-full cursor-pointer appearance-none rounded-lg accent-primary focus-visible:ring-2 focus-visible:ring-primary/30"
+                    id="ai-temperature"
+                    max="1"
+                    min="0"
+                    onChange={(e) =>
+                      setTemperature(Number.parseFloat(e.target.value))
+                    }
+                    step="0.1"
+                    type="range"
+                    value={temperature}
+                  />
+                  <div className="flex justify-between font-bold text-on-surface-variant text-xs uppercase">
+                    <span>{t("precise")}</span>
+                    <span>{t("creative")}</span>
+                  </div>
+                  <div className="rounded-lg bg-surface-container-lowest/50 p-3 text-on-surface-variant text-xs leading-relaxed">
+                    <span className="font-bold text-primary italic">
+                      {t("note")}:
+                    </span>{" "}
+                    {t("temperature_note")}
+                  </div>
+                </div>
+              </div>
+            </details>
           </div>
-
-          <div className="pt-6">
-            <button
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-secondary-fixed px-4 py-3 font-bold text-on-secondary-fixed text-sm transition-all hover:bg-secondary-fixed-dim"
-              onClick={handleTestConnection}
-              type="button"
-            >
-              <span className="material-symbols-outlined text-lg">
-                {getPingIcon(pingStatus)}
-              </span>
-              {pingStatus === "testing"
-                ? t("testing_connection")
-                : t("test_connection")}
-            </button>
-            <p className="mt-3 text-center text-[10px] text-on-surface-variant">
-              {pingStatus === "success" &&
-                t("last_ping", { time: t("just_now") })}
-              {pingStatus === "failed" && t("connection_failed")}
-              {pingStatus === "idle" && t("last_ping", { time: "—" })}
-            </p>
-          </div>
-        </div>
+        </form>
 
         <div className="mt-12 rounded-xl bg-primary/5 p-4">
           <div className="mb-2 flex items-center gap-3">
@@ -191,7 +246,7 @@ export default function AiConfigPanel({ open, onClose }: AiConfigPanelProps) {
               {t("training_context")}
             </span>
           </div>
-          <p className="text-[11px] text-on-surface-variant italic">
+          <p className="text-on-surface-variant text-xs italic">
             {t("training_context_desc")}
           </p>
         </div>

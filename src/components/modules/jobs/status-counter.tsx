@@ -67,7 +67,7 @@ export default function StatusCounter({
       </span>
       <span
         className={[
-          "font-bold font-label text-[11px] uppercase tracking-wider",
+          "font-bold font-label text-xs uppercase tracking-wider",
           labelColorClass(isActive, primary),
         ].join(" ")}
       >

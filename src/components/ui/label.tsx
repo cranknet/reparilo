@@ -8,7 +8,7 @@ export function Label({ children, className, htmlFor }: LabelProps) {
   return (
     <label
       className={[
-        "font-bold text-[11px] text-on-surface-variant uppercase tracking-wider",
+        "font-bold text-on-surface-variant text-xs uppercase tracking-wider",
         className,
       ]
         .filter(Boolean)

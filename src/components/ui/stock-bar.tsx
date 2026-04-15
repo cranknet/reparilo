@@ -22,7 +22,7 @@ export function StockBar({ level, max, className }: StockBarProps) {
     <div
       className={["flex flex-col gap-1", className].filter(Boolean).join(" ")}
     >
-      <div className="flex justify-between font-bold text-[10px]">
+      <div className="flex justify-between font-bold text-xs">
         <span className={textColor}>
           {level} {pct < 10 && "\u26A1"}
         </span>

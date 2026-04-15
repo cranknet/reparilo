@@ -15,7 +15,7 @@ interface QuickAddCustomerProps {
 export type { CustomerFormData };
 
 const labelCls =
-  "mb-2 ms-1 block font-bold font-label text-[11px] uppercase tracking-widest text-on-surface-variant";
+  "mb-2 ms-1 block font-bold font-label text-xs uppercase tracking-wide text-on-surface-variant";
 
 export default function QuickAddCustomer({
   onAdd,

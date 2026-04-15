@@ -43,7 +43,7 @@ export default function RepairMobileCard({ repair }: RepairMobileCardProps) {
       </div>
       <div className="flex items-end justify-between border-outline-variant/10 border-t pt-3">
         <div className="flex flex-col">
-          <span className="font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">
+          <span className="font-bold text-on-surface-variant text-xs uppercase tracking-wide">
             {t("duration")}
           </span>
           <span className="font-bold text-on-surface text-sm">

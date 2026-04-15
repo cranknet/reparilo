@@ -115,6 +115,17 @@ const CATEGORY_COLORS: Record<string, string> = {
   SPEAKER: "bg-tertiary-fixed text-on-tertiary-fixed-variant",
 };
 
+function getAriaSort(
+  currentSortBy: SortField,
+  currentSortDir: "asc" | "desc",
+  field: SortField
+): "ascending" | "descending" | "none" {
+  if (currentSortBy !== field) {
+    return "none";
+  }
+  return currentSortDir === "asc" ? "ascending" : "descending";
+}
+
 function StockBar({ level, max }: { level: number; max: number }) {
   const pct = Math.round((level / max) * 100);
   let color = "bg-primary";
@@ -126,7 +137,7 @@ function StockBar({ level, max }: { level: number; max: number }) {
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex justify-between font-bold text-[11px]">
+      <div className="flex justify-between font-bold text-xs">
         <span className={pct < 10 ? "text-error" : "text-on-surface"}>
           {level}
           {pct < 10 && (
@@ -141,7 +152,12 @@ function StockBar({ level, max }: { level: number; max: number }) {
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container-highest">
         <div
+          aria-label="stock level"
+          aria-valuemax={100}
+          aria-valuemin={0}
+          aria-valuenow={pct}
           className={`h-full rounded-full ${color} transition-all duration-500`}
+          role="progressbar"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -263,7 +279,7 @@ export default function PartsCatalogPage() {
         </div>
         <div className="flex w-full flex-wrap gap-3 sm:w-auto">
           <button
-            className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-surface-container-high px-4 py-3 font-bold text-on-surface-variant text-sm transition-all hover:bg-surface-container-highest sm:flex-none"
+            className="hidden min-h-[44px] items-center justify-center gap-2 rounded-xl bg-surface-container-high px-4 py-3 font-bold text-on-surface-variant text-sm transition-all hover:bg-surface-container-highest sm:flex"
             onClick={() => setShowCategoryFilters((prev) => !prev)}
             type="button"
           >
@@ -317,7 +333,7 @@ export default function PartsCatalogPage() {
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <span
-                    className={`shrink-0 rounded-full px-2.5 py-1 font-bold text-[11px] uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
+                    className={`shrink-0 rounded-full px-2.5 py-1 font-bold text-xs uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
                   >
                     {t(`part_category.${part.category}`)}
                   </span>
@@ -366,10 +382,37 @@ export default function PartsCatalogPage() {
           placeholder={t("search_parts_placeholder")}
           value={search}
         />
+        <div className="mt-2 sm:hidden">
+          <div className="relative">
+            <select
+              aria-label={t("all_categories")}
+              className="h-11 w-full appearance-none rounded-xl border-none bg-surface-container-highest px-4 pe-10 text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              onChange={(e) => {
+                setActiveFilter(
+                  e.target.value === "ALL"
+                    ? "ALL"
+                    : (e.target.value as PartCategoryType)
+                );
+              }}
+              value={activeFilter}
+            >
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat === "ALL"
+                    ? t("all_categories")
+                    : t(`part_category.${cat}`)}
+                </option>
+              ))}
+            </select>
+            <span className="material-symbols-outlined pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">
+              expand_more
+            </span>
+          </div>
+        </div>
       </div>
 
       {showCategoryFilters && (
-        <div className="mb-5 rounded-2xl bg-surface-container-low p-4">
+        <div className="mb-5 hidden rounded-2xl bg-surface-container-low p-4 sm:block">
           <div className="hide-scrollbar flex flex-wrap items-center gap-2">
             {categories
               .filter((cat) =>
@@ -381,6 +424,7 @@ export default function PartsCatalogPage() {
                 const isActive = activeFilter === cat;
                 return (
                   <button
+                    aria-pressed={isActive}
                     className={`min-h-[44px] shrink-0 rounded-full px-4 py-2.5 font-bold text-xs uppercase tracking-wide transition-all ${
                       isActive
                         ? "bg-primary text-on-primary"
@@ -419,8 +463,8 @@ export default function PartsCatalogPage() {
       )}
 
       {!showCategoryFilters && activeFilter !== "ALL" && (
-        <div className="mb-5 flex items-center gap-2">
-          <span className="rounded-full bg-primary px-3 py-1 font-bold text-white text-xs uppercase">
+        <div className="mb-5 hidden items-center gap-2 sm:flex">
+          <span className="rounded-full bg-primary px-3 py-1 font-bold text-on-primary text-xs uppercase">
             {t(`part_category.${activeFilter}`)}
           </span>
           <button
@@ -458,7 +502,8 @@ export default function PartsCatalogPage() {
               <thead>
                 <tr className="bg-surface-container-high/50">
                   <th
-                    className="cursor-pointer px-6 py-4 font-bold text-[11px] text-on-surface-variant uppercase tracking-widest transition-colors hover:text-primary"
+                    aria-sort={getAriaSort(sortBy, sortDir, "name")}
+                    className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
                     onClick={() => toggleSort("name")}
                   >
                     {t("part_details")}
@@ -473,7 +518,8 @@ export default function PartsCatalogPage() {
                     )}
                   </th>
                   <th
-                    className="cursor-pointer px-6 py-4 font-bold text-[11px] text-on-surface-variant uppercase tracking-widest transition-colors hover:text-primary"
+                    aria-sort={getAriaSort(sortBy, sortDir, "category")}
+                    className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
                     onClick={() => toggleSort("category")}
                   >
                     {t("category")}
@@ -488,7 +534,8 @@ export default function PartsCatalogPage() {
                     )}
                   </th>
                   <th
-                    className="cursor-pointer px-6 py-4 font-bold text-[11px] text-on-surface-variant uppercase tracking-widest transition-colors hover:text-primary"
+                    aria-sort={getAriaSort(sortBy, sortDir, "supplier")}
+                    className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
                     onClick={() => toggleSort("supplier")}
                   >
                     {t("supplier")}
@@ -503,7 +550,8 @@ export default function PartsCatalogPage() {
                     )}
                   </th>
                   <th
-                    className="cursor-pointer px-6 py-4 font-bold text-[11px] text-on-surface-variant uppercase tracking-widest transition-colors hover:text-primary"
+                    aria-sort={getAriaSort(sortBy, sortDir, "defaultPrice")}
+                    className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
                     onClick={() => toggleSort("defaultPrice")}
                   >
                     {t("unit_cost")}
@@ -517,10 +565,10 @@ export default function PartsCatalogPage() {
                       />
                     )}
                   </th>
-                  <th className="px-6 py-4 font-bold text-[11px] text-on-surface-variant uppercase tracking-widest">
+                  <th className="px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide">
                     {t("stock_level")}
                   </th>
-                  <th className="px-6 py-4 font-bold text-[11px] text-on-surface-variant uppercase tracking-widest">
+                  <th className="px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide">
                     {t("manage")}
                   </th>
                 </tr>
@@ -552,7 +600,7 @@ export default function PartsCatalogPage() {
                           </td>
                           <td className="px-6 py-5">
                             <span
-                              className={`rounded-full px-3 py-1 font-bold text-[11px] uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
+                              className={`rounded-full px-3 py-1 font-bold text-xs uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
                             >
                               {t(`part_category.${part.category}`)}
                             </span>
@@ -635,7 +683,7 @@ export default function PartsCatalogPage() {
                         </span>
                       </div>
                       <span
-                        className={`shrink-0 rounded-full px-2.5 py-1 font-bold text-[11px] uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
+                        className={`shrink-0 rounded-full px-2.5 py-1 font-bold text-xs uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
                       >
                         {t(`part_category.${part.category}`)}
                       </span>
@@ -645,7 +693,7 @@ export default function PartsCatalogPage() {
                     </div>
                     <div className="flex items-end justify-between">
                       <span
-                        className={`font-bold text-[11px] uppercase tracking-widest ${isLow ? "text-error" : "text-on-surface-variant"}`}
+                        className={`font-bold text-xs uppercase tracking-wide ${isLow ? "text-error" : "text-on-surface-variant"}`}
                       >
                         {isLow ? t("low_stock") : t("stock_level")}
                       </span>
@@ -694,7 +742,11 @@ export default function PartsCatalogPage() {
       )}
 
       {toast && (
-        <div className="fixed end-6 bottom-6 z-50 flex animate-[fadeSlideUp_0.3s_ease-out] items-center gap-2 rounded-2xl bg-on-surface px-5 py-3 font-bold text-on-primary text-sm shadow-2xl">
+        <div
+          aria-live="polite"
+          className="fixed end-6 bottom-6 z-50 flex animate-[fadeSlideUp_0.3s_ease-out] items-center gap-2 rounded-2xl bg-on-surface px-5 py-3 font-bold text-on-primary text-sm shadow-2xl"
+          role="status"
+        >
           <Icon name="check_circle" size="sm" />
           {toast}
         </div>

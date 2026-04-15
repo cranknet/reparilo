@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { RepairFormData } from "@/components/modules/repairs/add-repair-modal";
+import AddRepairModal from "@/components/modules/repairs/add-repair-modal";
 import AiPricingCallout from "@/components/modules/repairs/ai-pricing-callout";
 import CategoryHealth from "@/components/modules/repairs/category-health";
 import type { SortOption } from "@/components/modules/repairs/repair-filters";
@@ -111,6 +113,11 @@ export default function RepairsPage() {
   );
   const [activeSort, setActiveSort] = useState<SortOption>("recently_added");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  const handleAddRepair = async (_data: RepairFormData) => {
+    // TODO: Replace with real API call
+  };
 
   const { avgPrice, topCategory } = useMemo(() => {
     const avg = Math.round(
@@ -171,7 +178,13 @@ export default function RepairsPage() {
             · {t("avg_price_short", { price: formatDzd(avgPrice) })}
           </p>
         </div>
-        <Button icon="add" size="md" type="button" variant="gradient">
+        <Button
+          icon="add"
+          onClick={() => setShowAddModal(true)}
+          size="md"
+          type="button"
+          variant="gradient"
+        >
           {t("add_new_repair")}
         </Button>
       </div>
@@ -227,6 +240,12 @@ export default function RepairsPage() {
         </div>
         <CategoryHealth repairs={MOCK_REPAIRS} />
       </div>
+
+      <AddRepairModal
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddRepair}
+        open={showAddModal}
+      />
     </>
   );
 }

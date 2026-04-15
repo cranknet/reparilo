@@ -115,9 +115,9 @@ export default function FrontDeskPage() {
         </div>
       </div>
 
-      <section className="mb-8 flex flex-wrap items-center gap-4 rounded-xl bg-surface-container-low p-4">
+      <section className="mb-8 space-y-2">
         <button
-          className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-6 py-2.5 font-bold text-white shadow-premium transition-opacity hover:opacity-90"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-6 py-3 font-bold text-white shadow-premium transition-opacity hover:opacity-90 sm:w-auto"
           type="button"
         >
           <span
@@ -128,28 +128,35 @@ export default function FrontDeskPage() {
           </span>
           {t("new_intake")}
         </button>
-        <button
-          className="flex items-center gap-2 rounded-xl bg-secondary-fixed-dim px-6 py-2.5 font-semibold text-on-secondary-fixed transition-colors hover:bg-secondary-container"
-          type="button"
-        >
-          <span className="material-symbols-outlined">search</span>
-          {t("front_desk.walk_in_lookup")}
-        </button>
-        <div className="mx-2 h-8 w-px bg-outline-variant/30" />
-        <button
-          className="flex items-center gap-2 rounded-xl px-4 py-2.5 font-semibold text-primary transition-colors hover:bg-surface-container-high"
-          type="button"
-        >
-          <span className="material-symbols-outlined">print</span>
-          {t("front_desk.print_receipt")}
-        </button>
-        <button
-          className="flex items-center gap-2 rounded-xl px-4 py-2.5 font-semibold text-primary transition-colors hover:bg-surface-container-high"
-          type="button"
-        >
-          <span className="material-symbols-outlined">summarize</span>
-          {t("daily_summary")}
-        </button>
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+          <button
+            className="flex flex-col items-center gap-1 rounded-xl bg-surface-container-high px-2 py-2.5 font-semibold text-on-surface-variant transition-colors hover:bg-secondary-fixed-dim hover:text-on-secondary-fixed sm:flex-row sm:justify-center sm:gap-2 sm:px-6"
+            type="button"
+          >
+            <span className="material-symbols-outlined text-lg">search</span>
+            <span className="text-[10px] leading-tight sm:text-xs sm:leading-normal">
+              {t("front_desk.walk_in_lookup")}
+            </span>
+          </button>
+          <button
+            className="flex flex-col items-center gap-1 rounded-xl bg-surface-container-high px-2 py-2.5 font-semibold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary sm:flex-row sm:justify-center sm:gap-2 sm:px-4"
+            type="button"
+          >
+            <span className="material-symbols-outlined text-lg">print</span>
+            <span className="text-[10px] leading-tight sm:text-xs sm:leading-normal">
+              {t("front_desk.print_receipt")}
+            </span>
+          </button>
+          <button
+            className="flex flex-col items-center gap-1 rounded-xl bg-surface-container-high px-2 py-2.5 font-semibold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary sm:flex-row sm:justify-center sm:gap-2 sm:px-4"
+            type="button"
+          >
+            <span className="material-symbols-outlined text-lg">summarize</span>
+            <span className="text-[10px] leading-tight sm:text-xs sm:leading-normal">
+              {t("daily_summary")}
+            </span>
+          </button>
+        </div>
       </section>
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-12">

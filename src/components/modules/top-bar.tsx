@@ -13,7 +13,7 @@ export default function TopBar() {
   const setRole = useAuthStore((s) => s.setRole);
 
   return (
-    <header className="fixed top-0 right-0 z-40 flex h-16 w-full items-center justify-between border-slate-100 border-b bg-white/80 px-4 shadow-sm backdrop-blur-md md:px-8 lg:w-[calc(100%-16rem)]">
+    <header className="fixed top-0 right-0 z-40 flex h-16 w-full items-center justify-between border-outline-variant border-b bg-surface/95 px-4 shadow-sm backdrop-blur-sm md:px-8 lg:w-[calc(100%-16rem)]">
       <div className="flex flex-1 items-center gap-4">
         <div className="flex items-center gap-2 lg:hidden">
           <span className="material-symbols-outlined font-bold text-primary">
@@ -24,7 +24,7 @@ export default function TopBar() {
           </span>
         </div>
         <div className="group relative hidden w-full max-w-xs md:block md:w-96">
-          <span className="material-symbols-outlined absolute top-1/2 left-3 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary">
+          <span className="material-symbols-outlined absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant transition-colors group-focus-within:text-primary">
             search
           </span>
           <input
@@ -40,7 +40,7 @@ export default function TopBar() {
         {import.meta.env.DEV && (
           <select
             aria-label="DEV: Switch role"
-            className="rounded-lg border border-amber-400 bg-amber-50 px-2 py-1 font-bold text-[10px] text-amber-800 uppercase"
+            className="rounded-lg border border-tertiary-container bg-tertiary-container px-2 py-1 font-bold text-on-tertiary-container text-xs uppercase"
             onChange={(e) => setRole(e.target.value as RoleType)}
             title="DEV: Switch role"
             value={role}
@@ -54,14 +54,15 @@ export default function TopBar() {
         )}
         <LanguageToggle />
         <button
-          className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-primary"
+          aria-label={t("notifications")}
+          className="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary"
           type="button"
         >
           <span className="material-symbols-outlined">notifications</span>
         </button>
-        <div className="hidden h-8 w-px bg-slate-200 md:block" />
+        <div className="hidden h-8 w-px bg-outline-variant md:block" />
         <button
-          className="hidden items-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-3 py-2 font-semibold text-white text-xs shadow-md transition-transform hover:scale-95 md:flex md:px-4 md:text-sm"
+          className="hidden items-center gap-2 rounded-xl bg-gradient-to-br from-primary to-surface-tint px-3 py-2 font-semibold text-on-primary text-xs shadow-md transition-transform hover:scale-95 md:flex md:px-4 md:text-sm"
           type="button"
         >
           <span className="material-symbols-outlined">

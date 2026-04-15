@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Icon } from "@/components/ui/icon";
 
 interface MetricCardProps {
   children?: ReactNode;
@@ -17,37 +16,34 @@ export function MetricCard({
   value,
   unit,
   detail,
-  icon,
-  iconColor = "text-primary",
+  icon: _icon,
+  iconColor: _iconColor,
   children,
   onClick,
 }: MetricCardProps) {
   const inner = (
     <>
-      <div className="mb-4 flex items-start justify-between">
-        <p className="font-bold text-on-surface-variant text-xs uppercase tracking-widest">
-          {label}
-        </p>
-        <Icon color={iconColor} name={icon} />
-      </div>
-      <div className="flex items-baseline gap-2">
+      <p className="font-medium text-on-surface-variant text-xs uppercase tracking-wide">
+        {label}
+      </p>
+      <div className="mt-1 flex items-baseline gap-2">
         <span className="font-extrabold font-headline text-4xl text-on-surface">
           {value}
         </span>
         {unit && (
-          <span className="font-bold text-on-surface-variant text-sm">
+          <span className="font-medium text-on-surface-variant text-sm">
             {unit}
           </span>
         )}
       </div>
-      <p className="mt-1 font-bold text-on-surface-variant text-xs">{detail}</p>
-      {children && <div className="mt-4">{children}</div>}
+      <p className="mt-1 text-on-surface-variant text-xs">{detail}</p>
+      {children && <div className="mt-3">{children}</div>}
     </>
   );
 
-  const sharedClass = `relative overflow-hidden rounded-xl bg-surface-container-low p-6 transition-all ${
+  const sharedClass = `relative overflow-hidden rounded-xl bg-surface-container-low p-5 transition-all ${
     onClick
-      ? "cursor-pointer ring-1 ring-outline hover:bg-surface-container-low/60 active:scale-[0.98] w-full text-left"
+      ? "cursor-pointer hover:bg-surface-container-high active:scale-[0.98] w-full text-left"
       : ""
   }`;
 
@@ -59,5 +55,11 @@ export function MetricCard({
     );
   }
 
-  return <div className={sharedClass}>{inner}</div>;
+  return (
+    <div className={sharedClass} role="status">
+      {inner}
+    </div>
+  );
 }
+
+export default MetricCard;

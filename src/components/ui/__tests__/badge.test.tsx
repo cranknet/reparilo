@@ -26,7 +26,7 @@ describe("Badge", () => {
     render(<Badge size="sm">S</Badge>);
     const el = screen.getByText("S");
     expect(el).toHaveClass("px-2");
-    expect(el).toHaveClass("text-[10px]");
+    expect(el).toHaveClass("text-xs");
   });
 
   it("applies md size by default", () => {

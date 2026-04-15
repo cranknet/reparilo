@@ -25,13 +25,13 @@ export default function FinancialTrend({ data }: FinancialTrendProps) {
         <div className="flex gap-4">
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-primary" />
-            <span className="font-bold text-[10px] text-on-surface-variant uppercase">
+            <span className="font-bold text-on-surface-variant text-xs uppercase">
               {t("revenue")}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-slate-400" />
-            <span className="font-bold text-[10px] text-on-surface-variant uppercase">
+            <div className="h-2 w-2 rounded-full bg-on-surface-variant/60" />
+            <span className="font-bold text-on-surface-variant text-xs uppercase">
               {t("cost")}
             </span>
           </div>
@@ -44,7 +44,7 @@ export default function FinancialTrend({ data }: FinancialTrendProps) {
             key={DAY_KEYS[i]}
           >
             <div
-              className="w-full rounded-t bg-slate-300 transition-all duration-500"
+              className="w-full rounded-t bg-outline-variant/40 transition-all duration-500"
               style={{ height: `${(day.cost / maxVal) * 100}%` }}
             />
             <div

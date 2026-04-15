@@ -46,7 +46,7 @@ export default function JobsFilters({
       >
         <button
           className={[
-            "min-h-[44px] shrink-0 rounded-lg px-3 py-2 font-bold font-label text-[11px] uppercase tracking-wider transition-all",
+            "min-h-[44px] shrink-0 rounded-lg px-3 py-2 font-bold font-label text-xs uppercase tracking-wider transition-all",
             activeGroup === "ALL" && activeStatus === "ALL"
               ? "bg-primary text-on-primary"
               : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container",
@@ -60,7 +60,7 @@ export default function JobsFilters({
         {STATUS_GROUPS.map((group) => (
           <button
             className={[
-              "min-h-[44px] shrink-0 rounded-lg px-3 py-2 font-bold font-label text-[11px] uppercase tracking-wider transition-all",
+              "min-h-[44px] shrink-0 rounded-lg px-3 py-2 font-bold font-label text-xs uppercase tracking-wider transition-all",
               activeGroup === group.key && activeStatus === "ALL"
                 ? "bg-primary text-on-primary"
                 : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container",
@@ -81,7 +81,7 @@ export default function JobsFilters({
             ).map((s) => (
               <button
                 className={[
-                  "min-h-[44px] shrink-0 rounded-lg px-3 py-2 font-bold font-label text-[11px] uppercase tracking-wider transition-all",
+                  "min-h-[44px] shrink-0 rounded-lg px-3 py-2 font-bold font-label text-xs uppercase tracking-wider transition-all",
                   activeStatus === s
                     ? "bg-primary text-on-primary"
                     : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container",

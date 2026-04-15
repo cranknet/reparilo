@@ -21,7 +21,7 @@ const STATUS_CHIP_STYLES: Record<string, string> = {
   CANCELLED: "bg-outline-variant/20 text-on-surface-variant",
 };
 
-const STATUS_BAR_STYLES: Record<string, string> = {
+const STATUS_DOT_STYLES: Record<string, string> = {
   INTAKE: "bg-secondary",
   WAITING_FOR_PARTS: "bg-tertiary",
   IN_REPAIR: "bg-primary",
@@ -60,13 +60,10 @@ export default function ActiveRepairsQueue({ jobs }: ActiveRepairsQueueProps) {
               className="cursor-pointer overflow-hidden rounded-xl bg-surface-container-lowest shadow-premium transition-colors hover:bg-surface-container-low"
               key={job.id}
             >
-              <div
-                className={`h-1 w-full ${STATUS_BAR_STYLES[job.status] ?? "bg-primary"}`}
-              />
               <div className="p-5">
                 <div className="mb-4 flex items-start justify-between">
                   <div>
-                    <p className="mb-1 font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">
+                    <p className="mb-1 font-bold text-on-surface-variant text-xs uppercase tracking-wide">
                       {t("job_id")}: {job.id}
                     </p>
                     <h3 className="font-extrabold font-headline text-primary text-xl">
@@ -77,14 +74,17 @@ export default function ActiveRepairsQueue({ jobs }: ActiveRepairsQueueProps) {
                     </p>
                   </div>
                   <span
-                    className={`rounded-full px-3 py-1 font-bold font-label text-xs uppercase ${STATUS_CHIP_STYLES[job.status] ?? "bg-primary/10 text-primary"}`}
+                    className={`flex items-center gap-1.5 rounded-full px-3 py-1 font-bold font-label text-xs uppercase ${STATUS_CHIP_STYLES[job.status] ?? "bg-primary/10 text-primary"}`}
                   >
+                    <span
+                      className={`inline-block h-2 w-2 rounded-full ${STATUS_DOT_STYLES[job.status] ?? "bg-primary"}`}
+                    />
                     {t(`status.${job.status}`)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between border-outline-variant/5 border-t pt-4">
                   <div>
-                    <p className="font-bold text-[10px] text-on-surface-variant uppercase">
+                    <p className="font-bold text-on-surface-variant text-xs uppercase">
                       {t("front_desk.estimated_completion")}
                     </p>
                     <p className="font-bold text-sm">
@@ -92,7 +92,7 @@ export default function ActiveRepairsQueue({ jobs }: ActiveRepairsQueueProps) {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-[10px] text-on-surface-variant uppercase">
+                    <p className="font-bold text-on-surface-variant text-xs uppercase">
                       {t("technician")}
                     </p>
                     <p className="font-bold text-sm">{job.technician}</p>

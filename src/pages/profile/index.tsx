@@ -86,7 +86,7 @@ const INPUT_CLS =
   "w-full rounded-xl border-none bg-surface-container-lowest px-4 py-3.5 text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20";
 
 const LABEL_CLS =
-  "block font-bold text-[11px] text-on-surface-variant uppercase tracking-wider";
+  "block font-bold text-xs text-on-surface-variant uppercase tracking-wider";
 
 function getInitials(name: string): string {
   return name
@@ -442,7 +442,7 @@ export default function ProfilePage() {
                     />
                   ))}
                 </div>
-                <p className="font-bold text-[10px] text-on-surface-variant uppercase">
+                <p className="font-bold text-on-surface-variant text-xs uppercase">
                   {t(STRENGTH_LABELS[strength - 1] ?? "profile_strength_weak")}
                 </p>
               </div>
@@ -473,7 +473,7 @@ export default function ProfilePage() {
 
         <div className="flex justify-end">
           <button
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#0040a1] to-[#0056d2] px-6 py-2.5 font-bold text-sm text-white shadow-lg shadow-primary/20 transition-all active:opacity-80"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-primary to-surface-tint px-6 py-2.5 font-bold text-on-primary text-sm shadow-lg shadow-primary/20 transition-all active:opacity-80"
             type="submit"
           >
             <span className="material-symbols-outlined text-[18px]">lock</span>
@@ -498,14 +498,14 @@ export default function ProfilePage() {
                   <p className="font-semibold text-sm">
                     Chrome on macOS — {t("profile_current_session")}
                   </p>
-                  <p className="text-[10px] text-on-surface-variant">
+                  <p className="text-on-surface-variant text-xs">
                     Algiers, DZ — 192.168.1.42
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                <span className="font-bold text-[10px] text-emerald-600 uppercase">
+                <span className="font-bold text-emerald-600 text-xs uppercase">
                   {t("profile_active")}
                 </span>
               </div>
@@ -518,7 +518,7 @@ export default function ProfilePage() {
                 </span>
                 <div>
                   <p className="font-semibold text-sm">Firefox on Windows</p>
-                  <p className="text-[10px] text-on-surface-variant">
+                  <p className="text-on-surface-variant text-xs">
                     Oran, DZ — 10.0.0.15 — 3 days ago
                   </p>
                 </div>
@@ -567,7 +567,7 @@ export default function ProfilePage() {
                 <p className="font-semibold text-sm">
                   {t(item.textKey, item.interpolations)}
                 </p>
-                <p className="mt-1 font-bold text-[10px] text-on-surface-variant/50 uppercase">
+                <p className="mt-1 font-bold text-on-surface-variant/50 text-xs uppercase">
                   {item.time}
                 </p>
               </div>
@@ -596,7 +596,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-        <section className="flex w-full flex-col items-center rounded-xl bg-surface-container-lowest/80 p-8 text-center shadow-[0_40px_80px_-20px_rgba(0,64,161,0.06)] lg:w-[320px] lg:shrink-0">
+        <section className="flex w-full flex-col items-center rounded-xl bg-surface-container-lowest/95 p-8 text-center shadow-[0_40px_80px_-20px_rgba(0,64,161,0.06)] lg:w-[320px] lg:shrink-0">
           <div className="relative">
             <div className="flex h-24 w-24 items-center justify-center rounded-full bg-surface-container-low font-bold font-headline text-3xl text-primary">
               {initials}
@@ -607,30 +607,30 @@ export default function ProfilePage() {
           <h3 className="mt-4 font-bold font-headline text-on-surface text-xl">
             {displayName}
           </h3>
-          <div className="mt-2 rounded-full bg-primary/10 px-3 py-1 font-bold text-[10px] text-primary tracking-widest">
+          <div className="mt-2 rounded-full bg-primary/10 px-3 py-1 font-bold text-primary text-xs tracking-wide">
             {t(`role.${role}`)}
           </div>
 
           <div className="mt-6 grid w-full grid-cols-2 gap-4 border-surface-container-high border-t pt-6">
             <div className="text-start">
-              <p className="font-bold text-[11px] text-on-surface-variant uppercase tracking-wider">
+              <p className="font-bold text-on-surface-variant text-xs uppercase tracking-wider">
                 {t("profile_completed")}
               </p>
               <p className="font-extrabold font-headline text-2xl text-primary">
                 127
               </p>
-              <p className="text-[11px] text-on-secondary-container">
+              <p className="text-on-secondary-container text-xs">
                 {t("profile_total_jobs")}
               </p>
             </div>
             <div className="text-start">
-              <p className="font-bold text-[11px] text-on-surface-variant uppercase tracking-wider">
+              <p className="font-bold text-on-surface-variant text-xs uppercase tracking-wider">
                 {t("profile_monthly")}
               </p>
               <p className="font-extrabold font-headline text-2xl text-primary">
                 43
               </p>
-              <p className="text-[11px] text-on-secondary-container">
+              <p className="text-on-secondary-container text-xs">
                 {t("profile_repairs")}
               </p>
             </div>
@@ -670,12 +670,12 @@ export default function ProfilePage() {
             ))}
           </div>
 
-          <div className="rounded-xl bg-surface-container-lowest/80 p-6 shadow-[0_40px_80px_-20px_rgba(0,64,161,0.06)] md:p-8">
+          <div className="rounded-xl bg-surface-container-lowest/95 p-6 shadow-[0_40px_80px_-20px_rgba(0,64,161,0.06)] md:p-8">
             {sectionRenderers[activeTab]()}
           </div>
 
           {isDirty && (
-            <div className="flex items-center justify-between rounded-xl bg-surface-container-highest/90 px-5 py-3 backdrop-blur-xl">
+            <div className="flex items-center justify-between rounded-xl bg-surface-container-highest/95 px-5 py-3 backdrop-blur-sm">
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-[18px] text-primary">
                   info
@@ -700,7 +700,7 @@ export default function ProfilePage() {
                   {t("cancel")}
                 </button>
                 <button
-                  className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#0040a1] to-[#0056d2] px-5 py-2.5 font-bold text-sm text-white shadow-lg shadow-primary/20 transition-all active:opacity-80"
+                  className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-primary to-surface-tint px-5 py-2.5 font-bold text-on-primary text-sm shadow-lg shadow-primary/20 transition-all active:opacity-80"
                   onClick={() => {
                     if (personalDirty) {
                       personalFormRef.current?.requestSubmit();

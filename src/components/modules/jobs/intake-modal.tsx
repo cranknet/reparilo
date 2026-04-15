@@ -68,7 +68,7 @@ const BRANDS = [
 export type { IntakeFormData };
 
 const labelCls =
-  "mb-1.5 ms-1 block font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant";
+  "mb-1.5 ms-1 block font-label text-xs font-bold uppercase tracking-wide text-on-surface-variant";
 const inputCls =
   "h-12 w-full rounded-xl bg-surface-container-highest px-4 text-on-surface transition-all focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary";
 const inputErrorCls =
@@ -77,7 +77,7 @@ const textareaCls =
   "w-full resize-none rounded-xl bg-surface-container-low p-4 text-sm text-on-surface transition-all placeholder:text-outline focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary";
 const textareaErrorCls =
   "w-full resize-none rounded-xl bg-surface-container-low p-4 text-sm text-on-surface ring-2 ring-error transition-all placeholder:text-outline focus:bg-surface-container-lowest focus:ring-primary";
-const errorCls = "ms-1 mt-1 font-label text-[11px] font-medium text-error";
+const errorCls = "ms-1 mt-1 font-label text-xs font-medium text-error";
 const requiredMarkCls = "ms-0.5 text-error";
 
 export default function IntakeModal({
@@ -190,7 +190,7 @@ export default function IntakeModal({
   return (
     <div
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center px-2 py-20 lg:p-4"
       role="dialog"
     >
       <button
@@ -199,23 +199,26 @@ export default function IntakeModal({
         onClick={onClose}
         type="button"
       />
-      <div className="modal-surface relative z-10 mx-4 flex w-full max-w-[960px] flex-col overflow-hidden rounded-xl shadow-2xl sm:mx-6">
-        <form onSubmit={handleSubmit}>
+      <div className="modal-surface relative z-10 flex max-h-full w-full max-w-[960px] flex-col overflow-hidden rounded-xl shadow-2xl">
+        <form
+          className="flex flex-1 flex-col overflow-hidden"
+          onSubmit={handleSubmit}
+        >
           {Object.keys(errors).length > 0 &&
             Object.values(touched).some(Boolean) && (
-              <div className="flex items-center gap-3 bg-error-container px-8 py-3">
+              <div className="flex items-center gap-3 bg-error-container px-4 py-3 md:px-8">
                 <span className="material-symbols-outlined text-on-error-container">
                   error
                 </span>
-                <p className="font-bold font-label text-[11px] text-on-error-container">
+                <p className="font-bold font-label text-on-error-container text-xs">
                   {t("intake.error_summary")}
                 </p>
               </div>
             )}
           {/* Header */}
-          <header className="flex items-center justify-between bg-surface-container-low px-8 py-6">
+          <header className="flex shrink-0 items-center justify-between bg-surface-container-low px-4 py-4 md:px-8 md:py-6">
             <div className="flex items-center gap-4">
-              <h1 className="font-bold font-headline text-2xl text-on-surface tracking-tight">
+              <h1 className="font-bold font-headline text-lg text-on-surface tracking-tight md:text-2xl">
                 {t("intake.title")}
               </h1>
               <span className="rounded-full bg-primary-fixed px-3 py-1 font-bold font-headline text-on-primary-fixed text-xs uppercase tracking-widest">
@@ -232,9 +235,9 @@ export default function IntakeModal({
           </header>
 
           {/* Body: Two Column Asymmetric Layout */}
-          <div className="flex flex-1 flex-col overflow-y-auto md:flex-row">
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto md:flex-row">
             {/* Left Column (60%) — Customer & Device */}
-            <section className="w-full space-y-8 bg-surface-container-low p-8 md:w-[60%]">
+            <section className="w-full space-y-6 bg-surface-container-low p-4 md:w-[60%] md:space-y-8 md:p-8">
               {/* Customer */}
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
@@ -412,7 +415,7 @@ export default function IntakeModal({
             </section>
 
             {/* Right Column (40%) — Technical Spec Sheet */}
-            <section className="flex w-full flex-1 flex-col space-y-8 bg-surface-container-lowest p-8 md:w-[40%]">
+            <section className="flex w-full flex-1 flex-col space-y-6 bg-surface-container-lowest p-4 md:w-[40%] md:space-y-8 md:p-8">
               <h2 className="flex items-center gap-2 font-bold font-headline text-lg text-on-surface">
                 <span className="material-symbols-outlined text-primary">
                   assignment
@@ -462,7 +465,7 @@ export default function IntakeModal({
                 <div className="grid grid-cols-2 gap-6 py-4">
                   <div>
                     <label
-                      className="mb-0.5 block font-bold font-label text-[11px] text-on-surface-variant uppercase tracking-widest"
+                      className="mb-0.5 block font-bold font-label text-on-surface-variant text-xs uppercase tracking-wide"
                       htmlFor="estimated-cost"
                     >
                       {t("intake.estimated_cost")}
@@ -488,7 +491,7 @@ export default function IntakeModal({
                   </div>
                   <div>
                     <label
-                      className="mb-0.5 block font-bold font-label text-[11px] text-on-surface-variant uppercase tracking-widest"
+                      className="mb-0.5 block font-bold font-label text-on-surface-variant text-xs uppercase tracking-wide"
                       htmlFor="deposit"
                     >
                       {t("intake.required_deposit")}
@@ -593,11 +596,11 @@ export default function IntakeModal({
                       <p className="font-bold font-headline text-on-surface text-sm">
                         {t("intake.photo_upload_title")}
                       </p>
-                      <p className="font-label font-medium text-[11px] text-on-surface-variant">
+                      <p className="font-label font-medium text-on-surface-variant text-xs">
                         {t("intake.photo_upload_hint")}
                       </p>
                     </div>
-                    <span className="ms-auto rounded-full bg-primary-fixed px-2.5 py-1 font-bold font-label text-[11px] text-on-primary-fixed">
+                    <span className="ms-auto rounded-full bg-primary-fixed px-2.5 py-1 font-bold font-label text-on-primary-fixed text-xs">
                       0 {t("intake.photo_count_label")}
                     </span>
                   </button>
@@ -607,7 +610,7 @@ export default function IntakeModal({
           </div>
 
           {/* Footer */}
-          <footer className="flex items-center justify-end gap-4 border-outline-variant border-t bg-surface-container-high px-8 py-6">
+          <footer className="flex shrink-0 items-center justify-end gap-4 border-outline-variant border-t bg-surface-container-high px-4 py-4 md:px-8 md:py-6">
             <button
               className="px-6 py-3 font-bold font-headline text-on-surface-variant text-sm transition-colors hover:text-on-surface"
               onClick={onClose}

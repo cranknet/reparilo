@@ -15,6 +15,8 @@ describe("Checkbox", () => {
     const el = screen.getByRole("checkbox");
     expect(el).toHaveClass("h-5");
     expect(el).toHaveClass("w-5");
+    expect(el).toHaveClass("min-h-[44px]");
+    expect(el).toHaveClass("min-w-[44px]");
     expect(el).toHaveClass("rounded");
     expect(el).toHaveClass("text-primary");
   });

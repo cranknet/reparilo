@@ -19,7 +19,7 @@ function LanguageSwitcher() {
   return (
     <button
       aria-label="Switch language"
-      className="material-symbols-outlined rounded-full p-2 text-slate-600 transition-colors hover:bg-slate-200/50"
+      className="material-symbols-outlined rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high"
       onClick={nextLang}
       type="button"
     >
@@ -108,7 +108,7 @@ function LookupForm({ onSearch }: { onSearch: (code: string) => void }) {
               className="pointer-events-none absolute inset-0 opacity-[0.03]"
               style={{
                 backgroundImage:
-                  "radial-gradient(#0040a1 0.5px, transparent 0.5px)",
+                  "radial-gradient(var(--color-primary) 0.5px, transparent 0.5px)",
                 backgroundSize: "24px 24px",
               }}
             />
@@ -205,12 +205,12 @@ function LookupForm({ onSearch }: { onSearch: (code: string) => void }) {
         </div>
       </main>
 
-      <footer className="mt-auto w-full border-slate-200/30 border-t py-8">
+      <footer className="mt-auto w-full border-outline-variant/30 border-t py-8">
         <div className="flex w-full flex-col items-center gap-2 text-center">
-          <span className="font-body text-slate-500 text-xs uppercase tracking-wider">
+          <span className="font-body text-on-surface-variant text-xs uppercase tracking-wider">
             © 2026 Reparilo. All rights reserved.
           </span>
-          <span className="cursor-default font-body text-slate-400 text-xs uppercase tracking-wider transition-all hover:text-slate-900">
+          <span className="cursor-default font-body text-on-surface-variant text-xs uppercase tracking-wider transition-all hover:text-on-surface">
             Powered by Reparilo Engineering
           </span>
         </div>
@@ -255,7 +255,7 @@ function StatusView({
             <div className="flex flex-1 flex-col">
               <div className="flex items-center justify-between bg-surface-container-highest px-8 py-6">
                 <div className="flex items-center gap-3">
-                  <span className="rounded-full bg-primary px-4 py-1.5 font-bold font-label text-[11px] text-white uppercase tracking-widest">
+                  <span className="rounded-full bg-primary px-4 py-1.5 font-bold font-label text-on-primary text-xs uppercase tracking-wide">
                     {t(`status.${data.status}`)}
                   </span>
                   <span className="font-medium text-on-surface-variant text-sm">
@@ -275,7 +275,7 @@ function StatusView({
               <div className="space-y-10 p-8">
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                   <div className="space-y-1">
-                    <p className="font-bold font-label text-[10px] text-on-surface-variant uppercase tracking-[0.15em]">
+                    <p className="font-bold font-label text-on-surface-variant text-xs uppercase tracking-[0.15em]">
                       {t("tracking_device_model")}
                     </p>
                     <p className="font-bold font-headline text-on-surface text-xl">
@@ -283,7 +283,7 @@ function StatusView({
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="font-bold font-label text-[10px] text-on-surface-variant uppercase tracking-[0.15em]">
+                    <p className="font-bold font-label text-on-surface-variant text-xs uppercase tracking-[0.15em]">
                       {t("tracking_reported_issue")}
                     </p>
                     <p className="font-bold font-headline text-on-surface text-xl">
@@ -291,7 +291,7 @@ function StatusView({
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="font-bold font-label text-[10px] text-on-surface-variant uppercase tracking-[0.15em]">
+                    <p className="font-bold font-label text-on-surface-variant text-xs uppercase tracking-[0.15em]">
                       {t("tracking_job_reference")}
                     </p>
                     <p className="inline-block rounded bg-surface-container-low px-2 py-1 font-mono font-semibold text-lg text-primary-container">
@@ -299,7 +299,7 @@ function StatusView({
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="font-bold font-label text-[10px] text-on-surface-variant uppercase tracking-[0.15em]">
+                    <p className="font-bold font-label text-on-surface-variant text-xs uppercase tracking-[0.15em]">
                       {t("tracking_estimated_completion")}
                     </p>
                     <p className="font-bold font-headline text-lg text-on-surface">
@@ -328,7 +328,7 @@ function StatusView({
                           {isCompleted && (
                             <div className="z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary">
                               <span
-                                className="material-symbols-outlined text-sm text-white"
+                                className="material-symbols-outlined text-on-primary text-sm"
                                 style={{
                                   fontVariationSettings: "'wght' 700",
                                 }}
@@ -373,7 +373,7 @@ function StatusView({
                     {data.shopName}
                   </span>
                 </div>
-                <div className="flex items-center gap-6 font-medium text-[11px] text-on-surface-variant">
+                <div className="flex items-center gap-6 font-medium text-on-surface-variant text-xs">
                   <div className="flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-sm">
                       call
@@ -399,7 +399,7 @@ function StatusView({
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   <div className="absolute start-3 bottom-3 flex items-center gap-2">
                     <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-                    <span className="font-bold text-[10px] text-white uppercase tracking-widest">
+                    <span className="font-bold text-on-primary text-xs uppercase tracking-wide">
                       {t("tracking_live_bench")}
                     </span>
                   </div>
@@ -408,18 +408,18 @@ function StatusView({
 
               <div className="space-y-6">
                 <div>
-                  <p className="mb-2 font-bold font-label text-[10px] text-on-surface-variant uppercase tracking-widest">
+                  <p className="mb-2 font-bold font-label text-on-surface-variant text-xs uppercase tracking-wide">
                     {t("tracking_technician")}
                   </p>
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-container font-bold font-headline text-white text-xs">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-container font-bold font-headline text-on-primary text-xs">
                       {data.technician.initials}
                     </div>
                     <div>
                       <p className="font-bold text-on-surface text-sm">
                         {data.technician.name}
                       </p>
-                      <p className="text-[10px] text-on-surface-variant">
+                      <p className="text-on-surface-variant text-xs">
                         {data.technician.level}
                       </p>
                     </div>
@@ -431,18 +431,18 @@ function StatusView({
                     <span className="material-symbols-outlined text-lg text-primary">
                       verified_user
                     </span>
-                    <span className="font-bold text-[10px] uppercase tracking-widest">
+                    <span className="font-bold text-xs uppercase tracking-wide">
                       {t("tracking_repair_guarantee")}
                     </span>
                   </div>
-                  <p className="text-[11px] text-on-surface-variant leading-relaxed">
+                  <p className="text-on-surface-variant text-xs leading-relaxed">
                     {t("tracking_guarantee_desc")}
                   </p>
                 </div>
               </div>
 
               <button
-                className="group mt-auto flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-6 py-4 font-bold text-sm text-white tracking-wide shadow-lg shadow-primary/20 transition-all hover:opacity-90"
+                className="group mt-auto flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-6 py-4 font-bold text-on-primary text-sm tracking-wide shadow-lg shadow-primary/20 transition-all hover:opacity-90"
                 type="button"
               >
                 {t("tracking_contact_shop")}
@@ -455,12 +455,12 @@ function StatusView({
         </div>
       </main>
 
-      <footer className="mt-auto w-full border-slate-200/30 border-t py-8">
+      <footer className="mt-auto w-full border-outline-variant/30 border-t py-8">
         <div className="flex w-full flex-col items-center gap-2 text-center">
-          <span className="font-body text-slate-500 text-xs uppercase tracking-wider">
+          <span className="font-body text-on-surface-variant text-xs uppercase tracking-wider">
             © 2026 Reparilo. All rights reserved.
           </span>
-          <span className="font-body text-slate-400 text-xs uppercase tracking-wider transition-all hover:text-slate-900">
+          <span className="font-body text-on-surface-variant text-xs uppercase tracking-wider transition-all hover:text-on-surface">
             Powered by Reparilo Engineering
           </span>
         </div>

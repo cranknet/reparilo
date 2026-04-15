@@ -1,11 +1,11 @@
 import type { JobStatusType } from "@shared/constants";
 import { useTranslation } from "react-i18next";
-import MetricCard from "@/components/modules/dashboard/metric-card";
 import PartsAlert from "@/components/modules/dashboard/parts-alert";
 import PriorityActions from "@/components/modules/dashboard/priority-actions";
 import RecentActivity from "@/components/modules/dashboard/recent-activity";
 import TechJobPipeline from "@/components/modules/dashboard/tech-job-pipeline";
 import TodaySchedule from "@/components/modules/dashboard/today-schedule";
+import MetricCard from "@/components/ui/metric-card";
 
 const MOCK_PIPELINE_COUNTS: Record<JobStatusType, number> = {
   INTAKE: 1,
@@ -113,7 +113,7 @@ export default function TechnicianDashboardPage() {
             </span>
           </button>
           <button
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-4 py-2.5 font-bold font-headline text-sm text-white shadow-lg shadow-primary/20 transition-all hover:opacity-90 sm:flex-none md:px-8"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-4 py-2.5 font-bold font-headline text-on-primary text-sm shadow-lg shadow-primary/20 transition-all hover:opacity-90 sm:flex-none md:px-8"
             type="button"
           >
             <span className="material-symbols-outlined text-[18px] md:text-[20px]">
@@ -136,7 +136,7 @@ export default function TechnicianDashboardPage() {
           <div className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
             <div className="h-full w-2/3 bg-primary" />
           </div>
-          <span className="mt-2 block font-bold text-[10px] text-primary">
+          <span className="mt-2 block font-bold text-primary text-xs">
             66% {t("tech_dashboard.load")}
           </span>
         </MetricCard>
@@ -181,7 +181,7 @@ export default function TechnicianDashboardPage() {
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((i) => (
               <div
-                className={`h-1 flex-1 rounded-full ${i <= 4 ? "bg-amber-500" : "bg-surface-container-highest"}`}
+                className={`h-1 flex-1 rounded-full ${i <= 4 ? "bg-tertiary" : "bg-surface-container-highest"}`}
                 key={i}
               />
             ))}

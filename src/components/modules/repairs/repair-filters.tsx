@@ -42,38 +42,64 @@ export default function RepairFilters({
 
   return (
     <div className="flex flex-col gap-3">
-      <div
-        className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-      >
-        <div className="relative shrink-0">
-          <span className="material-symbols-outlined absolute top-1/2 left-3 -translate-y-1/2 text-[18px] text-on-surface-variant">
-            search
-          </span>
-          <input
-            className="rounded-xl bg-surface-container-high px-4 py-2.5 pl-10 font-body text-on-surface text-sm outline-none placeholder:text-on-surface-variant/60 focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary/20"
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={t("search_repairs")}
-            type="text"
-            value={searchQuery}
-          />
-        </div>
-        {CATEGORIES.map((cat) => (
-          <button
-            className={`shrink-0 rounded-full px-4 py-2 font-bold font-headline text-xs uppercase tracking-wide transition-all ${
-              activeCategory === cat
-                ? "bg-primary text-white"
-                : "bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest"
-            }`}
-            key={cat}
-            onClick={() => onCategoryChange(cat)}
-            type="button"
-          >
-            {cat === "ALL" ? t("all_repairs") : t(`repair_category.${cat}`)}
-          </button>
-        ))}
+      <div className="relative w-full">
+        <span className="material-symbols-outlined absolute start-3 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant">
+          search
+        </span>
+        <input
+          className="w-full rounded-xl bg-surface-container-high py-2.5 ps-10 pe-4 font-body text-on-surface text-sm outline-none placeholder:text-on-surface-variant/60 focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary/20"
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder={t("search_repairs")}
+          type="text"
+          value={searchQuery}
+        />
       </div>
+
       <div className="flex items-center gap-2">
+        <div className="relative sm:hidden">
+          <select
+            aria-label={t("all_repairs")}
+            className="h-10 w-full appearance-none rounded-xl border-none bg-surface-container-highest px-4 pe-10 text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/20"
+            onChange={(e) =>
+              onCategoryChange(
+                e.target.value === "ALL"
+                  ? "ALL"
+                  : (e.target.value as RepairCategory)
+              )
+            }
+            value={activeCategory}
+          >
+            {CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat === "ALL" ? t("all_repairs") : t(`repair_category.${cat}`)}
+              </option>
+            ))}
+          </select>
+          <span className="material-symbols-outlined pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">
+            expand_more
+          </span>
+        </div>
+
+        <div
+          className="hidden items-center gap-2 overflow-x-auto pb-1 sm:flex"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {CATEGORIES.map((cat) => (
+            <button
+              className={`shrink-0 rounded-full px-4 py-2 font-bold font-headline text-xs uppercase tracking-wide transition-all ${
+                activeCategory === cat
+                  ? "bg-primary text-white"
+                  : "bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest"
+              }`}
+              key={cat}
+              onClick={() => onCategoryChange(cat)}
+              type="button"
+            >
+              {cat === "ALL" ? t("all_repairs") : t(`repair_category.${cat}`)}
+            </button>
+          ))}
+        </div>
+
         <span className="material-symbols-outlined text-base text-on-surface-variant">
           sort
         </span>

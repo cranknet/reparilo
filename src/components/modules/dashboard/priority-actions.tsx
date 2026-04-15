@@ -12,19 +12,19 @@ interface PriorityActionsProps {
 
 const VARIANT_STYLES: Record<string, string> = {
   default: "bg-surface-container-lowest",
-  warning: "bg-amber-100 dark:bg-amber-900/30",
+  warning: "bg-tertiary-container",
   urgent: "bg-error-container/50",
 };
 
 const BADGE_STYLES: Record<string, string> = {
   default: "bg-primary/10 text-primary",
-  warning: "bg-amber-500 text-white",
-  urgent: "bg-error text-white",
+  warning: "bg-tertiary text-on-tertiary",
+  urgent: "bg-error text-on-error",
 };
 
 const TEXT_STYLES: Record<string, string> = {
   default: "text-on-surface",
-  warning: "text-amber-900 dark:text-amber-200",
+  warning: "text-on-tertiary-container",
   urgent: "text-error",
 };
 

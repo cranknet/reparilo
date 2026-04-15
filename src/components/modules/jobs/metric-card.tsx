@@ -16,7 +16,7 @@ export default function JobMetricCard({
   return (
     <div className="rounded-xl bg-surface-container-lowest p-5 transition-all">
       <div className="flex items-start justify-between">
-        <p className="font-body font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">
+        <p className="font-body font-bold text-on-surface-variant text-xs uppercase tracking-wide">
           {label}
         </p>
         <span

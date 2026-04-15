@@ -42,9 +42,9 @@ function getStockStatus(item: PartsAlertItem) {
   }
   if (item.quantity <= item.threshold * 2) {
     return {
-      color: "bg-amber-500",
+      color: "bg-tertiary",
       labelKey: "tech_dashboard.left",
-      textColor: "text-amber-500",
+      textColor: "text-tertiary",
       width: `${pct}%`,
     };
   }

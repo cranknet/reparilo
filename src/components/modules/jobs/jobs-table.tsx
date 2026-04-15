@@ -19,22 +19,22 @@ export default function JobsTable({ jobs }: JobsTableProps) {
         <table className="w-full min-w-[640px] border-collapse text-left">
           <thead>
             <tr className="bg-surface-container-low">
-              <th className="p-4 font-body font-bold text-[11px] text-on-surface-variant uppercase tracking-widest">
+              <th className="p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-wide">
                 {t("job_id")}
               </th>
-              <th className="p-4 font-body font-bold text-[11px] text-on-surface-variant uppercase tracking-widest">
+              <th className="p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-wide">
                 {t("device")}
               </th>
-              <th className="hidden p-4 font-body font-bold text-[11px] text-on-surface-variant uppercase tracking-widest lg:table-cell">
+              <th className="hidden p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-wide lg:table-cell">
                 {t("customers")}
               </th>
-              <th className="p-4 text-center font-body font-bold text-[11px] text-on-surface-variant uppercase tracking-widest">
+              <th className="p-4 text-center font-body font-bold text-on-surface-variant text-xs uppercase tracking-wide">
                 {t("status_label")}
               </th>
-              <th className="p-4 font-body font-bold text-[11px] text-on-surface-variant uppercase tracking-widest">
+              <th className="p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-wide">
                 {t("technician")}
               </th>
-              <th className="p-4 text-right font-body font-bold text-[11px] text-on-surface-variant uppercase tracking-widest">
+              <th className="p-4 text-right font-body font-bold text-on-surface-variant text-xs uppercase tracking-wide">
                 <span className="sr-only">{t("actions")}</span>
               </th>
             </tr>
@@ -63,7 +63,7 @@ export default function JobsTable({ jobs }: JobsTableProps) {
                         {job.device}
                       </p>
                       {job.deviceSpec && (
-                        <p className="font-body text-[11px] text-on-surface-variant">
+                        <p className="font-body text-on-surface-variant text-xs">
                           {job.deviceSpec}
                         </p>
                       )}

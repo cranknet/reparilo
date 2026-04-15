@@ -44,12 +44,12 @@ export default function TodaySchedule({ items }: TodayScheduleProps) {
                     — {item.customerName}
                   </span>
                 </h5>
-                <p className="mt-1 text-[10px] text-on-surface-variant">
+                <p className="mt-1 text-on-surface-variant text-xs">
                   {t("job_id")}: {item.id} &bull; {item.repairType}
                 </p>
               </div>
               <button
-                className="rounded-full bg-secondary/10 px-3 py-1 font-black text-[10px] text-secondary uppercase tracking-tighter transition-colors hover:bg-secondary hover:text-white"
+                className="rounded-full bg-secondary/10 px-3 py-1 font-black text-secondary text-xs uppercase tracking-tighter transition-colors hover:bg-secondary hover:text-white"
                 type="button"
               >
                 {t("tech_dashboard.update")}

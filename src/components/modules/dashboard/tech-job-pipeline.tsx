@@ -61,7 +61,7 @@ export default function TechJobPipeline({
         <h3 className="font-bold font-headline text-lg text-on-surface">
           {t("tech_dashboard.my_job_pipeline")}
         </h3>
-        <span className="font-bold text-[10px] text-primary uppercase">
+        <span className="font-bold text-primary text-xs uppercase">
           {t("realtime")}
         </span>
       </div>
@@ -78,12 +78,12 @@ export default function TechJobPipeline({
             type="button"
           >
             <div className="flex items-center gap-3">
-              <div className={`h-8 w-2 rounded-full ${color}`} />
+              <div className={`h-2.5 w-2.5 rounded-full ${color}`} />
               <div className="text-left">
                 <p className="font-bold text-on-surface text-sm">
                   {t(`status.${status}`)}
                 </p>
-                <p className="text-[10px] text-on-surface-variant">
+                <p className="text-on-surface-variant text-xs">
                   {t(descriptionKey)}
                 </p>
               </div>
@@ -96,14 +96,14 @@ export default function TechJobPipeline({
       </div>
       <div className="mt-8 rounded-xl bg-primary-fixed p-4 ring-1 ring-primary/20 transition-all">
         <div className="mb-2 flex items-center justify-between">
-          <p className="font-bold text-[10px] text-primary uppercase">
+          <p className="font-bold text-primary text-xs uppercase">
             {t("tech_dashboard.my_bench_capacity")}
           </p>
-          <span className="font-bold text-[10px] text-primary">
+          <span className="font-bold text-primary text-xs">
             {benchUsed}/{benchTotal} {t("tech_dashboard.slots")}
           </span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-white/50">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-surface-container-lowest/50">
           <div
             className="h-full rounded-full bg-primary transition-all duration-500"
             style={{ width: `${Math.min(100, Math.max(0, benchCapacity))}%` }}

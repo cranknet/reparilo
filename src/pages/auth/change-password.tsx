@@ -82,13 +82,13 @@ export default function ChangePasswordPage() {
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="space-y-1.5">
             <label
-              className="block font-extrabold text-[10px] text-on-surface-variant uppercase tracking-widest"
+              className="block font-extrabold text-on-surface-variant text-xs uppercase tracking-wide"
               htmlFor="oldPassword"
             >
               {t("auth_current_password")}
             </label>
             <div className="group relative">
-              <span className="material-symbols-outlined absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary">
+              <span className="material-symbols-outlined absolute start-4 top-1/2 -translate-y-1/2 text-on-surface-variant transition-colors group-focus-within:text-primary">
                 lock
               </span>
               <input
@@ -119,13 +119,13 @@ export default function ChangePasswordPage() {
 
           <div className="space-y-1.5">
             <label
-              className="block font-extrabold text-[10px] text-on-surface-variant uppercase tracking-widest"
+              className="block font-extrabold text-on-surface-variant text-xs uppercase tracking-wide"
               htmlFor="newPassword"
             >
               {t("auth_new_password")}
             </label>
             <div className="group relative">
-              <span className="material-symbols-outlined absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary">
+              <span className="material-symbols-outlined absolute start-4 top-1/2 -translate-y-1/2 text-on-surface-variant transition-colors group-focus-within:text-primary">
                 key
               </span>
               <input
@@ -156,13 +156,13 @@ export default function ChangePasswordPage() {
 
           <div className="space-y-1.5">
             <label
-              className="block font-extrabold text-[10px] text-on-surface-variant uppercase tracking-widest"
+              className="block font-extrabold text-on-surface-variant text-xs uppercase tracking-wide"
               htmlFor="confirmPassword"
             >
               {t("auth_confirm_new_password")}
             </label>
             <div className="group relative">
-              <span className="material-symbols-outlined absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary">
+              <span className="material-symbols-outlined absolute start-4 top-1/2 -translate-y-1/2 text-on-surface-variant transition-colors group-focus-within:text-primary">
                 key
               </span>
               <input
@@ -194,7 +194,7 @@ export default function ChangePasswordPage() {
           </div>
 
           <button
-            className="atelier-gradient flex w-full items-center justify-center gap-2 rounded-xl py-4 font-bold font-headline text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.01] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+            className="atelier-gradient flex w-full items-center justify-center gap-2 rounded-xl py-4 font-bold font-headline text-on-primary shadow-lg shadow-primary/20 transition-all hover:scale-[1.01] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={loading}
             type="submit"
           >

@@ -31,12 +31,12 @@ export default function WaitingCustomers({ customers }: WaitingCustomersProps) {
               key={customer.id}
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-container font-bold text-[10px] text-primary">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-container font-bold text-primary text-xs">
                   {customer.initials}
                 </div>
                 <p className="font-medium text-sm">{customer.name}</p>
               </div>
-              <span className="font-bold text-[10px] text-on-surface-variant">
+              <span className="font-bold text-on-surface-variant text-xs">
                 {t("front_desk.minutes_abbreviated", {
                   minutes: customer.waitMinutes,
                 })}

@@ -60,7 +60,7 @@ export default function JobPipeline({
       <div className="space-y-3">
         {PIPELINE_ITEMS.map(({ status, color, descriptionKey }) => (
           <button
-            className={`flex w-full cursor-pointer items-center justify-between rounded-lg p-3 text-left transition-all hover:bg-white/50 ${
+            className={`flex w-full cursor-pointer items-center justify-between rounded-lg p-3 text-left transition-all hover:bg-surface-container-low ${
               status === JobStatus.IN_REPAIR
                 ? "bg-surface-container-highest ring-1 ring-surface-container-low"
                 : ""
@@ -70,12 +70,12 @@ export default function JobPipeline({
             type="button"
           >
             <div className="flex items-center gap-3">
-              <div className={`h-8 w-2 rounded-full ${color}`} />
+              <div className={`h-2.5 w-2.5 rounded-full ${color}`} />
               <div className="text-left">
                 <p className="font-bold text-on-surface text-sm">
                   {t(`status.${status}`)}
                 </p>
-                <p className="text-[10px] text-on-surface-variant">
+                <p className="text-on-surface-variant text-xs">
                   {t(descriptionKey)}
                 </p>
               </div>
@@ -88,14 +88,14 @@ export default function JobPipeline({
       </div>
       <div className="mt-8 rounded-xl bg-primary-fixed p-4 ring-1 ring-primary/20 transition-all">
         <div className="mb-2 flex items-center justify-between">
-          <p className="font-bold text-[10px] text-primary uppercase">
+          <p className="font-bold text-primary text-xs uppercase">
             {t("bench_capacity")}
           </p>
-          <span className="font-bold text-[10px] text-primary">
+          <span className="font-bold text-primary text-xs">
             {benchCapacity}%
           </span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-white/50">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-surface-container-lowest/50">
           <div
             className="h-full rounded-full bg-primary transition-all duration-500"
             style={{ width: `${benchCapacity}%` }}

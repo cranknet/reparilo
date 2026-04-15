@@ -30,7 +30,7 @@ export default function QuickIntakeForm() {
         >
           <div>
             <label
-              className="mb-1 block font-bold text-[10px] text-on-surface-variant uppercase tracking-widest"
+              className="mb-1 block font-bold text-on-surface-variant text-xs uppercase tracking-wide"
               htmlFor="quick-intake-customer"
             >
               {t("front_desk.customer_name")}
@@ -45,7 +45,7 @@ export default function QuickIntakeForm() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label
-                className="mb-1 block font-bold text-[10px] text-on-surface-variant uppercase tracking-widest"
+                className="mb-1 block font-bold text-on-surface-variant text-xs uppercase tracking-wide"
                 htmlFor="quick-intake-phone"
               >
                 {t("front_desk.phone")}
@@ -59,7 +59,7 @@ export default function QuickIntakeForm() {
             </div>
             <div>
               <label
-                className="mb-1 block font-bold text-[10px] text-on-surface-variant uppercase tracking-widest"
+                className="mb-1 block font-bold text-on-surface-variant text-xs uppercase tracking-wide"
                 htmlFor="quick-intake-device"
               >
                 {t("front_desk.device")}
@@ -74,7 +74,7 @@ export default function QuickIntakeForm() {
           </div>
           <div>
             <label
-              className="mb-1 block font-bold text-[10px] text-on-surface-variant uppercase tracking-widest"
+              className="mb-1 block font-bold text-on-surface-variant text-xs uppercase tracking-wide"
               htmlFor="quick-intake-issue"
             >
               {t("front_desk.issue_description")}
