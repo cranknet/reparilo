@@ -686,7 +686,7 @@ export default function PartsCatalogPage() {
       {showAddModal && (
         <AddPartModal
           onClose={() => setShowAddModal(false)}
-          onSubmit={() => {
+          onSubmit={(_data) => {
             setShowAddModal(false);
             showToast(t("part_added_successfully"));
           }}
@@ -694,7 +694,7 @@ export default function PartsCatalogPage() {
       )}
 
       {toast && (
-        <div className="fade-in slide-in-from-bottom-4 fixed end-6 bottom-6 z-50 flex animate-in items-center gap-2 rounded-2xl bg-on-surface px-5 py-3 font-bold text-on-primary text-sm shadow-2xl">
+        <div className="fixed end-6 bottom-6 z-50 flex animate-[fadeSlideUp_0.3s_ease-out] items-center gap-2 rounded-2xl bg-on-surface px-5 py-3 font-bold text-on-primary text-sm shadow-2xl">
           <Icon name="check_circle" size="sm" />
           {toast}
         </div>

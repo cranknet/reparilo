@@ -52,7 +52,7 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
     if (
       key === "defaultPrice" &&
       value &&
-      Number.parseInt(String(value), 10) > 0
+      Number.parseFloat(String(value)) > 0
     ) {
       setErrors((prev) => ({ ...prev, defaultPrice: undefined }));
     }
@@ -69,7 +69,7 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
     if (!form.category) {
       newErrors.category = t("add_part_modal.error_category_required");
     }
-    const priceVal = Number.parseInt(form.defaultPrice, 10);
+    const priceVal = Number.parseFloat(form.defaultPrice);
     if (!form.defaultPrice || Number.isNaN(priceVal) || priceVal <= 0) {
       newErrors.defaultPrice = t("add_part_modal.error_price_invalid");
     }

@@ -49,6 +49,9 @@ const FOCUS_VISIBLE =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 function getInitials(username: string): string {
+  if (!username) {
+    return "?";
+  }
   return username.slice(0, 2).toUpperCase();
 }
 
@@ -118,7 +121,7 @@ export default function Sidebar() {
         <div className="rounded-xl bg-surface-container-high p-3">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-on-primary text-sm">
-              {username ? getInitials(username) : ""}
+              {getInitials(username)}
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate font-bold text-on-surface text-sm">

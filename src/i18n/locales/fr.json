@@ -340,7 +340,7 @@
   "auth_password_mismatch": "Les mots de passe ne correspondent pas",
   "auth_password_min_length": "Le mot de passe doit contenir au moins 8 caractères",
   "auth_sign_out_instead": "Déconnectez-vous plutôt",
-  "auth_sign_out_confirm": "Se déconnecter?",
+  "auth_sign_out_confirm": "Se déconnecter ?",
   "auth_login_failed": "Nom d'utilisateur ou mot de passe invalide",
   "auth_account_disabled": "Le compte est désactivé",
   "auth_change_password": "Changez votre mot de passe",
