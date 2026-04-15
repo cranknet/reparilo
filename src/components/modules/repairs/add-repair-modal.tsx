@@ -72,7 +72,7 @@ export default function AddRepairModal({
     Partial<Record<keyof RepairFormData, boolean>>
   >({});
 
-  const validate = useCallback((): boolean => {
+  function validate(): boolean {
     const newErrors: Partial<Record<keyof RepairFormData, string>> = {};
     if (!form.name.trim()) {
       newErrors.name = t("repair_modal.error_required");
@@ -85,7 +85,7 @@ export default function AddRepairModal({
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [form, t]);
+  }
 
   const update = useCallback(
     <K extends keyof RepairFormData>(key: K, value: RepairFormData[K]) => {
@@ -134,27 +134,24 @@ export default function AddRepairModal({
     };
   }, [open, onClose]);
 
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      setTouched({ name: true, basePrice: true, duration: true });
-      if (!validate()) {
-        return;
-      }
-      setIsSubmitting(true);
-      try {
-        await onSubmit(form);
-      } catch {
-        setIsSubmitting(false);
-        return;
-      }
-      setForm(INITIAL_FORM);
-      setTouched({});
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTouched({ name: true, basePrice: true, duration: true });
+    if (!validate()) {
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await onSubmit(form);
+    } catch {
       setIsSubmitting(false);
-      onClose();
-    },
-    [form, onSubmit, onClose, validate]
-  );
+      return;
+    }
+    setForm(INITIAL_FORM);
+    setTouched({});
+    setIsSubmitting(false);
+    onClose();
+  };
 
   if (!open) {
     return null;

@@ -20,7 +20,7 @@ const STRENGTH_COLORS = [
   "bg-error",
   "bg-tertiary",
   "bg-yellow-500",
-  "bg-emerald-500",
+  "bg-success",
 ];
 
 const STRENGTH_LABELS = [
@@ -33,7 +33,7 @@ const STRENGTH_LABELS = [
 const ACTIVITY_ICONS: Record<string, string> = {
   edit_square: "bg-secondary-container text-on-secondary-container",
   inventory_2: "bg-surface-container-high text-on-surface-variant",
-  check_circle: "bg-emerald-50 text-emerald-600",
+  check_circle: "bg-success/10 text-success",
   person_add: "bg-primary/10 text-primary",
   settings: "bg-surface-container-high text-on-surface-variant",
 };
@@ -504,8 +504,8 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                <span className="font-bold text-emerald-600 text-xs uppercase">
+                <div className="h-2.5 w-2.5 rounded-full bg-success" />
+                <span className="font-bold text-success text-xs uppercase">
                   {t("profile_active")}
                 </span>
               </div>
@@ -601,7 +601,7 @@ export default function ProfilePage() {
             <div className="flex h-24 w-24 items-center justify-center rounded-full bg-surface-container-low font-bold font-headline text-3xl text-primary">
               {initials}
             </div>
-            <div className="absolute end-0 bottom-1 h-4 w-4 rounded-full border-4 border-surface-container-lowest bg-emerald-500" />
+            <div className="absolute end-0 bottom-1 h-4 w-4 rounded-full border-4 border-surface-container-lowest bg-success" />
           </div>
 
           <h3 className="mt-4 font-bold font-headline text-on-surface text-xl">

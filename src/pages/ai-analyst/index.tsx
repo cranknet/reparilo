@@ -21,6 +21,7 @@ export default function AiAnalystPage() {
   const [clearConfirm, setClearConfirm] = useState(false);
   const [model, setModel] = useState<ModelOption>("gpt-4o");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const clearTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   const prevCountRef = useRef(0);
   const prevStreamingRef = useRef(false);
@@ -85,12 +86,23 @@ export default function AiAnalystPage() {
   const handleClear = () => {
     if (!clearConfirm) {
       setClearConfirm(true);
-      setTimeout(() => setClearConfirm(false), 3000);
+      clearTimerRef.current = setTimeout(() => setClearConfirm(false), 3000);
       return;
     }
     setMessages([]);
     setClearConfirm(false);
+    if (clearTimerRef.current) {
+      clearTimeout(clearTimerRef.current);
+    }
   };
+
+  useEffect(() => {
+    return () => {
+      if (clearTimerRef.current) {
+        clearTimeout(clearTimerRef.current);
+      }
+    };
+  }, []);
 
   function getModelLabel(m: ModelOption): string {
     if (m === "gpt-4o") {

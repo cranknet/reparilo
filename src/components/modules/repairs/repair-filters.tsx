@@ -88,7 +88,7 @@ export default function RepairFilters({
             <button
               className={`shrink-0 rounded-full px-4 py-2 font-bold font-headline text-xs uppercase tracking-wide transition-all ${
                 activeCategory === cat
-                  ? "bg-primary text-white"
+                  ? "bg-primary text-on-primary"
                   : "bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest"
               }`}
               key={cat}

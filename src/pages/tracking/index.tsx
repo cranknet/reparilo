@@ -398,7 +398,7 @@ function StatusView({
                 <div className="group relative aspect-video overflow-hidden rounded-xl bg-surface-container-highest">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   <div className="absolute start-3 bottom-3 flex items-center gap-2">
-                    <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+                    <div className="h-2 w-2 animate-pulse rounded-full bg-success" />
                     <span className="font-bold text-on-primary text-xs uppercase tracking-wide">
                       {t("tracking_live_bench")}
                     </span>

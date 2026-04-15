@@ -237,7 +237,11 @@ export default function SettingsPage() {
   }
 
   function handleTabKeyDown(e: KeyboardEvent<HTMLButtonElement>) {
-    const currentIndex = TAB_IDS.indexOf(activeTab);
+    const tabs = Object.keys(tabRefs.current) as SettingsTab[];
+    const focusedTab = tabs.find(
+      (key) => tabRefs.current[key] === document.activeElement
+    );
+    const currentIndex = TAB_IDS.indexOf(focusedTab ?? activeTab);
     let nextIndex: number | undefined;
     if (e.key === "ArrowRight" || e.key === "ArrowDown") {
       nextIndex = (currentIndex + 1) % TAB_IDS.length;
@@ -251,7 +255,6 @@ export default function SettingsPage() {
     if (nextIndex !== undefined) {
       e.preventDefault();
       const nextTab = TAB_IDS[nextIndex];
-      setActiveTab(nextTab);
       tabRefs.current[nextTab]?.focus();
     }
   }
