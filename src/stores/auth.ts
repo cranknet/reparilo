@@ -11,7 +11,7 @@ interface AuthUser {
 }
 
 interface AuthState {
-  checkSession: () => Promise<void>;
+  checkSession: (forceRefresh?: boolean) => Promise<void>;
   clearError: () => void;
   error: string | null;
   isAuthenticated: boolean;
@@ -30,10 +30,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   role: "FRONT_DESK" as RoleType,
   error: null,
 
-  checkSession: async () => {
+  checkSession: async (forceRefresh = false) => {
     set({ isLoading: true });
     try {
-      const res = await api.get("/auth/get-session");
+      const url = forceRefresh
+        ? `/auth/get-session?_=${Date.now()}`
+        : "/auth/get-session";
+      const res = await api.get(url);
       const user = res.data.user;
       set({
         user,

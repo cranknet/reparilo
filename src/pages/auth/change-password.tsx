@@ -36,7 +36,12 @@ export default function ChangePasswordPage() {
     setLoading(true);
     try {
       await api.post("/auth/change-password", { oldPassword, newPassword });
-      await checkSession();
+      useAuthStore.setState((state) => ({
+        user: state.user
+          ? { ...state.user, mustChangePassword: false }
+          : state.user,
+      }));
+      await checkSession(true);
       navigate("/", { replace: true });
     } catch (err: unknown) {
       const axiosErr = err as {
