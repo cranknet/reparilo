@@ -68,11 +68,17 @@ const BRANDS = [
 export type { IntakeFormData };
 
 const labelCls =
-  "mb-1.5 ml-1 block font-label text-[10px] font-bold uppercase tracking-widest text-on-surface-variant";
+  "mb-1.5 ml-1 block font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant";
 const inputCls =
   "h-12 w-full rounded-xl bg-surface-container-highest px-4 text-on-surface transition-all focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary";
+const inputErrorCls =
+  "h-12 w-full rounded-xl bg-surface-container-highest px-4 text-on-surface ring-2 ring-error transition-all focus:bg-surface-container-lowest focus:ring-primary";
 const textareaCls =
   "w-full resize-none rounded-xl bg-surface-container-low p-4 text-sm text-on-surface transition-all placeholder:text-outline focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary";
+const textareaErrorCls =
+  "w-full resize-none rounded-xl bg-surface-container-low p-4 text-sm text-on-surface ring-2 ring-error transition-all placeholder:text-outline focus:bg-surface-container-lowest focus:ring-primary";
+const errorCls = "mt-1 ml-1 font-label text-[11px] font-medium text-error";
+const requiredMarkCls = "ml-0.5 text-error";
 
 export default function IntakeModal({
   onClose,
@@ -82,12 +88,56 @@ export default function IntakeModal({
   const { t } = useTranslation();
   const [form, setForm] = useState<IntakeFormData>(INITIAL_FORM);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof IntakeFormData, string>>
+  >({});
+  const [touched, setTouched] = useState<
+    Partial<Record<keyof IntakeFormData, boolean>>
+  >({});
+
+  const validate = useCallback((): boolean => {
+    const newErrors: Partial<Record<keyof IntakeFormData, string>> = {};
+    if (!form.customerName.trim()) {
+      newErrors.customerName = t("intake.error_required");
+    }
+    if (!form.model.trim()) {
+      newErrors.model = t("intake.error_required");
+    }
+    if (!form.reportedProblem.trim()) {
+      newErrors.reportedProblem = t("intake.error_required");
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [form, t]);
 
   const update = useCallback(
     <K extends keyof IntakeFormData>(key: K, value: IntakeFormData[K]) => {
       setForm((prev) => ({ ...prev, [key]: value }));
+      if (errors[key]) {
+        setErrors((prev) => {
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
+      }
     },
-    []
+    [errors]
+  );
+
+  const handleBlur = useCallback(
+    (field: keyof IntakeFormData) => {
+      setTouched((prev) => ({ ...prev, [field]: true }));
+      if (
+        (field === "customerName" ||
+          field === "model" ||
+          field === "reportedProblem") &&
+        !form[field]?.toString().trim()
+      ) {
+        setErrors((prev) => ({ ...prev, [field]: t("intake.error_required") }));
+      }
+    },
+    [form, t]
   );
 
   useEffect(() => {
@@ -110,11 +160,22 @@ export default function IntakeModal({
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
+      setTouched({
+        customerName: true,
+        model: true,
+        reportedProblem: true,
+      });
+      if (!validate()) {
+        return;
+      }
+      setIsSubmitting(true);
       onSubmit(form);
       setForm(INITIAL_FORM);
+      setTouched({});
+      setIsSubmitting(false);
       onClose();
     },
-    [form, onSubmit, onClose]
+    [form, onSubmit, onClose, validate]
   );
 
   if (!open) {
@@ -129,14 +190,25 @@ export default function IntakeModal({
     >
       <button
         aria-label="Close modal"
-        className="absolute inset-0 bg-on-surface/40 backdrop-blur-sm"
+        className="absolute inset-0 bg-on-surface/40"
         onClick={onClose}
         type="button"
       />
-      <div className="glass-modal ambient-shadow relative z-10 mx-4 flex w-full max-w-[960px] flex-col overflow-hidden rounded-xl sm:mx-6">
+      <div className="modal-surface relative z-10 mx-4 flex w-full max-w-[960px] flex-col overflow-hidden rounded-xl shadow-2xl sm:mx-6">
         <form onSubmit={handleSubmit}>
+          {Object.keys(errors).length > 0 &&
+            Object.values(touched).some(Boolean) && (
+              <div className="flex items-center gap-3 bg-error-container px-8 py-3">
+                <span className="material-symbols-outlined text-on-error-container">
+                  error
+                </span>
+                <p className="font-bold font-label text-[11px] text-on-error-container">
+                  {t("intake.error_summary")}
+                </p>
+              </div>
+            )}
           {/* Header */}
-          <header className="flex items-center justify-between bg-surface-container-lowest/40 px-8 py-6">
+          <header className="flex items-center justify-between bg-surface-container-low px-8 py-6">
             <div className="flex items-center gap-4">
               <h1 className="font-bold font-headline text-2xl text-on-surface tracking-tight">
                 {t("intake.title")}
@@ -146,7 +218,7 @@ export default function IntakeModal({
               </span>
             </div>
             <button
-              className="flex h-10 w-10 items-center justify-center rounded-full text-outline transition-colors hover:bg-surface-container-high"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-outline transition-colors hover:bg-surface-container-high"
               onClick={onClose}
               type="button"
             >
@@ -192,20 +264,29 @@ export default function IntakeModal({
                   <div className="relative">
                     <label className={labelCls} htmlFor="customer-search">
                       {t("intake.customer_search")}
+                      <span className={requiredMarkCls}>*</span>
                     </label>
                     <div className="relative">
                       <span className="material-symbols-outlined absolute top-1/2 right-4 -translate-y-1/2 text-outline">
                         search
                       </span>
                       <input
-                        className={inputCls}
+                        aria-invalid={!!errors.customerName}
+                        className={
+                          errors.customerName ? inputErrorCls : inputCls
+                        }
                         id="customer-search"
+                        onBlur={() => handleBlur("customerName")}
                         onChange={(e) => update("customerName", e.target.value)}
                         placeholder={t("intake.customer_search_placeholder")}
+                        required
                         type="text"
                         value={form.customerName}
                       />
                     </div>
+                    {errors.customerName && touched.customerName && (
+                      <p className={errorCls}>{errors.customerName}</p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -255,9 +336,9 @@ export default function IntakeModal({
                 <div className="flex flex-wrap gap-2">
                   {DEVICE_CATEGORIES.map((cat) => (
                     <button
-                      className={`rounded-full px-4 py-1.5 font-bold font-label text-xs transition-all ${
+                      className={`min-h-[44px] rounded-full px-4 py-2 font-bold font-label text-xs transition-all ${
                         form.deviceCategory === cat.key
-                          ? "bg-primary text-white"
+                          ? "bg-primary text-on-primary"
                           : "bg-surface-container-highest text-on-surface-variant hover:bg-surface-variant"
                       }`}
                       key={cat.key}
@@ -291,15 +372,22 @@ export default function IntakeModal({
                   <div>
                     <label className={labelCls} htmlFor="device-model">
                       {t("intake.specific_model")}
+                      <span className={requiredMarkCls}>*</span>
                     </label>
                     <input
-                      className={inputCls}
+                      aria-invalid={!!errors.model}
+                      className={errors.model ? inputErrorCls : inputCls}
                       id="device-model"
+                      onBlur={() => handleBlur("model")}
                       onChange={(e) => update("model", e.target.value)}
                       placeholder={t("intake.specific_model")}
+                      required
                       type="text"
                       value={form.model}
                     />
+                    {errors.model && touched.model && (
+                      <p className={errorCls}>{errors.model}</p>
+                    )}
                   </div>
                   <div className="sm:col-span-2">
                     <label className={labelCls} htmlFor="device-color">
@@ -331,15 +419,24 @@ export default function IntakeModal({
                 <div>
                   <label className={labelCls} htmlFor="reported-problem">
                     {t("intake.reported_problem")}
+                    <span className={requiredMarkCls}>*</span>
                   </label>
                   <textarea
-                    className={textareaCls}
+                    aria-invalid={!!errors.reportedProblem}
+                    className={
+                      errors.reportedProblem ? textareaErrorCls : textareaCls
+                    }
                     id="reported-problem"
+                    onBlur={() => handleBlur("reportedProblem")}
                     onChange={(e) => update("reportedProblem", e.target.value)}
                     placeholder={t("intake.reported_problem_placeholder")}
+                    required
                     rows={4}
                     value={form.reportedProblem}
                   />
+                  {errors.reportedProblem && touched.reportedProblem && (
+                    <p className={errorCls}>{errors.reportedProblem}</p>
+                  )}
                 </div>
 
                 <div>
@@ -360,7 +457,7 @@ export default function IntakeModal({
                 <div className="grid grid-cols-2 gap-6 py-4">
                   <div>
                     <label
-                      className="mb-0.5 block font-bold font-label text-[10px] text-on-surface-variant uppercase tracking-widest"
+                      className="mb-0.5 block font-bold font-label text-[11px] text-on-surface-variant uppercase tracking-widest"
                       htmlFor="estimated-cost"
                     >
                       {t("intake.estimated_cost")}
@@ -386,7 +483,7 @@ export default function IntakeModal({
                   </div>
                   <div>
                     <label
-                      className="mb-0.5 block font-bold font-label text-[10px] text-on-surface-variant uppercase tracking-widest"
+                      className="mb-0.5 block font-bold font-label text-[11px] text-on-surface-variant uppercase tracking-widest"
                       htmlFor="deposit"
                     >
                       {t("intake.required_deposit")}
@@ -438,28 +535,37 @@ export default function IntakeModal({
                     >
                       {t("intake.warranty_return")}
                     </label>
-                    <button
-                      aria-checked={form.isWarrantyReturn}
-                      className={`relative h-6 w-11 rounded-full transition-colors ${
-                        form.isWarrantyReturn
-                          ? "bg-primary"
-                          : "bg-surface-container-highest"
-                      }`}
-                      id="warranty-toggle"
-                      onClick={() =>
-                        update("isWarrantyReturn", !form.isWarrantyReturn)
-                      }
-                      role="switch"
-                      type="button"
-                    >
+                    <div className="flex items-center gap-3">
                       <span
-                        className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                        className={`font-label font-semibold text-xs ${form.isWarrantyReturn ? "text-primary" : "text-on-surface-variant"}`}
+                      >
+                        {form.isWarrantyReturn
+                          ? t("intake.warranty_yes")
+                          : t("intake.warranty_no")}
+                      </span>
+                      <button
+                        aria-checked={form.isWarrantyReturn}
+                        className={`relative min-h-[44px] min-w-[44px] rounded-full p-4 transition-colors ${
                           form.isWarrantyReturn
-                            ? "translate-x-5"
-                            : "translate-x-0"
+                            ? "bg-primary"
+                            : "bg-surface-container-highest"
                         }`}
-                      />
-                    </button>
+                        id="warranty-toggle"
+                        onClick={() =>
+                          update("isWarrantyReturn", !form.isWarrantyReturn)
+                        }
+                        role="switch"
+                        type="button"
+                      >
+                        <span
+                          className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                            form.isWarrantyReturn
+                              ? "translate-x-5"
+                              : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -469,15 +575,25 @@ export default function IntakeModal({
                     {t("intake.photo_documentation")}
                   </label>
                   <button
-                    className="group flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-outline-variant border-dashed bg-surface-container-low/50 p-6 transition-colors hover:border-primary/50"
+                    className="group flex min-h-[44px] w-full cursor-pointer items-center gap-4 rounded-xl bg-surface-container-low px-5 py-4 ring-1 ring-outline-variant transition-all hover:ring-primary/50"
                     id="photo-upload"
                     type="button"
                   >
-                    <span className="material-symbols-outlined text-3xl text-outline transition-colors group-hover:text-primary">
-                      add_a_photo
-                    </span>
-                    <span className="font-label font-medium text-on-surface-variant text-xs">
-                      {t("intake.photo_upload_hint")}
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-container-highest">
+                      <span className="material-symbols-outlined text-on-surface-variant text-xl transition-colors group-hover:text-primary">
+                        add_a_photo
+                      </span>
+                    </div>
+                    <div className="text-left">
+                      <p className="font-bold font-headline text-on-surface text-sm">
+                        {t("intake.photo_upload_title")}
+                      </p>
+                      <p className="font-label font-medium text-[11px] text-on-surface-variant">
+                        {t("intake.photo_upload_hint")}
+                      </p>
+                    </div>
+                    <span className="ml-auto rounded-full bg-primary-fixed px-2.5 py-1 font-bold font-label text-[11px] text-on-primary-fixed">
+                      0 {t("intake.photo_count_label")}
                     </span>
                   </button>
                 </div>
@@ -486,7 +602,7 @@ export default function IntakeModal({
           </div>
 
           {/* Footer */}
-          <footer className="flex items-center justify-end gap-4 border-white/10 border-t bg-surface-container-high/50 px-8 py-6">
+          <footer className="flex items-center justify-end gap-4 border-outline-variant border-t bg-surface-container-high px-8 py-6">
             <button
               className="px-6 py-3 font-bold font-headline text-on-surface-variant text-sm transition-colors hover:text-on-surface"
               onClick={onClose}
@@ -495,10 +611,11 @@ export default function IntakeModal({
               {t("intake.cancel_intake")}
             </button>
             <button
-              className="primary-gradient rounded-xl px-8 py-3 font-bold font-headline text-sm text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="rounded-xl bg-primary px-8 py-3 font-bold font-headline text-on-primary text-sm transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={isSubmitting}
               type="submit"
             >
-              {t("intake.create_job")}
+              {isSubmitting ? t("intake.creating_job") : t("intake.create_job")}
             </button>
           </footer>
         </form>

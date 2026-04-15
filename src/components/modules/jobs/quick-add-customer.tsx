@@ -15,7 +15,7 @@ interface QuickAddCustomerProps {
 export type { CustomerFormData };
 
 const labelCls =
-  "mb-2 ml-1 block font-bold font-label text-[10px] uppercase tracking-widest text-on-surface-variant";
+  "mb-2 ml-1 block font-bold font-label text-[11px] uppercase tracking-widest text-on-surface-variant";
 
 export default function QuickAddCustomer({
   onAdd,
@@ -45,8 +45,7 @@ export default function QuickAddCustomer({
 
   return (
     <section className="relative">
-      <div className="absolute -top-4 right-4 left-4 h-1 rounded-full bg-primary-container/20 blur-sm" />
-      <div className="rounded-xl border-primary border-t-4 bg-surface-container-lowest p-6 shadow-sm ring-1 ring-black/5">
+      <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-primary text-xl">
@@ -129,7 +128,7 @@ export default function QuickAddCustomer({
 
           <div className="mt-8 flex justify-end">
             <button
-              className="primary-gradient flex h-12 items-center gap-2 rounded-xl px-6 font-bold font-headline text-sm text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95"
+              className="flex h-12 items-center gap-2 rounded-xl bg-primary px-6 font-bold font-headline text-on-primary text-sm transition-all active:scale-[0.98]"
               type="submit"
             >
               <span className="material-symbols-outlined text-sm">check</span>

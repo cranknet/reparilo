@@ -1,14 +1,7 @@
 import type { JobStatusType } from "@shared/constants";
+import { DEVICE_ICONS } from "@shared/constants";
 import { useTranslation } from "react-i18next";
 import StatusBadge from "./status-badge";
-
-const DEVICE_ICONS: Record<string, string> = {
-  phone: "smartphone",
-  tablet: "tablet_mac",
-  laptop: "laptop_mac",
-  watch: "watch",
-  other: "precision_manufacturing",
-};
 
 export interface JobRow {
   customer: string;
@@ -33,24 +26,24 @@ export default function JobsTable({ jobs }: JobsTableProps) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-left">
           <thead>
-            <tr className="bg-surface-container-high/30">
-              <th className="p-4 font-body font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">
+            <tr className="bg-surface-container-low">
+              <th className="p-4 font-body font-bold text-[11px] text-on-surface-variant uppercase tracking-widest">
                 {t("job_id")}
               </th>
-              <th className="p-4 font-body font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">
+              <th className="p-4 font-body font-bold text-[11px] text-on-surface-variant uppercase tracking-widest">
                 {t("device")}
               </th>
-              <th className="hidden p-4 font-body font-bold text-[10px] text-on-surface-variant uppercase tracking-widest lg:table-cell">
+              <th className="hidden p-4 font-body font-bold text-[11px] text-on-surface-variant uppercase tracking-widest lg:table-cell">
                 {t("customers")}
               </th>
-              <th className="p-4 text-center font-body font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">
+              <th className="p-4 text-center font-body font-bold text-[11px] text-on-surface-variant uppercase tracking-widest">
                 {t("status_label")}
               </th>
-              <th className="p-4 font-body font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">
+              <th className="p-4 font-body font-bold text-[11px] text-on-surface-variant uppercase tracking-widest">
                 {t("technician")}
               </th>
-              <th className="p-4 text-right font-body font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">
-                {" "}
+              <th className="p-4 text-right font-body font-bold text-[11px] text-on-surface-variant uppercase tracking-widest">
+                <span className="sr-only">{t("actions")}</span>
               </th>
             </tr>
           </thead>
@@ -67,7 +60,7 @@ export default function JobsTable({ jobs }: JobsTableProps) {
                 </td>
                 <td className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-container-high lg:h-10 lg:w-10">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-container-high">
                       <span className="material-symbols-outlined text-lg text-secondary lg:text-xl">
                         {DEVICE_ICONS[job.deviceIcon ?? "other"] ??
                           "precision_manufacturing"}
@@ -78,7 +71,7 @@ export default function JobsTable({ jobs }: JobsTableProps) {
                         {job.device}
                       </p>
                       {job.deviceSpec && (
-                        <p className="font-body text-[10px] text-on-surface-variant">
+                        <p className="font-body text-[11px] text-on-surface-variant">
                           {job.deviceSpec}
                         </p>
                       )}
@@ -103,8 +96,8 @@ export default function JobsTable({ jobs }: JobsTableProps) {
                 <td className="p-4">
                   {job.technician ? (
                     <div className="flex items-center gap-2">
-                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-container-highest">
-                        <span className="material-symbols-outlined text-[14px] text-on-surface-variant">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-container-highest">
+                        <span className="material-symbols-outlined text-on-surface-variant text-sm">
                           person
                         </span>
                       </div>
@@ -120,7 +113,9 @@ export default function JobsTable({ jobs }: JobsTableProps) {
                 </td>
                 <td className="p-4 text-right">
                   <button
-                    className="p-2 text-on-surface-variant transition-colors hover:text-primary"
+                    aria-label={t("job_actions")}
+                    className="min-h-[44px] min-w-[44px] rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
+                    title={t("job_actions")}
                     type="button"
                   >
                     <span className="material-symbols-outlined">more_vert</span>

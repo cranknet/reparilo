@@ -21,7 +21,7 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 font-extrabold text-[10px] uppercase tracking-wider ${STATUS_STYLES[status]}`}
+      className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 font-extrabold text-[11px] uppercase tracking-wider ${STATUS_STYLES[status]}`}
     >
       {t(`status.${status}`)}
     </span>

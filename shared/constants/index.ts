@@ -1,6 +1,7 @@
 export type { CurrencyCode } from "./currencies";
 // biome-ignore lint/performance/noBarrelFile: shared constants barrel is intentional
 export { CURRENCIES } from "./currencies";
+export { DEVICE_ICONS } from "./device-icons";
 export type { JobStatusType } from "./job-statuses";
 export {
   ACTIVE_STATUSES,

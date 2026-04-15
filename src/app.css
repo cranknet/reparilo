@@ -95,20 +95,13 @@ h3,
   background: linear-gradient(135deg, #0040a1 0%, #0056d2 100%);
 }
 
-.glass-modal {
-  background-color: rgb(255 255 255 / 0.8);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
+.modal-surface {
+  background-color: var(--color-surface-container-lowest);
 }
 
-.ambient-shadow {
-  box-shadow:
-    0 20px 40px rgb(0 64 161 / 0.06),
-    0 40px 100px -20px rgb(0 64 161 / 0.25);
-}
-
-.primary-gradient {
-  background: linear-gradient(135deg, #0040a1 0%, #0056d2 100%);
+.cta-primary {
+  color: var(--color-on-primary);
+  background: var(--color-primary);
 }
 
 @media (prefers-reduced-motion: reduce) {

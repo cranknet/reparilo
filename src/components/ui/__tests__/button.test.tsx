@@ -15,8 +15,8 @@ describe("Button", () => {
   it("applies primary variant styles by default", () => {
     render(<Button>Primary</Button>);
     const el = screen.getByRole("button");
-    expect(el).toHaveClass("bg-gradient-to-br");
-    expect(el).toHaveClass("from-primary");
+    expect(el).toHaveClass("bg-primary");
+    expect(el).toHaveClass("text-on-primary");
   });
 
   it("applies secondary variant", () => {
