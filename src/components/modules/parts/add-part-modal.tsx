@@ -81,6 +81,7 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
                 </p>
               </div>
               <button
+                aria-label={t("close")}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
                 onClick={onClose}
                 type="button"
@@ -180,6 +181,7 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
               </div>
               <button
                 aria-checked={form.isActive}
+                aria-label={t("add_part_modal.active_status")}
                 className={`relative h-6 w-11 rounded-full transition-colors ${
                   form.isActive ? "bg-primary" : "bg-surface-container-highest"
                 }`}

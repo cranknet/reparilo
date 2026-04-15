@@ -352,6 +352,7 @@
     "customer_name": "Nom du client",
     "customer_name_placeholder": "par ex. ",
     "phone": "Téléphone",
+    "phone_placeholder": "+213 XX XXX XXXX",
     "device": "Appareil",
     "device_placeholder": "Modèle",
     "issue_description": "Description du problème",
@@ -442,5 +443,7 @@
   "profile_activity_user_added": "Membre de l'équipe ajouté {{name}}",
   "profile_activity_settings_update": "Paramètres de la boutique mis à jour",
   "profile_password_mismatch": "Les mots de passe ne correspondent pas",
-  "profile_current_password_required": "Le mot de passe actuel est requis pour en définir un nouveau"
+  "profile_current_password_required": "Le mot de passe actuel est requis pour en définir un nouveau",
+  "profile_update_failed": "Échec de la mise à jour du profil. ",
+  "profile_password_update_failed": "Échec de la mise à jour du mot de passe. "
 }

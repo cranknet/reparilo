@@ -23,6 +23,12 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
 
     const { oldPassword, newPassword } = parsed.data;
 
+    if (oldPassword === newPassword) {
+      return reply.status(400).send({
+        error: "New password must be different from current password",
+      });
+    }
+
     const account = await app.prisma.account.findFirst({
       where: { userId: session.user.id, providerId: "credential" },
       select: { password: true },

@@ -1,7 +1,13 @@
 import { Navigate, Outlet } from "react-router";
 import { useAuthStore } from "@/stores/auth";
 
-export default function ProtectedRoute() {
+interface ProtectedRouteProps {
+  requireMustChangePassword?: boolean;
+}
+
+export default function ProtectedRoute({
+  requireMustChangePassword = true,
+}: ProtectedRouteProps) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isLoading = useAuthStore((s) => s.isLoading);
   const mustChangePassword = useAuthStore((s) => s.user?.mustChangePassword);
@@ -25,7 +31,7 @@ export default function ProtectedRoute() {
     return <Navigate replace to="/login" />;
   }
 
-  if (mustChangePassword) {
+  if (requireMustChangePassword && mustChangePassword) {
     return <Navigate replace to="/change-password" />;
   }
 

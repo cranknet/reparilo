@@ -35,7 +35,7 @@ export default function TodaySchedule({ items }: TodayScheduleProps) {
             <div
               className={`absolute top-1 left-0 h-6 w-6 rounded-full ${STATUS_COLORS[item.status] ?? "bg-outline-variant"} border-4 border-surface-container-low`}
             />
-            <div className="flex items-center justify-between rounded-xl bg-surface-container-lowest p-4 transition-colors hover:bg-white/80">
+            <div className="flex items-center justify-between rounded-xl bg-surface-container-lowest p-4 transition-colors hover:bg-surface-container">
               <div>
                 <p className="font-black text-primary text-xs">{item.time}</p>
                 <h5 className="mt-1 font-bold text-sm">
@@ -44,7 +44,7 @@ export default function TodaySchedule({ items }: TodayScheduleProps) {
                     — {item.customerName}
                   </span>
                 </h5>
-                <p className="mt-1 text-[10px] text-slate-400">
+                <p className="mt-1 text-[10px] text-on-surface-variant">
                   {t("job_id")}: {item.id} &bull; {item.repairType}
                 </p>
               </div>

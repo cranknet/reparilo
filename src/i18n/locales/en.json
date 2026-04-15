@@ -352,6 +352,7 @@
     "customer_name": "Customer Name",
     "customer_name_placeholder": "e.g. John Doe",
     "phone": "Phone",
+    "phone_placeholder": "+213 XX XXX XXXX",
     "device": "Device",
     "device_placeholder": "Model",
     "issue_description": "Issue Description",
@@ -442,5 +443,7 @@
   "profile_activity_user_added": "Added team member {{name}}",
   "profile_activity_settings_update": "Updated shop settings",
   "profile_password_mismatch": "Passwords do not match",
-  "profile_current_password_required": "Current password is required to set a new one"
+  "profile_current_password_required": "Current password is required to set a new one",
+  "profile_update_failed": "Failed to update profile. Please try again.",
+  "profile_password_update_failed": "Failed to update password. Please try again."
 }

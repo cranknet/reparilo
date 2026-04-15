@@ -33,12 +33,14 @@ export default function App() {
     checkSession();
   }, [checkSession]);
 
-  const DashboardComponent = DASHBOARD_MAP[role];
+  const DashboardComponent = DASHBOARD_MAP[role] ?? DashboardPage;
 
   return (
     <Routes>
       <Route element={<LoginPage />} path="/login" />
-      <Route element={<ChangePasswordPage />} path="/change-password" />
+      <Route element={<ProtectedRoute requireMustChangePassword={false} />}>
+        <Route element={<ChangePasswordPage />} path="/change-password" />
+      </Route>
       <Route element={<ProtectedRoute />}>
         <Route
           element={

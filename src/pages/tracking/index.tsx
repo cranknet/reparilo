@@ -18,6 +18,7 @@ function LanguageSwitcher() {
 
   return (
     <button
+      aria-label="Switch language"
       className="material-symbols-outlined rounded-full p-2 text-slate-600 transition-colors hover:bg-slate-200/50"
       onClick={nextLang}
       type="button"
@@ -136,6 +137,7 @@ function LookupForm({ onSearch }: { onSearch: (code: string) => void }) {
               >
                 <div className="group relative">
                   <input
+                    aria-label={t("tracking_input_placeholder")}
                     className="h-16 w-full rounded-xl bg-surface-container-highest px-6 font-medium text-lg outline-none transition-all placeholder:text-outline focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
                     onChange={(e) => setCode(e.target.value)}
                     placeholder={t("tracking_input_placeholder")}

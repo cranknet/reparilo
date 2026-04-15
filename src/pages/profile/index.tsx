@@ -91,7 +91,8 @@ const LABEL_CLS =
 function getInitials(name: string): string {
   return name
     .split(" ")
-    .map((w) => w[0])
+    .filter(Boolean)
+    .map((w) => w.charAt(0))
     .join("")
     .toUpperCase()
     .slice(0, 2);
@@ -120,7 +121,7 @@ function passwordStrength(pw: string): number {
 export default function ProfilePage() {
   const { t, i18n } = useTranslation();
   const role = useAuthStore((s) => s.role);
-  const username = useAuthStore((s) => s.username);
+  const username = useAuthStore((s) => s.user?.username);
 
   const displayName = username || "Reparilo User";
   const initials = getInitials(displayName);
@@ -167,15 +168,23 @@ export default function ProfilePage() {
     { key: "activity", label: t("profile_tab_activity") },
   ];
 
-  function handlePersonalSubmit(e: FormEvent) {
+  async function handlePersonalSubmit(e: FormEvent) {
     e.preventDefault();
-    api.put("/users/me", personalForm);
-    setPersonalInitial(personalForm);
-    setPersonalDirty(false);
+    try {
+      await api.put("/users/me", personalForm);
+      setPersonalInitial(personalForm);
+      setPersonalDirty(false);
+    } catch {
+      setPasswordError(t("profile_update_failed"));
+    }
   }
 
-  function handleSecuritySubmit(e: FormEvent) {
+  async function handleSecuritySubmit(e: FormEvent) {
     e.preventDefault();
+
+    if (!securityForm.newPassword.trim()) {
+      return;
+    }
 
     if (securityForm.newPassword !== securityForm.confirmPassword) {
       setPasswordError(t("profile_password_mismatch"));
@@ -188,16 +197,20 @@ export default function ProfilePage() {
     }
 
     setPasswordError("");
-    api.put("/users/me/password", {
-      currentPassword: securityForm.currentPassword,
-      newPassword: securityForm.newPassword,
-    });
-    setSecurityForm({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-    setSecurityDirty(false);
+    try {
+      await api.put("/users/me/password", {
+        currentPassword: securityForm.currentPassword,
+        newPassword: securityForm.newPassword,
+      });
+      setSecurityForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setSecurityDirty(false);
+    } catch {
+      setPasswordError(t("profile_password_update_failed"));
+    }
   }
 
   function handleCancelPersonal() {

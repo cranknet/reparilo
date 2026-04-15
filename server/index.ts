@@ -30,8 +30,8 @@ await app.register(multipart, { limits: { fileSize: 5 * 1024 * 1024 } });
 await app.register(websocket);
 
 await app.register(prismaPlugin);
-await app.register(authPlugin);
 app.register(authRoutes);
+await app.register(authPlugin);
 await app.register(websocketPlugin);
 
 app.register(healthRoutes);

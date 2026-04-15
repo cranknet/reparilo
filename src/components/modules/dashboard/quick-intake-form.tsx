@@ -8,6 +8,7 @@ export default function QuickIntakeForm() {
   return (
     <div className="overflow-hidden rounded-xl border-primary border-t-4 bg-surface-container-lowest shadow-premium">
       <button
+        aria-expanded={expanded}
         className="flex w-full items-center justify-between p-6 text-left"
         onClick={() => setExpanded(!expanded)}
         type="button"
@@ -52,7 +53,7 @@ export default function QuickIntakeForm() {
               <input
                 className="w-full rounded-xl border-none bg-surface-container-highest px-4 py-3 transition-all focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary"
                 id="quick-intake-phone"
-                placeholder="+213..."
+                placeholder={t("front_desk.phone_placeholder")}
                 type="tel"
               />
             </div>

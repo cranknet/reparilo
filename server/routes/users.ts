@@ -55,17 +55,27 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
         });
       }
 
-      const hashedPassword = await hashPassword(password);
-
-      const user = await app.prisma.user.create({
-        data: {
-          username,
+      const signUpResult = await app.auth.api.signUpEmail({
+        body: {
           email,
-          password: hashedPassword,
-          role: role as RoleType,
-          isActive: true,
-          mustChangePassword: true,
+          password,
+          name: username,
+          username,
         },
+      });
+
+      if (signUpResult && "id" in signUpResult) {
+        await app.prisma.user.update({
+          where: { id: (signUpResult as { id: string }).id },
+          data: {
+            role: role as RoleType,
+            mustChangePassword: true,
+          },
+        });
+      }
+
+      const user = await app.prisma.user.findUnique({
+        where: { email },
         select: {
           id: true,
           username: true,
@@ -96,6 +106,12 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const { isActive } = request.body as { isActive: boolean };
+
+      if (id === request.user?.id && !isActive) {
+        return reply
+          .status(400)
+          .send({ error: "Cannot deactivate your own account" });
+      }
 
       const user = await app.prisma.user.update({
         where: { id },
@@ -135,10 +151,14 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
       const hashedPassword = await hashPassword(parsed.data.password);
 
+      await app.prisma.account.updateMany({
+        where: { userId: id, providerId: "credential" },
+        data: { password: hashedPassword },
+      });
+
       await app.prisma.user.update({
         where: { id },
         data: {
-          password: hashedPassword,
           mustChangePassword: true,
         },
       });

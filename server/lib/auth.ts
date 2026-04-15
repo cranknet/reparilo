@@ -12,12 +12,18 @@ export function createAuth(prisma: PrismaClient) {
   return betterAuth({
     baseURL: process.env.BETTER_AUTH_URL || "http://localhost:4000",
     basePath: "/api/auth",
-    trustedOrigins: ["http://localhost:5173", "http://localhost:4000"],
+    trustedOrigins: (
+      process.env.TRUSTED_ORIGINS ||
+      "http://localhost:5173,http://localhost:4000"
+    )
+      .split(",")
+      .map((origin) => origin.trim()),
     database: prismaAdapter(prisma, {
       provider: "postgresql",
     }),
     emailAndPassword: {
       enabled: true,
+      disableSignUp: true,
     },
     session: {
       expiresIn: 604_800, // 7 days

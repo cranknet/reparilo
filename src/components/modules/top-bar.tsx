@@ -39,6 +39,7 @@ export default function TopBar() {
       <div className="flex items-center gap-2 md:gap-3">
         {import.meta.env.DEV && (
           <select
+            aria-label="DEV: Switch role"
             className="rounded-lg border border-amber-400 bg-amber-50 px-2 py-1 font-bold text-[10px] text-amber-800 uppercase"
             onChange={(e) => setRole(e.target.value as RoleType)}
             title="DEV: Switch role"

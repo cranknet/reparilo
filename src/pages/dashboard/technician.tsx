@@ -102,7 +102,7 @@ export default function TechnicianDashboardPage() {
         </div>
         <div className="flex w-full flex-wrap gap-3 sm:w-auto">
           <button
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-surface-container-highest px-4 py-2.5 font-bold font-headline text-on-secondary-fixed-variant text-sm transition-all hover:bg-surface-container-highest-container sm:flex-none md:px-6"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-surface-container-highest px-4 py-2.5 font-bold font-headline text-on-secondary-fixed-variant text-sm transition-all hover:bg-surface-container-high sm:flex-none md:px-6"
             type="button"
           >
             <span className="material-symbols-outlined text-[18px] md:text-[20px]">

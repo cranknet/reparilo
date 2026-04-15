@@ -19,6 +19,7 @@ interface AuthState {
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   role: RoleType;
+  setRole: (role: RoleType) => void;
   user: AuthUser | null;
 }
 
@@ -26,7 +27,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true,
-  role: "OWNER" as RoleType,
+  role: "FRONT_DESK" as RoleType,
   error: null,
 
   checkSession: async () => {
@@ -46,7 +47,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         user: null,
         isAuthenticated: false,
         isLoading: false,
-        role: "OWNER" as RoleType,
+        role: "FRONT_DESK" as RoleType,
+        error: null,
       });
     }
   },
@@ -80,18 +82,20 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     try {
       await api.post("/auth/sign-out");
-    } catch {
-      undefined;
+    } catch (_error) {
+      // Intentionally ignored: clear local state regardless of API result
     }
     set({
       user: null,
       isAuthenticated: false,
       isLoading: false,
-      role: "OWNER" as RoleType,
+      role: "FRONT_DESK" as RoleType,
       error: null,
     });
     window.location.href = "/login";
   },
 
   clearError: () => set({ error: null }),
+
+  setRole: (role) => set({ role }),
 }));

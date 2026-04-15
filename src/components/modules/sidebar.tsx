@@ -47,7 +47,7 @@ const ROLE_SUBTITLE_KEYS: Record<RoleType, string> = {
 export default function Sidebar() {
   const { t } = useTranslation();
   const role = useAuthStore((s) => s.role);
-  const navItems = NAV_ITEMS_BY_ROLE[role];
+  const navItems = NAV_ITEMS_BY_ROLE[role] ?? [];
 
   return (
     <aside className="fixed start-0 top-0 z-40 hidden h-screen w-64 flex-col bg-surface-container-low p-4 lg:flex">

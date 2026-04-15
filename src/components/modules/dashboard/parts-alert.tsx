@@ -20,6 +20,14 @@ function getStockStatus(item: PartsAlertItem) {
       width: "0%",
     };
   }
+  if (item.stockLevel === 0) {
+    return {
+      color: "bg-error",
+      labelKey: "tech_dashboard.left",
+      textColor: "text-error",
+      width: "0%",
+    };
+  }
   const pct = Math.min(
     100,
     Math.max(0, (item.quantity / item.stockLevel) * 100)

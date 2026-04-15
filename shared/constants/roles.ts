@@ -44,6 +44,7 @@ export const ROLE_PERMISSIONS: Record<RoleType, string[]> = {
     "jobs:update_status",
     "customers:read",
     "customers:write",
+    "notifications:read",
     "notifications:send",
   ],
 };

@@ -9,6 +9,9 @@ import fr from "./locales/fr.json";
 const i18n = i18next.use(LanguageDetector).use(initReactI18next);
 
 function applyDocumentDirection(lng: string) {
+  if (typeof document === "undefined") {
+    return;
+  }
   const normalized = lng.split("-")[0];
   document.documentElement.dir = RTL_LANGUAGES.includes(
     normalized as (typeof RTL_LANGUAGES)[number]
@@ -33,7 +36,9 @@ i18n.init({
   interpolation: { escapeValue: false },
 });
 
-applyDocumentDirection(i18n.language);
-i18n.on("languageChanged", applyDocumentDirection);
+if (typeof document !== "undefined") {
+  applyDocumentDirection(i18n.language);
+  i18n.on("languageChanged", applyDocumentDirection);
+}
 
 export default i18n;

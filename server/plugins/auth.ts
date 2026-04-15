@@ -23,6 +23,16 @@ interface RateLimitEntry {
 
 const signInRateLimitStore: Record<string, RateLimitEntry> = {};
 
+const RATE_LIMIT_CLEANUP_MS = 5 * 60_000;
+setInterval(() => {
+  const now = Date.now();
+  for (const ip of Object.keys(signInRateLimitStore)) {
+    if (now - signInRateLimitStore[ip].start > SIGN_IN_WINDOW_MS) {
+      delete signInRateLimitStore[ip];
+    }
+  }
+}, RATE_LIMIT_CLEANUP_MS);
+
 /** Returns true if the IP is rate-limited (too many attempts). */
 function isRateLimited(ip: string): boolean {
   const now = Date.now();

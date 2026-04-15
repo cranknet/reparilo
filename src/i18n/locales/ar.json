@@ -152,11 +152,11 @@
     "parts_requests_pending": "طلبات القطع معلقة",
     "parts_alert": "تنبيه الأجزاء",
     "out_of_stock": "إنتهى من المخزن",
-    "left": "غادر",
+    "left": "متبقي",
     "open_full_inventory": "فتح المخزون الكامل",
     "update_job_status": "تحديث حالة الوظيفة",
     "my_performance": "أدائي",
-    "repair_port_cleaning": "تنظيف الميناء"
+    "repair_port_cleaning": "تنظيف المنفذ"
   },
   "jobs_queue": "قائمة الأعمال",
   "jobs_queue_desc": "تتبع وإدارة الإصلاحات النشطة",
@@ -352,6 +352,7 @@
     "customer_name": "اسم العميل",
     "customer_name_placeholder": "على سبيل المثال ",
     "phone": "هاتف",
+    "phone_placeholder": "+213 XX XXX XXXX",
     "device": "جهاز",
     "device_placeholder": "نموذج",
     "issue_description": "وصف المشكلة",
@@ -431,7 +432,7 @@
   "profile_gdpr_compliant": "متوافق مع اللائحة العامة لحماية البيانات",
   "profile_unsaved_changes": "لديك تغييرات غير محفوظة في معلوماتك الشخصية.",
   "profile_strength_weak": "ضعيف",
-  "profile_strength_fair": "عدل",
+  "profile_strength_fair": "مقبول",
   "profile_strength_good": "جيد",
   "profile_strength_strong": "قوي",
   "profile_recent_activity": "النشاط الأخير",
@@ -442,5 +443,7 @@
   "profile_activity_user_added": "تمت إضافة عضو الفريق {{name}}",
   "profile_activity_settings_update": "تم تحديث إعدادات المتجر",
   "profile_password_mismatch": "كلمات المرور غير متطابقة",
-  "profile_current_password_required": "كلمة المرور الحالية مطلوبة لتعيين كلمة مرور جديدة"
+  "profile_current_password_required": "كلمة المرور الحالية مطلوبة لتعيين كلمة مرور جديدة",
+  "profile_update_failed": "فشل في تحديث الملف الشخصي. ",
+  "profile_password_update_failed": "فشل تحديث كلمة المرور. "
 }

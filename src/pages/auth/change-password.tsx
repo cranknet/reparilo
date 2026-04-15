@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth";
 
 export default function ChangePasswordPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const checkSession = useAuthStore((s) => s.checkSession);
   const logout = useAuthStore((s) => s.logout);
 
   const [oldPassword, setOldPassword] = useState("");
@@ -33,7 +36,8 @@ export default function ChangePasswordPage() {
     setLoading(true);
     try {
       await api.post("/auth/change-password", { oldPassword, newPassword });
-      await logout();
+      await checkSession();
+      navigate("/", { replace: true });
     } catch (err: unknown) {
       const axiosErr = err as {
         response?: { data?: { error?: string; message?: string } };

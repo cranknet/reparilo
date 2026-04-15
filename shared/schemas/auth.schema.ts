@@ -6,7 +6,14 @@ export const signInSchema = z.object({
 });
 
 export const createUserSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters").max(50),
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(50)
+    .regex(
+      /^[a-zA-Z0-9_]+$/,
+      "Username can only contain letters, numbers, and underscores"
+    ),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   role: z.enum(["OWNER", "TECHNICIAN", "FRONT_DESK"]),
