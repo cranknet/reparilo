@@ -68,7 +68,7 @@ const BRANDS = [
 export type { IntakeFormData };
 
 const labelCls =
-  "mb-1.5 ml-1 block font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant";
+  "mb-1.5 ms-1 block font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant";
 const inputCls =
   "h-12 w-full rounded-xl bg-surface-container-highest px-4 text-on-surface transition-all focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary";
 const inputErrorCls =
@@ -77,8 +77,8 @@ const textareaCls =
   "w-full resize-none rounded-xl bg-surface-container-low p-4 text-sm text-on-surface transition-all placeholder:text-outline focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary";
 const textareaErrorCls =
   "w-full resize-none rounded-xl bg-surface-container-low p-4 text-sm text-on-surface ring-2 ring-error transition-all placeholder:text-outline focus:bg-surface-container-lowest focus:ring-primary";
-const errorCls = "mt-1 ml-1 font-label text-[11px] font-medium text-error";
-const requiredMarkCls = "ml-0.5 text-error";
+const errorCls = "ms-1 mt-1 font-label text-[11px] font-medium text-error";
+const requiredMarkCls = "ms-0.5 text-error";
 
 export default function IntakeModal({
   onClose,
@@ -158,7 +158,7 @@ export default function IntakeModal({
   }, [open, onClose]);
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
       setTouched({
         customerName: true,
@@ -169,7 +169,12 @@ export default function IntakeModal({
         return;
       }
       setIsSubmitting(true);
-      onSubmit(form);
+      try {
+        await onSubmit(form);
+      } catch {
+        setIsSubmitting(false);
+        return;
+      }
       setForm(INITIAL_FORM);
       setTouched({});
       setIsSubmitting(false);
@@ -267,7 +272,7 @@ export default function IntakeModal({
                       <span className={requiredMarkCls}>*</span>
                     </label>
                     <div className="relative">
-                      <span className="material-symbols-outlined absolute top-1/2 right-4 -translate-y-1/2 text-outline">
+                      <span className="material-symbols-outlined absolute end-4 top-1/2 -translate-y-1/2 text-outline">
                         search
                       </span>
                       <input
@@ -513,7 +518,7 @@ export default function IntakeModal({
                       {t("intake.delivery_date")}
                     </label>
                     <div className="relative">
-                      <span className="material-symbols-outlined absolute top-1/2 right-4 -translate-y-1/2 text-outline">
+                      <span className="material-symbols-outlined absolute end-4 top-1/2 -translate-y-1/2 text-outline">
                         calendar_today
                       </span>
                       <input
@@ -558,10 +563,10 @@ export default function IntakeModal({
                         type="button"
                       >
                         <span
-                          className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                          className={`absolute top-[2px] h-5 w-5 rounded-full bg-white shadow-sm transition-[inset-inline-start] ${
                             form.isWarrantyReturn
-                              ? "translate-x-5"
-                              : "translate-x-0"
+                              ? "start-[22px]"
+                              : "start-[2px]"
                           }`}
                         />
                       </button>
@@ -592,7 +597,7 @@ export default function IntakeModal({
                         {t("intake.photo_upload_hint")}
                       </p>
                     </div>
-                    <span className="ml-auto rounded-full bg-primary-fixed px-2.5 py-1 font-bold font-label text-[11px] text-on-primary-fixed">
+                    <span className="ms-auto rounded-full bg-primary-fixed px-2.5 py-1 font-bold font-label text-[11px] text-on-primary-fixed">
                       0 {t("intake.photo_count_label")}
                     </span>
                   </button>

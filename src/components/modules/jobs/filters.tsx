@@ -26,12 +26,12 @@ export default function JobsFilters({
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
-          <span className="material-symbols-outlined absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant text-sm">
+          <span className="material-symbols-outlined absolute start-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">
             search
           </span>
           <input
             aria-label={t("search")}
-            className="min-h-[44px] w-full rounded-lg bg-surface-container-low py-2 pr-3 pl-10 font-body text-on-surface text-sm transition-all placeholder:text-outline focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary"
+            className="min-h-[44px] w-full rounded-lg bg-surface-container-low py-2 ps-10 pe-3 font-body text-on-surface text-sm transition-all placeholder:text-outline focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary"
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={t("search_jobs")}
             type="search"

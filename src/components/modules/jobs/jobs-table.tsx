@@ -1,18 +1,10 @@
-import type { JobStatusType } from "@shared/constants";
 import { DEVICE_ICONS } from "@shared/constants";
 import { useTranslation } from "react-i18next";
-import StatusBadge from "./status-badge";
+import type { JobRow } from "./jobs-shared";
 
-export interface JobRow {
-  customer: string;
-  customerTier?: string;
-  device: string;
-  deviceIcon?: string;
-  deviceSpec?: string;
-  id: string;
-  status: JobStatusType;
-  technician?: string;
-}
+export type { JobRow } from "./jobs-shared";
+
+import StatusBadge from "./status-badge";
 
 interface JobsTableProps {
   jobs: JobRow[];

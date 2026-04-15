@@ -15,7 +15,7 @@ interface QuickAddCustomerProps {
 export type { CustomerFormData };
 
 const labelCls =
-  "mb-2 ml-1 block font-bold font-label text-[11px] uppercase tracking-widest text-on-surface-variant";
+  "mb-2 ms-1 block font-bold font-label text-[11px] uppercase tracking-widest text-on-surface-variant";
 
 export default function QuickAddCustomer({
   onAdd,
@@ -73,11 +73,11 @@ export default function QuickAddCustomer({
                 {t("intake.full_name")}
               </label>
               <div className="relative flex items-center">
-                <span className="material-symbols-outlined absolute left-4 text-lg text-outline">
+                <span className="material-symbols-outlined absolute start-4 text-lg text-outline">
                   person
                 </span>
                 <input
-                  className="h-[52px] w-full rounded-xl border-none bg-surface-container-highest pr-4 pl-12 font-body text-on-surface text-sm transition-all placeholder:text-outline/50 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
+                  className="h-[52px] w-full rounded-xl border-none bg-surface-container-highest ps-12 pe-4 font-body text-on-surface text-sm transition-all placeholder:text-outline/50 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
                   id="qa-name"
                   onChange={(e) => update("name", e.target.value)}
                   placeholder={t("intake.full_name_placeholder")}
@@ -92,11 +92,11 @@ export default function QuickAddCustomer({
                 {t("intake.phone")}
               </label>
               <div className="relative flex items-center">
-                <span className="material-symbols-outlined absolute left-4 text-lg text-outline">
+                <span className="material-symbols-outlined absolute start-4 text-lg text-outline">
                   phone
                 </span>
                 <input
-                  className="h-[52px] w-full rounded-xl border-none bg-surface-container-highest pr-4 pl-12 font-body text-on-surface text-sm transition-all placeholder:text-outline/50 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
+                  className="h-[52px] w-full rounded-xl border-none bg-surface-container-highest ps-12 pe-4 font-body text-on-surface text-sm transition-all placeholder:text-outline/50 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
                   id="qa-phone"
                   onChange={(e) => update("phone", e.target.value)}
                   placeholder="+213..."
@@ -111,11 +111,11 @@ export default function QuickAddCustomer({
                 {t("intake.email")}
               </label>
               <div className="relative flex items-center">
-                <span className="material-symbols-outlined absolute left-4 text-lg text-outline">
+                <span className="material-symbols-outlined absolute start-4 text-lg text-outline">
                   mail
                 </span>
                 <input
-                  className="h-[52px] w-full rounded-xl border-none bg-surface-container-highest pr-4 pl-12 font-body text-on-surface text-sm transition-all placeholder:text-outline/50 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
+                  className="h-[52px] w-full rounded-xl border-none bg-surface-container-highest ps-12 pe-4 font-body text-on-surface text-sm transition-all placeholder:text-outline/50 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
                   id="qa-email"
                   onChange={(e) => update("email", e.target.value)}
                   placeholder="email@example.com"

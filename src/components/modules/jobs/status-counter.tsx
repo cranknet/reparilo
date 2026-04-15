@@ -43,16 +43,8 @@ export default function StatusCounter({
   isActive,
   primary,
 }: StatusCounterProps) {
-  return (
-    <button
-      className={[
-        "group flex min-h-[44px] items-center gap-3 rounded-lg px-4 py-2.5 text-left transition-all",
-        bgClass(isActive, primary),
-        onClick ? "cursor-pointer" : "cursor-default",
-      ].join(" ")}
-      onClick={onClick}
-      type="button"
-    >
+  const inner = (
+    <>
       <span
         className={[
           "font-extrabold font-headline tabular-nums",
@@ -71,18 +63,18 @@ export default function StatusCounter({
         {label}
       </span>
       {onClick && !isActive && (
-        <span className="material-symbols-outlined ml-auto text-[14px] text-outline-variant transition-colors group-hover:text-primary">
+        <span className="material-symbols-outlined ms-auto text-[14px] text-outline-variant transition-colors group-hover:text-primary">
           filter_list
         </span>
       )}
       {isActive && (
-        <span className="material-symbols-outlined ml-auto text-[14px] text-primary">
+        <span className="material-symbols-outlined ms-auto text-[14px] text-primary">
           filter_list
         </span>
       )}
       {status && !onClick && (
         <span
-          className="ml-auto h-2 w-2 rounded-full"
+          className="ms-auto h-2 w-2 rounded-full"
           style={{
             backgroundColor: isActive
               ? "var(--color-primary)"
@@ -90,6 +82,25 @@ export default function StatusCounter({
           }}
         />
       )}
-    </button>
+    </>
+  );
+
+  const className = [
+    "group flex min-h-[44px] items-center gap-3 rounded-lg px-4 py-2.5 text-left transition-all",
+    bgClass(isActive, primary),
+  ].join(" ");
+
+  if (onClick) {
+    return (
+      <button className={className} onClick={onClick} type="button">
+        {inner}
+      </button>
+    );
+  }
+
+  return (
+    <div className={className} role="status">
+      {inner}
+    </div>
   );
 }
