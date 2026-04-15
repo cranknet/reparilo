@@ -160,6 +160,7 @@ export default function SettingsPage() {
   const dirty = dirtyTabs.size > 0;
   const currentTabDirty = dirtyTabs.has(activeTab);
   const tabId = (key: SettingsTab) => `${baseId}-tab-${key}`;
+  const headingId = (key: SettingsTab) => `${baseId}-heading-${key}`;
   const panelId = (key: SettingsTab) => `${baseId}-panel-${key}`;
 
   const showToast = useCallback((message: string, type: ToastType) => {
@@ -239,7 +240,10 @@ export default function SettingsPage() {
         return;
       }
       const first = focusable[0];
-      const last = focusable.at(-1);
+      const last = Array.from(focusable).at(-1);
+      if (!last) {
+        return;
+      }
       if (e.shiftKey && document.activeElement === first) {
         e.preventDefault();
         last.focus();
@@ -294,8 +298,7 @@ export default function SettingsPage() {
     if (nextIndex !== undefined) {
       e.preventDefault();
       const nextTab = TAB_KEYS[nextIndex];
-      setActiveTab(nextTab);
-      tabRefs.current[nextTab]?.focus();
+      switchTab(nextTab);
     }
   }
 
@@ -923,7 +926,7 @@ export default function SettingsPage() {
 
         <div className="min-w-0 flex-1">
           <div
-            aria-labelledby={tabId(activeTab)}
+            aria-labelledby={headingId(activeTab)}
             className="rounded-3xl bg-surface-container-lowest p-5 md:p-7"
             id={panelId(activeTab)}
             ref={tabPanelRef}
@@ -936,7 +939,7 @@ export default function SettingsPage() {
                 </span>
                 <h3
                   className="font-extrabold font-headline text-lg text-on-surface"
-                  id={tabId(activeTab)}
+                  id={headingId(activeTab)}
                 >
                   {tabs.find((tab) => tab.key === activeTab)?.label}
                 </h3>
