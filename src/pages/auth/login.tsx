@@ -152,7 +152,7 @@ export default function LoginPage() {
           </p>
           <div className="grid grid-cols-2 gap-6">
             <div className="rounded-xl border border-outline-variant/10 bg-primary-container/20 p-6 backdrop-blur-md">
-              <span className="material-symbols-outlined mb-3 block font-bold font-headline text-primary-fixed text-xl">
+              <span className="material-symbols-outlined mb-3 block text-primary-fixed text-xl">
                 precision_manufacturing
               </span>
               <div className="font-bold font-headline text-white text-xl">
@@ -163,7 +163,7 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="rounded-xl border border-outline-variant/10 bg-primary-container/20 p-6 backdrop-blur-md">
-              <span className="material-symbols-outlined mb-3 block font-bold font-headline text-primary-fixed text-xl">
+              <span className="material-symbols-outlined mb-3 block text-primary-fixed text-xl">
                 build
               </span>
               <div className="font-bold font-headline text-white text-xl">
