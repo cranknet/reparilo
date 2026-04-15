@@ -409,8 +409,8 @@ model JobRepair {
 
 model AuditLog {
   id        String      @id @default(cuid())
-  jobId     String
-  job       Job         @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  jobId     String?
+  job       Job?        @relation(fields: [jobId], references: [id], onDelete: Restrict)
   userId    String
   user      User        @relation(fields: [userId], references: [id], onDelete: Restrict)
   action    AuditAction

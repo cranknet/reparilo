@@ -1,8 +1,78 @@
+import type { PrismaClient } from "@prisma/client";
 import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
 import type { Auth } from "../lib/auth.js";
 import { createAuth, getSessionFromRequest } from "../lib/auth.js";
+
+// ─────────────────────────────────────────────
+// Sign-in rate limiter (in-memory, per IP)
+// ─────────────────────────────────────────────
+
+const SIGN_IN_PATHS = new Set([
+  "/api/auth/sign-in/username",
+  "/api/auth/sign-in/email",
+]);
+const MAX_SIGN_IN_ATTEMPTS = 5;
+const SIGN_IN_WINDOW_MS = 60_000;
+
+interface RateLimitEntry {
+  count: number;
+  start: number;
+}
+
+const signInRateLimitStore: Record<string, RateLimitEntry> = {};
+
+/** Returns true if the IP is rate-limited (too many attempts). */
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = signInRateLimitStore[ip];
+
+  if (!entry || now - entry.start > SIGN_IN_WINDOW_MS) {
+    signInRateLimitStore[ip] = { start: now, count: 1 };
+    return false;
+  }
+
+  entry.count++;
+  return entry.count > MAX_SIGN_IN_ATTEMPTS;
+}
+
+function isSignInPath(pathname: string): boolean {
+  return SIGN_IN_PATHS.has(pathname);
+}
+
+// ─────────────────────────────────────────────
+// Audit log helper for sign-in events
+// ─────────────────────────────────────────────
+
+async function auditSignIn(
+  auth: Auth,
+  headers: Headers,
+  prisma: PrismaClient
+): Promise<void> {
+  try {
+    const session = await auth.api.getSession({ headers });
+    if (session?.user) {
+      await prisma.auditLog.create({
+        data: {
+          jobId: null,
+          userId: session.user.id,
+          action: "USER_SIGN_IN",
+          toValue: `Sign-in for ${session.user.username ?? session.user.email}`,
+        },
+      });
+    }
+  } catch {
+    // Audit failure should not block sign-in
+  }
+}
+
+/** Extract request body as JSON string for mutation methods. */
+function extractBody(method: string, body: unknown): string | undefined {
+  const isMutation =
+    method === "POST" || method === "PUT" || method === "PATCH";
+  return isMutation && body ? JSON.stringify(body) : undefined;
+}
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 const authPlugin: FastifyPluginAsync = async (app) => {
@@ -17,14 +87,19 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       const url = new URL(request.url, `http://${request.headers.host}`);
       const headers = fromNodeHeaders(request.headers);
 
-      let body: string | undefined;
+      // Rate limit sign-in attempts (5 per minute per IP)
       if (
-        request.method === "POST" ||
-        request.method === "PUT" ||
-        request.method === "PATCH"
+        isSignInPath(url.pathname) &&
+        request.method === "POST" &&
+        isRateLimited(request.ip)
       ) {
-        body = request.body ? JSON.stringify(request.body) : undefined;
+        await reply.status(429).send({
+          error: "Too many sign-in attempts. Try again later.",
+        });
+        return;
       }
+
+      const body = extractBody(request.method, request.body);
 
       const req = new Request(url.toString(), {
         method: request.method,
@@ -33,6 +108,15 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       });
 
       const response = await auth.handler(req);
+
+      // Audit successful sign-in
+      if (
+        isSignInPath(url.pathname) &&
+        request.method === "POST" &&
+        response.status === 200
+      ) {
+        await auditSignIn(auth, headers, prisma);
+      }
 
       app.log.info(
         { status: response.status, path: url.pathname, method: request.method },
