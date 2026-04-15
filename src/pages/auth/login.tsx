@@ -87,6 +87,7 @@ function SignInForm({
             autoComplete="username"
             className="w-full rounded-xl bg-surface-container-highest py-3.5 ps-12 pe-4 font-medium text-on-surface transition-colors placeholder:text-on-surface-variant/40 focus-visible:bg-surface-container-lowest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             id="username"
+            maxLength={128}
             name="username"
             onChange={(e) => {
               setUsername(e.target.value);
@@ -203,22 +204,17 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setSubmitError(null);
-    try {
-      // TODO: replace with actual API call when endpoint is ready
-      // await forgotPasswordApi(email);
-      await new Promise((r) => {
-        setTimeout(r, 500);
-      });
-      setSent(true);
-    } catch {
-      setSubmitError("auth_reset_failed");
-    } finally {
-      setSubmitting(false);
-    }
+    // TODO: replace with async API call when endpoint is ready:
+    //   try { await authApi.forgotPassword(email); setSent(true); }
+    //   catch { setSubmitError("auth_reset_failed"); }
+    //   finally { setSubmitting(false); }
+    // For now, show sent state immediately (no backend endpoint yet)
+    setSent(true);
+    setSubmitting(false);
   }
 
   if (sent) {
@@ -347,6 +343,8 @@ export default function LoginPage() {
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    // TODO: pass rememberMe to login when backend supports session persistence
+    // e.g. login(username, password, { rememberMe })
     try {
       await login(username, password);
       navigate("/", { replace: true });

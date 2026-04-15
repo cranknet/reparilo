@@ -318,7 +318,7 @@
   "auth_password_too_short": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل",
   "language_switch": "تبديل اللغة",
   "language_switch_to": "قم بالتبديل إلى {{lang}}",
-  "auth_reset_failed": "فشل إرسال رابط إعادة التعيين. ",
+  "auth_reset_failed": "فشل إرسال رابط إعادة التعيين.",
   "auth_sending_reset": "إرسال...",
   "tracking_page_title": "تتبع الزبون",
   "tracking_title": "تتبع الإصلاح الخاص بك",
