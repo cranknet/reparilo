@@ -1,8 +1,10 @@
 import type { PartCategoryType } from "@shared/constants";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import MetricCard from "@/components/modules/dashboard/metric-card";
 import AddPartModal from "@/components/modules/parts/add-part-modal";
+import { Icon } from "@/components/ui/icon";
+import { Input } from "@/components/ui/input";
+import { formatDzd } from "@/lib/format";
 
 type SortField = "name" | "category" | "defaultPrice" | "supplier";
 
@@ -124,9 +126,16 @@ function StockBar({ level, max }: { level: number; max: number }) {
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex justify-between font-bold text-[10px]">
+      <div className="flex justify-between font-bold text-[11px]">
         <span className={pct < 10 ? "text-error" : "text-on-surface"}>
-          {level} {pct < 10 && "⚡"}
+          {level}
+          {pct < 10 && (
+            <Icon
+              className="ms-1 align-middle text-error"
+              name="error"
+              size="xs"
+            />
+          )}
         </span>
         <span className={pct < 10 ? "text-error" : "text-primary"}>{pct}%</span>
       </div>
@@ -140,29 +149,63 @@ function StockBar({ level, max }: { level: number; max: number }) {
   );
 }
 
-function formatDzd(value: number): string {
-  return value.toLocaleString("fr-DZ");
+function SkeletonRow() {
+  return (
+    <tr>
+      <td className="px-6 py-5">
+        <div className="flex flex-col gap-2">
+          <div className="h-3 w-3/5 animate-pulse rounded bg-surface-container-high" />
+          <div className="h-2 w-2/5 animate-pulse rounded bg-surface-container-highest" />
+        </div>
+      </td>
+      <td className="px-6 py-5">
+        <div className="h-5 w-16 animate-pulse rounded-full bg-surface-container-high" />
+      </td>
+      <td className="px-6 py-5">
+        <div className="h-3 w-2/5 animate-pulse rounded bg-surface-container-high" />
+      </td>
+      <td className="px-6 py-5">
+        <div className="h-3 w-1/4 animate-pulse rounded bg-surface-container-high" />
+      </td>
+      <td className="min-w-[160px] px-6 py-5">
+        <div className="flex flex-col gap-1">
+          <div className="h-2 w-full animate-pulse rounded bg-surface-container-high" />
+          <div className="h-1.5 w-3/4 animate-pulse rounded-full bg-surface-container-highest" />
+        </div>
+      </td>
+    </tr>
+  );
 }
 
 export default function PartsCatalogPage() {
   const { t } = useTranslation();
-  const [search] = useState("");
+  const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortField>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [activeFilter, setActiveFilter] = useState<PartCategoryType | "ALL">(
     "ALL"
   );
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showCategoryFilters, setShowCategoryFilters] = useState(false);
+  const [isLoading] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
-  const lowStockCount = MOCK_PARTS.filter(
+  const lowStockItems = MOCK_PARTS.filter(
     (p) => p.stockLevel / p.stockMax < 0.1
-  ).length;
+  );
+  const lowStockCount = lowStockItems.length;
   const totalValue = MOCK_PARTS.reduce(
     (acc, p) => acc + p.defaultPrice * p.stockLevel,
     0
   );
   const uniqueSuppliers = [...new Set(MOCK_PARTS.map((p) => p.supplier))]
     .length;
+
+  const showToast = useCallback((message: string) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
+  }, []);
 
   const filtered = MOCK_PARTS.filter((p) => {
     const matchesSearch =
@@ -220,281 +263,430 @@ export default function PartsCatalogPage() {
         </div>
         <div className="flex w-full flex-wrap gap-3 sm:w-auto">
           <button
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-surface-container-highest px-4 py-2.5 font-bold font-headline text-on-secondary-fixed-variant text-sm transition-all hover:bg-surface-container sm:flex-none"
+            className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-surface-container-high px-4 py-3 font-bold text-on-surface-variant text-sm transition-all hover:bg-surface-container-highest sm:flex-none"
+            onClick={() => setShowCategoryFilters((prev) => !prev)}
             type="button"
           >
-            <span className="material-symbols-outlined text-[18px]">
-              filter_list
-            </span>
-            <span className="whitespace-nowrap">{t("advanced_filters")}</span>
+            <Icon name="filter_list" size="sm" />
+            <span className="whitespace-nowrap">{t("filters")}</span>
           </button>
           <button
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-4 py-2.5 font-bold font-headline text-sm text-white shadow-lg shadow-primary/20 transition-all hover:opacity-90 sm:flex-none md:px-8"
+            className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-on-primary text-sm shadow-md shadow-primary/10 transition-all hover:bg-primary/90 active:scale-[0.98] sm:flex-none md:px-8"
             onClick={() => setShowAddModal(true)}
             type="button"
           >
-            <span className="material-symbols-outlined text-[18px]">add</span>
+            <Icon name="add" size="sm" />
             <span className="whitespace-nowrap">{t("add_new_part")}</span>
           </button>
         </div>
       </div>
 
-      <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
-        <MetricCard
-          detail={t("across_categories")}
-          icon="inventory_2"
-          label={t("total_skus")}
-          value={MOCK_PARTS.length.toLocaleString()}
-        />
-        <MetricCard
-          detail={t("reorder_recommended")}
-          icon="warning"
-          iconColor="text-error"
-          label={t("low_stock_alerts")}
-          value={String(lowStockCount)}
-        />
-        <MetricCard
-          detail=""
-          icon="account_balance_wallet"
-          iconColor="text-tertiary"
-          label={t("inventory_value")}
-          unit="DZD"
-          value={formatDzd(totalValue)}
-        />
-        <MetricCard
-          detail={t("in_network")}
-          icon="local_shipping"
-          iconColor="text-on-secondary-container"
-          label={t("active_suppliers")}
-          value={String(uniqueSuppliers)}
-        />
-      </div>
-
-      <div className="hide-scrollbar mb-4 flex items-center gap-2 overflow-x-auto pb-2">
-        {categories.map((cat) => {
-          const isActive = activeFilter === cat;
-          return (
+      {lowStockCount > 0 && (
+        <div className="mb-6 rounded-2xl bg-error-container/20 p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-error-container">
+                <Icon className="text-error" name="warning" size="lg" />
+              </div>
+              <div>
+                <p className="font-extrabold font-headline text-lg text-on-surface">
+                  {t("low_stock_alerts")} ({lowStockCount})
+                </p>
+                <p className="text-on-surface-variant text-sm">
+                  {t("reorder_recommended")}
+                </p>
+              </div>
+            </div>
             <button
-              className={`shrink-0 rounded-full px-4 py-2 font-bold font-headline text-xs uppercase tracking-wide transition-all ${
-                isActive
-                  ? "bg-primary text-white"
-                  : "bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest"
-              }`}
-              key={cat}
-              onClick={() => setActiveFilter(cat)}
+              className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-error px-5 py-3 font-bold text-on-error text-sm transition-all hover:opacity-90"
+              onClick={() => {
+                setActiveFilter("ALL");
+                setShowCategoryFilters(true);
+              }}
               type="button"
             >
-              {cat === "ALL" ? t("all_categories") : t(`part_category.${cat}`)}
+              <Icon name="shopping_cart" size="sm" />
+              <span>{t("review_low_stock")}</span>
             </button>
-          );
-        })}
+          </div>
+          <div className="mt-4 flex flex-col gap-2">
+            {lowStockItems.map((part) => (
+              <div
+                className="flex items-center justify-between rounded-xl bg-error-container/40 px-4 py-3"
+                key={part.id}
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-1 font-bold text-[11px] uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
+                  >
+                    {t(`part_category.${part.category}`)}
+                  </span>
+                  <span className="truncate font-bold text-on-surface text-sm">
+                    {part.name}
+                  </span>
+                </div>
+                <div className="flex shrink-0 items-center gap-4">
+                  <span className="font-bold text-error text-sm">
+                    {part.stockLevel}/{part.stockMax}
+                  </span>
+                  <button
+                    className="flex min-h-[44px] items-center gap-1.5 rounded-lg bg-error px-3 py-2 font-bold text-on-error text-xs transition-all hover:opacity-90"
+                    type="button"
+                  >
+                    <Icon name="replay" size="xs" />
+                    {t("reorder")}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4 text-on-surface-variant text-sm">
+          <span className="font-bold text-on-surface">{MOCK_PARTS.length}</span>{" "}
+          {t("total_skus")}
+          <span className="text-outline-variant">·</span>
+          <span className="font-bold text-on-surface">
+            {formatDzd(totalValue)}
+          </span>{" "}
+          {t("currency_dzd")}
+          <span className="text-outline-variant">·</span>
+          <span className="font-bold text-on-surface">{uniqueSuppliers}</span>{" "}
+          {t("active_suppliers")}
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl bg-surface-container-low">
-        <div className="hidden overflow-x-auto md:block">
-          <table className="w-full border-collapse text-left">
-            <thead>
-              <tr className="bg-surface-container-high/50">
-                <th
-                  className="cursor-pointer px-6 py-4 font-bold text-[10px] text-on-surface-variant uppercase tracking-widest transition-colors hover:text-primary"
-                  onClick={() => toggleSort("name")}
-                >
-                  {t("part_details")}
-                  {sortBy === "name" && (
-                    <span className="ms-1 text-primary">
-                      {sortDir === "asc" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </th>
-                <th
-                  className="cursor-pointer px-6 py-4 font-bold text-[10px] text-on-surface-variant uppercase tracking-widest transition-colors hover:text-primary"
-                  onClick={() => toggleSort("category")}
-                >
-                  {t("category")}
-                  {sortBy === "category" && (
-                    <span className="ms-1 text-primary">
-                      {sortDir === "asc" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </th>
-                <th
-                  className="cursor-pointer px-6 py-4 font-bold text-[10px] text-on-surface-variant uppercase tracking-widest transition-colors hover:text-primary"
-                  onClick={() => toggleSort("supplier")}
-                >
-                  {t("supplier")}
-                  {sortBy === "supplier" && (
-                    <span className="ms-1 text-primary">
-                      {sortDir === "asc" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </th>
-                <th
-                  className="cursor-pointer px-6 py-4 font-bold text-[10px] text-on-surface-variant uppercase tracking-widest transition-colors hover:text-primary"
-                  onClick={() => toggleSort("defaultPrice")}
-                >
-                  {t("unit_cost")}
-                  {sortBy === "defaultPrice" && (
-                    <span className="ms-1 text-primary">
-                      {sortDir === "asc" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </th>
-                <th className="px-6 py-4 font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">
-                  {t("stock_level")}
-                </th>
-                <th className="px-6 py-4" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant/10">
-              {sorted.map((part) => {
+      <div className="mb-5">
+        <Input
+          iconStart="search"
+          id="parts-search"
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t("search_parts_placeholder")}
+          value={search}
+        />
+      </div>
+
+      {showCategoryFilters && (
+        <div className="mb-5 rounded-2xl bg-surface-container-low p-4">
+          <div className="hide-scrollbar flex flex-wrap items-center gap-2">
+            {categories
+              .filter((cat) =>
+                showAllCategories
+                  ? true
+                  : cat === "ALL" || categories.indexOf(cat) <= 4
+              )
+              .map((cat) => {
+                const isActive = activeFilter === cat;
+                return (
+                  <button
+                    className={`min-h-[44px] shrink-0 rounded-full px-4 py-2.5 font-bold text-xs uppercase tracking-wide transition-all ${
+                      isActive
+                        ? "bg-primary text-on-primary"
+                        : "bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest"
+                    }`}
+                    key={cat}
+                    onClick={() => setActiveFilter(cat)}
+                    type="button"
+                  >
+                    {cat === "ALL"
+                      ? t("all_categories")
+                      : t(`part_category.${cat}`)}
+                  </button>
+                );
+              })}
+            {!showAllCategories && categories.length > 5 && (
+              <button
+                className="min-h-[44px] shrink-0 rounded-full px-4 py-2.5 font-bold text-primary text-xs uppercase tracking-wide transition-all hover:bg-surface-container-high"
+                onClick={() => setShowAllCategories(true)}
+                type="button"
+              >
+                {t("show_more")}
+              </button>
+            )}
+            {showAllCategories && (
+              <button
+                className="min-h-[44px] shrink-0 rounded-full px-4 py-2.5 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-all hover:bg-surface-container-high"
+                onClick={() => setShowAllCategories(false)}
+                type="button"
+              >
+                {t("show_less")}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!showCategoryFilters && activeFilter !== "ALL" && (
+        <div className="mb-5 flex items-center gap-2">
+          <span className="rounded-full bg-primary px-3 py-1 font-bold text-white text-xs uppercase">
+            {t(`part_category.${activeFilter}`)}
+          </span>
+          <button
+            className="flex min-h-[44px] items-center gap-1 rounded-full px-2 py-1 text-on-surface-variant text-xs transition-all hover:text-on-surface"
+            onClick={() => setActiveFilter("ALL")}
+            type="button"
+          >
+            <Icon name="close" size="xs" />
+          </button>
+        </div>
+      )}
+
+      {sorted.length === 0 && !isLoading && (
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-container-low">
+            <Icon
+              className="text-on-surface-variant"
+              name="search_off"
+              size="xl"
+            />
+          </div>
+          <p className="font-bold font-headline text-lg text-on-surface">
+            {t("no_parts_found")}
+          </p>
+          <p className="mt-1 text-on-surface-variant text-sm">
+            {t("try_different_search")}
+          </p>
+        </div>
+      )}
+
+      {(sorted.length > 0 || isLoading) && (
+        <div className="overflow-hidden rounded-2xl bg-surface-container-low">
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full border-collapse text-start">
+              <thead>
+                <tr className="bg-surface-container-high/50">
+                  <th
+                    className="cursor-pointer px-6 py-4 font-bold text-[11px] text-on-surface-variant uppercase tracking-widest transition-colors hover:text-primary"
+                    onClick={() => toggleSort("name")}
+                  >
+                    {t("part_details")}
+                    {sortBy === "name" && (
+                      <Icon
+                        className="ms-1 align-middle text-primary"
+                        name={
+                          sortDir === "asc" ? "arrow_upward" : "arrow_downward"
+                        }
+                        size="xs"
+                      />
+                    )}
+                  </th>
+                  <th
+                    className="cursor-pointer px-6 py-4 font-bold text-[11px] text-on-surface-variant uppercase tracking-widest transition-colors hover:text-primary"
+                    onClick={() => toggleSort("category")}
+                  >
+                    {t("category")}
+                    {sortBy === "category" && (
+                      <Icon
+                        className="ms-1 align-middle text-primary"
+                        name={
+                          sortDir === "asc" ? "arrow_upward" : "arrow_downward"
+                        }
+                        size="xs"
+                      />
+                    )}
+                  </th>
+                  <th
+                    className="cursor-pointer px-6 py-4 font-bold text-[11px] text-on-surface-variant uppercase tracking-widest transition-colors hover:text-primary"
+                    onClick={() => toggleSort("supplier")}
+                  >
+                    {t("supplier")}
+                    {sortBy === "supplier" && (
+                      <Icon
+                        className="ms-1 align-middle text-primary"
+                        name={
+                          sortDir === "asc" ? "arrow_upward" : "arrow_downward"
+                        }
+                        size="xs"
+                      />
+                    )}
+                  </th>
+                  <th
+                    className="cursor-pointer px-6 py-4 font-bold text-[11px] text-on-surface-variant uppercase tracking-widest transition-colors hover:text-primary"
+                    onClick={() => toggleSort("defaultPrice")}
+                  >
+                    {t("unit_cost")}
+                    {sortBy === "defaultPrice" && (
+                      <Icon
+                        className="ms-1 align-middle text-primary"
+                        name={
+                          sortDir === "asc" ? "arrow_upward" : "arrow_downward"
+                        }
+                        size="xs"
+                      />
+                    )}
+                  </th>
+                  <th className="px-6 py-4 font-bold text-[11px] text-on-surface-variant uppercase tracking-widest">
+                    {t("stock_level")}
+                  </th>
+                  <th className="px-6 py-4 font-bold text-[11px] text-on-surface-variant uppercase tracking-widest">
+                    {t("manage")}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading
+                  ? Array.from({ length: 5 }).map((_, i) => (
+                      <SkeletonRow key={`skeleton-${String(i)}`} />
+                    ))
+                  : sorted.map((part) => {
+                      const stockPct = Math.round(
+                        (part.stockLevel / part.stockMax) * 100
+                      );
+                      const isLow = stockPct < 10;
+                      return (
+                        <tr
+                          className={`transition-colors hover:bg-surface-container-lowest ${isLow ? "bg-error-container/20" : ""}`}
+                          key={part.id}
+                        >
+                          <td className="px-6 py-5">
+                            <div className="flex flex-col">
+                              <span className="font-bold text-on-surface text-sm">
+                                {part.name}
+                              </span>
+                              <span className="font-mono text-[11px] text-outline tracking-tight">
+                                {part.sku}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5">
+                            <span
+                              className={`rounded-full px-3 py-1 font-bold text-[11px] uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
+                            >
+                              {t(`part_category.${part.category}`)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-5">
+                            <span className="text-on-surface-variant text-sm">
+                              {part.supplier}
+                            </span>
+                          </td>
+                          <td className="px-6 py-5">
+                            <span className="font-mono font-semibold text-sm">
+                              {formatDzd(part.defaultPrice)} {t("currency_dzd")}
+                            </span>
+                          </td>
+                          <td className="min-w-[160px] px-6 py-5">
+                            <StockBar
+                              level={part.stockLevel}
+                              max={part.stockMax}
+                            />
+                          </td>
+                          <td className="px-6 py-5">
+                            <div className="flex items-center gap-1">
+                              <button
+                                aria-label={t("edit_part")}
+                                className="flex h-11 w-11 items-center justify-center rounded-xl text-outline transition-colors hover:bg-surface-container-high hover:text-primary"
+                                type="button"
+                              >
+                                <Icon name="edit" size="sm" />
+                              </button>
+                              {isLow && (
+                                <button
+                                  aria-label={t("reorder")}
+                                  className="flex h-11 items-center gap-1.5 rounded-xl bg-error px-3 font-bold text-on-error text-xs transition-all hover:opacity-90"
+                                  type="button"
+                                >
+                                  <Icon name="replay" size="xs" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="md:hidden">
+            {isLoading ? (
+              <div className="p-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    className="flex flex-col gap-3 py-4"
+                    key={`mobile-skeleton-${String(i)}`}
+                  >
+                    <div className="h-3 w-3/5 animate-pulse rounded bg-surface-container-high" />
+                    <div className="h-2 w-2/5 animate-pulse rounded bg-surface-container-highest" />
+                    <div className="h-1.5 w-full animate-pulse rounded-full bg-surface-container-highest" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              sorted.map((part) => {
                 const stockPct = Math.round(
                   (part.stockLevel / part.stockMax) * 100
                 );
                 const isLow = stockPct < 10;
                 return (
-                  <tr
-                    className={`transition-colors hover:bg-surface-container-lowest ${isLow ? "bg-error-container/10" : ""}`}
+                  <div
+                    className={`p-4 ${isLow ? "bg-error-container/20" : ""}`}
                     key={part.id}
                   >
-                    <td className="px-6 py-5">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-on-surface text-sm">
+                    <div className="mb-3 flex items-start justify-between">
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-on-surface text-sm">
                           {part.name}
-                        </span>
-                        <span className="font-mono text-[10px] text-outline uppercase tracking-tight">
+                        </h3>
+                        <span className="font-mono text-[11px] text-outline">
                           {part.sku}
                         </span>
                       </div>
-                    </td>
-                    <td className="px-6 py-5">
                       <span
-                        className={`rounded-full px-3 py-1 font-bold text-[10px] uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
+                        className={`shrink-0 rounded-full px-2.5 py-1 font-bold text-[11px] uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
                       >
                         {t(`part_category.${part.category}`)}
                       </span>
-                    </td>
-                    <td className="px-6 py-5">
-                      <span className="text-on-surface-variant text-sm">
-                        {part.supplier}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5">
-                      <span className="font-mono font-semibold text-sm">
-                        {formatDzd(part.defaultPrice)} DZD
-                      </span>
-                    </td>
-                    <td className="min-w-[160px] px-6 py-5">
+                    </div>
+                    <div className="mb-3">
                       <StockBar level={part.stockLevel} max={part.stockMax} />
-                    </td>
-                    <td className="px-6 py-5 text-right">
-                      <button
-                        className="material-symbols-outlined text-outline transition-colors hover:text-primary"
-                        type="button"
+                    </div>
+                    <div className="flex items-end justify-between">
+                      <span
+                        className={`font-bold text-[11px] uppercase tracking-widest ${isLow ? "text-error" : "text-on-surface-variant"}`}
                       >
-                        more_vert
-                      </button>
-                    </td>
-                  </tr>
+                        {isLow ? t("low_stock") : t("stock_level")}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold font-mono text-primary text-sm">
+                          {formatDzd(part.defaultPrice)} {t("currency_dzd")}
+                        </span>
+                        {isLow && (
+                          <button
+                            aria-label={t("reorder")}
+                            className="flex h-8 items-center gap-1 rounded-lg bg-error px-2 font-bold text-[11px] text-on-error transition-all hover:opacity-90"
+                            type="button"
+                          >
+                            <Icon name="replay" size="xs" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="divide-y divide-outline-variant/10 md:hidden">
-          {sorted.map((part) => {
-            const stockPct = Math.round(
-              (part.stockLevel / part.stockMax) * 100
-            );
-            const isLow = stockPct < 10;
-            return (
-              <div
-                className={`p-4 ${isLow ? "bg-error-container/10" : ""}`}
-                key={part.id}
-              >
-                <div className="mb-2 flex items-start justify-between">
-                  <div>
-                    <h3 className="font-bold text-on-surface text-sm">
-                      {part.name}
-                    </h3>
-                    <span className="font-mono text-[10px] text-outline">
-                      {part.sku}
-                    </span>
-                  </div>
-                  <span
-                    className={`rounded-full px-2 py-0.5 font-bold text-[10px] uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
-                  >
-                    {t(`part_category.${part.category}`)}
-                  </span>
-                </div>
-                <div className="flex items-end justify-between">
-                  <div className="flex flex-col">
-                    <span
-                      className={`font-bold text-[10px] uppercase tracking-widest ${isLow ? "text-error" : "text-on-surface-variant"}`}
-                    >
-                      {isLow ? t("low_stock") : t("stock_level")}
-                    </span>
-                    <span
-                      className={`font-bold text-sm ${isLow ? "text-error" : "text-on-surface"}`}
-                    >
-                      {part.stockLevel} {t("units")} ({stockPct}%)
-                    </span>
-                  </div>
-                  <span className="font-bold font-mono text-primary text-sm">
-                    {formatDzd(part.defaultPrice)} DZD
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="flex items-center justify-between border-outline-variant/5 border-t bg-surface-container-high/30 px-6 py-4">
-          <span className="font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">
-            {t("showing_results", {
-              count: sorted.length,
-              total: MOCK_PARTS.length,
-            })}
-          </span>
-          <div className="flex gap-2">
-            <button
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container-highest text-on-surface disabled:opacity-50"
-              disabled
-              type="button"
-            >
-              <span className="material-symbols-outlined text-sm">
-                chevron_left
-              </span>
-            </button>
-            <button
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white"
-              type="button"
-            >
-              <span className="font-bold text-xs">1</span>
-            </button>
-            <button
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container-highest text-on-surface"
-              type="button"
-            >
-              <span className="font-bold text-xs">2</span>
-            </button>
-            <button
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container-highest text-on-surface"
-              type="button"
-            >
-              <span className="material-symbols-outlined text-sm">
-                chevron_right
-              </span>
-            </button>
+              })
+            )}
           </div>
         </div>
-      </div>
+      )}
 
       {showAddModal && (
         <AddPartModal
           onClose={() => setShowAddModal(false)}
-          onSubmit={() => setShowAddModal(false)}
+          onSubmit={() => {
+            setShowAddModal(false);
+            showToast(t("part_added_successfully"));
+          }}
         />
+      )}
+
+      {toast && (
+        <div className="fade-in slide-in-from-bottom-4 fixed end-6 bottom-6 z-50 flex animate-in items-center gap-2 rounded-2xl bg-on-surface px-5 py-3 font-bold text-on-primary text-sm shadow-2xl">
+          <Icon name="check_circle" size="sm" />
+          {toast}
+        </div>
       )}
     </>
   );

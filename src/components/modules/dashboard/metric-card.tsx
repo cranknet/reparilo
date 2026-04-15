@@ -21,17 +21,14 @@ export default function MetricCard({
   children,
   onClick,
 }: MetricCardProps) {
-  return (
-    <button
-      className={`relative overflow-hidden rounded-xl p-6 transition-all ${
-        onClick
-          ? "cursor-pointer bg-surface-container-low ring-1 ring-slate-100 hover:bg-white/40 active:scale-[0.98]"
-          : "cursor-default bg-surface-container-low"
-      }`}
-      disabled={!onClick}
-      onClick={onClick}
-      type="button"
-    >
+  const className = `relative overflow-hidden rounded-xl p-6 transition-all ${
+    onClick
+      ? "cursor-pointer bg-surface-container-low hover:bg-surface-container-high active:scale-[0.98]"
+      : "bg-surface-container-low"
+  }`;
+
+  const content = (
+    <>
       <div className="mb-4 flex items-start justify-between">
         <p className="font-bold text-on-surface-variant text-xs uppercase tracking-widest">
           {label}
@@ -50,6 +47,20 @@ export default function MetricCard({
       </div>
       <p className="mt-1 font-bold text-on-surface-variant text-xs">{detail}</p>
       {children && <div className="mt-4">{children}</div>}
-    </button>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button className={className} onClick={onClick} type="button">
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={className} role="status">
+      {content}
+    </div>
   );
 }

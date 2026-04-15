@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { formatDzd } from "@/lib/format";
 
 export type RepairCategory = "HARDWARE" | "SOFTWARE" | "DIAGNOSTIC";
 
@@ -20,16 +21,11 @@ const CATEGORY_COLORS: Record<RepairCategory, string> = {
   DIAGNOSTIC: "bg-primary-fixed text-on-primary-fixed",
 };
 
-function formatDzd(value: number): string {
-  return value.toLocaleString("fr-DZ");
-}
-
 interface RepairTableProps {
   repairs: RepairItem[];
-  totalCount: number;
 }
 
-export default function RepairTable({ repairs, totalCount }: RepairTableProps) {
+export default function RepairTable({ repairs }: RepairTableProps) {
   const { t } = useTranslation();
 
   return (
@@ -38,19 +34,31 @@ export default function RepairTable({ repairs, totalCount }: RepairTableProps) {
         <table className="w-full min-w-[640px] border-collapse text-left">
           <thead>
             <tr className="bg-surface-container-high/30">
-              <th className="p-4 font-body font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">
+              <th
+                className="p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-widest"
+                scope="col"
+              >
                 {t("repair_name")}
               </th>
-              <th className="p-4 font-body font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">
+              <th
+                className="p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-widest"
+                scope="col"
+              >
                 {t("category")}
               </th>
-              <th className="p-4 font-body font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">
+              <th
+                className="p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-widest"
+                scope="col"
+              >
                 {t("base_price")}
               </th>
-              <th className="p-4 font-body font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">
+              <th
+                className="p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-widest"
+                scope="col"
+              >
                 {t("duration")}
               </th>
-              <th className="p-4" />
+              <th className="p-4" scope="col" />
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/10">
@@ -74,7 +82,7 @@ export default function RepairTable({ repairs, totalCount }: RepairTableProps) {
                       <p className="font-bold font-headline text-sm">
                         {repair.name}
                       </p>
-                      <p className="font-mono text-[10px] text-outline uppercase tracking-tight">
+                      <p className="font-mono text-on-surface-variant text-xs uppercase tracking-tight">
                         {repair.code}
                       </p>
                     </div>
@@ -82,7 +90,7 @@ export default function RepairTable({ repairs, totalCount }: RepairTableProps) {
                 </td>
                 <td className="p-4">
                   <span
-                    className={`rounded-full px-3 py-1 font-bold text-[10px] uppercase ${CATEGORY_COLORS[repair.category]}`}
+                    className={`rounded-full px-3 py-1 font-bold text-xs uppercase ${CATEGORY_COLORS[repair.category]}`}
                   >
                     {t(`repair_category.${repair.category}`)}
                   </span>
@@ -99,7 +107,8 @@ export default function RepairTable({ repairs, totalCount }: RepairTableProps) {
                 </td>
                 <td className="p-4 text-right">
                   <button
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
+                    aria-label={t("edit_repair", { name: repair.name })}
+                    className="flex h-11 w-11 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
                     type="button"
                   >
                     <span className="material-symbols-outlined text-[20px]">
@@ -111,42 +120,6 @@ export default function RepairTable({ repairs, totalCount }: RepairTableProps) {
             ))}
           </tbody>
         </table>
-      </div>
-      <div className="flex items-center justify-between border-outline-variant/5 border-t bg-surface-container-high/30 px-6 py-4">
-        <span className="font-bold text-[10px] text-on-surface-variant uppercase tracking-widest">
-          {t("showing_results", { count: repairs.length, total: totalCount })}
-        </span>
-        <div className="flex gap-2">
-          <button
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container-highest text-on-surface disabled:opacity-50"
-            disabled
-            type="button"
-          >
-            <span className="material-symbols-outlined text-sm">
-              chevron_left
-            </span>
-          </button>
-          <button
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white"
-            type="button"
-          >
-            <span className="font-bold text-xs">1</span>
-          </button>
-          <button
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container-highest text-on-surface"
-            type="button"
-          >
-            <span className="font-bold text-xs">2</span>
-          </button>
-          <button
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container-highest text-on-surface"
-            type="button"
-          >
-            <span className="material-symbols-outlined text-sm">
-              chevron_right
-            </span>
-          </button>
-        </div>
       </div>
     </div>
   );

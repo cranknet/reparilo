@@ -34,20 +34,40 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
     supplier: "",
     isActive: true,
   });
+  const [errors, setErrors] = useState<
+    Partial<Record<"name" | "category", string>>
+  >({});
 
   function update<K extends keyof AddPartFormData>(
     key: K,
     value: AddPartFormData[K]
   ) {
     setForm((prev) => ({ ...prev, [key]: value }));
+    if (key === "name" && value.toString().trim()) {
+      setErrors((prev) => ({ ...prev, name: undefined }));
+    }
+    if (key === "category" && value) {
+      setErrors((prev) => ({ ...prev, category: undefined }));
+    }
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const newErrors: Partial<Record<"name" | "category", string>> = {};
+    if (!form.name.trim()) {
+      newErrors.name = t("add_part_modal.error_name_required");
+    }
+    if (!form.category) {
+      newErrors.category = t("add_part_modal.error_category_required");
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
     onSubmit({
       name: form.name,
       category: form.category as PartCategoryType,
-      defaultPrice: Number.parseFloat(form.defaultPrice) || 0,
+      defaultPrice: Number.parseInt(form.defaultPrice, 10) || 0,
       supplier: form.supplier,
       isActive: form.isActive,
     });
@@ -82,7 +102,7 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
               </div>
               <button
                 aria-label={t("close")}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
+                className="flex h-11 w-11 items-center justify-center rounded-xl text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
                 onClick={onClose}
                 type="button"
               >
@@ -103,6 +123,9 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
                 required
                 value={form.name}
               />
+              {errors.name && (
+                <p className="mt-1.5 text-error text-sm">{errors.name}</p>
+              )}
             </div>
 
             <div>
@@ -131,6 +154,9 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
                   <Icon name="expand_more" size="sm" />
                 </span>
               </div>
+              {errors.category && (
+                <p className="mt-1.5 text-error text-sm">{errors.category}</p>
+              )}
             </div>
 
             <div>
@@ -139,16 +165,16 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
               </Label>
               <div className="relative">
                 <span className="absolute start-4 top-1/2 -translate-y-1/2 font-mono text-on-surface-variant text-sm">
-                  $
+                  DA
                 </span>
                 <Input
-                  className="ps-8 font-mono"
+                  className="ps-10 font-mono"
                   id="part-price"
                   min="0"
                   onChange={(e) => update("defaultPrice", e.target.value)}
-                  placeholder="0.00"
+                  placeholder="0"
                   required
-                  step="0.01"
+                  step="1"
                   type="number"
                   value={form.defaultPrice}
                 />
@@ -182,7 +208,7 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
               <button
                 aria-checked={form.isActive}
                 aria-label={t("add_part_modal.active_status")}
-                className={`relative h-6 w-11 rounded-full transition-colors ${
+                className={`relative h-7 w-12 rounded-full transition-colors ${
                   form.isActive ? "bg-primary" : "bg-surface-container-highest"
                 }`}
                 onClick={() => update("isActive", !form.isActive)}
@@ -190,15 +216,17 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
                 type="button"
               >
                 <span
-                  className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                    form.isActive ? "translate-x-5" : "translate-x-0"
+                  className={`inline-start-[3px] absolute top-[3px] h-[22px] w-[22px] rounded-full bg-white shadow-sm transition-transform ltr:translate-x-[22px] rtl:-translate-x-[22px] ${
+                    form.isActive
+                      ? "ltr:translate-x-[22px] rtl:-translate-x-[22px]"
+                      : "translate-x-0 ltr:translate-x-0 rtl:-translate-x-0"
                   }`}
                 />
               </button>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 border-outline-variant/10 border-t px-6 py-4">
+          <div className="flex items-center justify-end gap-3 px-6 py-4">
             <Button onClick={onClose} type="button" variant="secondary">
               {t("add_part_modal.cancel")}
             </Button>

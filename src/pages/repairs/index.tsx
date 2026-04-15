@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import MetricCard from "@/components/modules/dashboard/metric-card";
 import AiPricingCallout from "@/components/modules/repairs/ai-pricing-callout";
 import CategoryHealth from "@/components/modules/repairs/category-health";
 import type { SortOption } from "@/components/modules/repairs/repair-filters";
@@ -11,6 +10,8 @@ import type {
   RepairItem,
 } from "@/components/modules/repairs/repair-table";
 import RepairTable from "@/components/modules/repairs/repair-table";
+import { Button } from "@/components/ui/button";
+import { formatDzd } from "@/lib/format";
 
 const MOCK_REPAIRS: RepairItem[] = [
   {
@@ -103,24 +104,41 @@ const MOCK_REPAIRS: RepairItem[] = [
   },
 ];
 
-function formatDzd(value: number): string {
-  return value.toLocaleString("fr-DZ");
-}
-
 export default function RepairsPage() {
   const { t } = useTranslation();
   const [activeCategory, setActiveCategory] = useState<RepairCategory | "ALL">(
     "ALL"
   );
   const [activeSort, setActiveSort] = useState<SortOption>("recently_added");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const avgPrice = Math.round(
-    MOCK_REPAIRS.reduce((sum, r) => sum + r.basePrice, 0) / MOCK_REPAIRS.length
-  );
+  const { avgPrice, topCategory } = useMemo(() => {
+    const avg = Math.round(
+      MOCK_REPAIRS.reduce((sum, r) => sum + r.basePrice, 0) /
+        MOCK_REPAIRS.length
+    );
+    const counts = MOCK_REPAIRS.reduce(
+      (acc, r) => {
+        acc[r.category] = (acc[r.category] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+    const top = Object.entries(counts).sort(
+      ([, a], [, b]) => b - a
+    )[0]?.[0] as RepairCategory;
+    return { avgPrice: avg, topCategory: top };
+  }, []);
 
-  const filtered = MOCK_REPAIRS.filter(
-    (r) => activeCategory === "ALL" || r.category === activeCategory
-  );
+  const filtered = MOCK_REPAIRS.filter((r) => {
+    const matchesCategory =
+      activeCategory === "ALL" || r.category === activeCategory;
+    const matchesSearch =
+      searchQuery === "" ||
+      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.code.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const sorted = [...filtered].sort((a, b) => {
     switch (activeSort) {
@@ -145,38 +163,17 @@ export default function RepairsPage() {
           <p className="mt-1 font-medium text-on-surface-variant text-sm md:text-base">
             {t("repair_catalog")}
           </p>
+          <p className="mt-1 text-on-surface-variant text-sm">
+            {t("services_count", { count: MOCK_REPAIRS.length })} ·{" "}
+            {t("top_category_short", {
+              category: t(`repair_category.${topCategory}`),
+            })}{" "}
+            · {t("avg_price_short", { price: formatDzd(avgPrice) })}
+          </p>
         </div>
-        <button
-          className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#0040a1] to-[#0056d2] px-4 py-2.5 font-bold font-headline text-sm text-white shadow-lg shadow-primary/20 transition-all hover:opacity-90 md:px-8"
-          type="button"
-        >
-          <span className="material-symbols-outlined text-[18px]">add</span>
-          <span className="whitespace-nowrap">{t("add_new_repair")}</span>
-        </button>
-      </div>
-
-      <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-3 md:gap-6">
-        <MetricCard
-          detail={t("across_categories")}
-          icon="build_circle"
-          label={t("total_services")}
-          value="142"
-        />
-        <MetricCard
-          detail={t("repair_category.HARDWARE")}
-          icon="star"
-          iconColor="text-tertiary"
-          label={t("most_popular")}
-          value={t("hardware")}
-        />
-        <MetricCard
-          detail=""
-          icon="payments"
-          iconColor="text-on-secondary-container"
-          label={t("avg_price")}
-          unit="DZD"
-          value={formatDzd(avgPrice)}
-        />
+        <Button icon="add" size="md" type="button" variant="gradient">
+          {t("add_new_repair")}
+        </Button>
       </div>
 
       <div className="mb-6">
@@ -184,26 +181,51 @@ export default function RepairsPage() {
           activeCategory={activeCategory}
           activeSort={activeSort}
           onCategoryChange={setActiveCategory}
+          onSearchChange={setSearchQuery}
           onSortChange={setActiveSort}
+          searchQuery={searchQuery}
         />
       </div>
 
       <div className="mb-8">
-        <div className="hidden md:block">
-          <RepairTable repairs={sorted} totalCount={MOCK_REPAIRS.length} />
-        </div>
-        <div className="flex flex-col gap-3 md:hidden">
-          {sorted.map((repair) => (
-            <RepairMobileCard key={repair.id} repair={repair} />
-          ))}
-        </div>
+        {sorted.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl bg-surface-container-low px-6 py-16 text-center">
+            <span className="material-symbols-outlined mb-4 text-[48px] text-on-surface-variant">
+              search_off
+            </span>
+            <p className="font-bold font-headline text-lg text-on-surface">
+              {t("no_repairs_found")}
+            </p>
+            <p className="mt-1 max-w-sm text-on-surface-variant text-sm">
+              {t("no_repairs_found_desc")}
+            </p>
+            <button
+              className="mt-6 rounded-xl bg-surface-container-high px-5 py-2.5 font-bold font-headline text-on-surface-variant text-sm transition-all hover:bg-surface-container-highest"
+              onClick={() => setActiveCategory("ALL")}
+              type="button"
+            >
+              {t("clear_filters")}
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="hidden md:block">
+              <RepairTable repairs={sorted} />
+            </div>
+            <div className="flex flex-col gap-3 md:hidden">
+              {sorted.map((repair) => (
+                <RepairMobileCard key={repair.id} repair={repair} />
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <AiPricingCallout />
         </div>
-        <CategoryHealth />
+        <CategoryHealth repairs={MOCK_REPAIRS} />
       </div>
     </>
   );
