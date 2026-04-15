@@ -66,17 +66,25 @@ export function createAuth(prisma: PrismaClient) {
       enabled: true,
       disableSignUp: true,
       sendResetPassword: async ({ user, url }) => {
-        await sendPasswordResetEmail(user.email, url);
+        try {
+          await sendPasswordResetEmail(user.email, url);
+        } catch {
+          console.error("[auth] Failed to send password reset email");
+        }
       },
       onPasswordReset: async ({ user }) => {
-        await prisma.auditLog.create({
-          data: {
-            jobId: null,
-            userId: user.id,
-            action: "PASSWORD_RESET",
-            toValue: `Password reset for ${user.email}`,
-          },
-        });
+        try {
+          await prisma.auditLog.create({
+            data: {
+              jobId: null,
+              userId: user.id,
+              action: "PASSWORD_RESET",
+              toValue: `Password reset for ${user.email}`,
+            },
+          });
+        } catch {
+          console.error("[auth] Failed to audit password reset");
+        }
       },
     },
     session: {

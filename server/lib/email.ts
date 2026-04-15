@@ -54,6 +54,13 @@ export async function sendPasswordResetEmail(
   to: string,
   resetUrl: string
 ): Promise<void> {
+  const safeUrl = resetUrl
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
   await sendEmail({
     to,
     subject: "Reset your Reparilo password",
@@ -62,7 +69,7 @@ export async function sendPasswordResetEmail(
       <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
         <h2 style="color:#1a1a1a">Reset your password</h2>
         <p>Click the button below to set a new password:</p>
-        <a href="${resetUrl}" style="display:inline-block;padding:12px 24px;background:#6750a4;color:#fff;border-radius:8px;text-decoration:none;font-weight:600">Reset Password</a>
+        <a href="${safeUrl}" style="display:inline-block;padding:12px 24px;background:#6750a4;color:#fff;border-radius:8px;text-decoration:none;font-weight:600">Reset Password</a>
         <p style="margin-top:16px;color:#666;font-size:14px">If you didn't request this, you can ignore this email.</p>
       </div>
     `,

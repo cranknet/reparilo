@@ -328,7 +328,7 @@
   "auth_reset_password_title": "Définir un nouveau mot de passe",
   "auth_reset_password_subtitle": "Entrez votre nouveau mot de passe ci-dessous.",
   "auth_reset_password_submit": "Réinitialiser le mot de passe",
-  "auth_saving": "Économie...",
+  "auth_saving": "Enregistrement...",
   "auth_sending_reset": "Envoi...",
   "tracking_page_title": "Suivi client",
   "tracking_title": "Suivez votre réparation",

@@ -122,7 +122,7 @@ export default function ResetPasswordPage() {
       if (code === "RESET_PASSWORD_DISABLED" || code === "INVALID_TOKEN") {
         setError("auth_reset_invalid_token");
       } else {
-        setError(axiosErr.response?.data?.message || "auth_reset_failed");
+        setError("auth_reset_failed");
       }
     } finally {
       setLoading(false);

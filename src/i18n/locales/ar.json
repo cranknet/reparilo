@@ -328,7 +328,7 @@
   "auth_reset_password_title": "تعيين كلمة مرور جديدة",
   "auth_reset_password_subtitle": "أدخل كلمة المرور الجديدة أدناه.",
   "auth_reset_password_submit": "إعادة تعيين كلمة المرور",
-  "auth_saving": "توفير...",
+  "auth_saving": "جاري الحفظ...",
   "auth_sending_reset": "إرسال...",
   "tracking_page_title": "تتبع الزبون",
   "tracking_title": "تتبع الإصلاح الخاص بك",
