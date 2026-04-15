@@ -8,6 +8,7 @@ export default function LanguageToggle() {
   return (
     <div
       aria-label={t("language_switch")}
+      aria-orientation="horizontal"
       className="flex items-center gap-1"
       role="radiogroup"
     >

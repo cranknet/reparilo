@@ -318,6 +318,8 @@
   "auth_password_too_short": "Password must be at least 8 characters",
   "language_switch": "Switch language",
   "language_switch_to": "Switch to {{lang}}",
+  "auth_reset_failed": "Failed to send reset link. Please try again.",
+  "auth_sending_reset": "Sending...",
   "tracking_page_title": "Customer Tracking",
   "tracking_title": "Track Your Repair",
   "tracking_subtitle": "Enter your job code to see the latest status of your device.",

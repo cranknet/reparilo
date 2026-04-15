@@ -4,11 +4,22 @@ import { useNavigate } from "react-router";
 import LanguageToggle from "@/components/modules/language-toggle";
 import { useAuthStore } from "@/stores/auth";
 
+const KNOWN_ERROR_KEYS = [
+  "auth_login_failed",
+  "auth_account_disabled",
+] as const;
+
+function isErrorKey(key: string): key is (typeof KNOWN_ERROR_KEYS)[number] {
+  return KNOWN_ERROR_KEYS.includes(key as (typeof KNOWN_ERROR_KEYS)[number]);
+}
+
 function SignInForm({
   username,
   setUsername,
   password,
   setPassword,
+  rememberMe,
+  setRememberMe,
   loading,
   onSubmit,
   error,
@@ -18,6 +29,8 @@ function SignInForm({
   setUsername: (v: string) => void;
   password: string;
   setPassword: (v: string) => void;
+  rememberMe: boolean;
+  setRememberMe: (v: boolean) => void;
   loading: boolean;
   onSubmit: (e: React.FormEvent) => void;
   error: string | null;
@@ -45,7 +58,7 @@ function SignInForm({
           </span>
           <div className="flex-1">
             <p className="font-medium text-on-error-container text-sm">
-              {t(error)}
+              {isErrorKey(error) ? t(error) : t("auth_login_failed")}
             </p>
             {error === "auth_login_failed" && (
               <p className="mt-1 text-on-error-container/70 text-xs">
@@ -64,7 +77,10 @@ function SignInForm({
           {t("auth_username")}
         </label>
         <div className="group relative">
-          <span className="material-symbols-outlined absolute start-4 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant/40 transition-colors group-focus-within:text-primary">
+          <span
+            aria-hidden="true"
+            className="material-symbols-outlined pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant/40 transition-colors group-focus-within:text-primary"
+          >
             person
           </span>
           <input
@@ -91,7 +107,10 @@ function SignInForm({
           {t("auth_password")}
         </label>
         <div className="group relative">
-          <span className="material-symbols-outlined absolute start-4 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant/40 transition-colors group-focus-within:text-primary">
+          <span
+            aria-hidden="true"
+            className="material-symbols-outlined pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant/40 transition-colors group-focus-within:text-primary"
+          >
             lock
           </span>
           <input
@@ -117,7 +136,10 @@ function SignInForm({
             }}
             type="button"
           >
-            <span className="material-symbols-outlined text-xl">
+            <span
+              aria-hidden="true"
+              className="material-symbols-outlined text-xl"
+            >
               {showPassword ? "visibility_off" : "visibility"}
             </span>
           </button>
@@ -125,10 +147,19 @@ function SignInForm({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <label className="flex cursor-pointer items-center gap-2">
+        <label
+          className="flex cursor-pointer items-center gap-2"
+          htmlFor="remember-me"
+        >
           <span className="relative flex h-6 w-6 shrink-0 items-center justify-center">
             <input
+              checked={rememberMe}
               className="peer h-4 w-4 rounded accent-primary"
+              id="remember-me"
+              name="remember-me"
+              onChange={(e) => {
+                setRememberMe(e.target.checked);
+              }}
               type="checkbox"
             />
           </span>
@@ -165,29 +196,40 @@ function SignInForm({
   );
 }
 
-function ForgotPasswordForm({
-  onSubmit,
-  onBack,
-}: {
-  onSubmit: (email: string) => void;
-  onBack: () => void;
-}) {
+function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onSubmit(email);
-    setSent(true);
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      // TODO: replace with actual API call when endpoint is ready
+      // await forgotPasswordApi(email);
+      await new Promise((r) => {
+        setTimeout(r, 500);
+      });
+      setSent(true);
+    } catch {
+      setSubmitError("auth_reset_failed");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (sent) {
     return (
-      <div className="space-y-4 py-4">
+      <div aria-live="polite" className="space-y-4 py-4">
         <div className="flex items-center justify-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-container">
-            <span className="material-symbols-outlined text-2xl text-on-primary-container">
+            <span
+              aria-hidden="true"
+              className="material-symbols-outlined text-2xl text-on-primary-container"
+            >
               mail
             </span>
           </div>
@@ -203,7 +245,12 @@ function ForgotPasswordForm({
           onClick={onBack}
           type="button"
         >
-          <span className="material-symbols-outlined text-lg">arrow_back</span>
+          <span
+            aria-hidden="true"
+            className="material-symbols-outlined text-lg"
+          >
+            arrow_back
+          </span>
           {t("auth_back_to_sign_in")}
         </button>
       </div>
@@ -216,6 +263,22 @@ function ForgotPasswordForm({
       className="space-y-5"
       onSubmit={handleSubmit}
     >
+      {submitError && (
+        <div
+          className="flex items-start gap-3 rounded-lg bg-error-container px-4 py-3"
+          role="alert"
+        >
+          <span
+            aria-hidden="true"
+            className="material-symbols-outlined mt-0.5 text-lg text-on-error-container"
+          >
+            error
+          </span>
+          <p className="font-medium text-on-error-container text-sm">
+            {t(submitError)}
+          </p>
+        </div>
+      )}
       <div className="space-y-1.5">
         <label
           className="font-label font-semibold text-on-surface-variant text-xs uppercase tracking-wider"
@@ -224,13 +287,17 @@ function ForgotPasswordForm({
           {t("auth_email")}
         </label>
         <div className="group relative">
-          <span className="material-symbols-outlined absolute start-4 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant/40 transition-colors group-focus-within:text-primary">
+          <span
+            aria-hidden="true"
+            className="material-symbols-outlined pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant/40 transition-colors group-focus-within:text-primary"
+          >
             mail
           </span>
           <input
             autoComplete="email"
             className="w-full rounded-xl bg-surface-container-highest py-3.5 ps-12 pe-4 font-medium text-on-surface transition-colors placeholder:text-on-surface-variant/40 focus-visible:bg-surface-container-lowest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             id="reset-email"
+            maxLength={254}
             name="email"
             onChange={(e) => {
               setEmail(e.target.value);
@@ -243,17 +310,20 @@ function ForgotPasswordForm({
         </div>
       </div>
       <button
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 font-bold font-headline text-on-primary text-sm uppercase tracking-wider transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:bg-primary/80"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 font-bold font-headline text-on-primary text-sm uppercase tracking-wider transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={submitting}
         type="submit"
       >
-        {t("auth_send_reset")}
+        {submitting ? t("auth_sending_reset") : t("auth_send_reset")}
       </button>
       <button
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-surface-container-highest py-3 font-bold font-headline text-on-surface text-sm uppercase tracking-wider transition-colors hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         onClick={onBack}
         type="button"
       >
-        <span className="material-symbols-outlined text-lg">arrow_back</span>
+        <span aria-hidden="true" className="material-symbols-outlined text-lg">
+          arrow_back
+        </span>
         {t("auth_back_to_sign_in")}
       </button>
     </form>
@@ -265,6 +335,7 @@ export default function LoginPage() {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const navigate = useNavigate();
@@ -286,10 +357,6 @@ export default function LoginPage() {
     }
   }
 
-  function handleForgotPassword(_email: string) {
-    // TODO: implement forgot password API endpoint
-  }
-
   function handleBackToSignIn() {
     setShowForgotPassword(false);
     clearError();
@@ -300,7 +367,10 @@ export default function LoginPage() {
       <header className="flex shrink-0 items-center justify-between border-outline-variant/30 border-b px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-            <span className="material-symbols-outlined text-lg text-on-primary">
+            <span
+              aria-hidden="true"
+              className="material-symbols-outlined text-lg text-on-primary"
+            >
               precision_manufacturing
             </span>
           </div>
@@ -316,7 +386,7 @@ export default function LoginPage() {
         <LanguageToggle />
       </header>
 
-      <section className="flex flex-1 items-center justify-center overflow-y-auto p-4 pb-[env(safe-area-inset-bottom,0px)] sm:p-6">
+      <section className="flex flex-1 items-center justify-center overflow-y-auto p-4 sm:p-6">
         <div className="w-full max-w-sm">
           {showForgotPassword ? (
             <>
@@ -329,10 +399,7 @@ export default function LoginPage() {
                 </p>
               </div>
 
-              <ForgotPasswordForm
-                onBack={handleBackToSignIn}
-                onSubmit={handleForgotPassword}
-              />
+              <ForgotPasswordForm onBack={handleBackToSignIn} />
             </>
           ) : (
             <>
@@ -353,7 +420,9 @@ export default function LoginPage() {
                 }}
                 onSubmit={handleSignIn}
                 password={password}
+                rememberMe={rememberMe}
                 setPassword={setPassword}
+                setRememberMe={setRememberMe}
                 setUsername={setUsername}
                 username={username}
               />
