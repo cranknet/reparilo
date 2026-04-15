@@ -15,10 +15,22 @@ const TAB_ICONS: Record<SettingsTab, string> = {
 };
 
 const AI_MODELS = [
-  { id: "gpt-4o-mini", label: "Fast & Affordable", labelShort: "GPT-4o Mini" },
-  { id: "gpt-4o", label: "Balanced (Recommended)", labelShort: "GPT-4o" },
-  { id: "gpt-4-turbo", label: "Best Quality", labelShort: "GPT-4 Turbo" },
-  { id: "o1-preview", label: "Advanced Reasoning", labelShort: "o1-preview" },
+  {
+    id: "gpt-4o-mini",
+    labelKey: "model_label_fast",
+    labelShort: "GPT-4o Mini",
+  },
+  { id: "gpt-4o", labelKey: "model_label_balanced", labelShort: "GPT-4o" },
+  {
+    id: "gpt-4-turbo",
+    labelKey: "model_label_best",
+    labelShort: "GPT-4 Turbo",
+  },
+  {
+    id: "o1-preview",
+    labelKey: "model_label_advanced",
+    labelShort: "o1-preview",
+  },
 ];
 
 const MOCK_TEMPLATES = [
@@ -465,7 +477,7 @@ export default function SettingsPage() {
               >
                 {AI_MODELS.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {m.label}
+                    {t(m.labelKey)}
                   </option>
                 ))}
               </select>

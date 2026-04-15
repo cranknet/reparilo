@@ -16,10 +16,10 @@ export default function AiCallout({ insight }: AiCalloutProps) {
           </div>
           <div>
             <h4 className="font-bold font-headline text-on-surface text-sm md:text-base">
-              {t("ask_ai_analyst")}
+              {t("ask_ai_assistant")}
             </h4>
             <p className="text-on-surface-variant text-xs md:text-xs">
-              {t("ai_analyst_subtitle")}
+              {t("ai_assistant_subtitle")}
             </p>
           </div>
         </div>
@@ -30,7 +30,7 @@ export default function AiCallout({ insight }: AiCalloutProps) {
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-on-surface py-2.5 font-bold text-on-primary text-sm transition-all hover:bg-inverse-surface"
           type="button"
         >
-          {t("open_ai_insights")}
+          {t("ask_ai")}
           <span className="material-symbols-outlined text-sm">north_east</span>
         </button>
       </div>

@@ -120,7 +120,7 @@ export default function TechnicianDashboardPage() {
               swap_horiz
             </span>
             <span className="whitespace-nowrap">
-              {t("tech_dashboard.update_job_status")}
+              {t("tech_dashboard.update_status")}
             </span>
           </button>
         </div>
@@ -137,7 +137,7 @@ export default function TechnicianDashboardPage() {
             <div className="h-full w-2/3 bg-primary" />
           </div>
           <span className="mt-2 block font-bold text-primary text-xs">
-            66% {t("tech_dashboard.load")}
+            66% {t("tech_dashboard.workload")}
           </span>
         </MetricCard>
 

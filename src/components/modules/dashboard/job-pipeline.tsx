@@ -55,7 +55,7 @@ export default function JobPipeline({
     <div className="h-full rounded-xl bg-surface-container-low p-6 ring-1 ring-surface-container-low/50 transition-all">
       <h3 className="mb-6 flex items-center gap-2 font-bold font-headline text-lg text-on-surface">
         <span className="material-symbols-outlined">account_tree</span>
-        {t("job_pipeline")}
+        {t("repair_status_board")}
       </h3>
       <div className="space-y-3">
         {PIPELINE_ITEMS.map(({ status, color, descriptionKey }) => (
@@ -89,7 +89,7 @@ export default function JobPipeline({
       <div className="mt-8 rounded-xl bg-primary-fixed p-4 ring-1 ring-primary/20 transition-all">
         <div className="mb-2 flex items-center justify-between">
           <p className="font-bold text-primary text-xs uppercase">
-            {t("bench_capacity")}
+            {t("bench_usage")}
           </p>
           <span className="font-bold text-primary text-xs">
             {benchCapacity}%

@@ -306,7 +306,7 @@ export default function AddRepairModal({
                       value={form.basePrice}
                     />
                     <span className="font-bold text-on-surface-variant text-sm">
-                      DZD
+                      {t("currency_dzd")}
                     </span>
                   </div>
                   {errors.basePrice && touched.basePrice && (

@@ -90,7 +90,7 @@ export default function QuickIntakeForm() {
             className="mt-2 w-full rounded-xl bg-gradient-to-br from-primary to-primary-container py-4 font-bold text-white shadow-premium transition-all hover:opacity-90"
             type="submit"
           >
-            {t("intake.create_job")}
+            {t("intake.start_repair")}
           </button>
         </form>
       )}

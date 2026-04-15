@@ -20,7 +20,7 @@ export default function FinancialTrend({ data }: FinancialTrendProps) {
     <div className="relative overflow-hidden rounded-xl bg-surface-container-low p-6">
       <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <h3 className="font-bold font-headline text-lg text-on-surface">
-          {t("financial_trend")}
+          {t("revenue_this_week")}
         </h3>
         <div className="flex gap-4">
           <div className="flex items-center gap-2">

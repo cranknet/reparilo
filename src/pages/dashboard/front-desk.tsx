@@ -74,7 +74,7 @@ const MOCK_ALERTS = [
   {
     id: "alert-overdue",
     icon: "warning",
-    title: "2 Jobs Overdue",
+    title: "2 Repairs Overdue",
     description: "Action required immediately",
     variant: "error" as const,
   },
@@ -126,7 +126,7 @@ export default function FrontDeskPage() {
           >
             add_circle
           </span>
-          {t("new_intake")}
+          {t("new_checkin")}
         </button>
         <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
           <button

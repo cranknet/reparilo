@@ -96,7 +96,7 @@ export default function PartsAlert({ items }: PartsAlertProps) {
         className="mt-8 w-full rounded-xl bg-surface-container-highest py-3 font-bold text-on-surface-variant text-xs transition-colors hover:bg-surface-container-high"
         type="button"
       >
-        {t("tech_dashboard.open_full_inventory")}
+        {t("tech_dashboard.view_all_parts")}
       </button>
     </div>
   );

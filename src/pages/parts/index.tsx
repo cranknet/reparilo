@@ -322,7 +322,7 @@ export default function PartsCatalogPage() {
               type="button"
             >
               <Icon name="shopping_cart" size="sm" />
-              <span>{t("review_low_stock")}</span>
+              <span>{t("view_low_stock")}</span>
             </button>
           </div>
           <div className="mt-4 flex flex-col gap-2">
@@ -350,7 +350,7 @@ export default function PartsCatalogPage() {
                     type="button"
                   >
                     <Icon name="replay" size="xs" />
-                    {t("reorder")}
+                    {t("restock")}
                   </button>
                 </div>
               </div>
@@ -362,7 +362,7 @@ export default function PartsCatalogPage() {
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4 text-on-surface-variant text-sm">
           <span className="font-bold text-on-surface">{MOCK_PARTS.length}</span>{" "}
-          {t("total_skus")}
+          {t("total_parts")}
           <span className="text-outline-variant">·</span>
           <span className="font-bold text-on-surface">
             {formatDzd(totalValue)}
@@ -632,7 +632,7 @@ export default function PartsCatalogPage() {
                               </button>
                               {isLow && (
                                 <button
-                                  aria-label={t("reorder")}
+                                  aria-label={t("restock")}
                                   className="flex h-11 items-center gap-1.5 rounded-xl bg-error px-3 font-bold text-on-error text-xs transition-all hover:opacity-90"
                                   type="button"
                                 >
@@ -714,12 +714,12 @@ export default function PartsCatalogPage() {
                       </button>
                       {isLow && (
                         <button
-                          aria-label={t("reorder")}
+                          aria-label={t("restock")}
                           className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-error font-bold text-on-error text-xs transition-all hover:opacity-90"
                           type="button"
                         >
                           <Icon name="replay" size="xs" />
-                          <span>{t("reorder")}</span>
+                          <span>{t("restock")}</span>
                         </button>
                       )}
                     </div>

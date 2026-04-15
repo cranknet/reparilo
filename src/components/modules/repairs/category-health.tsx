@@ -46,7 +46,7 @@ export default function CategoryHealth({ repairs }: CategoryHealthProps) {
     <div className="rounded-2xl bg-surface-container-high p-6">
       <div className="mb-6 flex items-center justify-between">
         <h3 className="font-extrabold font-headline text-lg text-on-surface">
-          {t("category_health")}
+          {t("service_breakdown")}
         </h3>
         <span
           aria-hidden="true"
@@ -85,7 +85,7 @@ export default function CategoryHealth({ repairs }: CategoryHealthProps) {
         >
           download
         </span>
-        {t("download_catalog_report")}
+        {t("download_service_report")}
       </button>
     </div>
   );

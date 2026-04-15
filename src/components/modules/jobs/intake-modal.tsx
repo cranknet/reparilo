@@ -194,7 +194,7 @@ export default function IntakeModal({
       role="dialog"
     >
       <button
-        aria-label="Close modal"
+        aria-label={t("close_modal")}
         className="absolute inset-0 bg-on-surface/40"
         onClick={onClose}
         type="button"
@@ -252,7 +252,7 @@ export default function IntakeModal({
                     onClick={() => setShowQuickAdd(!showQuickAdd)}
                     type="button"
                   >
-                    {t("intake.quick_add")}
+                    {t("intake.add_customer")}
                   </button>
                 </div>
 
@@ -361,7 +361,7 @@ export default function IntakeModal({
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label className={labelCls} htmlFor="device-brand">
-                      {t("intake.brand_series")}
+                      {t("intake.brand")}
                     </label>
                     <select
                       className="h-12 w-full appearance-none rounded-xl bg-surface-container-highest px-4 text-on-surface transition-all focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary"
@@ -369,7 +369,7 @@ export default function IntakeModal({
                       onChange={(e) => update("brand", e.target.value)}
                       value={form.brand}
                     >
-                      <option value="">{t("intake.brand_series")}</option>
+                      <option value="">{t("intake.brand")}</option>
                       {BRANDS.map((b) => (
                         <option key={b} value={b}>
                           {b}
@@ -379,7 +379,7 @@ export default function IntakeModal({
                   </div>
                   <div>
                     <label className={labelCls} htmlFor="device-model">
-                      {t("intake.specific_model")}
+                      {t("intake.model")}
                       <span className={requiredMarkCls}>*</span>
                     </label>
                     <input
@@ -388,7 +388,7 @@ export default function IntakeModal({
                       id="device-model"
                       onBlur={() => handleBlur("model")}
                       onChange={(e) => update("model", e.target.value)}
-                      placeholder={t("intake.specific_model")}
+                      placeholder={t("intake.model")}
                       required
                       type="text"
                       value={form.model}
@@ -399,7 +399,7 @@ export default function IntakeModal({
                   </div>
                   <div className="sm:col-span-2">
                     <label className={labelCls} htmlFor="device-color">
-                      {t("intake.color_finish")}
+                      {t("intake.device_color")}
                     </label>
                     <input
                       className={inputCls}
@@ -420,7 +420,7 @@ export default function IntakeModal({
                 <span className="material-symbols-outlined text-primary">
                   assignment
                 </span>
-                {t("intake.tech_spec_sheet")}
+                {t("intake.repair_details")}
               </h2>
 
               <div className="flex flex-1 flex-col space-y-6">
@@ -485,7 +485,7 @@ export default function IntakeModal({
                         value={form.estimatedCost}
                       />
                       <span className="font-bold text-on-surface-variant text-sm">
-                        DZD
+                        {t("currency_dzd")}
                       </span>
                     </div>
                   </div>
@@ -509,7 +509,7 @@ export default function IntakeModal({
                         value={form.deposit}
                       />
                       <span className="font-bold text-on-surface-variant text-sm">
-                        DZD
+                        {t("currency_dzd")}
                       </span>
                     </div>
                   </div>
@@ -580,7 +580,7 @@ export default function IntakeModal({
                 {/* Photo Upload Zone */}
                 <div>
                   <label className={labelCls} htmlFor="photo-upload">
-                    {t("intake.photo_documentation")}
+                    {t("intake.device_photos")}
                   </label>
                   <button
                     className="group flex min-h-[44px] w-full cursor-pointer items-center gap-4 rounded-xl bg-surface-container-low px-5 py-4 ring-1 ring-outline-variant transition-all hover:ring-primary/50"
@@ -623,7 +623,9 @@ export default function IntakeModal({
               disabled={isSubmitting}
               type="submit"
             >
-              {isSubmitting ? t("intake.creating_job") : t("intake.create_job")}
+              {isSubmitting
+                ? t("intake.creating_job")
+                : t("intake.start_repair")}
             </button>
           </footer>
         </form>

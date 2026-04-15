@@ -54,7 +54,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
           {message.content}
         </article>
         <span className="ms-1 font-bold text-on-surface-variant text-xs uppercase tracking-wider">
-          {t("ai_analyst")} &bull; {message.timestamp}
+          {t("ai_assistant")} &bull; {message.timestamp}
         </span>
       </div>
     </div>

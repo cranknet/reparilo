@@ -128,22 +128,22 @@ export default function JobsPage() {
       <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <h2 className="font-extrabold font-headline text-2xl text-on-surface tracking-tight md:text-3xl">
-            {t("jobs_queue")}
+            {t("open_repairs")}
           </h2>
           <p className="mt-1 font-body font-medium text-on-surface-variant text-sm md:text-base">
-            {t("jobs_queue_desc")}
+            {t("open_repairs_desc")}
           </p>
         </div>
         <div className="flex w-full flex-wrap gap-3 sm:w-auto">
           <button
-            aria-label={t("export")}
+            aria-label={t("download_list")}
             className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-surface-container-low px-4 py-2.5 font-bold font-headline text-on-surface-variant text-sm transition-all hover:bg-surface-container-high sm:flex-none md:px-6"
             type="button"
           >
             <span className="material-symbols-outlined text-[18px] md:text-[20px]">
               file_export
             </span>
-            <span className="whitespace-nowrap">{t("export")}</span>
+            <span className="whitespace-nowrap">{t("download_list")}</span>
           </button>
           <button
             className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-bold font-headline text-on-primary text-sm transition-all hover:bg-primary-container sm:flex-none md:px-8"
@@ -153,7 +153,7 @@ export default function JobsPage() {
             <span className="material-symbols-outlined text-[18px] md:text-[20px]">
               add_box
             </span>
-            <span className="whitespace-nowrap">{t("new_intake")}</span>
+            <span className="whitespace-nowrap">{t("new_checkin")}</span>
           </button>
         </div>
       </div>

@@ -59,7 +59,7 @@ export default function TechJobPipeline({
     <div className="h-full rounded-xl bg-surface-container-low p-6 ring-1 ring-surface-container-low/50 transition-all">
       <div className="mb-6 flex items-center justify-between">
         <h3 className="font-bold font-headline text-lg text-on-surface">
-          {t("tech_dashboard.my_job_pipeline")}
+          {t("tech_dashboard.my_repair_board")}
         </h3>
         <span className="font-bold text-primary text-xs uppercase">
           {t("realtime")}
@@ -97,7 +97,7 @@ export default function TechJobPipeline({
       <div className="mt-8 rounded-xl bg-primary-fixed p-4 ring-1 ring-primary/20 transition-all">
         <div className="mb-2 flex items-center justify-between">
           <p className="font-bold text-primary text-xs uppercase">
-            {t("tech_dashboard.my_bench_capacity")}
+            {t("tech_dashboard.my_bench_usage")}
           </p>
           <span className="font-bold text-primary text-xs">
             {benchUsed}/{benchTotal} {t("tech_dashboard.slots")}

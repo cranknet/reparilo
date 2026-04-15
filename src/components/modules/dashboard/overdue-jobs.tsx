@@ -59,13 +59,13 @@ export default function OverdueJobs({
                     className="rounded bg-surface-container-highest p-1 font-bold text-[9px] text-on-surface-variant transition-colors hover:bg-surface-container-highest-container"
                     type="button"
                   >
-                    {t("snooze", { defaultValue: "Snooze" })}
+                    {t("snooze")}
                   </button>
                   <button
                     className="rounded bg-error-container p-1 font-bold text-[9px] text-error transition-colors hover:bg-error-container/80"
                     type="button"
                   >
-                    {t("prioritize", { defaultValue: "Prioritize" })}
+                    {t("prioritize")}
                   </button>
                 </div>
               </div>

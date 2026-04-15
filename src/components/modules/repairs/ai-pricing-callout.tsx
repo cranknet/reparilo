@@ -14,11 +14,11 @@ export default function AiPricingCallout() {
             trending_up
           </span>
           <h3 className="font-extrabold font-headline text-lg text-on-primary-container">
-            {t("optimize_pricing")}
+            {t("improve_pricing")}
           </h3>
         </div>
         <p className="mb-6 max-w-2xl text-on-primary-container text-sm leading-relaxed md:text-base">
-          {t("optimize_pricing_desc")}
+          {t("improve_pricing_desc")}
         </p>
         {confirming ? (
           <div>
@@ -48,7 +48,7 @@ export default function AiPricingCallout() {
             onClick={() => setConfirming(true)}
             variant="secondary"
           >
-            {t("apply_market_suggestion")}
+            {t("use_recommended_price")}
           </Button>
         )}
       </div>

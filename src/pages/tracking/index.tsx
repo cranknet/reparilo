@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 
 function LanguageSwitcher() {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
 
   const nextLang = () => {
     const normalizedLang = i18n.language.split("-")[0];
@@ -18,7 +18,7 @@ function LanguageSwitcher() {
 
   return (
     <button
-      aria-label="Switch language"
+      aria-label={t("language_switch")}
       className="material-symbols-outlined rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high"
       onClick={nextLang}
       type="button"
@@ -182,7 +182,7 @@ function LookupForm({ onSearch }: { onSearch: (code: string) => void }) {
                   {t("tracking_certified_parts")}
                 </p>
                 <p className="font-bold font-headline text-sm">
-                  {t("tracking_original_engineering")}
+                  {t("tracking_genuine_parts")}
                 </p>
               </div>
             </div>
@@ -310,7 +310,7 @@ function StatusView({
 
                 <div className="space-y-6">
                   <h3 className="mb-6 font-bold font-label text-on-surface-variant text-xs uppercase tracking-widest">
-                    {t("tracking_repair_lifecycle")}
+                    {t("tracking_repair_progress")}
                   </h3>
                   <div className="relative flex flex-col gap-8">
                     <div className="absolute start-[11px] top-2 bottom-2 w-[2px] bg-surface-container-high" />
@@ -393,14 +393,14 @@ function StatusView({
             <div className="flex w-full flex-col gap-8 bg-surface-container-high p-8 md:w-80">
               <div className="space-y-4">
                 <h4 className="font-bold font-label text-on-surface-variant text-xs uppercase tracking-widest">
-                  {t("tracking_facility_insight")}
+                  {t("tracking_workshop_view")}
                 </h4>
                 <div className="group relative aspect-video overflow-hidden rounded-xl bg-surface-container-highest">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   <div className="absolute start-3 bottom-3 flex items-center gap-2">
                     <div className="h-2 w-2 animate-pulse rounded-full bg-success" />
                     <span className="font-bold text-on-primary text-xs uppercase tracking-wide">
-                      {t("tracking_live_bench")}
+                      {t("tracking_live_workstation")}
                     </span>
                   </div>
                 </div>

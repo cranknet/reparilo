@@ -4,8 +4,8 @@ import { NavLink } from "react-router";
 const NAV_ITEMS = [
   { icon: "dashboard", labelKey: "dashboard", to: "/" },
   { icon: "build", labelKey: "jobs", to: "/jobs" },
-  { icon: "menu_book", labelKey: "service_catalog", to: "/repairs" },
-  { icon: "psychology", labelKey: "ai_analyst", to: "/ai-analyst" },
+  { icon: "menu_book", labelKey: "repair_services", to: "/repairs" },
+  { icon: "psychology", labelKey: "ai_assistant", to: "/ai-analyst" },
   { icon: "settings", labelKey: "settings", to: "/settings" },
 ] as const;
 

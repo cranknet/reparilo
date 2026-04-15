@@ -98,7 +98,7 @@ export default function AiConfigPanel({ open, onClose }: AiConfigPanelProps) {
                 className="block font-bold text-on-surface-variant text-xs uppercase tracking-wider"
                 htmlFor="ai-api-key"
               >
-                {t("master_api_key")}
+                {t("access_key")}
               </label>
               <div className="relative">
                 <input
@@ -180,7 +180,7 @@ export default function AiConfigPanel({ open, onClose }: AiConfigPanelProps) {
                     className="block font-bold text-on-surface-variant text-xs uppercase tracking-wider"
                     htmlFor="ai-endpoint"
                   >
-                    {t("api_endpoint_url")}
+                    {t("connection_url")}
                   </label>
                   <div className="relative">
                     <input
@@ -202,7 +202,7 @@ export default function AiConfigPanel({ open, onClose }: AiConfigPanelProps) {
                       className="font-bold text-on-surface-variant text-xs uppercase tracking-wider"
                       htmlFor="ai-temperature"
                     >
-                      {t("inference_temperature")}
+                      {t("ai_creativity_setting")}
                     </label>
                     <span className="font-bold font-mono text-primary text-xs">
                       {temperature.toFixed(1)}
@@ -243,11 +243,11 @@ export default function AiConfigPanel({ open, onClose }: AiConfigPanelProps) {
               database
             </span>
             <span className="font-bold text-primary text-xs uppercase">
-              {t("training_context")}
+              {t("ai_data_scope")}
             </span>
           </div>
           <p className="text-on-surface-variant text-xs italic">
-            {t("training_context_desc")}
+            {t("ai_data_scope_desc")}
           </p>
         </div>
       </div>

@@ -65,7 +65,7 @@ export default function DashboardPage() {
       <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <h2 className="font-extrabold font-headline text-2xl text-on-surface tracking-tight md:text-3xl">
-            {t("shop_intelligence")}
+            {t("shop_overview")}
           </h2>
           <p className="mt-1 font-medium text-on-surface-variant text-sm md:text-base">
             {t("realtime_status")}
@@ -88,7 +88,7 @@ export default function DashboardPage() {
             <span className="material-symbols-outlined text-[18px] md:text-[20px]">
               add_box
             </span>
-            <span className="whitespace-nowrap">{t("new_intake")}</span>
+            <span className="whitespace-nowrap">{t("new_checkin")}</span>
           </button>
         </div>
       </div>
@@ -121,8 +121,8 @@ export default function DashboardPage() {
           detail=""
           icon="payments"
           iconColor="text-tertiary"
-          label={t("revenue_mtd")}
-          unit="DZD"
+          label={t("revenue_this_month")}
+          unit={t("currency_dzd")}
           value="452,000"
         >
           <div className="flex items-center gap-1 font-bold text-tertiary text-xs">

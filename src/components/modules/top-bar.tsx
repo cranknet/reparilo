@@ -69,8 +69,8 @@ export default function TopBar() {
             {role === "TECHNICIAN" ? "swap_horiz" : "add_circle"}
           </span>
           {role === "TECHNICIAN"
-            ? t("tech_dashboard.update_job_status")
-            : t("new_intake")}
+            ? t("tech_dashboard.update_status")
+            : t("new_checkin")}
         </button>
       </div>
     </header>

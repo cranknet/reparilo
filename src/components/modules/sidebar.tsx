@@ -13,9 +13,9 @@ interface NavItem {
 const OWNER_NAV_ITEMS: NavItem[] = [
   { icon: "dashboard", labelKey: "dashboard", to: "/" },
   { icon: "build", labelKey: "jobs", to: "/jobs" },
-  { icon: "inventory_2", labelKey: "parts_catalog", to: "/parts" },
-  { icon: "menu_book", labelKey: "service_catalog", to: "/repairs" },
-  { icon: "psychology", labelKey: "ai_analyst", to: "/ai-analyst" },
+  { icon: "inventory_2", labelKey: "parts_inventory", to: "/parts" },
+  { icon: "menu_book", labelKey: "repair_services", to: "/repairs" },
+  { icon: "psychology", labelKey: "ai_assistant", to: "/ai-analyst" },
   { icon: "settings", labelKey: "settings", to: "/settings" },
 ];
 
@@ -23,7 +23,7 @@ const TECHNICIAN_NAV_ITEMS: NavItem[] = [
   { icon: "dashboard", labelKey: "dashboard", to: "/" },
   { icon: "work_history", labelKey: "my_jobs", to: "/jobs" },
   { icon: "inventory_2", labelKey: "parts_inventory", to: "/parts" },
-  { icon: "build", labelKey: "service_catalog", to: "/repairs" },
+  { icon: "build", labelKey: "repair_services", to: "/repairs" },
   { icon: "notifications", labelKey: "notifications", to: "/notifications" },
 ];
 
@@ -113,8 +113,8 @@ export default function Sidebar() {
           </span>
           <span>
             {role === "TECHNICIAN"
-              ? t("tech_dashboard.update_job_status")
-              : t("new_intake")}
+              ? t("tech_dashboard.update_status")
+              : t("new_checkin")}
           </span>
         </button>
 

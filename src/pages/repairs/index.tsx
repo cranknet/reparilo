@@ -165,10 +165,10 @@ export default function RepairsPage() {
       <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <h2 className="font-extrabold font-headline text-2xl text-on-surface tracking-tight md:text-3xl">
-            {t("service_catalog")}
+            {t("repair_services")}
           </h2>
           <p className="mt-1 font-medium text-on-surface-variant text-sm md:text-base">
-            {t("repair_catalog")}
+            {t("repair_services_subtitle")}
           </p>
           <p className="mt-1 text-on-surface-variant text-sm">
             {t("services_count", { count: MOCK_REPAIRS.length })} ·{" "}
@@ -185,7 +185,7 @@ export default function RepairsPage() {
           type="button"
           variant="gradient"
         >
-          {t("add_new_repair")}
+          {t("add_service")}
         </Button>
       </div>
 

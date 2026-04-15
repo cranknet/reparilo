@@ -124,7 +124,7 @@ export default function AiAnalystPage() {
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
             </span>
             <h2 className="hidden font-bold font-headline text-on-surface text-sm tracking-tight md:block md:text-base">
-              {t("shop_intelligence_analyst")}
+              {t("shop_ai_assistant")}
             </h2>
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary md:hidden">
               <span
@@ -212,10 +212,10 @@ export default function AiAnalystPage() {
                   </span>
                 </div>
                 <h3 className="mb-1 font-bold font-headline text-base text-on-surface">
-                  {t("ai_analyst_empty_title")}
+                  {t("ai_assistant_empty_title")}
                 </h3>
                 <p className="max-w-xs text-on-surface-variant text-sm">
-                  {t("ai_analyst_empty_desc")}
+                  {t("ai_assistant_empty_desc")}
                 </p>
                 <div className="mt-6 flex flex-wrap justify-center gap-2">
                   {[

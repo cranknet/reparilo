@@ -56,7 +56,7 @@ const MOCK_ACTIVITY = [
     id: "2",
     icon: "inventory_2",
     textKey: "profile_activity_part_ordered",
-    interpolations: { part: "Gasket Set (V6-Turbo)" },
+    interpolations: { part: "iPhone 15 Screen Assembly" },
     time: "Yesterday, 14:22",
   },
   {
@@ -123,7 +123,7 @@ export default function ProfilePage() {
   const role = useAuthStore((s) => s.role);
   const username = useAuthStore((s) => s.user?.username);
 
-  const displayName = username || "Reparilo User";
+  const displayName = username || t("default_user_display");
   const initials = getInitials(displayName);
 
   const [activeTab, setActiveTab] = useState<ProfileTab>("personal");
@@ -326,10 +326,10 @@ export default function ProfilePage() {
         <div className="flex items-center justify-between gap-4 rounded-xl bg-surface-container-low p-5">
           <div>
             <h4 className="font-bold font-headline text-on-surface text-sm">
-              {t("profile_data_localization")}
+              {t("profile_data_storage")}
             </h4>
             <p className="text-on-surface-variant text-xs">
-              {t("profile_data_localization_desc")}
+              {t("profile_data_storage_desc")}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -340,7 +340,7 @@ export default function ProfilePage() {
               verified_user
             </span>
             <span className="font-semibold text-sm">
-              {t("profile_gdpr_compliant")}
+              {t("profile_data_protection")}
             </span>
           </div>
         </div>
@@ -527,7 +527,7 @@ export default function ProfilePage() {
                 className="font-bold text-tertiary text-xs transition-colors hover:text-tertiary-container"
                 type="button"
               >
-                {t("profile_revoke")}
+                {t("profile_end_session")}
               </button>
             </div>
           </div>
