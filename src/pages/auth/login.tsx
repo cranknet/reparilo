@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import LanguageToggle from "@/components/modules/language-toggle";
+import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth";
 
 const KNOWN_ERROR_KEYS = [
@@ -204,17 +205,19 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setSubmitError(null);
-    // TODO: replace with async API call when endpoint is ready:
-    //   try { await authApi.forgotPassword(email); setSent(true); }
-    //   catch { setSubmitError("auth_reset_failed"); }
-    //   finally { setSubmitting(false); }
-    // For now, show sent state immediately (no backend endpoint yet)
-    setSent(true);
-    setSubmitting(false);
+    try {
+      const redirectTo = `${window.location.origin}/reset-password`;
+      await api.post("/auth/request-password-reset", { email, redirectTo });
+      setSent(true);
+    } catch {
+      setSubmitError("auth_reset_failed");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (sent) {
@@ -343,10 +346,8 @@ export default function LoginPage() {
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    // TODO: pass rememberMe to login when backend supports session persistence
-    // e.g. login(username, password, { rememberMe })
     try {
-      await login(username, password);
+      await login(username, password, rememberMe);
       navigate("/", { replace: true });
     } catch {
       // error is set in the store

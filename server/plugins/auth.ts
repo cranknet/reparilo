@@ -12,6 +12,7 @@ import { createAuth, getSessionFromRequest } from "../lib/auth.js";
 const SIGN_IN_PATHS = new Set([
   "/api/auth/sign-in/username",
   "/api/auth/sign-in/email",
+  "/api/auth/request-password-reset",
 ]);
 const MAX_SIGN_IN_ATTEMPTS = 5;
 const SIGN_IN_WINDOW_MS = 60_000;

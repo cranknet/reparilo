@@ -19,6 +19,8 @@ api.interceptors.response.use(
         "/auth/get-session",
         "/auth/change-password",
         "/auth/must-change-password",
+        "/auth/request-password-reset",
+        "/auth/reset-password",
       ];
       const isAuthEndpoint = authEndpoints.some((ep) => url.includes(ep));
       if (!isAuthEndpoint) {

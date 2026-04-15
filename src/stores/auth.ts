@@ -16,7 +16,11 @@ interface AuthState {
   error: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  login: (
+    username: string,
+    password: string,
+    rememberMe?: boolean
+  ) => Promise<void>;
   logout: () => Promise<void>;
   role: RoleType;
   setRole: (role: RoleType) => void;
@@ -56,10 +60,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  login: async (username, password) => {
+  login: async (username, password, rememberMe) => {
     set({ isLoading: true, error: null });
     try {
-      await api.post("/auth/sign-in/username", { username, password });
+      await api.post("/auth/sign-in/username", {
+        username,
+        password,
+        rememberMe,
+      });
       const res = await api.get("/auth/get-session");
       const user = res.data.user;
       set({

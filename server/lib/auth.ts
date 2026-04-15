@@ -3,6 +3,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { fromNodeHeaders } from "better-auth/node";
 import { admin, createAccessControl, username } from "better-auth/plugins";
+import { sendPasswordResetEmail } from "./email.js";
 
 const ac = createAccessControl({
   user: [
@@ -64,6 +65,19 @@ export function createAuth(prisma: PrismaClient) {
     emailAndPassword: {
       enabled: true,
       disableSignUp: true,
+      sendResetPassword: async ({ user, url }) => {
+        await sendPasswordResetEmail(user.email, url);
+      },
+      onPasswordReset: async ({ user }) => {
+        await prisma.auditLog.create({
+          data: {
+            jobId: null,
+            userId: user.id,
+            action: "PASSWORD_RESET",
+            toValue: `Password reset for ${user.email}`,
+          },
+        });
+      },
     },
     session: {
       expiresIn: 604_800, // 7 days

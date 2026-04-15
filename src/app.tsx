@@ -7,6 +7,7 @@ import ProtectedRoute from "@/components/modules/protected-route";
 import AiAnalystPage from "@/pages/ai-analyst";
 import ChangePasswordPage from "@/pages/auth/change-password";
 import LoginPage from "@/pages/auth/login";
+import ResetPasswordPage from "@/pages/auth/reset-password";
 import DashboardPage from "@/pages/dashboard";
 import FrontDeskPage from "@/pages/dashboard/front-desk";
 import TechnicianDashboardPage from "@/pages/dashboard/technician";
@@ -38,6 +39,7 @@ export default function App() {
   return (
     <Routes>
       <Route element={<LoginPage />} path="/login" />
+      <Route element={<ResetPasswordPage />} path="/reset-password" />
       <Route element={<ProtectedRoute requireMustChangePassword={false} />}>
         <Route element={<ChangePasswordPage />} path="/change-password" />
       </Route>
