@@ -220,6 +220,7 @@ export default function JobsPage() {
         onClose={() => setIntakeOpen(false)}
         onSubmit={(data) => {
           console.log("Intake submitted:", data);
+          return Promise.resolve();
         }}
         open={intakeOpen}
       />

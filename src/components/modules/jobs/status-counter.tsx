@@ -9,6 +9,17 @@ interface StatusCounterProps {
   value: number;
 }
 
+const STATUS_DOT_COLOR: Record<JobStatusType, string> = {
+  CANCELLED: "var(--color-outline-variant)",
+  DELIVERED: "var(--color-primary-fixed)",
+  DONE: "var(--color-primary)",
+  IN_REPAIR: "var(--color-primary)",
+  INTAKE: "var(--color-secondary)",
+  ON_HOLD: "var(--color-on-surface-variant)",
+  RETURNED: "var(--color-error)",
+  WAITING_FOR_PARTS: "var(--color-tertiary)",
+};
+
 const bgClass = (
   isActive: boolean | undefined,
   primary: boolean | undefined
@@ -76,9 +87,7 @@ export default function StatusCounter({
         <span
           className="ms-auto h-2 w-2 rounded-full"
           style={{
-            backgroundColor: isActive
-              ? "var(--color-primary)"
-              : "var(--color-outline-variant)",
+            backgroundColor: STATUS_DOT_COLOR[status],
           }}
         />
       )}

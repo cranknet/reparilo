@@ -39,7 +39,7 @@ const INITIAL_FORM: IntakeFormData = {
 
 interface IntakeModalProps {
   onClose: () => void;
-  onSubmit: (data: IntakeFormData) => void;
+  onSubmit: (data: IntakeFormData) => Promise<void>;
   open: boolean;
 }
 
