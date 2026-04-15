@@ -5,7 +5,6 @@ import { useAuthStore } from "@/stores/auth";
 
 export default function ChangePasswordPage() {
   const { t } = useTranslation();
-  const checkSession = useAuthStore((s) => s.checkSession);
   const logout = useAuthStore((s) => s.logout);
 
   const [oldPassword, setOldPassword] = useState("");
@@ -34,7 +33,7 @@ export default function ChangePasswordPage() {
     setLoading(true);
     try {
       await api.post("/auth/change-password", { oldPassword, newPassword });
-      await checkSession();
+      await logout();
     } catch (err: unknown) {
       const axiosErr = err as {
         response?: { data?: { error?: string; message?: string } };

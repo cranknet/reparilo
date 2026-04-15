@@ -12,6 +12,7 @@ export function createAuth(prisma: PrismaClient) {
   return betterAuth({
     baseURL: process.env.BETTER_AUTH_URL || "http://localhost:4000",
     basePath: "/api/auth",
+    trustedOrigins: ["http://localhost:5173", "http://localhost:4000"],
     database: prismaAdapter(prisma, {
       provider: "postgresql",
     }),

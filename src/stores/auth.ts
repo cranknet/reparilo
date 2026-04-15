@@ -32,7 +32,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   checkSession: async () => {
     set({ isLoading: true });
     try {
-      const res = await api.get("/auth/session");
+      const res = await api.get("/auth/get-session");
       const user = res.data.user;
       set({
         user,
@@ -55,7 +55,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       await api.post("/auth/sign-in/username", { username, password });
-      const res = await api.get("/auth/session");
+      const res = await api.get("/auth/get-session");
       const user = res.data.user;
       set({
         user,

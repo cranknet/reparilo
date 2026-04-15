@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 import { useAuthStore } from "@/stores/auth";
 
 function SignInForm({
@@ -113,6 +114,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const login = useAuthStore((s) => s.login);
   const error = useAuthStore((s) => s.error);
@@ -122,6 +124,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(username, password);
+      navigate("/", { replace: true });
     } catch {
       // error is set in the store
     } finally {

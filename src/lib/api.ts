@@ -13,7 +13,7 @@ api.interceptors.response.use(
   (error) => {
     if (
       error.response?.status === 401 &&
-      !error.config?.url?.includes("/auth/session")
+      !error.config?.url?.includes("/auth/get-session")
     ) {
       window.location.href = "/login";
     }
