@@ -36,6 +36,8 @@
   --color-on-surface-variant: #424654;
   --color-primary-fixed: #dae2ff;
   --color-background: #f7f9ff;
+  --color-success: #16a34a;
+  --color-on-success: #ffffff;
   --color-error-container: #ffdad6;
   --color-error: #ba1a1a;
   --color-surface: #f7f9ff;
@@ -107,4 +109,10 @@ h3,
 
 .primary-gradient {
   background: linear-gradient(135deg, #0040a1 0%, #0056d2 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin {
+    animation: none;
+  }
 }

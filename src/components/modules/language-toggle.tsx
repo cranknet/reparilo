@@ -2,33 +2,33 @@ import { LANGUAGES } from "@shared/constants";
 import { useTranslation } from "react-i18next";
 
 export default function LanguageToggle() {
-  const { i18n } = useTranslation();
-
+  const { i18n, t } = useTranslation();
   const normalizedLang = i18n.language.split("-")[0];
-  const currentIndex = LANGUAGES.indexOf(
-    normalizedLang as (typeof LANGUAGES)[number]
-  );
-  const resolvedIndex = currentIndex === -1 ? 0 : currentIndex;
-
-  if (currentIndex === -1 && i18n.language !== LANGUAGES[0]) {
-    i18n.changeLanguage(LANGUAGES[0]);
-  }
-
-  const nextIndex = (resolvedIndex + 1) % LANGUAGES.length;
-
-  const handleClick = () => {
-    i18n.changeLanguage(LANGUAGES[nextIndex]);
-  };
 
   return (
-    <button
-      aria-label={`Switch language. Current: ${LANGUAGES[resolvedIndex].toUpperCase()}`}
-      className="flex items-center gap-1 rounded-lg bg-surface-container-high px-2 py-1 font-bold text-on-surface-variant text-xs transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-primary"
-      onClick={handleClick}
-      type="button"
+    <div
+      aria-label={t("language_switch")}
+      className="flex items-center gap-1"
+      role="radiogroup"
     >
-      <span className="material-symbols-outlined text-sm">translate</span>
-      {LANGUAGES[resolvedIndex].toUpperCase()}
-    </button>
+      {LANGUAGES.map((lang) => (
+        <button
+          aria-label={t("language_switch_to", { lang: lang.toUpperCase() })}
+          aria-pressed={normalizedLang === lang}
+          className={`min-h-[44px] min-w-[44px] rounded-md px-2.5 py-1 font-label font-semibold text-xs uppercase tracking-wide transition-colors ${
+            normalizedLang === lang
+              ? "bg-primary/10 text-primary"
+              : "text-on-surface-variant/50 hover:bg-surface-container-high hover:text-on-surface-variant"
+          }`}
+          key={lang}
+          onClick={() => {
+            i18n.changeLanguage(lang);
+          }}
+          type="button"
+        >
+          {lang.toUpperCase()}
+        </button>
+      ))}
+    </div>
   );
 }

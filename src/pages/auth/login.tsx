@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import LanguageToggle from "@/components/modules/language-toggle";
 import { useAuthStore } from "@/stores/auth";
 
 function SignInForm({
@@ -10,6 +11,8 @@ function SignInForm({
   setPassword,
   loading,
   onSubmit,
+  error,
+  onForgotPassword,
 }: {
   username: string;
   setUsername: (v: string) => void;
@@ -17,26 +20,56 @@ function SignInForm({
   setPassword: (v: string) => void;
   loading: boolean;
   onSubmit: (e: React.FormEvent) => void;
+  error: string | null;
+  onForgotPassword: () => void;
 }) {
   const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <form className="space-y-6" onSubmit={onSubmit}>
-      <div className="space-y-2">
+    <form
+      aria-label={t("auth_sign_in")}
+      className="space-y-5"
+      onSubmit={onSubmit}
+    >
+      {error && (
+        <div
+          className="flex items-start gap-3 rounded-lg bg-error-container px-4 py-3"
+          role="alert"
+        >
+          <span
+            aria-hidden="true"
+            className="material-symbols-outlined mt-0.5 text-lg text-on-error-container"
+          >
+            error
+          </span>
+          <div className="flex-1">
+            <p className="font-medium text-on-error-container text-sm">
+              {t(error)}
+            </p>
+            {error === "auth_login_failed" && (
+              <p className="mt-1 text-on-error-container/70 text-xs">
+                {t("auth_login_failed_hint")}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-1.5">
         <label
-          className="font-bold font-label text-on-surface-variant text-xs uppercase tracking-wider"
+          className="font-label font-semibold text-on-surface-variant text-xs uppercase tracking-wider"
           htmlFor="username"
         >
           {t("auth_username")}
         </label>
         <div className="group relative">
-          <span className="material-symbols-outlined absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary">
+          <span className="material-symbols-outlined absolute start-4 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant/40 transition-colors group-focus-within:text-primary">
             person
           </span>
           <input
             autoComplete="username"
-            className="w-full rounded-xl bg-surface-container-highest py-4 ps-12 pe-4 font-medium transition-all placeholder:text-slate-400 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl bg-surface-container-highest py-3.5 ps-12 pe-4 font-medium text-on-surface transition-colors placeholder:text-on-surface-variant/40 focus-visible:bg-surface-container-lowest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             id="username"
             name="username"
             onChange={(e) => {
@@ -50,20 +83,20 @@ function SignInForm({
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <label
-          className="font-bold font-label text-on-surface-variant text-xs uppercase tracking-wider"
+          className="font-label font-semibold text-on-surface-variant text-xs uppercase tracking-wider"
           htmlFor="password"
         >
           {t("auth_password")}
         </label>
         <div className="group relative">
-          <span className="material-symbols-outlined absolute start-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary">
+          <span className="material-symbols-outlined absolute start-4 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant/40 transition-colors group-focus-within:text-primary">
             lock
           </span>
           <input
             autoComplete="current-password"
-            className="w-full rounded-xl bg-surface-container-highest py-4 ps-12 pe-12 transition-all placeholder:text-slate-400 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl bg-surface-container-highest py-3.5 ps-12 pe-14 font-medium text-on-surface transition-colors placeholder:text-on-surface-variant/40 focus-visible:bg-surface-container-lowest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             id="password"
             name="password"
             onChange={(e) => {
@@ -78,46 +111,167 @@ function SignInForm({
             aria-label={
               showPassword ? t("auth_hide_password") : t("auth_show_password")
             }
-            className="absolute end-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-on-surface"
+            className="absolute end-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-on-surface-variant/40 transition-colors hover:bg-surface-container-high hover:text-on-surface-variant focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             onClick={() => {
               setShowPassword((v) => !v);
             }}
             type="button"
           >
-            <span className="material-symbols-outlined">
+            <span className="material-symbols-outlined text-xl">
               {showPassword ? "visibility_off" : "visibility"}
             </span>
           </button>
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <label className="flex cursor-pointer items-center gap-2">
+          <span className="relative flex h-6 w-6 shrink-0 items-center justify-center">
+            <input
+              className="peer h-4 w-4 rounded accent-primary"
+              type="checkbox"
+            />
+          </span>
+          <span className="font-label text-on-surface-variant text-xs">
+            {t("auth_remember_me")}
+          </span>
+        </label>
+        <button
+          className="min-h-[44px] rounded font-label font-semibold text-primary text-xs uppercase tracking-wider transition-colors hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          onClick={onForgotPassword}
+          type="button"
+        >
+          {t("auth_forgot_password")}
+        </button>
+      </div>
+
       <button
-        className="atelier-gradient flex w-full items-center justify-center gap-2 rounded-xl py-4 font-bold font-headline text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.01] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 font-bold font-headline text-on-primary text-sm uppercase tracking-wider transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50"
         disabled={loading}
         type="submit"
       >
-        <span>{loading ? t("auth_signing_in") : t("auth_authorize")}</span>
-        {!loading && (
-          <span className="material-symbols-outlined text-lg">
-            arrow_forward
+        {loading ? (
+          <span className="flex items-center gap-2">
+            <span className="material-symbols-outlined animate-spin text-lg">
+              progress_activity
+            </span>
+            {t("auth_signing_in")}
           </span>
+        ) : (
+          t("auth_authorize")
         )}
       </button>
     </form>
   );
 }
 
+function ForgotPasswordForm({
+  onSubmit,
+  onBack,
+}: {
+  onSubmit: (email: string) => void;
+  onBack: () => void;
+}) {
+  const { t } = useTranslation();
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    onSubmit(email);
+    setSent(true);
+  }
+
+  if (sent) {
+    return (
+      <div className="space-y-4 py-4">
+        <div className="flex items-center justify-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-container">
+            <span className="material-symbols-outlined text-2xl text-on-primary-container">
+              mail
+            </span>
+          </div>
+        </div>
+        <p className="text-center font-medium text-on-surface-variant">
+          {t("auth_reset_sent")}
+        </p>
+        <p className="text-center text-on-surface-variant/70 text-sm">
+          {t("auth_reset_sent_desc")}
+        </p>
+        <button
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-surface-container-highest py-3 font-bold font-headline text-on-surface text-sm uppercase tracking-wider transition-colors hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          onClick={onBack}
+          type="button"
+        >
+          <span className="material-symbols-outlined text-lg">arrow_back</span>
+          {t("auth_back_to_sign_in")}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      aria-label={t("auth_forgot_password")}
+      className="space-y-5"
+      onSubmit={handleSubmit}
+    >
+      <div className="space-y-1.5">
+        <label
+          className="font-label font-semibold text-on-surface-variant text-xs uppercase tracking-wider"
+          htmlFor="reset-email"
+        >
+          {t("auth_email")}
+        </label>
+        <div className="group relative">
+          <span className="material-symbols-outlined absolute start-4 top-1/2 -translate-y-1/2 text-lg text-on-surface-variant/40 transition-colors group-focus-within:text-primary">
+            mail
+          </span>
+          <input
+            autoComplete="email"
+            className="w-full rounded-xl bg-surface-container-highest py-3.5 ps-12 pe-4 font-medium text-on-surface transition-colors placeholder:text-on-surface-variant/40 focus-visible:bg-surface-container-lowest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            id="reset-email"
+            name="email"
+            onChange={(e) => {
+              setEmail(e.target.value);
+            }}
+            placeholder={t("auth_email_placeholder")}
+            required
+            type="email"
+            value={email}
+          />
+        </div>
+      </div>
+      <button
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 font-bold font-headline text-on-primary text-sm uppercase tracking-wider transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:bg-primary/80"
+        type="submit"
+      >
+        {t("auth_send_reset")}
+      </button>
+      <button
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-surface-container-highest py-3 font-bold font-headline text-on-surface text-sm uppercase tracking-wider transition-colors hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        onClick={onBack}
+        type="button"
+      >
+        <span className="material-symbols-outlined text-lg">arrow_back</span>
+        {t("auth_back_to_sign_in")}
+      </button>
+    </form>
+  );
+}
+
 export default function LoginPage() {
-  const { t, i18n } = useTranslation();
-  const isRtl = i18n.dir() === "rtl";
+  const { t } = useTranslation();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const navigate = useNavigate();
 
   const login = useAuthStore((s) => s.login);
   const error = useAuthStore((s) => s.error);
+  const clearError = useAuthStore((s) => s.clearError);
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
@@ -132,119 +286,91 @@ export default function LoginPage() {
     }
   }
 
+  function handleForgotPassword(_email: string) {
+    // TODO: implement forgot password API endpoint
+  }
+
+  function handleBackToSignIn() {
+    setShowForgotPassword(false);
+    clearError();
+  }
+
   return (
-    <main className="flex h-screen w-full overflow-hidden bg-background font-body text-on-surface antialiased">
-      <section
-        className={`blueprint-pattern relative hidden items-center justify-center overflow-hidden lg:flex lg:w-1/2 ${isRtl ? "lg:order-2" : ""}`}
-      >
-        <div className="relative z-10 max-w-2xl px-16">
-          <div className="mb-8">
-            <span className="rounded-full border border-primary-container/50 bg-primary-container/30 px-4 py-1.5 font-label font-semibold text-on-primary-container text-xs uppercase tracking-widest">
-              {t("auth_precision_engine")}
+    <main className="flex min-h-dvh w-full flex-col bg-background font-body text-on-surface antialiased">
+      <header className="flex shrink-0 items-center justify-between border-outline-variant/30 border-b px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+            <span className="material-symbols-outlined text-lg text-on-primary">
+              precision_manufacturing
             </span>
           </div>
-          <h1 className="mb-6 font-extrabold font-headline text-5xl text-white leading-tight">
-            {t("auth_engineering_atelier")} <br />
-            <span className="text-primary-fixed">{t("auth_atelier")}</span>
-          </h1>
-          <p className="mb-10 font-light text-lg text-primary-fixed-dim leading-relaxed">
-            {t("auth_hero_desc")}
-          </p>
-          <div className="grid grid-cols-2 gap-6">
-            <div className="rounded-xl border border-outline-variant/10 bg-primary-container/20 p-6 backdrop-blur-md">
-              <span className="material-symbols-outlined mb-3 block text-primary-fixed text-xl">
-                precision_manufacturing
-              </span>
-              <div className="font-bold font-headline text-white text-xl">
-                {t("auth_intake")}
-              </div>
-              <div className="mt-1 text-primary-fixed-dim text-sm">
-                {t("auth_intake_desc")}
-              </div>
-            </div>
-            <div className="rounded-xl border border-outline-variant/10 bg-primary-container/20 p-6 backdrop-blur-md">
-              <span className="material-symbols-outlined mb-3 block text-primary-fixed text-xl">
-                build
-              </span>
-              <div className="font-bold font-headline text-white text-xl">
-                {t("auth_metrics")}
-              </div>
-              <div className="mt-1 text-primary-fixed-dim text-sm">
-                {t("auth_metrics_desc")}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div
-          className={`absolute bottom-10 flex items-center gap-4 text-primary-fixed/40 ${isRtl ? "end-16" : "start-16"}`}
-        >
-          <span className="font-bold font-headline text-2xl tracking-tighter">
-            Reparilo
-          </span>
-          <span className="h-[1px] w-12 bg-primary-fixed/20" />
-          <span className="font-label text-[10px] uppercase tracking-[0.3em]">
-            {t("app_tagline")}
-          </span>
-        </div>
-      </section>
-
-      <section
-        className={`flex w-full flex-col overflow-y-auto bg-surface lg:w-1/2 ${isRtl ? "lg:order-1" : ""}`}
-      >
-        <div className="flex items-center justify-between px-8 py-6 lg:hidden">
           <div>
-            <h1 className="font-bold font-headline text-primary text-xl tracking-tighter">
+            <h1 className="font-bold font-headline text-lg text-on-surface tracking-tight">
               Reparilo
             </h1>
-            <p className="font-bold text-[10px] text-slate-500 uppercase tracking-widest">
+            <p className="font-label font-medium text-on-surface-variant/60 text-xs uppercase tracking-widest">
               {t("app_tagline")}
             </p>
           </div>
         </div>
+        <LanguageToggle />
+      </header>
 
-        <div className="flex flex-grow items-center justify-center p-8 md:p-16">
-          <div className="w-full max-w-md">
-            <div className="mb-10">
-              <h2 className="mt-6 mb-2 font-extrabold font-headline text-3xl text-on-surface">
-                {t("auth_access_portal")}
-              </h2>
-              <p className="font-medium text-on-surface-variant">
-                {t("auth_identify")}
-              </p>
-            </div>
-
-            {error && (
-              <div className="mb-6 rounded-xl bg-error-container px-4 py-3 font-medium text-on-error-container text-sm">
-                {t(error)}
+      <section className="flex flex-1 items-center justify-center overflow-y-auto p-4 pb-[env(safe-area-inset-bottom,0px)] sm:p-6">
+        <div className="w-full max-w-sm">
+          {showForgotPassword ? (
+            <>
+              <div className="mb-8">
+                <h2 className="mb-1 font-bold font-headline text-2xl text-on-surface">
+                  {t("auth_forgot_password")}
+                </h2>
+                <p className="text-on-surface-variant text-sm">
+                  {t("auth_forgot_password_desc")}
+                </p>
               </div>
-            )}
 
-            <SignInForm
-              loading={loading}
-              onSubmit={handleSignIn}
-              password={password}
-              setPassword={setPassword}
-              setUsername={setUsername}
-              username={username}
-            />
-          </div>
+              <ForgotPasswordForm
+                onBack={handleBackToSignIn}
+                onSubmit={handleForgotPassword}
+              />
+            </>
+          ) : (
+            <>
+              <div className="mb-8">
+                <h2 className="mb-1 font-bold font-headline text-2xl text-on-surface">
+                  {t("auth_sign_in")}
+                </h2>
+                <p className="text-on-surface-variant text-sm">
+                  {t("auth_identify")}
+                </p>
+              </div>
+
+              <SignInForm
+                error={error}
+                loading={loading}
+                onForgotPassword={() => {
+                  setShowForgotPassword(true);
+                }}
+                onSubmit={handleSignIn}
+                password={password}
+                setPassword={setPassword}
+                setUsername={setUsername}
+                username={username}
+              />
+            </>
+          )}
         </div>
-
-        <footer className="mt-auto flex items-center justify-between border-transparent border-t bg-surface-container-low p-8">
-          <div className="font-bold font-label text-[10px] text-slate-400 uppercase tracking-widest">
-            {t("auth_copyright")}
-          </div>
-          <div className="flex gap-4">
-            <span className="flex items-center gap-1.5 font-bold font-label text-[10px] text-slate-400 uppercase tracking-widest">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              {t("auth_system_status")}
-            </span>
-          </div>
-        </footer>
       </section>
 
-      <div className="pointer-events-none fixed top-0 right-0 -z-10 h-64 w-64 translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-3xl lg:hidden" />
-      <div className="pointer-events-none fixed bottom-0 left-0 -z-10 h-64 w-64 -translate-x-1/2 translate-y-1/2 rounded-full bg-primary/5 blur-3xl lg:hidden" />
+      <footer className="flex shrink-0 items-center justify-between border-outline-variant/30 border-t px-4 py-3 pb-[env(safe-area-inset-bottom,16px)] sm:px-6 lg:px-8">
+        <span className="font-label text-on-surface-variant/40 text-xs">
+          {t("auth_copyright")}
+        </span>
+        <span className="flex items-center gap-1.5 font-label text-on-surface-variant/40 text-xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-success" />
+          {t("auth_system_status")}
+        </span>
+      </footer>
     </main>
   );
 }
