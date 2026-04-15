@@ -1,11 +1,11 @@
 import type { FormEvent, KeyboardEvent, ReactNode } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import api from "@/lib/api";
 
 type SettingsTab = "ai" | "shop" | "notifications" | "users";
 
-const TAB_IDS: SettingsTab[] = ["ai", "shop", "notifications", "users"];
+const TAB_KEYS: SettingsTab[] = ["ai", "shop", "notifications", "users"];
 
 const TAB_ICONS: Record<SettingsTab, string> = {
   ai: "psychology",
@@ -26,21 +26,21 @@ const MOCK_TEMPLATES = [
     id: "1",
     name: "Job Status Update",
     channel: "WHATSAPP" as const,
-    body: "Hello {{customer}}, your device {{device}} status is now: {{status}}. — {{shopName}}",
+    body: "Hello {{customer}}, your device {{device}} status is now: {{status}}. \u2014 {{shopName}}",
     isDefault: true,
   },
   {
     id: "2",
     name: "Job Ready",
     channel: "WHATSAPP" as const,
-    body: "{{device}} is ready for pickup! Total: {{cost}} {{currency}}. — {{shopName}}",
+    body: "{{device}} is ready for pickup! Total: {{cost}} {{currency}}. \u2014 {{shopName}}",
     isDefault: false,
   },
   {
     id: "3",
     name: "Status SMS",
     channel: "SMS" as const,
-    body: "{{shopName}}: {{device}} status → {{status}}. Track: {{trackingUrl}}",
+    body: "{{shopName}}: {{device}} status \u2192 {{status}}. Track: {{trackingUrl}}",
     isDefault: true,
   },
 ];
@@ -113,6 +113,7 @@ function getCreativityLabel(value: number, t: (key: string) => string): string {
 
 export default function SettingsPage() {
   const { t } = useTranslation();
+  const baseId = useId();
   const [activeTab, setActiveTab] = useState<SettingsTab>("ai");
   const [dirtyTabs, setDirtyTabs] = useState<Set<SettingsTab>>(new Set());
   const [saving, setSaving] = useState(false);
@@ -127,12 +128,15 @@ export default function SettingsPage() {
   > | null>(null);
   const aiFormRef = useRef<HTMLFormElement>(null);
   const shopFormRef = useRef<HTMLFormElement>(null);
+  const tabPanelRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Record<SettingsTab, HTMLButtonElement | null>>({
     ai: null,
     shop: null,
     notifications: null,
     users: null,
   });
+  const previousActiveElement = useRef<HTMLElement | null>(null);
 
   const [aiForm, setAiForm] = useState({
     endpointUrl: "",
@@ -141,7 +145,6 @@ export default function SettingsPage() {
     temperature: 0.4,
   });
   const [aiFormInitial, setAiFormInitial] = useState(aiForm);
-
   const [shopForm, setShopForm] = useState({
     shopName: "",
     address: "",
@@ -150,13 +153,14 @@ export default function SettingsPage() {
     receiptFooter: "",
   });
   const [shopFormInitial, setShopFormInitial] = useState(shopForm);
-
   const [testStatus, setTestStatus] = useState<
     "idle" | "loading" | "success" | "fail"
   >("idle");
 
   const dirty = dirtyTabs.size > 0;
   const currentTabDirty = dirtyTabs.has(activeTab);
+  const tabId = (key: SettingsTab) => `${baseId}-tab-${key}`;
+  const panelId = (key: SettingsTab) => `${baseId}-panel-${key}`;
 
   const showToast = useCallback((message: string, type: ToastType) => {
     setToast({ message, type });
@@ -213,6 +217,45 @@ export default function SettingsPage() {
     tabRefs.current[key]?.focus();
   }
 
+  useEffect(() => {
+    if (!pendingTab) {
+      return;
+    }
+    previousActiveElement.current = document.activeElement as HTMLElement;
+    dialogRef.current?.querySelector<HTMLElement>("button")?.focus();
+
+    function handleDialogKey(e: globalThis.KeyboardEvent) {
+      if (e.key === "Escape") {
+        setPendingTab(null);
+        return;
+      }
+      if (e.key !== "Tab") {
+        return;
+      }
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable?.length) {
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleDialogKey);
+    return () => {
+      document.removeEventListener("keydown", handleDialogKey);
+      previousActiveElement.current?.focus();
+    };
+  }, [pendingTab]);
+
   function handleDiscardAndSwitch() {
     if (!pendingTab) {
       return;
@@ -237,24 +280,21 @@ export default function SettingsPage() {
   }
 
   function handleTabKeyDown(e: KeyboardEvent<HTMLButtonElement>) {
-    const tabs = Object.keys(tabRefs.current) as SettingsTab[];
-    const focusedTab = tabs.find(
-      (key) => tabRefs.current[key] === document.activeElement
-    );
-    const currentIndex = TAB_IDS.indexOf(focusedTab ?? activeTab);
+    const currentIndex = TAB_KEYS.indexOf(activeTab);
     let nextIndex: number | undefined;
     if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-      nextIndex = (currentIndex + 1) % TAB_IDS.length;
+      nextIndex = (currentIndex + 1) % TAB_KEYS.length;
     } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-      nextIndex = (currentIndex - 1 + TAB_IDS.length) % TAB_IDS.length;
+      nextIndex = (currentIndex - 1 + TAB_KEYS.length) % TAB_KEYS.length;
     } else if (e.key === "Home") {
       nextIndex = 0;
     } else if (e.key === "End") {
-      nextIndex = TAB_IDS.length - 1;
+      nextIndex = TAB_KEYS.length - 1;
     }
     if (nextIndex !== undefined) {
       e.preventDefault();
-      const nextTab = TAB_IDS[nextIndex];
+      const nextTab = TAB_KEYS[nextIndex];
+      setActiveTab(nextTab);
       tabRefs.current[nextTab]?.focus();
     }
   }
@@ -331,7 +371,6 @@ export default function SettingsPage() {
 
   function renderAiSection() {
     const isTesting = testStatus === "loading";
-
     return (
       <form className="space-y-6" onSubmit={handleAiSubmit} ref={aiFormRef}>
         <div className="rounded-2xl bg-surface-container-low p-5">
@@ -342,7 +381,7 @@ export default function SettingsPage() {
                 htmlFor="ai-endpoint"
               >
                 {t("ai_endpoint_label")}
-                <span aria-hidden="true" className="ml-0.5 text-error">
+                <span aria-hidden="true" className="ms-0.5 text-error">
                   *
                 </span>
               </label>
@@ -362,7 +401,6 @@ export default function SettingsPage() {
                 {t("ai_endpoint_hint")}
               </p>
             </div>
-
             <div className="space-y-2">
               <label
                 className="block font-semibold text-on-surface text-sm"
@@ -378,7 +416,7 @@ export default function SettingsPage() {
                     setAiForm((f) => ({ ...f, apiKey: e.target.value }));
                     markTabDirty("ai");
                   }}
-                  placeholder="sk-••••••••••••••••"
+                  placeholder="sk-\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
                   type={showApiKey ? "text" : "password"}
                   value={aiForm.apiKey}
                 />
@@ -435,7 +473,6 @@ export default function SettingsPage() {
               </span>
             </div>
           </div>
-
           <button
             aria-expanded={showAdvanced}
             className="mt-4 flex items-center gap-2 text-on-surface-variant text-sm transition-colors hover:text-primary"
@@ -443,14 +480,12 @@ export default function SettingsPage() {
             type="button"
           >
             <span
-              className="material-symbols-outlined text-[18px] transition-transform"
-              style={{ transform: showAdvanced ? "rotate(180deg)" : undefined }}
+              className={`material-symbols-outlined text-[18px] transition-transform duration-200 ${showAdvanced ? "rotate-180" : ""}`}
             >
               expand_more
             </span>
             {t("advanced_settings")}
           </button>
-
           {showAdvanced && (
             <div className="mt-4 space-y-4 pt-2">
               <div className="flex items-center justify-between">
@@ -495,7 +530,7 @@ export default function SettingsPage() {
 
         <div className="flex items-center gap-4">
           <button
-            className={`flex items-center gap-2 rounded-xl px-6 py-3 font-bold text-sm transition-all ${TEST_BUTTON_CLASSES[testStatus] ?? "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"}`}
+            className={`flex min-h-11 items-center gap-2 rounded-xl px-6 py-3 font-bold text-sm transition-all ${TEST_BUTTON_CLASSES[testStatus] ?? "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"}`}
             disabled={isTesting}
             onClick={handleTestConnection}
             type="button"
@@ -552,7 +587,7 @@ export default function SettingsPage() {
                 htmlFor="shop-name"
               >
                 {t("shop_name")}
-                <span aria-hidden="true" className="ml-0.5 text-error">
+                <span aria-hidden="true" className="ms-0.5 text-error">
                   *
                 </span>
               </label>
@@ -609,7 +644,6 @@ export default function SettingsPage() {
             />
           </div>
         </div>
-
         <div className="rounded-2xl bg-surface-container-low p-5">
           <p className="mb-4 font-semibold text-on-surface text-sm">
             {t("regional_settings_label")}
@@ -632,9 +666,9 @@ export default function SettingsPage() {
                   }}
                   value={shopForm.currency}
                 >
-                  <option value="DZD">DZD — Algerian Dinar (DA)</option>
-                  <option value="USD">USD — US Dollar ($)</option>
-                  <option value="EUR">EUR — Euro (€)</option>
+                  <option value="DZD">DZD \u2014 Algerian Dinar (DA)</option>
+                  <option value="USD">USD \u2014 US Dollar ($)</option>
+                  <option value="EUR">EUR \u2014 Euro (\u20ac)</option>
                 </select>
                 <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
                   <span className="material-symbols-outlined text-[20px]">
@@ -717,7 +751,7 @@ export default function SettingsPage() {
                   </div>
                   <button
                     aria-label={`${t("edit")} ${tpl.name}`}
-                    className="flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-primary"
+                    className="flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-3 py-2 text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-primary"
                     type="button"
                   >
                     <span className="material-symbols-outlined text-[16px]">
@@ -739,7 +773,6 @@ export default function SettingsPage() {
       (tpl) => tpl.channel === "WHATSAPP"
     );
     const smsTemplates = MOCK_TEMPLATES.filter((tpl) => tpl.channel === "SMS");
-
     return (
       <div className="space-y-8">
         {renderTemplateGroup(
@@ -757,7 +790,7 @@ export default function SettingsPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-end">
           <button
-            className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 font-bold text-on-primary text-sm transition-all active:opacity-80"
+            className="flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 py-2.5 font-bold text-on-primary text-sm transition-all active:opacity-80"
             type="button"
           >
             <span className="material-symbols-outlined text-[18px]">
@@ -809,7 +842,7 @@ export default function SettingsPage() {
                   </span>
                   <button
                     aria-label={`${t("edit")} ${user.username}`}
-                    className="flex items-center gap-1 rounded-lg p-1.5 text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-primary"
+                    className="flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg p-2 text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-primary"
                     type="button"
                   >
                     <span className="material-symbols-outlined text-[16px]">
@@ -861,13 +894,14 @@ export default function SettingsPage() {
         >
           {tabs.map(({ key, label }) => (
             <button
+              aria-controls={panelId(key)}
               aria-selected={activeTab === key}
-              className={`flex flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-center transition-all lg:flex-row lg:gap-2.5 lg:px-4 lg:py-3 lg:text-left ${
+              className={`flex flex-col items-center gap-0.5 rounded-xl px-1 py-2.5 text-center transition-all lg:flex-row lg:gap-2.5 lg:px-4 lg:py-3 lg:text-left ${
                 activeTab === key
                   ? "bg-primary/10 font-bold text-primary"
                   : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
               }`}
-              id={`tab-${key}`}
+              id={tabId(key)}
               key={key}
               onClick={() => switchTab(key)}
               onKeyDown={handleTabKeyDown}
@@ -881,9 +915,7 @@ export default function SettingsPage() {
               <span className="material-symbols-outlined text-[20px]">
                 {TAB_ICONS[key]}
               </span>
-              <span className="text-[10px] leading-tight lg:hidden">
-                {label}
-              </span>
+              <span className="text-xs leading-tight lg:hidden">{label}</span>
               <span className="hidden lg:inline">{label}</span>
             </button>
           ))}
@@ -891,8 +923,10 @@ export default function SettingsPage() {
 
         <div className="min-w-0 flex-1">
           <div
-            aria-labelledby={`tab-${activeTab}`}
+            aria-labelledby={tabId(activeTab)}
             className="rounded-3xl bg-surface-container-lowest p-5 md:p-7"
+            id={panelId(activeTab)}
+            ref={tabPanelRef}
             role="tabpanel"
           >
             <div className="mb-5">
@@ -902,7 +936,7 @@ export default function SettingsPage() {
                 </span>
                 <h3
                   className="font-extrabold font-headline text-lg text-on-surface"
-                  id={`tab-${activeTab}`}
+                  id={tabId(activeTab)}
                 >
                   {tabs.find((tab) => tab.key === activeTab)?.label}
                 </h3>
@@ -911,12 +945,17 @@ export default function SettingsPage() {
                 {sectionDescriptions[activeTab]}
               </p>
             </div>
-
             {sectionRenderers[activeTab]()}
           </div>
 
-          {currentTabDirty && isFormTab && (
-            <div className="mt-4 flex flex-col gap-3 rounded-2xl bg-surface-container-low px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div
+            className={`overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] ${
+              currentTabDirty && isFormTab
+                ? "mt-4 max-h-24 opacity-100"
+                : "max-h-0 opacity-0"
+            }`}
+          >
+            <div className="flex flex-col gap-3 rounded-2xl bg-surface-container-low px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-on-surface-variant text-sm">
                 {t("unsaved_changes")}
               </span>
@@ -929,7 +968,7 @@ export default function SettingsPage() {
                   {t("cancel")}
                 </button>
                 <button
-                  className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 font-bold text-on-primary text-sm transition-all active:opacity-80"
+                  className="flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 py-2 font-bold text-on-primary text-sm transition-all active:opacity-80"
                   disabled={saving}
                   onClick={() => {
                     const form =
@@ -955,14 +994,14 @@ export default function SettingsPage() {
                 </button>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
 
       {toast && (
         <div
           aria-live="polite"
-          className={`fixed end-6 bottom-6 z-50 flex items-center gap-2 rounded-2xl px-5 py-3 font-semibold text-sm shadow-lg transition-all ${
+          className={`fixed start-4 end-4 bottom-4 z-50 flex items-center gap-2 rounded-2xl px-5 py-3 font-semibold text-sm shadow-lg transition-all sm:start-auto sm:end-6 sm:bottom-6 ${
             toast.type === "success"
               ? "bg-success text-on-success"
               : "bg-error text-on-error"
@@ -972,10 +1011,10 @@ export default function SettingsPage() {
           <span className="material-symbols-outlined text-[18px]">
             {toast.type === "success" ? "check_circle" : "error"}
           </span>
-          {toast.message}
+          <span className="min-w-0 flex-1 truncate">{toast.message}</span>
           <button
             aria-label={t("cancel")}
-            className="ms-2 rounded-md p-0.5 opacity-70 transition-opacity hover:opacity-100"
+            className="ms-2 shrink-0 rounded-md p-1 opacity-70 transition-opacity hover:opacity-100"
             onClick={dismissToast}
             type="button"
           >
@@ -988,10 +1027,13 @@ export default function SettingsPage() {
         <div
           aria-label={t("confirm_tab_switch_title")}
           aria-modal="true"
-          className="fixed inset-0 z-40 flex items-center justify-center bg-on-surface/40"
+          className="fixed inset-0 z-40 flex items-center justify-center bg-on-surface/40 transition-all duration-200"
           role="dialog"
         >
-          <div className="mx-4 w-full max-w-sm rounded-2xl bg-surface-container-lowest p-6 shadow-xl">
+          <div
+            className="mx-4 w-full max-w-sm animate-[fadeSlideUp_0.2s_ease-out] rounded-2xl bg-surface-container-lowest p-6 shadow-xl"
+            ref={dialogRef}
+          >
             <h4 className="font-extrabold font-headline text-base text-on-surface">
               {t("confirm_tab_switch_title")}
             </h4>
