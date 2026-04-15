@@ -57,13 +57,13 @@ const MOCK_DATA: TrackingData = {
   issue: "Cracked screen replacement",
   estimatedCompletion: "Apr 16, 2026",
   daysInShop: 3,
-  shopName: "Precision Auto Care",
+  shopName: "Reparilo Phone Repair",
   shopPhone: "+213 550 123 456",
-  shopAddress: "Industrial Zone East, Lot 42, Algiers",
+  shopAddress: "Rue Didouche Mourad, Algiers Centre",
   technician: {
     initials: "SM",
     name: "S. Mansour",
-    level: "L3 Certified Tech",
+    level: "Senior Technician",
   },
   timeline: [
     {
