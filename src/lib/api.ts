@@ -11,11 +11,19 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (
-      error.response?.status === 401 &&
-      !error.config?.url?.includes("/auth/get-session")
-    ) {
-      window.location.href = "/login";
+    if (error.response?.status === 401) {
+      const url = error.config?.url ?? "";
+      const authEndpoints = [
+        "/auth/sign-in",
+        "/auth/sign-out",
+        "/auth/get-session",
+        "/auth/change-password",
+        "/auth/must-change-password",
+      ];
+      const isAuthEndpoint = authEndpoints.some((ep) => url.includes(ep));
+      if (!isAuthEndpoint) {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }
