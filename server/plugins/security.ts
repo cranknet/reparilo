@@ -101,7 +101,7 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
   ): void {
     for (const key of Object.keys(obj)) {
       if (SENSITIVE_KEYS.has(key)) {
-        log.debug({ key, path }, "Sanitized sensitive key from request body");
+        log.warn({ key, path }, "Sanitized sensitive key from request body");
         delete obj[key];
         continue;
       }
