@@ -1,106 +1,15 @@
 import type { PartCategoryType } from "@shared/constants";
-import { useCallback, useState } from "react";
+import { PartCategory } from "@shared/constants";
+import type { PartsCatalog } from "@shared/types";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import AddPartModal from "@/components/modules/parts/add-part-modal";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { formatDzd } from "@/lib/format";
+import { usePartsCatalogStore } from "@/stores/parts-catalog";
 
 type SortField = "name" | "category" | "defaultPrice" | "supplier";
-
-interface MockPart {
-  category: PartCategoryType;
-  defaultPrice: number;
-  id: string;
-  name: string;
-  sku: string;
-  stockLevel: number;
-  stockMax: number;
-  supplier: string;
-}
-
-const MOCK_PARTS: MockPart[] = [
-  {
-    category: "SCREEN",
-    defaultPrice: 42_500,
-    id: "1",
-    name: "Super Retina XDR Display",
-    sku: "LCD-IP14-001",
-    stockLevel: 42,
-    stockMax: 50,
-    supplier: "Global Tech Parts",
-  },
-  {
-    category: "BATTERY",
-    defaultPrice: 8200,
-    id: "2",
-    name: "Li-Ion Battery (4323mAh)",
-    sku: "BATT-IP14PM-92",
-    stockLevel: 3,
-    stockMax: 50,
-    supplier: "Energetic Logistics",
-  },
-  {
-    category: "OTHER",
-    defaultPrice: 1450,
-    id: "3",
-    name: "Mainboard Flex Cable",
-    sku: "FLEX-MB-S22-04",
-    stockLevel: 112,
-    stockMax: 120,
-    supplier: "Component Hub",
-  },
-  {
-    category: "CHARGING_PORT",
-    defaultPrice: 6800,
-    id: "4",
-    name: "USB-C Charging Assembly",
-    sku: "CHRG-S23U-07",
-    stockLevel: 18,
-    stockMax: 40,
-    supplier: "Global Tech Parts",
-  },
-  {
-    category: "CAMERA",
-    defaultPrice: 22_400,
-    id: "5",
-    name: "Wide-Angle Camera Module",
-    sku: "CAM-IP14P-WA",
-    stockLevel: 7,
-    stockMax: 30,
-    supplier: "OptiSource DZA",
-  },
-  {
-    category: "SPEAKER",
-    defaultPrice: 3200,
-    id: "6",
-    name: "Earpiece Speaker Unit",
-    sku: "SPK-EP-IP13-01",
-    stockLevel: 56,
-    stockMax: 60,
-    supplier: "Component Hub",
-  },
-  {
-    category: "MOTHERBOARD",
-    defaultPrice: 85_000,
-    id: "7",
-    name: "Logic Board (A15 Bionic)",
-    sku: "MB-IP14-A15",
-    stockLevel: 2,
-    stockMax: 10,
-    supplier: "ShenZhen Direct",
-  },
-  {
-    category: "HOUSING",
-    defaultPrice: 18_000,
-    id: "8",
-    name: "Midframe Assembly",
-    sku: "HSG-IP14-MID",
-    stockLevel: 24,
-    stockMax: 25,
-    supplier: "Global Tech Parts",
-  },
-];
 
 const CATEGORY_COLORS: Record<string, string> = {
   BATTERY: "bg-tertiary-fixed text-on-tertiary-fixed-variant",
@@ -115,6 +24,11 @@ const CATEGORY_COLORS: Record<string, string> = {
   SPEAKER: "bg-tertiary-fixed text-on-tertiary-fixed-variant",
 };
 
+const CATEGORIES: (PartCategoryType | "ALL")[] = [
+  "ALL",
+  ...Object.values(PartCategory),
+];
+
 function getAriaSort(
   currentSortBy: SortField,
   currentSortDir: "asc" | "desc",
@@ -124,45 +38,6 @@ function getAriaSort(
     return "none";
   }
   return currentSortDir === "asc" ? "ascending" : "descending";
-}
-
-function StockBar({ level, max }: { level: number; max: number }) {
-  const pct = Math.round((level / max) * 100);
-  let color = "bg-primary";
-  if (pct < 10) {
-    color = "bg-error";
-  } else if (pct < 30) {
-    color = "bg-tertiary";
-  }
-
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="flex justify-between font-bold text-xs">
-        <span className={pct < 10 ? "text-error" : "text-on-surface"}>
-          {level}
-          {pct < 10 && (
-            <Icon
-              className="ms-1 align-middle text-error"
-              name="error"
-              size="xs"
-            />
-          )}
-        </span>
-        <span className={pct < 10 ? "text-error" : "text-primary"}>{pct}%</span>
-      </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container-highest">
-        <div
-          aria-label="stock level"
-          aria-valuemax={100}
-          aria-valuemin={0}
-          aria-valuenow={pct}
-          className={`h-full rounded-full ${color} transition-all duration-500`}
-          role="progressbar"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
 }
 
 function SkeletonRow() {
@@ -183,18 +58,339 @@ function SkeletonRow() {
       <td className="px-6 py-5">
         <div className="h-3 w-1/4 animate-pulse rounded bg-surface-container-high" />
       </td>
-      <td className="min-w-[160px] px-6 py-5">
-        <div className="flex flex-col gap-1">
-          <div className="h-2 w-full animate-pulse rounded bg-surface-container-high" />
-          <div className="h-1.5 w-3/4 animate-pulse rounded-full bg-surface-container-highest" />
+      <td className="px-6 py-5">
+        <div className="h-5 w-16 animate-pulse rounded-full bg-surface-container-high" />
+      </td>
+      <td className="px-6 py-5">
+        <div className="h-8 w-8 animate-pulse rounded-xl bg-surface-container-high" />
+      </td>
+    </tr>
+  );
+}
+
+function DesktopPartRow({
+  onToggle,
+  part,
+  t,
+  togglingId,
+}: {
+  onToggle: (part: PartsCatalog) => void;
+  part: PartsCatalog;
+  t: (key: string) => string;
+  togglingId: string | null;
+}) {
+  const isActive = part.isActive;
+  const rowCls = isActive
+    ? "transition-colors hover:bg-surface-container-lowest"
+    : "bg-surface-container/50 opacity-60 transition-colors hover:bg-surface-container-lowest";
+  const nameCls = isActive
+    ? "font-bold text-on-surface text-sm"
+    : "font-bold line-through text-on-surface text-sm";
+  const statusBadgeCls = isActive
+    ? "bg-primary-container text-on-primary-container"
+    : "bg-surface-container-high text-on-surface-variant";
+  const toggleBtnCls = isActive
+    ? "text-on-surface-variant hover:bg-surface-container-high hover:text-primary"
+    : "text-primary hover:bg-primary-container";
+
+  return (
+    <tr className={rowCls}>
+      <td className="px-6 py-5">
+        <div className="flex flex-col">
+          <span className={nameCls}>{part.name}</span>
+          <span className="font-mono text-[11px] text-outline tracking-tight">
+            {part.id.slice(0, 8)}
+          </span>
+        </div>
+      </td>
+      <td className="px-6 py-5">
+        <span
+          className={`rounded-full px-3 py-1 font-bold text-xs uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
+        >
+          {t(`part_category.${part.category}`)}
+        </span>
+      </td>
+      <td className="px-6 py-5">
+        <span className="text-on-surface-variant text-sm">
+          {part.supplier ?? "\u2014"}
+        </span>
+      </td>
+      <td className="px-6 py-5">
+        <span className="font-mono font-semibold text-sm">
+          {formatDzd(Number(part.defaultPrice))} {t("currency_dzd")}
+        </span>
+      </td>
+      <td className="px-6 py-5">
+        <span
+          className={`rounded-full px-3 py-1 font-bold text-xs ${statusBadgeCls}`}
+        >
+          {isActive ? t("active") : t("inactive")}
+        </span>
+      </td>
+      <td className="px-6 py-5">
+        <div className="flex items-center gap-1">
+          <button
+            aria-label={isActive ? t("deactivate_part") : t("activate_part")}
+            className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${toggleBtnCls}`}
+            disabled={togglingId === part.id}
+            onClick={() => onToggle(part)}
+            type="button"
+          >
+            <Icon name={isActive ? "toggle_on" : "toggle_off"} size="sm" />
+          </button>
         </div>
       </td>
     </tr>
   );
 }
 
+function MobilePartCard({
+  onToggle,
+  part,
+  t,
+  togglingId,
+}: {
+  onToggle: (part: PartsCatalog) => void;
+  part: PartsCatalog;
+  t: (key: string) => string;
+  togglingId: string | null;
+}) {
+  const isActive = part.isActive;
+  const cardCls = isActive ? "p-4" : "bg-surface-container/50 opacity-60 p-4";
+  const nameCls = isActive
+    ? "font-bold text-on-surface text-sm"
+    : "font-bold line-through text-on-surface text-sm";
+  const statusBadgeCls = isActive
+    ? "bg-primary-container text-on-primary-container"
+    : "bg-surface-container-high text-on-surface-variant";
+  const toggleBtnCls = isActive
+    ? "flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl font-bold text-on-surface-variant text-xs transition-all hover:bg-surface-container-high hover:text-primary"
+    : "flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl font-bold text-primary text-xs transition-all hover:bg-primary-container";
+
+  return (
+    <div className={cardCls}>
+      <div className="mb-3 flex items-start justify-between">
+        <div className="min-w-0">
+          <h3 className={nameCls}>{part.name}</h3>
+          <span className="font-mono text-[11px] text-outline">
+            {part.id.slice(0, 8)}
+          </span>
+        </div>
+        <span
+          className={`shrink-0 rounded-full px-2.5 py-1 font-bold text-xs uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
+        >
+          {t(`part_category.${part.category}`)}
+        </span>
+      </div>
+      <div className="mb-3 flex items-center justify-between">
+        <span
+          className={`rounded-full px-3 py-1 font-bold text-xs ${statusBadgeCls}`}
+        >
+          {isActive ? t("active") : t("inactive")}
+        </span>
+        <span className="font-bold font-mono text-primary text-sm">
+          {formatDzd(Number(part.defaultPrice))} {t("currency_dzd")}
+        </span>
+      </div>
+      <div className="-mx-1 flex items-center gap-2 rounded-xl bg-surface-container-lowest px-1 py-1">
+        {part.supplier && (
+          <span className="flex-1 px-3 py-2 text-on-surface-variant text-xs">
+            {part.supplier}
+          </span>
+        )}
+        <button
+          aria-label={isActive ? t("deactivate_part") : t("activate_part")}
+          className={toggleBtnCls}
+          disabled={togglingId === part.id}
+          onClick={() => onToggle(part)}
+          type="button"
+        >
+          <Icon name={isActive ? "toggle_on" : "toggle_off"} size="sm" />
+          <span>{isActive ? t("deactivate_part") : t("activate_part")}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CategoryFilterPills({
+  activeFilter,
+  onFilterChange,
+  showAllCategories,
+  onToggleAll,
+  t,
+}: {
+  activeFilter: PartCategoryType | "ALL";
+  onFilterChange: (cat: PartCategoryType | "ALL") => void;
+  onToggleAll: (show: boolean) => void;
+  showAllCategories: boolean;
+  t: (key: string) => string;
+}) {
+  const visibleCats = CATEGORIES.filter(
+    (cat) => showAllCategories || cat === "ALL" || CATEGORIES.indexOf(cat) <= 4
+  );
+
+  return (
+    <div className="hide-scrollbar flex flex-wrap items-center gap-2">
+      {visibleCats.map((cat) => {
+        const isActive = activeFilter === cat;
+        return (
+          <button
+            aria-pressed={isActive}
+            className={`min-h-[44px] shrink-0 rounded-full px-4 py-2.5 font-bold text-xs uppercase tracking-wide transition-all ${
+              isActive
+                ? "bg-primary text-on-primary"
+                : "bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest"
+            }`}
+            key={cat}
+            onClick={() => onFilterChange(cat)}
+            type="button"
+          >
+            {cat === "ALL" ? t("all_categories") : t(`part_category.${cat}`)}
+          </button>
+        );
+      })}
+      {!showAllCategories && CATEGORIES.length > 5 && (
+        <button
+          className="min-h-[44px] shrink-0 rounded-full px-4 py-2.5 font-bold text-primary text-xs uppercase tracking-wide transition-all hover:bg-surface-container-high"
+          onClick={() => onToggleAll(true)}
+          type="button"
+        >
+          {t("show_more")}
+        </button>
+      )}
+      {showAllCategories && (
+        <button
+          className="min-h-[44px] shrink-0 rounded-full px-4 py-2.5 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-all hover:bg-surface-container-high"
+          onClick={() => onToggleAll(false)}
+          type="button"
+        >
+          {t("show_less")}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function PartsDesktopTable({
+  isLoading,
+  onSort,
+  parts,
+  sortBy,
+  sortDir,
+  t,
+  togglingId,
+  onToggle,
+}: {
+  isLoading: boolean;
+  onSort: (field: SortField) => void;
+  onToggle: (part: PartsCatalog) => void;
+  parts: PartsCatalog[];
+  sortBy: SortField;
+  sortDir: "asc" | "desc";
+  t: (key: string) => string;
+  togglingId: string | null;
+}) {
+  return (
+    <table className="w-full border-collapse text-start">
+      <thead>
+        <tr className="bg-surface-container-high/50">
+          <th
+            aria-sort={getAriaSort(sortBy, sortDir, "name")}
+            className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
+            onClick={() => onSort("name")}
+          >
+            {t("part_details")}
+            {sortBy === "name" && (
+              <Icon
+                className="ms-1 align-middle text-primary"
+                name={sortDir === "asc" ? "arrow_upward" : "arrow_downward"}
+                size="xs"
+              />
+            )}
+          </th>
+          <th
+            aria-sort={getAriaSort(sortBy, sortDir, "category")}
+            className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
+            onClick={() => onSort("category")}
+          >
+            {t("category")}
+            {sortBy === "category" && (
+              <Icon
+                className="ms-1 align-middle text-primary"
+                name={sortDir === "asc" ? "arrow_upward" : "arrow_downward"}
+                size="xs"
+              />
+            )}
+          </th>
+          <th
+            aria-sort={getAriaSort(sortBy, sortDir, "supplier")}
+            className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
+            onClick={() => onSort("supplier")}
+          >
+            {t("supplier")}
+            {sortBy === "supplier" && (
+              <Icon
+                className="ms-1 align-middle text-primary"
+                name={sortDir === "asc" ? "arrow_upward" : "arrow_downward"}
+                size="xs"
+              />
+            )}
+          </th>
+          <th
+            aria-sort={getAriaSort(sortBy, sortDir, "defaultPrice")}
+            className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
+            onClick={() => onSort("defaultPrice")}
+          >
+            {t("unit_cost")}
+            {sortBy === "defaultPrice" && (
+              <Icon
+                className="ms-1 align-middle text-primary"
+                name={sortDir === "asc" ? "arrow_upward" : "arrow_downward"}
+                size="xs"
+              />
+            )}
+          </th>
+          <th className="px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide">
+            {t("status")}
+          </th>
+          <th className="px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide">
+            {t("manage")}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {isLoading
+          ? Array.from({ length: 5 }).map((_, i) => (
+              <SkeletonRow key={`skeleton-${String(i)}`} />
+            ))
+          : parts.map((part) => (
+              <DesktopPartRow
+                key={part.id}
+                onToggle={onToggle}
+                part={part}
+                t={t}
+                togglingId={togglingId}
+              />
+            ))}
+      </tbody>
+    </table>
+  );
+}
+
 export default function PartsCatalogPage() {
   const { t } = useTranslation();
+  const {
+    parts,
+    isLoading,
+    error,
+    totalCount,
+    fetchParts,
+    createPart,
+    togglePartActive,
+    clearError,
+  } = usePartsCatalogStore();
+
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortField>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -203,68 +399,111 @@ export default function PartsCatalogPage() {
   );
   const [showAddModal, setShowAddModal] = useState(false);
   const [showCategoryFilters, setShowCategoryFilters] = useState(false);
-  const [isLoading] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-
-  const lowStockItems = MOCK_PARTS.filter(
-    (p) => p.stockLevel / p.stockMax < 0.1
-  );
-  const lowStockCount = lowStockItems.length;
-  const totalValue = MOCK_PARTS.reduce(
-    (acc, p) => acc + p.defaultPrice * p.stockLevel,
-    0
-  );
-  const uniqueSuppliers = [...new Set(MOCK_PARTS.map((p) => p.supplier))]
-    .length;
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const showToast = useCallback((message: string) => {
     setToast(message);
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  const filtered = MOCK_PARTS.filter((p) => {
-    const matchesSearch =
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.sku.toLowerCase().includes(search.toLowerCase()) ||
-      p.supplier.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory =
-      activeFilter === "ALL" || p.category === activeFilter;
-    return matchesSearch && matchesCategory;
-  });
+  const fetchParams = useMemo(
+    () => ({
+      search: search || undefined,
+      category: activeFilter === "ALL" ? undefined : activeFilter,
+    }),
+    [search, activeFilter]
+  );
 
-  const sorted = [...filtered].sort((a, b) => {
-    const mul = sortDir === "asc" ? 1 : -1;
-    const av = a[sortBy];
-    const bv = b[sortBy];
-    if (typeof av === "string" && typeof bv === "string") {
-      return mul * av.localeCompare(bv);
+  useEffect(() => {
+    fetchParts(fetchParams);
+  }, [fetchParams, fetchParts]);
+
+  useEffect(() => {
+    if (error) {
+      showToast(error);
+      clearError();
     }
-    return mul * (Number(av) - Number(bv));
-  });
+  }, [error, showToast, clearError]);
 
-  function toggleSort(field: SortField) {
-    if (sortBy === field) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortBy(field);
+  const sorted = useMemo(() => {
+    return [...parts].sort((a, b) => {
+      const mul = sortDir === "asc" ? 1 : -1;
+      const av = a[sortBy];
+      const bv = b[sortBy];
+      if (typeof av === "string" && typeof bv === "string") {
+        return mul * av.localeCompare(bv);
+      }
+      return mul * (Number(av) - Number(bv));
+    });
+  }, [parts, sortBy, sortDir]);
+
+  const toggleSort = useCallback((field: SortField) => {
+    setSortBy((prev) => {
+      if (prev === field) {
+        setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+        return prev;
+      }
       setSortDir("asc");
-    }
-  }
+      return field;
+    });
+  }, []);
 
-  const categories: (PartCategoryType | "ALL")[] = [
-    "ALL",
-    "SCREEN",
-    "BATTERY",
-    "CHARGING_PORT",
-    "CAMERA",
-    "SPEAKER",
-    "MICROPHONE",
-    "MOTHERBOARD",
-    "HOUSING",
-    "BUTTON",
-    "OTHER",
-  ];
+  const activeCount = parts.filter((p) => p.isActive).length;
+  const catalogValue = parts
+    .filter((p) => p.isActive)
+    .reduce((acc, p) => acc + Number(p.defaultPrice), 0);
+  const uniqueSuppliers = [
+    ...new Set(
+      parts
+        .filter(
+          (p): p is PartsCatalog & { supplier: string } => p.supplier !== null
+        )
+        .map((p) => p.supplier)
+    ),
+  ].length;
+
+  const handleAddPart = async (
+    data: Omit<
+      {
+        category: PartCategoryType | "";
+        isActive: boolean;
+        name: string;
+        supplier: string;
+      },
+      "defaultPrice"
+    > & { defaultPrice: number }
+  ) => {
+    try {
+      await createPart({
+        category: data.category,
+        defaultPrice: data.defaultPrice,
+        name: data.name,
+        supplier: data.supplier || undefined,
+      });
+      setShowAddModal(false);
+      showToast(t("part_added_successfully"));
+      await fetchParts(fetchParams);
+    } catch {
+      showToast(t("failed_to_create_part"));
+    }
+  };
+
+  const handleToggleActive = async (part: PartsCatalog) => {
+    setTogglingId(part.id);
+    try {
+      await togglePartActive(part.id, !part.isActive);
+      showToast(t("part_status_changed"));
+    } catch {
+      showToast(t("failed_to_update_status"));
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const hasParts = sorted.length > 0 || isLoading;
+  const showEmptyState = sorted.length === 0 && !isLoading;
 
   return (
     <>
@@ -297,78 +536,19 @@ export default function PartsCatalogPage() {
         </div>
       </div>
 
-      {lowStockCount > 0 && (
-        <div className="mb-6 rounded-2xl bg-error-container/20 p-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-error-container">
-                <Icon className="text-error" name="warning" size="lg" />
-              </div>
-              <div>
-                <p className="font-extrabold font-headline text-lg text-on-surface">
-                  {t("low_stock_alerts")} ({lowStockCount})
-                </p>
-                <p className="text-on-surface-variant text-sm">
-                  {t("reorder_recommended")}
-                </p>
-              </div>
-            </div>
-            <button
-              className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-error px-5 py-3 font-bold text-on-error text-sm transition-all hover:opacity-90"
-              onClick={() => {
-                setActiveFilter("ALL");
-                setShowCategoryFilters(true);
-              }}
-              type="button"
-            >
-              <Icon name="shopping_cart" size="sm" />
-              <span>{t("view_low_stock")}</span>
-            </button>
-          </div>
-          <div className="mt-4 flex flex-col gap-2">
-            {lowStockItems.map((part) => (
-              <div
-                className="flex items-center justify-between rounded-xl bg-error-container/40 px-4 py-3"
-                key={part.id}
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <span
-                    className={`shrink-0 rounded-full px-2.5 py-1 font-bold text-xs uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
-                  >
-                    {t(`part_category.${part.category}`)}
-                  </span>
-                  <span className="truncate font-bold text-on-surface text-sm">
-                    {part.name}
-                  </span>
-                </div>
-                <div className="flex shrink-0 items-center gap-4">
-                  <span className="font-bold text-error text-sm">
-                    {part.stockLevel}/{part.stockMax}
-                  </span>
-                  <button
-                    className="flex min-h-[44px] items-center gap-1.5 rounded-lg bg-error px-3 py-2 font-bold text-on-error text-xs transition-all hover:opacity-90"
-                    type="button"
-                  >
-                    <Icon name="replay" size="xs" />
-                    {t("restock")}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4 text-on-surface-variant text-sm">
-          <span className="font-bold text-on-surface">{MOCK_PARTS.length}</span>{" "}
+          <span className="font-bold text-on-surface">{totalCount}</span>{" "}
           {t("total_parts")}
-          <span className="text-outline-variant">·</span>
+          <span className="text-outline-variant">&middot;</span>
+          <span className="font-bold text-on-surface">{activeCount}</span>{" "}
+          {t("active")}
+          <span className="text-outline-variant">&middot;</span>
           <span className="font-bold text-on-surface">
-            {formatDzd(totalValue)}
+            {catalogValue > 0 ? formatDzd(catalogValue) : "0"}
           </span>{" "}
           {t("currency_dzd")}
-          <span className="text-outline-variant">·</span>
+          <span className="text-outline-variant">&middot;</span>
           <span className="font-bold text-on-surface">{uniqueSuppliers}</span>{" "}
           {t("active_suppliers")}
         </div>
@@ -396,7 +576,7 @@ export default function PartsCatalogPage() {
               }}
               value={activeFilter}
             >
-              {categories.map((cat) => (
+              {CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat === "ALL"
                     ? t("all_categories")
@@ -413,52 +593,13 @@ export default function PartsCatalogPage() {
 
       {showCategoryFilters && (
         <div className="mb-5 hidden rounded-2xl bg-surface-container-low p-4 sm:block">
-          <div className="hide-scrollbar flex flex-wrap items-center gap-2">
-            {categories
-              .filter((cat) =>
-                showAllCategories
-                  ? true
-                  : cat === "ALL" || categories.indexOf(cat) <= 4
-              )
-              .map((cat) => {
-                const isActive = activeFilter === cat;
-                return (
-                  <button
-                    aria-pressed={isActive}
-                    className={`min-h-[44px] shrink-0 rounded-full px-4 py-2.5 font-bold text-xs uppercase tracking-wide transition-all ${
-                      isActive
-                        ? "bg-primary text-on-primary"
-                        : "bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest"
-                    }`}
-                    key={cat}
-                    onClick={() => setActiveFilter(cat)}
-                    type="button"
-                  >
-                    {cat === "ALL"
-                      ? t("all_categories")
-                      : t(`part_category.${cat}`)}
-                  </button>
-                );
-              })}
-            {!showAllCategories && categories.length > 5 && (
-              <button
-                className="min-h-[44px] shrink-0 rounded-full px-4 py-2.5 font-bold text-primary text-xs uppercase tracking-wide transition-all hover:bg-surface-container-high"
-                onClick={() => setShowAllCategories(true)}
-                type="button"
-              >
-                {t("show_more")}
-              </button>
-            )}
-            {showAllCategories && (
-              <button
-                className="min-h-[44px] shrink-0 rounded-full px-4 py-2.5 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-all hover:bg-surface-container-high"
-                onClick={() => setShowAllCategories(false)}
-                type="button"
-              >
-                {t("show_less")}
-              </button>
-            )}
-          </div>
+          <CategoryFilterPills
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+            onToggleAll={setShowAllCategories}
+            showAllCategories={showAllCategories}
+            t={t}
+          />
         </div>
       )}
 
@@ -477,7 +618,7 @@ export default function PartsCatalogPage() {
         </div>
       )}
 
-      {sorted.length === 0 && !isLoading && (
+      {showEmptyState && (
         <div className="flex flex-col items-center justify-center py-16">
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-container-low">
             <Icon
@@ -495,157 +636,19 @@ export default function PartsCatalogPage() {
         </div>
       )}
 
-      {(sorted.length > 0 || isLoading) && (
+      {hasParts && (
         <div className="overflow-hidden rounded-2xl bg-surface-container-low">
           <div className="hidden overflow-x-auto md:block">
-            <table className="w-full border-collapse text-start">
-              <thead>
-                <tr className="bg-surface-container-high/50">
-                  <th
-                    aria-sort={getAriaSort(sortBy, sortDir, "name")}
-                    className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
-                    onClick={() => toggleSort("name")}
-                  >
-                    {t("part_details")}
-                    {sortBy === "name" && (
-                      <Icon
-                        className="ms-1 align-middle text-primary"
-                        name={
-                          sortDir === "asc" ? "arrow_upward" : "arrow_downward"
-                        }
-                        size="xs"
-                      />
-                    )}
-                  </th>
-                  <th
-                    aria-sort={getAriaSort(sortBy, sortDir, "category")}
-                    className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
-                    onClick={() => toggleSort("category")}
-                  >
-                    {t("category")}
-                    {sortBy === "category" && (
-                      <Icon
-                        className="ms-1 align-middle text-primary"
-                        name={
-                          sortDir === "asc" ? "arrow_upward" : "arrow_downward"
-                        }
-                        size="xs"
-                      />
-                    )}
-                  </th>
-                  <th
-                    aria-sort={getAriaSort(sortBy, sortDir, "supplier")}
-                    className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
-                    onClick={() => toggleSort("supplier")}
-                  >
-                    {t("supplier")}
-                    {sortBy === "supplier" && (
-                      <Icon
-                        className="ms-1 align-middle text-primary"
-                        name={
-                          sortDir === "asc" ? "arrow_upward" : "arrow_downward"
-                        }
-                        size="xs"
-                      />
-                    )}
-                  </th>
-                  <th
-                    aria-sort={getAriaSort(sortBy, sortDir, "defaultPrice")}
-                    className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
-                    onClick={() => toggleSort("defaultPrice")}
-                  >
-                    {t("unit_cost")}
-                    {sortBy === "defaultPrice" && (
-                      <Icon
-                        className="ms-1 align-middle text-primary"
-                        name={
-                          sortDir === "asc" ? "arrow_upward" : "arrow_downward"
-                        }
-                        size="xs"
-                      />
-                    )}
-                  </th>
-                  <th className="px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide">
-                    {t("stock_level")}
-                  </th>
-                  <th className="px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide">
-                    {t("manage")}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading
-                  ? Array.from({ length: 5 }).map((_, i) => (
-                      <SkeletonRow key={`skeleton-${String(i)}`} />
-                    ))
-                  : sorted.map((part) => {
-                      const stockPct = Math.round(
-                        (part.stockLevel / part.stockMax) * 100
-                      );
-                      const isLow = stockPct < 10;
-                      return (
-                        <tr
-                          className={`transition-colors hover:bg-surface-container-lowest ${isLow ? "bg-error-container/20" : ""}`}
-                          key={part.id}
-                        >
-                          <td className="px-6 py-5">
-                            <div className="flex flex-col">
-                              <span className="font-bold text-on-surface text-sm">
-                                {part.name}
-                              </span>
-                              <span className="font-mono text-[11px] text-outline tracking-tight">
-                                {part.sku}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-5">
-                            <span
-                              className={`rounded-full px-3 py-1 font-bold text-xs uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
-                            >
-                              {t(`part_category.${part.category}`)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-5">
-                            <span className="text-on-surface-variant text-sm">
-                              {part.supplier}
-                            </span>
-                          </td>
-                          <td className="px-6 py-5">
-                            <span className="font-mono font-semibold text-sm">
-                              {formatDzd(part.defaultPrice)} {t("currency_dzd")}
-                            </span>
-                          </td>
-                          <td className="min-w-[160px] px-6 py-5">
-                            <StockBar
-                              level={part.stockLevel}
-                              max={part.stockMax}
-                            />
-                          </td>
-                          <td className="px-6 py-5">
-                            <div className="flex items-center gap-1">
-                              <button
-                                aria-label={t("edit_part")}
-                                className="flex h-11 w-11 items-center justify-center rounded-xl text-outline transition-colors hover:bg-surface-container-high hover:text-primary"
-                                type="button"
-                              >
-                                <Icon name="edit" size="sm" />
-                              </button>
-                              {isLow && (
-                                <button
-                                  aria-label={t("restock")}
-                                  className="flex h-11 items-center gap-1.5 rounded-xl bg-error px-3 font-bold text-on-error text-xs transition-all hover:opacity-90"
-                                  type="button"
-                                >
-                                  <Icon name="replay" size="xs" />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-              </tbody>
-            </table>
+            <PartsDesktopTable
+              isLoading={isLoading}
+              onSort={toggleSort}
+              onToggle={handleToggleActive}
+              parts={sorted}
+              sortBy={sortBy}
+              sortDir={sortDir}
+              t={t}
+              togglingId={togglingId}
+            />
           </div>
 
           <div className="md:hidden">
@@ -663,69 +666,15 @@ export default function PartsCatalogPage() {
                 ))}
               </div>
             ) : (
-              sorted.map((part) => {
-                const stockPct = Math.round(
-                  (part.stockLevel / part.stockMax) * 100
-                );
-                const isLow = stockPct < 10;
-                return (
-                  <div
-                    className={`p-4 ${isLow ? "bg-error-container/20" : ""}`}
-                    key={part.id}
-                  >
-                    <div className="mb-3 flex items-start justify-between">
-                      <div className="min-w-0">
-                        <h3 className="font-bold text-on-surface text-sm">
-                          {part.name}
-                        </h3>
-                        <span className="font-mono text-[11px] text-outline">
-                          {part.sku}
-                        </span>
-                      </div>
-                      <span
-                        className={`shrink-0 rounded-full px-2.5 py-1 font-bold text-xs uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
-                      >
-                        {t(`part_category.${part.category}`)}
-                      </span>
-                    </div>
-                    <div className="mb-3">
-                      <StockBar level={part.stockLevel} max={part.stockMax} />
-                    </div>
-                    <div className="flex items-end justify-between">
-                      <span
-                        className={`font-bold text-xs uppercase tracking-wide ${isLow ? "text-error" : "text-on-surface-variant"}`}
-                      >
-                        {isLow ? t("low_stock") : t("stock_level")}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold font-mono text-primary text-sm">
-                          {formatDzd(part.defaultPrice)} {t("currency_dzd")}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="-mx-1 mt-3 flex items-center gap-2 rounded-xl bg-surface-container-lowest px-1 py-1">
-                      <button
-                        aria-label={t("edit_part")}
-                        className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
-                        type="button"
-                      >
-                        <Icon name="edit" size="sm" />
-                        <span className="text-xs">{t("edit")}</span>
-                      </button>
-                      {isLow && (
-                        <button
-                          aria-label={t("restock")}
-                          className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-error font-bold text-on-error text-xs transition-all hover:opacity-90"
-                          type="button"
-                        >
-                          <Icon name="replay" size="xs" />
-                          <span>{t("restock")}</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
+              sorted.map((part) => (
+                <MobilePartCard
+                  key={part.id}
+                  onToggle={handleToggleActive}
+                  part={part}
+                  t={t}
+                  togglingId={togglingId}
+                />
+              ))
             )}
           </div>
         </div>
@@ -734,10 +683,7 @@ export default function PartsCatalogPage() {
       {showAddModal && (
         <AddPartModal
           onClose={() => setShowAddModal(false)}
-          onSubmit={(_data) => {
-            setShowAddModal(false);
-            showToast(t("part_added_successfully"));
-          }}
+          onSubmit={handleAddPart}
         />
       )}
 
