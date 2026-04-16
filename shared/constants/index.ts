@@ -5,6 +5,7 @@ export { DEVICE_ICONS } from "./device-icons";
 export type { JobStatusType } from "./job-statuses";
 export {
   ACTIVE_STATUSES,
+  COMPLETED_STATUSES,
   INACTIVE_STATUSES,
   JOB_STATUS_FLOW,
   JobStatus,

@@ -16,6 +16,8 @@ const MAGIC_BYTES: Record<string, number[]> = {
   "image/webp": [0x52, 0x49, 0x46, 0x46],
 };
 
+const WEBP_MARKER = [0x57, 0x45, 0x42, 0x50];
+
 function extFromMime(mime: string): string {
   if (mime === "image/png") {
     return "png";
@@ -31,7 +33,15 @@ function validateMagicBytes(buffer: Buffer, mime: string): boolean {
   if (!expected) {
     return false;
   }
-  return expected.every((byte, i) => buffer[i] === byte);
+  const headerMatch = expected.every((byte, i) => buffer[i] === byte);
+  if (!headerMatch) {
+    return false;
+  }
+  if (mime === "image/webp") {
+    const offset = 8;
+    return WEBP_MARKER.every((byte, i) => buffer[offset + i] === byte);
+  }
+  return true;
 }
 
 export async function upload(

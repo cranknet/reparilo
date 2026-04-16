@@ -25,6 +25,8 @@ export const INACTIVE_STATUSES: JobStatusType[] = [
   "CANCELLED",
 ];
 
+export const COMPLETED_STATUSES: JobStatusType[] = ["DONE", "DELIVERED"];
+
 export const JOB_STATUS_FLOW: Record<JobStatusType, JobStatusType[]> = {
   INTAKE: ["WAITING_FOR_PARTS", "IN_REPAIR", "ON_HOLD", "CANCELLED"],
   WAITING_FOR_PARTS: ["IN_REPAIR", "ON_HOLD", "CANCELLED"],
