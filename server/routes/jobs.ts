@@ -63,40 +63,61 @@ function getUserId(req: FastifyRequest): string {
 export const jobRoutes: FastifyPluginAsync = async (app) => {
   app.addHook("preHandler", requirePermission("jobs:read"));
 
-  app.get("/metrics", async (_req, reply) => {
-    const metrics = await getMetrics(app.prisma);
-    return reply.send(metrics);
-  });
-
-  app.get("/", async (req, reply) => {
-    const parsed = jobListQuerySchema.safeParse(req.query);
-    if (!parsed.success) {
-      return sendError(
-        reply,
-        400,
-        "VALIDATION_ERROR",
-        "Invalid query parameters",
-        {
-          errors: parsed.error.flatten().fieldErrors,
-        }
-      );
+  app.get(
+    "/metrics",
+    {
+      config: { rateLimit: { max: 100, timeWindow: "1 minute" } },
+    },
+    async (_req, reply) => {
+      const metrics = await getMetrics(app.prisma);
+      return reply.send(metrics);
     }
-    const result = await listJobs(app.prisma, parsed.data);
-    return reply.send(result);
-  });
+  );
 
-  app.get("/:id", async (req, reply) => {
-    const { id } = req.params as { id: string };
-    const job = await getJobById(app.prisma, id);
-    if (!job) {
-      return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+  app.get(
+    "/",
+    {
+      config: { rateLimit: { max: 100, timeWindow: "1 minute" } },
+    },
+    async (req, reply) => {
+      const parsed = jobListQuerySchema.safeParse(req.query);
+      if (!parsed.success) {
+        return sendError(
+          reply,
+          400,
+          "VALIDATION_ERROR",
+          "Invalid query parameters",
+          {
+            errors: parsed.error.flatten().fieldErrors,
+          }
+        );
+      }
+      const result = await listJobs(app.prisma, parsed.data);
+      return reply.send(result);
     }
-    return reply.send(job);
-  });
+  );
+
+  app.get(
+    "/:id",
+    {
+      config: { rateLimit: { max: 100, timeWindow: "1 minute" } },
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const job = await getJobById(app.prisma, id);
+      if (!job) {
+        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+      }
+      return reply.send(job);
+    }
+  );
 
   app.post(
     "/",
-    { preHandler: requirePermission("jobs:write") },
+    {
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+      preHandler: requirePermission("jobs:write"),
+    },
     async (req, reply) => {
       const parsed = createJobSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -126,7 +147,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.patch(
     "/:id",
-    { preHandler: requirePermission("jobs:write") },
+    {
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+      preHandler: requirePermission("jobs:write"),
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = updateJobSchema.safeParse(req.body);
@@ -168,7 +192,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.patch(
     "/:id/status",
-    { preHandler: requirePermission("jobs:update_status") },
+    {
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+      preHandler: requirePermission("jobs:update_status"),
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = transitionStatusSchema.safeParse(req.body);
@@ -209,18 +236,27 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
     }
   );
 
-  app.get("/:id/notes", async (req, reply) => {
-    const { id } = req.params as { id: string };
-    const notes = await listNotes(app.prisma, id);
-    if (!notes) {
-      return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+  app.get(
+    "/:id/notes",
+    {
+      config: { rateLimit: { max: 100, timeWindow: "1 minute" } },
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const notes = await listNotes(app.prisma, id);
+      if (!notes) {
+        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+      }
+      return reply.send(notes);
     }
-    return reply.send(notes);
-  });
+  );
 
   app.post(
     "/:id/notes",
-    { preHandler: requirePermission("jobs:write") },
+    {
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+      preHandler: requirePermission("jobs:write"),
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = addJobNoteSchema.safeParse(req.body);
@@ -254,7 +290,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/:id/parts",
-    { preHandler: requirePermission("jobs:write") },
+    {
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+      preHandler: requirePermission("jobs:write"),
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = addJobPartSchema.safeParse(req.body);
@@ -288,7 +327,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete(
     "/:id/parts/:partId",
-    { preHandler: requirePermission("jobs:write") },
+    {
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+      preHandler: requirePermission("jobs:write"),
+    },
     async (req, reply) => {
       const { id, partId } = req.params as { id: string; partId: string };
       const userId = getUserId(req);
@@ -302,7 +344,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/:id/repairs",
-    { preHandler: requirePermission("jobs:write") },
+    {
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+      preHandler: requirePermission("jobs:write"),
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = addJobRepairSchema.safeParse(req.body);
@@ -336,7 +381,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete(
     "/:id/repairs/:repairId",
-    { preHandler: requirePermission("jobs:write") },
+    {
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+      preHandler: requirePermission("jobs:write"),
+    },
     async (req, reply) => {
       const { id, repairId } = req.params as { id: string; repairId: string };
       const userId = getUserId(req);
@@ -350,7 +398,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/:id/photos",
-    { preHandler: requirePermission("jobs:write") },
+    {
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+      preHandler: requirePermission("jobs:write"),
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const data = await req.file();
@@ -400,7 +451,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete(
     "/:id/photos/:photoId",
-    { preHandler: requirePermission("jobs:write") },
+    {
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+      preHandler: requirePermission("jobs:write"),
+    },
     async (req, reply) => {
       const { id, photoId } = req.params as { id: string; photoId: string };
       const userId = getUserId(req);
@@ -414,7 +468,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/:id/waiting-parts",
-    { preHandler: requirePermission("jobs:write") },
+    {
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+      preHandler: requirePermission("jobs:write"),
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = addWaitingPartSchema.safeParse(req.body);
@@ -448,7 +505,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete(
     "/:id/waiting-parts/:waitingId",
-    { preHandler: requirePermission("jobs:write") },
+    {
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+      preHandler: requirePermission("jobs:write"),
+    },
     async (req, reply) => {
       const { id, waitingId } = req.params as { id: string; waitingId: string };
       const userId = getUserId(req);

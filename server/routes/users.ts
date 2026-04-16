@@ -11,7 +11,10 @@ import { requirePermission } from "../middlewares/rbac.js";
 export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/",
-    { preHandler: [requirePermission("users:read")] },
+    {
+      config: { rateLimit: { max: 100, timeWindow: "1 minute" } },
+      preHandler: [requirePermission("users:read")],
+    },
     async (_request, reply) => {
       const users = await app.prisma.user.findMany({
         select: {
@@ -31,7 +34,13 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/",
-    { preHandler: [requirePermission("users:write")] },
+    {
+      config: {
+        rateLimit: { max: 10, timeWindow: "1 minute" },
+        allowSensitiveKeys: true,
+      },
+      preHandler: [requirePermission("users:write")],
+    },
     async (request, reply) => {
       const parsed = createUserSchema.safeParse(request.body);
       if (!parsed.success) {
@@ -101,7 +110,10 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
   app.patch(
     "/:id/status",
-    { preHandler: [requirePermission("users:write")] },
+    {
+      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+      preHandler: [requirePermission("users:write")],
+    },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const { isActive } = request.body as { isActive: boolean };
@@ -132,7 +144,13 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/:id/reset-password",
-    { preHandler: [requirePermission("users:write")] },
+    {
+      config: {
+        rateLimit: { max: 10, timeWindow: "1 minute" },
+        allowSensitiveKeys: true,
+      },
+      preHandler: [requirePermission("users:write")],
+    },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const parsed = resetPasswordSchema.safeParse(request.body);
