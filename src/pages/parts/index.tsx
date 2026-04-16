@@ -459,7 +459,7 @@ export default function PartsCatalogPage() {
       activeCount: active.length,
       catalogValue: active.reduce((acc, p) => acc + Number(p.defaultPrice), 0),
       uniqueSuppliers: new Set(
-        parts
+        active
           .filter(
             (p): p is PartsCatalog & { supplier: string } => p.supplier !== null
           )
