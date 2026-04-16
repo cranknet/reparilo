@@ -363,4 +363,79 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
     return reply.send({ completedJobs, monthlyJobs });
   });
+
+  app.get("/:id/sessions", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const requestingUser = request.user;
+
+    if (!requestingUser) {
+      return reply.status(401).send({ error: "Authentication required" });
+    }
+
+    if (requestingUser.id !== id) {
+      return reply.status(403).send({ error: "Can only view own sessions" });
+    }
+
+    const currentToken =
+      request.headers.authorization?.replace("Bearer ", "") ?? "";
+
+    const sessions = await app.prisma.session.findMany({
+      where: { userId: id, expiresAt: { gt: new Date() } },
+      select: {
+        id: true,
+        ipAddress: true,
+        userAgent: true,
+        createdAt: true,
+        expiresAt: true,
+        token: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const result = sessions.map((s) => ({
+      id: s.id,
+      ipAddress: s.ipAddress,
+      userAgent: s.userAgent,
+      createdAt: s.createdAt,
+      expiresAt: s.expiresAt,
+      isCurrent: s.token === currentToken,
+    }));
+
+    return reply.send(result);
+  });
+
+  app.delete("/:id/sessions/:sessionId", async (request, reply) => {
+    const { id, sessionId } = request.params as {
+      id: string;
+      sessionId: string;
+    };
+    const requestingUser = request.user;
+
+    if (!requestingUser) {
+      return reply.status(401).send({ error: "Authentication required" });
+    }
+
+    if (requestingUser.id !== id) {
+      return reply.status(403).send({ error: "Can only revoke own sessions" });
+    }
+
+    const session = await app.prisma.session.findUnique({
+      where: { id: sessionId },
+      select: { id: true, userId: true, token: true },
+    });
+
+    if (!session || session.userId !== id) {
+      return reply.status(404).send({ error: "Session not found" });
+    }
+
+    const currentToken =
+      request.headers.authorization?.replace("Bearer ", "") ?? "";
+    if (session.token === currentToken) {
+      return reply.status(400).send({ error: "Cannot end current session" });
+    }
+
+    await app.prisma.session.delete({ where: { id: sessionId } });
+
+    return reply.send({ success: true });
+  });
 };
