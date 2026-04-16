@@ -72,6 +72,15 @@ interface ActivityItem {
   toValue: string | null;
 }
 
+interface SessionItem {
+  createdAt: string;
+  expiresAt: string;
+  id: string;
+  ipAddress: string | null;
+  isCurrent: boolean;
+  userAgent: string | null;
+}
+
 function getInitials(name: string): string {
   return name
     .split(" ")
@@ -80,6 +89,22 @@ function getInitials(name: string): string {
     .join("")
     .toUpperCase()
     .slice(0, 2);
+}
+
+function parseUserAgent(ua: string): string {
+  if (ua.includes("Firefox")) {
+    return "Firefox";
+  }
+  if (ua.includes("Edg")) {
+    return "Edge";
+  }
+  if (ua.includes("Chrome")) {
+    return "Chrome";
+  }
+  if (ua.includes("Safari")) {
+    return "Safari";
+  }
+  return ua.slice(0, 30);
 }
 
 function passwordStrength(pw: string): number {
@@ -138,7 +163,7 @@ export default function ProfilePage() {
   const role = useAuthStore((s) => s.role);
   const checkSession = useAuthStore((s) => s.checkSession);
   const userId = user?.id;
-  const displayName = user?.username || t("default_user_display");
+  const displayName = user?.name || user?.username || t("default_user_display");
   const initials = getInitials(displayName);
 
   const [activeTab, setActiveTab] = useState<ProfileTab>("personal");
@@ -156,9 +181,10 @@ export default function ProfilePage() {
   }
 
   const [personalForm, setPersonalForm] = useState({
-    name: user?.username || "",
-    email: "",
+    name: user?.name || user?.username || "",
+    email: user?.email || "",
     language: detectLanguage(),
+    username: user?.username || "",
   });
 
   const [personalInitial, setPersonalInitial] = useState(personalForm);
@@ -175,6 +201,10 @@ export default function ProfilePage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [activityLoading, setActivityLoading] = useState(false);
+  const [stats, setStats] = useState({ completedJobs: 0, monthlyJobs: 0 });
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [sessions, setSessions] = useState<SessionItem[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
 
   const personalFormRef = useRef<HTMLFormElement>(null);
   const securityFormRef = useRef<HTMLFormElement>(null);
@@ -194,11 +224,63 @@ export default function ProfilePage() {
     }
   }, [userId]);
 
+  const loadStats = useCallback(async () => {
+    if (!userId) {
+      return;
+    }
+    setStatsLoading(true);
+    try {
+      const res = await api.get(`/users/${userId}/stats`);
+      setStats(res.data);
+    } catch {
+      setStats({ completedJobs: 0, monthlyJobs: 0 });
+    } finally {
+      setStatsLoading(false);
+    }
+  }, [userId]);
+
+  const loadSessions = useCallback(async () => {
+    if (!userId) {
+      return;
+    }
+    setSessionsLoading(true);
+    try {
+      const res = await api.get(`/users/${userId}/sessions`);
+      setSessions(res.data);
+    } catch {
+      setSessions([]);
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, [userId]);
+
+  async function handleRevokeSession(sessionId: string) {
+    if (!userId) {
+      return;
+    }
+    try {
+      await api.delete(`/users/${userId}/sessions/${sessionId}`);
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+    } catch {
+      // error already handled by axios interceptor
+    }
+  }
+
   useEffect(() => {
     if (activeTab === "activity") {
       loadActivity();
     }
   }, [activeTab, loadActivity]);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
+
+  useEffect(() => {
+    if (activeTab === "security") {
+      loadSessions();
+    }
+  }, [activeTab, loadSessions]);
 
   const tabs: { key: ProfileTab; label: string }[] = [
     { key: "personal", label: t("profile_tab_personal") },
@@ -216,6 +298,7 @@ export default function ProfilePage() {
       await api.patch(`/users/${userId}`, {
         name: personalForm.name,
         email: personalForm.email,
+        username: personalForm.username,
       });
       setPersonalInitial(personalForm);
       setPersonalDirty(false);
@@ -304,6 +387,22 @@ export default function ProfilePage() {
               }}
               type="text"
               value={personalForm.name}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className={LABEL_CLS} htmlFor="profile-username">
+              {t("username")}
+            </label>
+            <input
+              className={INPUT_CLS}
+              id="profile-username"
+              onChange={(e) => {
+                setPersonalForm((f) => ({ ...f, username: e.target.value }));
+                setPersonalDirty(true);
+              }}
+              type="text"
+              value={personalForm.username}
             />
           </div>
 
@@ -517,47 +616,63 @@ export default function ProfilePage() {
           </h4>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between rounded-xl bg-surface-container-lowest p-4">
-              <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-[20px] text-on-surface-variant">
-                  laptop_mac
-                </span>
-                <div>
-                  <p className="font-semibold text-sm">
-                    Chrome on macOS — {t("profile_current_session")}
-                  </p>
-                  <p className="text-on-surface-variant text-xs">
-                    Algiers, DZ — 192.168.1.42
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-2.5 w-2.5 rounded-full bg-success" />
-                <span className="font-bold text-success text-xs uppercase">
-                  {t("profile_active")}
+            {sessionsLoading && (
+              <div className="flex items-center justify-center py-6">
+                <span className="material-symbols-outlined animate-spin text-[24px] text-on-surface-variant">
+                  progress_activity
                 </span>
               </div>
-            </div>
-
-            <div className="flex items-center justify-between rounded-xl bg-surface-container-lowest p-4">
-              <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-[20px] text-on-surface-variant">
-                  monitor
-                </span>
-                <div>
-                  <p className="font-semibold text-sm">Firefox on Windows</p>
-                  <p className="text-on-surface-variant text-xs">
-                    Oran, DZ — 10.0.0.15 — 3 days ago
-                  </p>
-                </div>
-              </div>
-              <button
-                className="font-bold text-tertiary text-xs transition-colors hover:text-tertiary-container"
-                type="button"
+            )}
+            {!sessionsLoading && sessions.length === 0 && (
+              <p className="text-on-surface-variant text-sm">
+                {t("profile_no_sessions")}
+              </p>
+            )}
+            {sessions.map((session) => (
+              <div
+                className="flex items-center justify-between rounded-xl bg-surface-container-lowest p-4"
+                key={session.id}
               >
-                {t("profile_end_session")}
-              </button>
-            </div>
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-[20px] text-on-surface-variant">
+                    {session.userAgent?.includes("Mobile")
+                      ? "smartphone"
+                      : "laptop_mac"}
+                  </span>
+                  <div>
+                    <p className="font-semibold text-sm">
+                      {session.userAgent
+                        ? parseUserAgent(session.userAgent)
+                        : t("profile_unknown_device")}
+                      {session.isCurrent
+                        ? ` — ${t("profile_current_session")}`
+                        : ""}
+                    </p>
+                    <p className="text-on-surface-variant text-xs">
+                      {session.ipAddress ?? t("profile_unknown_ip")}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {session.isCurrent ? (
+                    <>
+                      <div className="h-2.5 w-2.5 rounded-full bg-success" />
+                      <span className="font-bold text-success text-xs uppercase">
+                        {t("profile_active")}
+                      </span>
+                    </>
+                  ) : (
+                    <button
+                      className="font-bold text-tertiary text-xs transition-colors hover:text-tertiary-container"
+                      onClick={() => handleRevokeSession(session.id)}
+                      type="button"
+                    >
+                      {t("profile_end_session")}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </form>
@@ -671,7 +786,7 @@ export default function ProfilePage() {
                 {t("profile_completed")}
               </p>
               <p className="font-extrabold font-headline text-2xl text-primary">
-                127
+                {statsLoading ? "—" : stats.completedJobs}
               </p>
               <p className="text-on-secondary-container text-xs">
                 {t("profile_total_jobs")}
@@ -682,7 +797,7 @@ export default function ProfilePage() {
                 {t("profile_monthly")}
               </p>
               <p className="font-extrabold font-headline text-2xl text-primary">
-                43
+                {statsLoading ? "—" : stats.monthlyJobs}
               </p>
               <p className="text-on-secondary-container text-xs">
                 {t("profile_repairs")}
