@@ -3,12 +3,18 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 import { AuditAction } from "@prisma/client";
+import { INACTIVE_STATUSES } from "@shared/constants";
 import { createAuditLog } from "./audit.service.js";
 
 const UPLOAD_DIR = path.resolve("uploads/job-photos");
 const MAX_PHOTOS = 5;
 const ALLOWED_MIMES = ["image/jpeg", "image/png", "image/webp"];
-const TERMINAL_STATUSES = ["DELIVERED", "RETURNED", "CANCELLED"];
+
+const MAGIC_BYTES: Record<string, number[]> = {
+  "image/jpeg": [0xff, 0xd8, 0xff],
+  "image/png": [0x89, 0x50, 0x4e, 0x47],
+  "image/webp": [0x52, 0x49, 0x46, 0x46],
+};
 
 function extFromMime(mime: string): string {
   if (mime === "image/png") {
@@ -18,6 +24,14 @@ function extFromMime(mime: string): string {
     return "webp";
   }
   return "jpg";
+}
+
+function validateMagicBytes(buffer: Buffer, mime: string): boolean {
+  const expected = MAGIC_BYTES[mime];
+  if (!expected) {
+    return false;
+  }
+  return expected.every((byte, i) => buffer[i] === byte);
 }
 
 export async function upload(
@@ -30,7 +44,7 @@ export async function upload(
   if (!job) {
     return null;
   }
-  if (TERMINAL_STATUSES.includes(job.status)) {
+  if (INACTIVE_STATUSES.includes(job.status)) {
     return { error: "JOB_IN_TERMINAL_STATUS" as const };
   }
 
@@ -43,13 +57,17 @@ export async function upload(
     return { error: "INVALID_FILE_TYPE" as const };
   }
 
+  const buffer = await file.toBuffer();
+  if (!validateMagicBytes(buffer, file.mimetype)) {
+    return { error: "INVALID_FILE_CONTENT" as const };
+  }
+
   const ext = extFromMime(file.mimetype);
   const filename = `${crypto.randomUUID()}.${ext}`;
   const jobDir = path.join(UPLOAD_DIR, jobId);
   const filePath = path.join(jobDir, filename);
 
   await fs.mkdir(jobDir, { recursive: true });
-  const buffer = await file.toBuffer();
   await fs.writeFile(filePath, buffer);
 
   const relativePath = `job-photos/${jobId}/${filename}`;
@@ -92,7 +110,8 @@ export async function remove(
   await createAuditLog(prisma, {
     jobId,
     userId,
-    action: AuditAction.PHOTO_ADDED,
+    action: AuditAction.PHOTO_REMOVED,
+    fromValue: photo.path,
     note: `Photo deleted: ${photo.path}`,
   });
 

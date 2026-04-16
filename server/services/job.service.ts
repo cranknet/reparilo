@@ -14,6 +14,8 @@ import type {
 import { generateJobCode } from "../utils/job-code.js";
 import { createAuditLog } from "./audit.service.js";
 
+const COMPLETED_STATUSES: JobStatusType[] = ["DONE", "DELIVERED"];
+
 const JOB_INCLUDE = {
   customer: true,
   device: true,
@@ -28,20 +30,10 @@ const JOB_INCLUDE = {
   technician: true,
 } as const satisfies Prisma.JobInclude;
 
-const TERMINAL_STATUSES = ["DELIVERED", "RETURNED", "CANCELLED"];
-
-function computeFinalCost(
-  job:
-    | {
-        partsUsed: { totalCost: { toNumber: () => number } }[];
-        repairs: { price: { toNumber: () => number } }[];
-      }
-    | null
-    | undefined
-): number {
-  if (!job) {
-    return 0;
-  }
+function computeFinalCost(job: {
+  partsUsed: { totalCost: { toNumber: () => number } }[];
+  repairs: { price: { toNumber: () => number } }[];
+}): number {
   const repairsSum = job.repairs.reduce((s, r) => s + r.price.toNumber(), 0);
   const partsSum = job.partsUsed.reduce(
     (s, p) => s + p.totalCost.toNumber(),
@@ -132,6 +124,20 @@ export async function create(
   input: CreateJobInput,
   userId: string
 ) {
+  if (input.warrantyForJobId) {
+    const warrantyJob = await prisma.job.findUnique({
+      where: { id: input.warrantyForJobId },
+      include: { customer: true },
+    });
+    const isCompleted =
+      warrantyJob &&
+      COMPLETED_STATUSES.includes(warrantyJob.status as JobStatusType);
+    const sameCustomer = warrantyJob?.customer?.phone === input.customerPhone;
+    if (!(isCompleted && sameCustomer)) {
+      return { error: "INVALID_WARRANTY_REFERENCE" as const };
+    }
+  }
+
   const customer = await prisma.customer.upsert({
     where: { phone: input.customerPhone },
     update: { name: input.customerName },
@@ -188,11 +194,11 @@ export async function update(
   if (!job) {
     return null;
   }
-  if (TERMINAL_STATUSES.includes(job.status)) {
+  if (INACTIVE_STATUSES.includes(job.status as JobStatusType)) {
     return { error: "JOB_IN_TERMINAL_STATUS" as const };
   }
 
-  if (input.technicianId !== undefined) {
+  if (input.technicianId !== undefined && input.technicianId !== null) {
     const tech = await prisma.user.findUnique({
       where: { id: input.technicianId },
     });
@@ -204,29 +210,55 @@ export async function update(
     }
   }
 
+  const { technicianId, estimatedDate, ...rest } = input;
+  const data: Prisma.JobUpdateInput = {
+    ...rest,
+    estimatedDate: estimatedDate ? new Date(estimatedDate) : undefined,
+  };
+
+  if (technicianId === null) {
+    data.technician = { disconnect: true };
+  } else if (technicianId) {
+    data.technician = { connect: { id: technicianId } };
+  }
+
   const updated = await prisma.job.update({
-    data: input,
+    data,
     include: JOB_INCLUDE,
     where: { id },
   });
 
-  if (input.technicianId && input.technicianId !== job.technicianId) {
+  const costFieldsChanged =
+    "estimatedCost" in input || "depositAmount" in input;
+
+  if (
+    technicianId !== undefined &&
+    technicianId !== (job.technicianId ?? undefined)
+  ) {
     await createAuditLog(prisma, {
       action: AuditAction.TECHNICIAN_ASSIGNED,
       fromValue: job.technicianId ?? undefined,
       jobId: id,
-      toValue: input.technicianId,
+      toValue: technicianId ?? "unassigned",
       userId,
     });
   }
 
-  await createAuditLog(prisma, {
-    action: AuditAction.COST_UPDATED,
-    jobId: id,
-    metadata: input,
-    note: "Job fields updated",
-    userId,
-  });
+  if (costFieldsChanged) {
+    await createAuditLog(prisma, {
+      action: AuditAction.COST_UPDATED,
+      jobId: id,
+      note: "Cost fields updated",
+      userId,
+    });
+  } else if (Object.keys(rest).length > 0 || technicianId !== undefined) {
+    await createAuditLog(prisma, {
+      action: AuditAction.COST_UPDATED,
+      jobId: id,
+      note: "Job fields updated",
+      userId,
+    });
+  }
 
   return { ...updated, finalCost: computeFinalCost(updated) };
 }

@@ -1,9 +1,8 @@
 import type { PrismaClient } from "@prisma/client";
 import { AuditAction } from "@prisma/client";
+import { INACTIVE_STATUSES } from "@shared/constants";
 import type { AddJobPartInput } from "@shared/schemas";
 import { createAuditLog } from "./audit.service.js";
-
-const TERMINAL_STATUSES = ["DELIVERED", "RETURNED", "CANCELLED"];
 
 export async function add(
   prisma: PrismaClient,
@@ -15,7 +14,7 @@ export async function add(
   if (!job) {
     return null;
   }
-  if (TERMINAL_STATUSES.includes(job.status)) {
+  if (INACTIVE_STATUSES.includes(job.status)) {
     return { error: "JOB_IN_TERMINAL_STATUS" as const };
   }
 

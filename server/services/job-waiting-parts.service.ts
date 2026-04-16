@@ -1,13 +1,13 @@
 import type { PrismaClient } from "@prisma/client";
 import { AuditAction } from "@prisma/client";
 import { INACTIVE_STATUSES } from "@shared/constants";
-import type { AddJobRepairInput } from "@shared/schemas";
+import type { AddWaitingPartInput } from "@shared/schemas";
 import { createAuditLog } from "./audit.service.js";
 
 export async function add(
   prisma: PrismaClient,
   jobId: string,
-  input: AddJobRepairInput,
+  input: AddWaitingPartInput,
   userId: string
 ) {
   const job = await prisma.job.findUnique({ where: { id: jobId } });
@@ -18,48 +18,46 @@ export async function add(
     return { error: "JOB_IN_TERMINAL_STATUS" as const };
   }
 
-  const jobRepair = await prisma.jobRepair.create({
+  const waitingPart = await prisma.jobPartsWaiting.create({
     data: {
       jobId,
-      repairId: input.repairId ?? null,
-      repairName: input.repairName,
-      category: input.category,
-      price: input.price,
-      createdById: userId,
+      partName: input.partName,
+      supplier: input.supplier ?? null,
     },
   });
 
   await createAuditLog(prisma, {
     jobId,
     userId,
-    action: AuditAction.REPAIR_ADDED,
-    toValue: `${input.repairName} — ${input.price}`,
-    metadata: { repairId: input.repairId },
+    action: AuditAction.PART_ADDED,
+    note: `Waiting part added: ${input.partName}`,
+    toValue: input.partName,
   });
 
-  return jobRepair;
+  return waitingPart;
 }
 
 export async function remove(
   prisma: PrismaClient,
   jobId: string,
-  repairId: string,
+  waitingId: string,
   userId: string
 ) {
-  const repair = await prisma.jobRepair.findFirst({
-    where: { id: repairId, jobId },
+  const waitingPart = await prisma.jobPartsWaiting.findFirst({
+    where: { id: waitingId, jobId },
   });
-  if (!repair) {
+  if (!waitingPart) {
     return null;
   }
 
-  await prisma.jobRepair.delete({ where: { id: repairId } });
+  await prisma.jobPartsWaiting.delete({ where: { id: waitingId } });
 
   await createAuditLog(prisma, {
     jobId,
     userId,
-    action: AuditAction.REPAIR_REMOVED,
-    fromValue: `${repair.repairName} — ${repair.price}`,
+    action: AuditAction.PART_REMOVED,
+    note: `Waiting part removed: ${waitingPart.partName}`,
+    fromValue: waitingPart.partName,
   });
 
   return true;

@@ -8,7 +8,7 @@ import {
   transitionStatusSchema,
   updateJobSchema,
 } from "@shared/schemas";
-import type { FastifyPluginAsync, FastifyReply } from "fastify";
+import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
 import {
   create as createJob,
@@ -34,6 +34,10 @@ import {
   add as addRepair,
   remove as removeRepair,
 } from "../services/job-repairs.service.js";
+import {
+  add as addWaitingPart,
+  remove as removeWaitingPart,
+} from "../services/job-waiting-parts.service.js";
 
 function sendError(
   reply: FastifyReply,
@@ -47,7 +51,7 @@ function sendError(
     .send({ error: code, message, details: details ?? {} });
 }
 
-function getUserId(req: { user: { id: string } | null }): string {
+function getUserId(req: FastifyRequest): string {
   const user = req.user;
   if (!user) {
     throw new Error("Unauthorized");
@@ -85,7 +89,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
     const { id } = req.params as { id: string };
     const job = await getJobById(app.prisma, id);
     if (!job) {
-      return sendError(reply, 404, "NOT_FOUND", "Job not found");
+      return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
     }
     return reply.send(job);
   });
@@ -107,8 +111,16 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         );
       }
       const userId = getUserId(req);
-      const job = await createJob(app.prisma, parsed.data, userId);
-      return reply.status(201).send(job);
+      const result = await createJob(app.prisma, parsed.data, userId);
+      if ("error" in result && result.error === "INVALID_WARRANTY_REFERENCE") {
+        return sendError(
+          reply,
+          400,
+          "INVALID_WARRANTY_REFERENCE",
+          "Warranty reference must be a completed job for the same customer"
+        );
+      }
+      return reply.status(201).send(result);
     }
   );
 
@@ -132,7 +144,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const userId = getUserId(req);
       const result = await updateJob(app.prisma, id, parsed.data, userId);
       if (!result) {
-        return sendError(reply, 404, "NOT_FOUND", "Job not found");
+        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
       }
       if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
         return sendError(
@@ -179,7 +191,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         userId
       );
       if (!result) {
-        return sendError(reply, 404, "NOT_FOUND", "Job not found");
+        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
       }
       if ("error" in result && result.error === "CONFLICT_STATUS_TRANSITION") {
         return sendError(
@@ -223,7 +235,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const userId = getUserId(req);
       const note = await addNote(app.prisma, id, parsed.data, userId);
       if (!note) {
-        return sendError(reply, 404, "NOT_FOUND", "Job not found");
+        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
       }
       return reply.status(201).send(note);
     }
@@ -249,7 +261,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const userId = getUserId(req);
       const result = await addPart(app.prisma, id, parsed.data, userId);
       if (!result) {
-        return sendError(reply, 404, "NOT_FOUND", "Job not found");
+        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
       }
       if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
         return sendError(
@@ -271,7 +283,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const userId = getUserId(req);
       const removed = await removePart(app.prisma, id, partId, userId);
       if (!removed) {
-        return sendError(reply, 404, "NOT_FOUND", "Part not found");
+        return sendError(reply, 404, "RESOURCE_NOT_FOUND", "Part not found");
       }
       return reply.status(204).send();
     }
@@ -297,7 +309,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const userId = getUserId(req);
       const result = await addRepair(app.prisma, id, parsed.data, userId);
       if (!result) {
-        return sendError(reply, 404, "NOT_FOUND", "Job not found");
+        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
       }
       if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
         return sendError(
@@ -319,7 +331,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const userId = getUserId(req);
       const removed = await removeRepair(app.prisma, id, repairId, userId);
       if (!removed) {
-        return sendError(reply, 404, "NOT_FOUND", "Repair not found");
+        return sendError(reply, 404, "RESOURCE_NOT_FOUND", "Repair not found");
       }
       return reply.status(204).send();
     }
@@ -337,7 +349,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const userId = getUserId(req);
       const result = await uploadPhoto(app.prisma, id, data, userId);
       if (!result) {
-        return sendError(reply, 404, "NOT_FOUND", "Job not found");
+        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
       }
       if ("error" in result && result.error === "PHOTO_LIMIT_REACHED") {
         return sendError(
@@ -363,6 +375,14 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
           "Invalid file type. Allowed: JPEG, PNG, WebP"
         );
       }
+      if ("error" in result && result.error === "INVALID_FILE_CONTENT") {
+        return sendError(
+          reply,
+          400,
+          "INVALID_FILE_CONTENT",
+          "File content does not match the declared file type"
+        );
+      }
       return reply.status(201).send(result);
     }
   );
@@ -375,7 +395,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const userId = getUserId(req);
       const removed = await removePhoto(app.prisma, id, photoId, userId);
       if (!removed) {
-        return sendError(reply, 404, "NOT_FOUND", "Photo not found");
+        return sendError(reply, 404, "RESOURCE_NOT_FOUND", "Photo not found");
       }
       return reply.status(204).send();
     }
@@ -398,14 +418,20 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
           }
         );
       }
-      const waitingPart = await app.prisma.jobPartsWaiting.create({
-        data: {
-          jobId: id,
-          partName: parsed.data.partName,
-          supplier: parsed.data.supplier ?? null,
-        },
-      });
-      return reply.status(201).send(waitingPart);
+      const userId = getUserId(req);
+      const result = await addWaitingPart(app.prisma, id, parsed.data, userId);
+      if (!result) {
+        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+      }
+      if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
+        return sendError(
+          reply,
+          409,
+          "JOB_IN_TERMINAL_STATUS",
+          "Cannot add waiting parts to a job in terminal status"
+        );
+      }
+      return reply.status(201).send(result);
     }
   );
 
@@ -414,13 +440,21 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: requirePermission("jobs:write") },
     async (req, reply) => {
       const { id, waitingId } = req.params as { id: string; waitingId: string };
-      const waitingPart = await app.prisma.jobPartsWaiting.findFirst({
-        where: { id: waitingId, jobId: id },
-      });
-      if (!waitingPart) {
-        return sendError(reply, 404, "NOT_FOUND", "Waiting part not found");
+      const userId = getUserId(req);
+      const removed = await removeWaitingPart(
+        app.prisma,
+        id,
+        waitingId,
+        userId
+      );
+      if (!removed) {
+        return sendError(
+          reply,
+          404,
+          "RESOURCE_NOT_FOUND",
+          "Waiting part not found"
+        );
       }
-      await app.prisma.jobPartsWaiting.delete({ where: { id: waitingId } });
       return reply.status(204).send();
     }
   );

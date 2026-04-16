@@ -20,7 +20,7 @@ export const createJobSchema = z.object({
     .number()
     .min(0, { error: "Enter a valid deposit amount" })
     .optional(),
-  technicianId: z.string().optional(),
+  technicianId: z.string().min(1).optional(),
   isWarrantyReturn: z.boolean().optional(),
   warrantyForJobId: z.string().optional(),
 });
@@ -31,8 +31,8 @@ export const updateJobSchema = z.object({
   reportedProblem: z.string().min(1).optional(),
   conditionNotes: z.string().optional(),
   estimatedCost: z.number().min(0).optional(),
-  estimatedDate: z.string().optional(),
-  technicianId: z.string().optional(),
+  estimatedDate: z.string().min(1).optional(),
+  technicianId: z.string().min(1).nullable().optional(),
   color: z.string().optional(),
 });
 
