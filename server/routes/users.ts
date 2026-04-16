@@ -111,7 +111,10 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.patch(
     "/:id/status",
     {
-      config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+      config: {
+        rateLimit: { max: 30, timeWindow: "1 minute" },
+        allowSensitiveKeys: true,
+      },
       preHandler: [requirePermission("users:write")],
     },
     async (request, reply) => {
