@@ -9,11 +9,15 @@ import type {
   FastifyPluginAsync,
 } from "fastify";
 import fp from "fastify-plugin";
+import {
+  DEFAULT_SECURITY,
+  isMutation,
+  matchRoute,
+  routeSecurity,
+} from "../config/route-security.js";
 
 const IS_PROD = process.env.NODE_ENV === "production";
 const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://localhost:5173";
-
-const MUTATION_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
 
 const SENSITIVE_KEYS = new Set([
   "password",
@@ -58,11 +62,19 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
     maxAge: 86_400,
   });
 
-  // ── Layer 3: Rate Limiting ──────────────────────────────────────────────
+  // ── Layer 3: Rate Limiting (global — all routes rate-limited by default) ──
   await app.register(rateLimit, {
-    global: false,
-    max: 100,
-    timeWindow: "1 minute",
+    global: true,
+    max:
+      DEFAULT_SECURITY.rateLimit &&
+      typeof DEFAULT_SECURITY.rateLimit === "object"
+        ? (DEFAULT_SECURITY.rateLimit as { max: number }).max
+        : 100,
+    timeWindow:
+      DEFAULT_SECURITY.rateLimit &&
+      typeof DEFAULT_SECURITY.rateLimit === "object"
+        ? (DEFAULT_SECURITY.rateLimit as { timeWindow: string }).timeWindow
+        : "1 minute",
     keyGenerator: (request) => request.user?.id ?? request.ip,
     exponentialBackoff: true,
     ban: 5,
@@ -89,7 +101,44 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
     },
   });
 
-  // ── Layer 5: Request Sanitization ───────────────────────────────────────
+  // ── Layer 5: Auto-apply route security from config map ──────────────────
+  app.addHook("onRoute", (routeOptions) => {
+    const url = routeOptions.path;
+    const method = routeOptions.method;
+    const methodStr = Array.isArray(method) ? method[0] : method;
+
+    const override = matchRoute(url, routeSecurity);
+
+    // Apply CSRF protection on mutations unless explicitly disabled
+    if (isMutation(methodStr) && override?.csrf !== false) {
+      const existing = routeOptions.preHandler;
+      const csrfFn = app.csrfProtection;
+      if (Array.isArray(existing)) {
+        if (!existing.includes(csrfFn)) {
+          routeOptions.preHandler = [...existing, csrfFn];
+        }
+      } else if (existing) {
+        routeOptions.preHandler = [existing, csrfFn];
+      } else {
+        routeOptions.preHandler = [csrfFn];
+      }
+    }
+
+    // Merge config map overrides into route config
+    const mergedConfig: Record<string, unknown> = {
+      ...DEFAULT_SECURITY,
+      ...override,
+    };
+
+    // Handle rateLimit: false explicitly (disable rate limit for this route)
+    if (override?.rateLimit === false) {
+      mergedConfig.rateLimit = false;
+    }
+
+    routeOptions.config = { ...routeOptions.config, ...mergedConfig };
+  });
+
+  // ── Layer 6: Request Sanitization ───────────────────────────────────────
   function isObject(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
   }
@@ -134,7 +183,7 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
     done();
   });
 
-  // ── Layer 6: Error Obfuscation ─────────────────────────────────────────
+  // ── Layer 7: Error Obfuscation ─────────────────────────────────────────
   app.setErrorHandler((error: FastifyError, _request, reply) => {
     if (error.validation) {
       reply.status(error.statusCode ?? 400).send({
@@ -181,7 +230,9 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
     });
   });
 
-  // ── Layer 7: Audit Logging ─────────────────────────────────────────────
+  // ── Layer 8: Audit Logging ─────────────────────────────────────────────
+  const MUTATION_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
+
   app.addHook("onResponse", async (request, reply) => {
     if (!MUTATION_METHODS.has(request.method)) {
       return;
