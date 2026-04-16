@@ -352,7 +352,7 @@ function PartsDesktopTable({
             )}
           </th>
           <th className="px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide">
-            {t("status")}
+            {t("status_label")}
           </th>
           <th className="px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide">
             {t("manage")}
