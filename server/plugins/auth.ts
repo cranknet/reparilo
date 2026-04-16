@@ -5,58 +5,6 @@ import fp from "fastify-plugin";
 import type { Auth } from "../lib/auth.js";
 import { createAuth, getSessionFromRequest } from "../lib/auth.js";
 
-// ─────────────────────────────────────────────
-// Sign-in rate limiter (in-memory, per IP)
-// ─────────────────────────────────────────────
-
-const SIGN_IN_PATHS = new Set([
-  "/api/auth/sign-in/username",
-  "/api/auth/sign-in/email",
-  "/api/auth/request-password-reset",
-]);
-const MAX_SIGN_IN_ATTEMPTS = 5;
-const SIGN_IN_WINDOW_MS = 60_000;
-
-interface RateLimitEntry {
-  count: number;
-  start: number;
-}
-
-const signInRateLimitStore: Record<string, RateLimitEntry> = {};
-
-const RATE_LIMIT_CLEANUP_MS = 5 * 60_000;
-const cleanupInterval = setInterval(() => {
-  const now = Date.now();
-  for (const ip of Object.keys(signInRateLimitStore)) {
-    if (now - signInRateLimitStore[ip].start > SIGN_IN_WINDOW_MS) {
-      delete signInRateLimitStore[ip];
-    }
-  }
-}, RATE_LIMIT_CLEANUP_MS);
-cleanupInterval.unref();
-
-/** Returns true if the IP is rate-limited (too many attempts). */
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = signInRateLimitStore[ip];
-
-  if (!entry || now - entry.start > SIGN_IN_WINDOW_MS) {
-    signInRateLimitStore[ip] = { start: now, count: 1 };
-    return false;
-  }
-
-  entry.count++;
-  return entry.count > MAX_SIGN_IN_ATTEMPTS;
-}
-
-function isSignInPath(pathname: string): boolean {
-  return SIGN_IN_PATHS.has(pathname);
-}
-
-// ─────────────────────────────────────────────
-// Audit log helper for sign-in events
-// ─────────────────────────────────────────────
-
 async function auditSignIn(
   auth: Auth,
   headers: Headers,
@@ -79,7 +27,6 @@ async function auditSignIn(
   }
 }
 
-/** Extract request body as JSON string for mutation methods. */
 function extractBody(method: string, body: unknown): string | undefined {
   const isMutation =
     method === "POST" || method === "PUT" || method === "PATCH";
@@ -94,27 +41,10 @@ const authPlugin: FastifyPluginAsync = async (app) => {
   app.decorate("auth", auth);
   app.decorateRequest("user", null);
 
-  app.addHook("onClose", () => {
-    clearInterval(cleanupInterval);
-  });
-
   app.all("/api/auth/*", async (request, reply) => {
     try {
       const url = new URL(request.url, `http://${request.headers.host}`);
       const headers = fromNodeHeaders(request.headers);
-
-      // Rate limit sign-in attempts (5 per minute per IP)
-      if (
-        isSignInPath(url.pathname) &&
-        request.method === "POST" &&
-        isRateLimited(request.ip)
-      ) {
-        await reply.status(429).send({
-          error: "Too many sign-in attempts. Try again later.",
-        });
-        return;
-      }
-
       const body = extractBody(request.method, request.body);
 
       const req = new Request(url.toString(), {
@@ -125,11 +55,10 @@ const authPlugin: FastifyPluginAsync = async (app) => {
 
       const response = await auth.handler(req);
 
-      // Audit successful sign-in
       if (
-        isSignInPath(url.pathname) &&
+        response.status === 200 &&
         request.method === "POST" &&
-        response.status === 200
+        url.pathname.includes("sign-in")
       ) {
         await auditSignIn(auth, headers, prisma);
       }
