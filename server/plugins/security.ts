@@ -94,18 +94,23 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
     return typeof value === "object" && value !== null && !Array.isArray(value);
   }
 
-  function sanitizeObject(obj: Record<string, unknown>): void {
+  function sanitizeObject(
+    obj: Record<string, unknown>,
+    path: string,
+    log: FastifyInstance["log"]
+  ): void {
     for (const key of Object.keys(obj)) {
       if (SENSITIVE_KEYS.has(key)) {
+        log.debug({ key, path }, "Sanitized sensitive key from request body");
         delete obj[key];
         continue;
       }
       if (isObject(obj[key])) {
-        sanitizeObject(obj[key]);
+        sanitizeObject(obj[key], `${path}.${key}`, log);
       } else if (Array.isArray(obj[key])) {
-        for (const item of obj[key] as unknown[]) {
+        for (const [i, item] of (obj[key] as unknown[]).entries()) {
           if (isObject(item)) {
-            sanitizeObject(item);
+            sanitizeObject(item, `${path}.${key}[${i}]`, log);
           }
         }
       }
@@ -116,7 +121,15 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
     const allowSensitive =
       request.routeOptions?.config?.allowSensitiveKeys ?? false;
     if (isObject(request.body) && !allowSensitive) {
-      sanitizeObject(request.body as Record<string, unknown>);
+      request.log.debug(
+        { url: request.url, allowSensitive },
+        "Applying request body sanitization"
+      );
+      sanitizeObject(
+        request.body as Record<string, unknown>,
+        "body",
+        request.log
+      );
     }
     done();
   });
@@ -146,7 +159,10 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
 
     const payload: Record<string, unknown> = {
       statusCode,
-      error: IS_PROD ? "Internal Server Error" : (error.name ?? "Error"),
+      error:
+        IS_PROD && isServerError
+          ? "Internal Server Error"
+          : (error.name ?? "Error"),
       message,
     };
 
