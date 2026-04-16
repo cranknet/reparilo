@@ -53,6 +53,14 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
+if (process.env.NODE_ENV !== "production") {
+  await app.register(staticPlugin, {
+    root: path.resolve("uploads"),
+    prefix: "/api/uploads/",
+    decorateReply: false,
+  });
+}
+
 process.on("uncaughtException", (err) => {
   app.log.fatal({ err }, "Uncaught exception");
   process.exit(1);
