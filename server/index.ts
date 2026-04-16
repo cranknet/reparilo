@@ -1,13 +1,12 @@
 import "dotenv/config";
 import path from "node:path";
-import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
-import rateLimit from "@fastify/rate-limit";
 import staticPlugin from "@fastify/static";
 import websocket from "@fastify/websocket";
 import Fastify from "fastify";
 import authPlugin from "./plugins/auth.js";
 import prismaPlugin from "./plugins/prisma.js";
+import securityPlugin from "./plugins/security.js";
 import { websocketPlugin } from "./plugins/websocket.js";
 import { aiRoutes } from "./routes/ai.js";
 import { authRoutes } from "./routes/auth.js";
@@ -24,8 +23,7 @@ const HOST = process.env.HOST || "0.0.0.0";
 
 const app = Fastify({ logger: true });
 
-await app.register(cors, { origin: true });
-await app.register(rateLimit, { max: 100, timeWindow: "1 minute" });
+await app.register(securityPlugin);
 await app.register(multipart, { limits: { fileSize: 5 * 1024 * 1024 } });
 await app.register(websocket);
 
