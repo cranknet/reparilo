@@ -27,6 +27,15 @@ export const changePasswordSchema = z.object({
 export const updateProfileSchema = z.object({
   name: z.string().min(1, "Name is required").max(100).optional(),
   email: z.string().email("Invalid email address").optional(),
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(50)
+    .regex(
+      /^[a-zA-Z0-9_]+$/,
+      "Username can only contain letters, numbers, and underscores"
+    )
+    .optional(),
 });
 
 export const resetPasswordSchema = z.object({
