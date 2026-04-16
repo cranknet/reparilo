@@ -12,6 +12,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
         rateLimit: { max: 5, timeWindow: "1 minute" },
         allowSensitiveKeys: true,
       },
+      preHandler: [app.csrfProtection],
     },
     async (request, reply) => {
       const headers = fromNodeHeaders(request.headers);
