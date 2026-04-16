@@ -39,26 +39,27 @@ const ROLE_LABEL_KEYS: Record<RoleType, string> = {
   FRONT_DESK: "role.FRONT_DESK",
 };
 
-const ROLE_SUBTITLE_KEYS: Record<RoleType, string> = {
-  OWNER: "shop_owner",
-  TECHNICIAN: "senior_technician",
-  FRONT_DESK: "front_desk_role_subtitle",
-};
-
 const FOCUS_VISIBLE =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
-function getInitials(username: string): string {
-  if (!username) {
+const WORD_BOUNDARY = /\s+/;
+
+function getInitials(name: string): string {
+  if (!name) {
     return "?";
   }
-  return username.slice(0, 2).toUpperCase();
+  const parts = name.trim().split(WORD_BOUNDARY);
+  if (parts.length >= 2) {
+    const last = parts.at(-1);
+    return (parts[0][0] + (last?.[0] ?? "")).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
 }
 
 export default function Sidebar() {
   const { t } = useTranslation();
   const role = useAuthStore((s) => s.role);
-  const username = useAuthStore((s) => s.user?.username ?? "");
+  const userName = useAuthStore((s) => s.user?.name || s.user?.username || "");
   const navItems = NAV_ITEMS_BY_ROLE[role] ?? [];
   const [logoutPending, setLogoutPending] = useState(false);
   const logoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -127,17 +128,20 @@ export default function Sidebar() {
           </span>
         </button>
 
-        <div className="rounded-xl bg-surface-container-high p-3">
+        <NavLink
+          className="rounded-xl bg-surface-container-high p-3 transition-colors hover:bg-surface-container-highest"
+          to="/profile"
+        >
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-on-primary text-sm">
-              {getInitials(username)}
+              {getInitials(userName)}
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate font-bold text-on-surface text-sm">
-                {t(ROLE_LABEL_KEYS[role])}
+                {userName}
               </p>
               <p className="truncate text-on-surface-variant text-xs">
-                {t(ROLE_SUBTITLE_KEYS[role])}
+                {t(ROLE_LABEL_KEYS[role])}
               </p>
             </div>
             <button
@@ -151,7 +155,11 @@ export default function Sidebar() {
                   ? "bg-error-container font-medium text-on-error-container text-xs"
                   : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
               }`}
-              onClick={handleLogoutClick}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleLogoutClick();
+              }}
               title={
                 logoutPending
                   ? t("auth_sign_out_confirm")
@@ -171,7 +179,7 @@ export default function Sidebar() {
               )}
             </button>
           </div>
-        </div>
+        </NavLink>
       </div>
     </aside>
   );
