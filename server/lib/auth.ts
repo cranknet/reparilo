@@ -152,8 +152,10 @@ export async function getSessionFromRequest(
 
   return {
     id: session.user.id,
-    role: session.user.role as string,
+    name: (session.user.name as string) ?? "",
     username: session.user.username as string,
+    email: session.user.email as string,
+    role: session.user.role as string,
     isActive: session.user.isActive as boolean,
     mustChangePassword: session.user.mustChangePassword as boolean,
   };

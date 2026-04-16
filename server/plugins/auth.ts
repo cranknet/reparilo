@@ -87,8 +87,10 @@ const authPlugin: FastifyPluginAsync = async (app) => {
     ) {
       request.user = {
         id: "dev",
-        role: "OWNER",
+        name: "Developer",
         username: "dev",
+        email: "dev@reparilo.local",
+        role: "OWNER",
         isActive: true,
         mustChangePassword: false,
       };
@@ -130,8 +132,10 @@ declare module "fastify" {
   interface FastifyRequest {
     user: {
       id: string;
-      role: string;
+      name: string;
       username: string;
+      email: string;
+      role: string;
       isActive: boolean;
       mustChangePassword: boolean;
     } | null;
