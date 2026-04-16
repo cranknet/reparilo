@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import type { RepairCatalog } from "@shared/types";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { RepairFormData } from "@/components/modules/repairs/add-repair-modal";
 import AddRepairModal from "@/components/modules/repairs/add-repair-modal";
@@ -14,100 +15,118 @@ import type {
 import RepairTable from "@/components/modules/repairs/repair-table";
 import { Button } from "@/components/ui/button";
 import { formatDzd } from "@/lib/format";
+import { useRepairCatalogStore } from "@/stores/repair-catalog";
 
-const MOCK_REPAIRS: RepairItem[] = [
-  {
-    id: "1",
-    code: "REP-SCR-004",
-    name: "Screen Replacement Gen 4",
-    category: "HARDWARE",
-    basePrice: 18_500,
-    duration: "2 - 3 Hours",
-    icon: "stay_current_portrait",
+const CATEGORY_ICONS: Record<
+  string,
+  { icon: string; iconBg: string; iconColor: string }
+> = {
+  HARDWARE: {
+    icon: "build",
     iconBg: "bg-primary-fixed",
     iconColor: "text-primary",
   },
-  {
-    id: "2",
-    code: "REP-BAT-001",
-    name: "Battery Replacement Standard",
-    category: "HARDWARE",
-    basePrice: 6200,
-    duration: "45 Mins",
-    icon: "battery_charging_full",
-    iconBg: "bg-tertiary-fixed",
-    iconColor: "text-tertiary",
-  },
-  {
-    id: "3",
-    code: "REP-SFT-012",
-    name: "Software Flash & OS Recovery",
-    category: "SOFTWARE",
-    basePrice: 4500,
-    duration: "1.5 Hours",
+  SOFTWARE: {
     icon: "terminal",
     iconBg: "bg-secondary-fixed",
     iconColor: "text-secondary",
   },
-  {
-    id: "4",
-    code: "REP-CHG-008",
-    name: "Charging Port Repair",
-    category: "HARDWARE",
-    basePrice: 5800,
-    duration: "1 Hour",
-    icon: "electric_bolt",
-    iconBg: "bg-primary-fixed",
-    iconColor: "text-primary",
-  },
-  {
-    id: "5",
-    code: "REP-DIAG-003",
-    name: "Full Device Diagnostic",
-    category: "DIAGNOSTIC",
-    basePrice: 2000,
-    duration: "30 Mins",
+  DIAGNOSTIC: {
     icon: "troubleshoot",
-    iconBg: "bg-secondary-fixed",
-    iconColor: "text-secondary",
-  },
-  {
-    id: "6",
-    code: "REP-CAM-006",
-    name: "Camera Module Replacement",
-    category: "HARDWARE",
-    basePrice: 15_000,
-    duration: "2 Hours",
-    icon: "photo_camera",
-    iconBg: "bg-primary-fixed",
-    iconColor: "text-primary",
-  },
-  {
-    id: "7",
-    code: "REP-DAT-015",
-    name: "Data Recovery Service",
-    category: "SOFTWARE",
-    basePrice: 8000,
-    duration: "3 - 5 Hours",
-    icon: "cloud_sync",
-    iconBg: "bg-secondary-fixed",
-    iconColor: "text-secondary",
-  },
-  {
-    id: "8",
-    code: "REP-WAT-002",
-    name: "Water Damage Assessment",
-    category: "DIAGNOSTIC",
-    basePrice: 3500,
-    duration: "45 Mins",
-    icon: "water_drop",
     iconBg: "bg-tertiary-fixed",
     iconColor: "text-tertiary",
   },
-];
+  OTHER: {
+    icon: "miscellaneous_services",
+    iconBg: "bg-surface-container-high",
+    iconColor: "text-on-surface-variant",
+  },
+};
+
+const CATEGORY_PREFIXES: Record<string, string> = {
+  HARDWARE: "HW",
+  SOFTWARE: "SW",
+  DIAGNOSTIC: "DG",
+  OTHER: "OT",
+};
+
+function toRepairItem(r: RepairCatalog): RepairItem {
+  const cat = r.category as string;
+  const display = CATEGORY_ICONS[cat] ?? CATEGORY_ICONS.OTHER;
+  const prefix = CATEGORY_PREFIXES[cat] ?? "OT";
+  return {
+    id: r.id,
+    code: `REP-${prefix}-${r.id.slice(-3).toUpperCase()}`,
+    name: r.name,
+    category: cat as RepairCategory,
+    basePrice:
+      typeof r.defaultPrice === "number"
+        ? r.defaultPrice
+        : Number(r.defaultPrice),
+    duration: "—",
+    icon: display.icon,
+    iconBg: display.iconBg,
+    iconColor: display.iconColor,
+  };
+}
+
+function RepairListEmpty({ onClearFilters }: { onClearFilters: () => void }) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex flex-col items-center justify-center rounded-2xl bg-surface-container-low px-6 py-16 text-center">
+      <span className="material-symbols-outlined mb-4 text-[48px] text-on-surface-variant">
+        search_off
+      </span>
+      <p className="font-bold font-headline text-lg text-on-surface">
+        {t("no_repairs_found")}
+      </p>
+      <p className="mt-1 max-w-sm text-on-surface-variant text-sm">
+        {t("no_repairs_found_desc")}
+      </p>
+      <button
+        className="mt-6 rounded-xl bg-surface-container-high px-5 py-2.5 font-bold font-headline text-on-surface-variant text-sm transition-all hover:bg-surface-container-highest"
+        onClick={onClearFilters}
+        type="button"
+      >
+        {t("clear_filters")}
+      </button>
+    </div>
+  );
+}
+
+function RepairListContent({ sorted }: { sorted: RepairItem[] }) {
+  return (
+    <>
+      <div className="hidden md:block">
+        <RepairTable repairs={sorted} />
+      </div>
+      <div className="flex flex-col gap-3 md:hidden">
+        {sorted.map((repair) => (
+          <RepairMobileCard key={repair.id} repair={repair} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function RepairListLoading() {
+  return (
+    <div className="flex flex-col gap-3">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div
+          className="h-20 animate-pulse rounded-xl bg-surface-container-high"
+          key={`skeleton-${String(i)}`}
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function RepairsPage() {
   const { t } = useTranslation();
+  const { repairs, isLoading, error, fetchRepairs, createRepair, clearError } =
+    useRepairCatalogStore();
   const [activeCategory, setActiveCategory] = useState<RepairCategory | "ALL">(
     "ALL"
   );
@@ -115,16 +134,28 @@ export default function RepairsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const handleAddRepair = async (_data: RepairFormData) => {
-    // TODO: Replace with real API call
+  useEffect(() => {
+    fetchRepairs();
+  }, [fetchRepairs]);
+
+  const repairItems = useMemo(() => repairs.map(toRepairItem), [repairs]);
+
+  const handleAddRepair = async (data: RepairFormData) => {
+    await createRepair({
+      name: data.name,
+      category: data.category,
+      defaultPrice: Number(data.basePrice),
+    });
   };
 
   const { avgPrice, topCategory } = useMemo(() => {
+    if (repairItems.length === 0) {
+      return { avgPrice: 0, topCategory: "HARDWARE" as RepairCategory };
+    }
     const avg = Math.round(
-      MOCK_REPAIRS.reduce((sum, r) => sum + r.basePrice, 0) /
-        MOCK_REPAIRS.length
+      repairItems.reduce((sum, r) => sum + r.basePrice, 0) / repairItems.length
     );
-    const counts = MOCK_REPAIRS.reduce(
+    const counts = repairItems.reduce(
       (acc, r) => {
         acc[r.category] = (acc[r.category] || 0) + 1;
         return acc;
@@ -135,9 +166,9 @@ export default function RepairsPage() {
       ([, a], [, b]) => b - a
     )[0]?.[0] as RepairCategory;
     return { avgPrice: avg, topCategory: top };
-  }, []);
+  }, [repairItems]);
 
-  const filtered = MOCK_REPAIRS.filter((r) => {
+  const filtered = repairItems.filter((r) => {
     const matchesCategory =
       activeCategory === "ALL" || r.category === activeCategory;
     const matchesSearch =
@@ -171,7 +202,7 @@ export default function RepairsPage() {
             {t("repair_services_subtitle")}
           </p>
           <p className="mt-1 text-on-surface-variant text-sm">
-            {t("services_count", { count: MOCK_REPAIRS.length })} ·{" "}
+            {t("services_count", { count: repairItems.length })} ·{" "}
             {t("top_category_short", {
               category: t(`repair_category.${topCategory}`),
             })}{" "}
@@ -189,6 +220,27 @@ export default function RepairsPage() {
         </Button>
       </div>
 
+      {error && (
+        <div
+          className="mb-6 flex items-center gap-3 rounded-xl bg-error-container px-4 py-3"
+          role="alert"
+        >
+          <span className="material-symbols-outlined text-on-error-container">
+            error
+          </span>
+          <p className="flex-1 font-bold text-on-error-container text-sm">
+            {error}
+          </p>
+          <button
+            className="flex h-8 w-8 items-center justify-center rounded-full text-on-error-container transition-colors hover:bg-on-error-container/10"
+            onClick={clearError}
+            type="button"
+          >
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+      )}
+
       <div className="mb-6">
         <RepairFilters
           activeCategory={activeCategory}
@@ -201,36 +253,12 @@ export default function RepairsPage() {
       </div>
 
       <div className="mb-8">
-        {sorted.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl bg-surface-container-low px-6 py-16 text-center">
-            <span className="material-symbols-outlined mb-4 text-[48px] text-on-surface-variant">
-              search_off
-            </span>
-            <p className="font-bold font-headline text-lg text-on-surface">
-              {t("no_repairs_found")}
-            </p>
-            <p className="mt-1 max-w-sm text-on-surface-variant text-sm">
-              {t("no_repairs_found_desc")}
-            </p>
-            <button
-              className="mt-6 rounded-xl bg-surface-container-high px-5 py-2.5 font-bold font-headline text-on-surface-variant text-sm transition-all hover:bg-surface-container-highest"
-              onClick={() => setActiveCategory("ALL")}
-              type="button"
-            >
-              {t("clear_filters")}
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="hidden md:block">
-              <RepairTable repairs={sorted} />
-            </div>
-            <div className="flex flex-col gap-3 md:hidden">
-              {sorted.map((repair) => (
-                <RepairMobileCard key={repair.id} repair={repair} />
-              ))}
-            </div>
-          </>
+        {isLoading && <RepairListLoading />}
+        {!isLoading && sorted.length === 0 && (
+          <RepairListEmpty onClearFilters={() => setActiveCategory("ALL")} />
+        )}
+        {!isLoading && sorted.length > 0 && (
+          <RepairListContent sorted={sorted} />
         )}
       </div>
 
@@ -238,7 +266,7 @@ export default function RepairsPage() {
         <div className="lg:col-span-2">
           <AiPricingCallout />
         </div>
-        <CategoryHealth repairs={MOCK_REPAIRS} />
+        <CategoryHealth repairs={repairItems} />
       </div>
 
       <AddRepairModal

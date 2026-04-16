@@ -311,3 +311,45 @@ export async function transitionStatus(
 
   return { ...updated, finalCost: computeFinalCost(updated) };
 }
+
+export async function lookupByCode(prisma: PrismaClient, code: string) {
+  const job = await prisma.job.findFirst({
+    where: { OR: [{ jobCode: code }, { accessCode: code }] },
+    include: {
+      customer: { select: { name: true, phone: true } },
+      device: { select: { brand: true, model: true } },
+      repairs: { select: { name: true, price: true } },
+      partsUsed: { select: { partName: true, totalCost: true } },
+      technician: { select: { name: true, role: true } },
+      notes: {
+        where: { isCustomerVisible: true },
+        select: { content: true, createdAt: true },
+        orderBy: { createdAt: "desc" as const },
+      },
+    },
+  });
+  if (!job) {
+    return null;
+  }
+
+  return {
+    jobCode: job.jobCode,
+    status: job.status,
+    device: `${job.device.brand} ${job.device.model}`,
+    reportedProblem: job.reportedProblem,
+    estimatedDate: job.estimatedDate,
+    createdAt: job.createdAt,
+    customer: { name: job.customer.name, phone: job.customer.phone },
+    technician: job.technician
+      ? { name: job.technician.name, role: job.technician.role }
+      : null,
+    notes: job.notes.map((n) => ({
+      content: n.content,
+      createdAt: n.createdAt,
+    })),
+    repairs: job.repairs.map((r) => ({
+      name: r.name,
+      price: r.price.toNumber(),
+    })),
+  };
+}

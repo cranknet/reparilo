@@ -1,4 +1,6 @@
 import type { JobStatusType } from "@shared/constants";
+import { DEVICE_ICONS } from "@shared/constants";
+import type { Job } from "@shared/types";
 
 export interface JobRow {
   customer: string;
@@ -11,12 +13,21 @@ export interface JobRow {
   technician?: string;
 }
 
-const STATUS_GROUP_ACTIVE: JobStatusType[] = ["INTAKE", "IN_REPAIR", "ON_HOLD"];
-const STATUS_GROUP_WAITING: JobStatusType[] = ["WAITING_FOR_PARTS", "DONE"];
+const STATUS_GROUP_ACTIVE: JobStatusType[] = [
+  "INTAKE" as const,
+  "IN_REPAIR" as const,
+  "ON_HOLD" as const,
+];
+
+const STATUS_GROUP_WAITING: JobStatusType[] = [
+  "WAITING_FOR_PARTS" as const,
+  "DONE" as const,
+];
+
 const STATUS_GROUP_CLOSED: JobStatusType[] = [
-  "DELIVERED",
-  "RETURNED",
-  "CANCELLED",
+  "DELIVERED" as const,
+  "RETURNED" as const,
+  "CANCELLED" as const,
 ];
 
 export const STATUS_GROUPS = [
@@ -38,3 +49,31 @@ export const STATUS_GROUPS = [
 ] as const;
 
 export type StatusGroupKey = (typeof STATUS_GROUPS)[number]["key"];
+
+function inferDeviceType(brand: string): string {
+  const lower = brand.toLowerCase();
+  if (lower.includes("ipad")) {
+    return "tablet";
+  }
+  if (lower.includes("mac") || lower.includes("laptop")) {
+    return "laptop";
+  }
+  if (lower.includes("watch")) {
+    return "watch";
+  }
+  return "phone";
+}
+
+export function jobToRow(job: Job): JobRow {
+  const deviceType = job.device ? inferDeviceType(job.device.brand) : "phone";
+
+  return {
+    id: job.jobCode ?? job.id,
+    customer: job.customer?.name ?? "",
+    device: job.device ? `${job.device.brand} ${job.device.model}` : "",
+    deviceIcon: DEVICE_ICONS[deviceType] ?? deviceType,
+    deviceSpec: job.device?.model ?? "",
+    status: job.status,
+    technician: job.technician?.name,
+  };
+}

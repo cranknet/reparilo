@@ -1,75 +1,21 @@
 import type { JobStatusType } from "@shared/constants";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import JobsFilters from "@/components/modules/jobs/filters";
+import type { IntakeFormData } from "@/components/modules/jobs/intake-modal";
 import IntakeModal from "@/components/modules/jobs/intake-modal";
 import type { StatusGroupKey } from "@/components/modules/jobs/jobs-shared";
-import { STATUS_GROUPS } from "@/components/modules/jobs/jobs-shared";
+import { jobToRow, STATUS_GROUPS } from "@/components/modules/jobs/jobs-shared";
 import type { JobRow } from "@/components/modules/jobs/jobs-table";
 import JobsTable from "@/components/modules/jobs/jobs-table";
 import JobMobileCard from "@/components/modules/jobs/mobile-card";
 import StatusCounter from "@/components/modules/jobs/status-counter";
-
-const MOCK_METRICS: { label: string; status?: JobStatusType; value: number }[] =
-  [
-    { label: "on_bench", status: "IN_REPAIR", value: 8 },
-    { label: "queue_priority", status: "INTAKE", value: 12 },
-    { label: "awaiting_parts", status: "WAITING_FOR_PARTS", value: 4 },
-    { label: "quality_check", status: "DONE", value: 3 },
-  ];
-
-const MOCK_JOBS: JobRow[] = [
-  {
-    customer: "Karim Benali",
-    customerTier: "Standard",
-    device: "iPhone 14 Pro Max",
-    deviceIcon: "phone",
-    deviceSpec: "A16 | Space Black",
-    id: "REP-2026-0042",
-    status: "IN_REPAIR" as JobStatusType,
-    technician: "Yacine M.",
-  },
-  {
-    customer: "Leila Kermiche",
-    customerTier: "VIP",
-    device: 'iPad Air M2 11"',
-    deviceIcon: "tablet",
-    deviceSpec: "Wi-Fi | Blue",
-    id: "REP-2026-0045",
-    status: "WAITING_FOR_PARTS" as JobStatusType,
-    technician: "Sarah B.",
-  },
-  {
-    customer: "Omar Hadj",
-    device: "Samsung Galaxy S24 Ultra",
-    deviceIcon: "phone",
-    deviceSpec: "Snapdragon | Titanium Gray",
-    id: "REP-2026-0051",
-    status: "INTAKE" as JobStatusType,
-  },
-  {
-    customer: "Fatima Zeroual",
-    customerTier: "VIP",
-    device: "MacBook Air M3",
-    deviceIcon: "laptop",
-    deviceSpec: '13" | Midnight',
-    id: "REP-2026-0058",
-    status: "ON_HOLD" as JobStatusType,
-    technician: "Yacine M.",
-  },
-  {
-    customer: "Nabil Rouabeh",
-    device: "Apple Watch Series 9",
-    deviceIcon: "watch",
-    deviceSpec: "45mm | Starlight",
-    id: "REP-2026-0061",
-    status: "DONE" as JobStatusType,
-    technician: "Sarah B.",
-  },
-];
+import { useJobsStore } from "@/stores/jobs";
 
 export default function JobsPage() {
   const { t } = useTranslation();
+  const { jobs, metrics, isLoadingJobs, fetchJobs, fetchMetrics, createJob } =
+    useJobsStore();
   const [statusFilter, setStatusFilter] = useState<JobStatusType | "ALL">(
     "ALL"
   );
@@ -77,21 +23,28 @@ export default function JobsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [intakeOpen, setIntakeOpen] = useState(false);
 
+  useEffect(() => {
+    fetchJobs();
+    fetchMetrics();
+  }, [fetchJobs, fetchMetrics]);
+
+  const jobRows: JobRow[] = useMemo(() => jobs.map(jobToRow), [jobs]);
+
   const filteredJobs = useMemo(() => {
-    let jobs = MOCK_JOBS;
+    let result = jobRows;
 
     if (statusFilter !== "ALL") {
-      jobs = jobs.filter((j) => j.status === statusFilter);
+      result = result.filter((j) => j.status === statusFilter);
     } else if (groupFilter !== "ALL") {
       const group = STATUS_GROUPS.find((g) => g.key === groupFilter);
       if (group) {
-        jobs = jobs.filter((j) => group.statuses.includes(j.status));
+        result = result.filter((j) => group.statuses.includes(j.status));
       }
     }
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      jobs = jobs.filter(
+      result = result.filter(
         (j) =>
           j.id.toLowerCase().includes(q) ||
           j.customer.toLowerCase().includes(q) ||
@@ -99,8 +52,36 @@ export default function JobsPage() {
       );
     }
 
-    return jobs;
-  }, [statusFilter, groupFilter, searchQuery]);
+    return result;
+  }, [jobRows, statusFilter, groupFilter, searchQuery]);
+
+  const counterData = useMemo(() => {
+    if (!metrics) {
+      return [];
+    }
+    return [
+      {
+        label: "on_bench",
+        status: "IN_REPAIR" as JobStatusType,
+        value: metrics.IN_REPAIR ?? 0,
+      },
+      {
+        label: "queue_priority",
+        status: "INTAKE" as JobStatusType,
+        value: metrics.INTAKE ?? 0,
+      },
+      {
+        label: "awaiting_parts",
+        status: "WAITING_FOR_PARTS" as JobStatusType,
+        value: metrics.WAITING_FOR_PARTS ?? 0,
+      },
+      {
+        label: "quality_check",
+        status: "DONE" as JobStatusType,
+        value: metrics.DONE ?? 0,
+      },
+    ];
+  }, [metrics]);
 
   const handleCounterClick = (status: JobStatusType | undefined) => {
     if (!status) {
@@ -122,6 +103,33 @@ export default function JobsPage() {
     setGroupFilter(group);
     setStatusFilter("ALL");
   };
+
+  const handleIntakeSubmit = async (data: IntakeFormData) => {
+    await createJob({
+      customerName: data.customerName,
+      customerPhone: data.customerPhone,
+      deviceBrand: data.brand || data.model,
+      deviceModel: data.model,
+      color: data.color || undefined,
+      reportedProblem: data.reportedProblem,
+      conditionNotes: data.conditionNotes || undefined,
+      estimatedCost: Number.parseFloat(data.estimatedCost) || 0,
+      estimatedDate: data.estimatedDelivery || undefined,
+      depositAmount: data.deposit ? Number.parseFloat(data.deposit) : undefined,
+    });
+    await fetchJobs();
+    await fetchMetrics();
+  };
+
+  if (isLoadingJobs && jobs.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <span className="material-symbols-outlined animate-spin text-4xl text-primary">
+          progress_activity
+        </span>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -159,7 +167,7 @@ export default function JobsPage() {
       </div>
 
       <section className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-4 md:gap-3">
-        {MOCK_METRICS.map((m, i) => (
+        {counterData.map((m, i) => (
           <StatusCounter
             isActive={statusFilter === m.status}
             key={m.label}
@@ -218,10 +226,7 @@ export default function JobsPage() {
 
       <IntakeModal
         onClose={() => setIntakeOpen(false)}
-        onSubmit={(data) => {
-          console.log("Intake submitted:", data);
-          return Promise.resolve();
-        }}
+        onSubmit={handleIntakeSubmit}
         open={intakeOpen}
       />
     </>

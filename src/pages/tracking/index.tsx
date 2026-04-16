@@ -1,7 +1,8 @@
 import { JobStatus, LANGUAGES } from "@shared/constants";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
+import api from "@/lib/api";
 
 function LanguageSwitcher() {
   const { i18n, t } = useTranslation();
@@ -49,42 +50,6 @@ interface TrackingData {
   technician: { initials: string; name: string; level: string };
   timeline: { status: string; note: string; date: string }[];
 }
-
-const MOCK_DATA: TrackingData = {
-  jobCode: "JOB-12345",
-  status: JobStatus.IN_REPAIR,
-  device: "iPhone 15 Pro Max",
-  issue: "Cracked screen replacement",
-  estimatedCompletion: "Apr 16, 2026",
-  daysInShop: 3,
-  shopName: "Reparilo Phone Repair",
-  shopPhone: "+213 550 123 456",
-  shopAddress: "Rue Didouche Mourad, Algiers Centre",
-  technician: {
-    initials: "SM",
-    name: "S. Mansour",
-    level: "Senior Technician",
-  },
-  timeline: [
-    {
-      status: JobStatus.INTAKE,
-      note: "Confirmed on April 12, 09:15 AM",
-      date: "Apr 12",
-    },
-    {
-      status: JobStatus.WAITING_FOR_PARTS,
-      note: "OEM Screen Kit arrived April 13",
-      date: "Apr 13",
-    },
-    {
-      status: JobStatus.IN_REPAIR,
-      note: "Technician currently calibrating digitizer",
-      date: "Apr 14",
-    },
-    { status: JobStatus.DONE, note: "Pending Quality Control", date: "" },
-    { status: JobStatus.DELIVERED, note: "Pending Pickup / Courier", date: "" },
-  ],
-};
 
 function LookupForm({ onSearch }: { onSearch: (code: string) => void }) {
   const { t } = useTranslation();
@@ -478,9 +443,165 @@ function StatusView({
 
 export default function TrackingPage() {
   const { jobCode } = useParams<{ jobCode?: string }>();
-  const [trackedJob, setTrackedJob] = useState<TrackingData | null>(
-    jobCode ? MOCK_DATA : null
+  const { t } = useTranslation();
+  const [trackedJob, setTrackedJob] = useState<TrackingData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchJob = useCallback(
+    async (code: string) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const res = await api.get(
+          `/jobs/lookup?code=${encodeURIComponent(code)}`
+        );
+        const data = res.data;
+        const createdDate = new Date(data.createdAt);
+        const daysInShop = Math.max(
+          1,
+          Math.ceil(
+            (Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24)
+          )
+        );
+        const technicianInitials = data.technician
+          ? data.technician.name
+              .split(" ")
+              .map((n: string) => n[0])
+              .join("")
+              .toUpperCase()
+              .slice(0, 2)
+          : "?";
+        const resolvedStatus = STATUS_FLOW.indexOf(
+          data.status as (typeof STATUS_FLOW)[number]
+        );
+        const activeIdx = resolvedStatus === -1 ? 0 : resolvedStatus;
+        const timeline = STATUS_FLOW.map((status, idx) => {
+          const isCompleted = idx < activeIdx;
+          const isCurrent = idx === activeIdx;
+          const completedNote = t("tracking_step_completed", {
+            status: t(`status.${status}`),
+          });
+          const inProgressNote = t("tracking_step_in_progress");
+          const pendingNote = t("tracking_step_pending");
+          let note: string;
+          if (isCompleted) {
+            note = completedNote;
+          } else if (isCurrent) {
+            note = inProgressNote;
+          } else {
+            note = pendingNote;
+          }
+          const date =
+            isCompleted || isCurrent
+              ? createdDate.toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                })
+              : "";
+          return { status, note, date };
+        });
+
+        const estimatedCompletion = data.estimatedDate
+          ? new Date(data.estimatedDate).toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })
+          : t("tracking_tbd");
+        const technician = data.technician
+          ? {
+              initials: technicianInitials,
+              name: data.technician.name,
+              level: data.technician.role,
+            }
+          : { initials: "?", name: t("tracking_unassigned"), level: "" };
+
+        setTrackedJob({
+          jobCode: data.jobCode,
+          status: data.status,
+          device: data.device,
+          issue: data.reportedProblem,
+          estimatedCompletion,
+          daysInShop,
+          shopName: "Reparilo",
+          shopPhone: "",
+          shopAddress: "",
+          technician,
+          timeline,
+        });
+      } catch {
+        setError(t("tracking_job_not_found"));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [t]
   );
+
+  useEffect(() => {
+    if (jobCode) {
+      fetchJob(jobCode);
+    }
+  }, [jobCode, fetchJob]);
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen flex-col bg-background">
+        <nav className="sticky top-0 z-50 w-full bg-background">
+          <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4">
+            <span className="font-bold font-headline text-2xl text-primary-container tracking-tight">
+              Reparilo
+            </span>
+            <LanguageSwitcher />
+          </div>
+        </nav>
+        <main className="flex flex-grow items-center justify-center px-4">
+          <div className="text-center">
+            <span className="material-symbols-outlined mb-4 block text-5xl text-error">
+              error
+            </span>
+            <p className="font-bold font-headline text-on-surface text-xl">
+              {error}
+            </p>
+            <button
+              className="mt-4 rounded-xl bg-primary px-6 py-3 font-bold text-on-primary"
+              onClick={() => {
+                setError(null);
+                setTrackedJob(null);
+              }}
+              type="button"
+            >
+              {t("tracking_try_again")}
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen flex-col bg-background">
+        <nav className="sticky top-0 z-50 w-full bg-background">
+          <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4">
+            <span className="font-bold font-headline text-2xl text-primary-container tracking-tight">
+              Reparilo
+            </span>
+            <LanguageSwitcher />
+          </div>
+        </nav>
+        <main className="flex flex-grow items-center justify-center px-4">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/30 border-t-primary" />
+            <p className="font-body text-on-surface-variant">
+              {t("tracking_loading")}
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   if (trackedJob) {
     return (
@@ -495,8 +616,8 @@ export default function TrackingPage() {
 
   return (
     <LookupForm
-      onSearch={(_code) => {
-        setTrackedJob(MOCK_DATA);
+      onSearch={(code) => {
+        fetchJob(code);
       }}
     />
   );

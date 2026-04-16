@@ -1,4 +1,5 @@
-import type { JobStatusType } from "@shared/constants";
+import { JobStatus, type JobStatusType } from "@shared/constants";
+import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import PartsAlert from "@/components/modules/dashboard/parts-alert";
 import PriorityActions from "@/components/modules/dashboard/priority-actions";
@@ -6,13 +7,14 @@ import RecentActivity from "@/components/modules/dashboard/recent-activity";
 import TechJobPipeline from "@/components/modules/dashboard/tech-job-pipeline";
 import TodaySchedule from "@/components/modules/dashboard/today-schedule";
 import MetricCard from "@/components/ui/metric-card";
+import { useJobsStore } from "@/stores/jobs";
 
-const MOCK_PIPELINE_COUNTS: Record<JobStatusType, number> = {
-  INTAKE: 1,
-  WAITING_FOR_PARTS: 3,
-  IN_REPAIR: 2,
+const EMPTY_PIPELINE: Record<JobStatusType, number> = {
+  INTAKE: 0,
+  WAITING_FOR_PARTS: 0,
+  IN_REPAIR: 0,
   ON_HOLD: 0,
-  DONE: 4,
+  DONE: 0,
   DELIVERED: 0,
   RETURNED: 0,
   CANCELLED: 0,
@@ -88,6 +90,26 @@ const MOCK_PARTS_ALERTS = [
 
 export default function TechnicianDashboardPage() {
   const { t } = useTranslation();
+  const { metrics, fetchMetrics } = useJobsStore();
+
+  useEffect(() => {
+    fetchMetrics().catch(() => {
+      /* metrics fetch handled by store */
+    });
+  }, [fetchMetrics]);
+
+  const pipelineCounts = useMemo<Record<JobStatusType, number>>(() => {
+    if (!metrics) {
+      return EMPTY_PIPELINE;
+    }
+    return Object.fromEntries(
+      Object.values(JobStatus).map((status) => [status, metrics[status] ?? 0])
+    ) as Record<JobStatusType, number>;
+  }, [metrics]);
+
+  const activeJobs = metrics?.IN_REPAIR ?? 0;
+  const completedToday = metrics?.DONE ?? 0;
+  const waitingForParts = metrics?.WAITING_FOR_PARTS ?? 0;
 
   return (
     <>
@@ -128,10 +150,10 @@ export default function TechnicianDashboardPage() {
 
       <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
         <MetricCard
-          detail={t("dashboard_page.since_8am", { count: 2 })}
+          detail={t("dashboard_page.since_8am", { count: activeJobs })}
           icon="precision_manufacturing"
           label={t("tech_dashboard.my_active_jobs")}
-          value="6"
+          value={String(activeJobs)}
         >
           <div className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
             <div className="h-full w-2/3 bg-primary" />
@@ -146,7 +168,7 @@ export default function TechnicianDashboardPage() {
           icon="check_circle"
           iconColor="text-on-secondary-container"
           label={t("completed_today")}
-          value="4"
+          value={String(completedToday)}
         >
           <div className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
             <div className="h-full w-3/5 bg-on-secondary-container" />
@@ -158,16 +180,18 @@ export default function TechnicianDashboardPage() {
           icon="inventory_2"
           iconColor="text-tertiary"
           label={t("tech_dashboard.waiting_for_parts")}
-          value="3"
+          value={String(waitingForParts)}
         >
           <div className="flex gap-1">
-            {[1, 2, 3].map((i) => (
-              <div className="h-2 w-2 rounded-full bg-tertiary" key={i} />
+            {[1, 2, 3, 4, 5].slice(0, Math.min(waitingForParts, 5)).map((n) => (
+              <div className="h-2 w-2 rounded-full bg-tertiary" key={n} />
             ))}
           </div>
-          <p className="mt-3 font-bold text-tertiary text-xs">
-            {t("tech_dashboard.one_arriving_today")}
-          </p>
+          {waitingForParts > 0 && (
+            <p className="mt-3 font-bold text-tertiary text-xs">
+              {t("tech_dashboard.one_arriving_today")}
+            </p>
+          )}
         </MetricCard>
 
         <MetricCard
@@ -194,8 +218,8 @@ export default function TechnicianDashboardPage() {
           <TechJobPipeline
             benchCapacity={50}
             benchTotal={4}
-            benchUsed={2}
-            counts={MOCK_PIPELINE_COUNTS}
+            benchUsed={activeJobs}
+            counts={pipelineCounts}
           />
         </div>
 

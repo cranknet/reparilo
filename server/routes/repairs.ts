@@ -1,18 +1,17 @@
 import {
-  createPartSchema,
-  listPartsQuerySchema,
-  togglePartStatusSchema,
-  updatePartSchema,
-} from "@shared/schemas/parts-catalog.schema";
+  createRepairSchema,
+  listRepairsQuerySchema,
+  updateRepairSchema,
+} from "@shared/schemas/repair-catalog.schema";
 import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
 import {
-  create as createPart,
-  getById as getPartById,
-  list as listParts,
+  create as createRepair,
+  getById as getRepairById,
+  list as listRepairs,
   toggleActive,
-  update as updatePart,
-} from "../services/parts-catalog.service.js";
+  update as updateRepair,
+} from "../services/repair-catalog.service.js";
 
 function sendError(
   reply: FastifyReply,
@@ -27,11 +26,11 @@ function sendError(
 }
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
-export const partsRoutes: FastifyPluginAsync = async (app) => {
+export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
   app.addHook("preHandler", requirePermission("parts:read"));
 
   app.get("/", async (req, reply) => {
-    const parsed = listPartsQuerySchema.safeParse(req.query);
+    const parsed = listRepairsQuerySchema.safeParse(req.query);
     if (!parsed.success) {
       return sendError(
         reply,
@@ -41,24 +40,24 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
         { errors: parsed.error.flatten().fieldErrors }
       );
     }
-    const result = await listParts(app.prisma, parsed.data);
+    const result = await listRepairs(app.prisma, parsed.data);
     return reply.send(result);
   });
 
   app.get("/:id", async (req, reply) => {
     const { id } = req.params as { id: string };
-    const part = await getPartById(app.prisma, id);
-    if (!part) {
-      return sendError(reply, 404, "PART_NOT_FOUND", "Part not found");
+    const repair = await getRepairById(app.prisma, id);
+    if (!repair) {
+      return sendError(reply, 404, "REPAIR_NOT_FOUND", "Repair not found");
     }
-    return reply.send(part);
+    return reply.send(repair);
   });
 
   app.post(
     "/",
     { preHandler: [requirePermission("parts:write")] },
     async (req, reply) => {
-      const parsed = createPartSchema.safeParse(req.body);
+      const parsed = createRepairSchema.safeParse(req.body);
       if (!parsed.success) {
         return sendError(
           reply,
@@ -68,8 +67,8 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
           { errors: parsed.error.flatten().fieldErrors }
         );
       }
-      const part = await createPart(app.prisma, parsed.data);
-      return reply.status(201).send(part);
+      const repair = await createRepair(app.prisma, parsed.data);
+      return reply.status(201).send(repair);
     }
   );
 
@@ -78,7 +77,7 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: [requirePermission("parts:write")] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
-      const parsed = updatePartSchema.safeParse(req.body);
+      const parsed = updateRepairSchema.safeParse(req.body);
       if (!parsed.success) {
         return sendError(
           reply,
@@ -88,9 +87,9 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
           { errors: parsed.error.flatten().fieldErrors }
         );
       }
-      const result = await updatePart(app.prisma, id, parsed.data);
+      const result = await updateRepair(app.prisma, id, parsed.data);
       if (!result) {
-        return sendError(reply, 404, "PART_NOT_FOUND", "Part not found");
+        return sendError(reply, 404, "REPAIR_NOT_FOUND", "Repair not found");
       }
       return reply.send(result);
     }
@@ -101,19 +100,18 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: [requirePermission("parts:write")] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
-      const parsed = togglePartStatusSchema.safeParse(req.body);
-      if (!parsed.success) {
+      const { isActive } = req.body as { isActive: boolean };
+      if (typeof isActive !== "boolean") {
         return sendError(
           reply,
           400,
           "VALIDATION_ERROR",
-          "Invalid request body",
-          { errors: parsed.error.flatten().fieldErrors }
+          "isActive must be a boolean"
         );
       }
-      const result = await toggleActive(app.prisma, id, parsed.data.isActive);
+      const result = await toggleActive(app.prisma, id, isActive);
       if (!result) {
-        return sendError(reply, 404, "PART_NOT_FOUND", "Part not found");
+        return sendError(reply, 404, "REPAIR_NOT_FOUND", "Repair not found");
       }
       return reply.send(result);
     }

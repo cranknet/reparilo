@@ -15,6 +15,7 @@ import {
   getById as getJobById,
   getMetrics,
   list as listJobs,
+  lookupByCode,
   transitionStatus,
   update as updateJob,
 } from "../services/job.service.js";
@@ -62,6 +63,23 @@ function getUserId(req: FastifyRequest): string {
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const jobRoutes: FastifyPluginAsync = async (app) => {
   app.addHook("preHandler", requirePermission("jobs:read"));
+
+  app.get("/lookup", { preHandler: [] }, async (req, reply) => {
+    const { code } = req.query as { code?: string };
+    if (!code) {
+      return reply.status(400).send({
+        error: "MISSING_CODE",
+        message: "code query parameter is required",
+      });
+    }
+    const job = await lookupByCode(app.prisma, code);
+    if (!job) {
+      return reply
+        .status(404)
+        .send({ error: "JOB_NOT_FOUND", message: "Job not found" });
+    }
+    return reply.send(job);
+  });
 
   app.get("/metrics", async (_req, reply) => {
     const metrics = await getMetrics(app.prisma);

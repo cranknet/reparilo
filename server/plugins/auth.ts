@@ -98,7 +98,8 @@ const authPlugin: FastifyPluginAsync = async (app) => {
     if (
       request.url === "/health" ||
       request.url.startsWith("/tracking") ||
-      request.url.startsWith("/api/auth")
+      request.url.startsWith("/api/auth") ||
+      request.url.startsWith("/api/jobs/lookup")
     ) {
       return;
     }

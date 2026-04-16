@@ -15,6 +15,7 @@ import { healthRoutes } from "./routes/health.js";
 import { jobRoutes } from "./routes/jobs.js";
 import { notificationsRoutes } from "./routes/notifications.js";
 import { partsRoutes } from "./routes/parts.js";
+import { repairCatalogRoutes } from "./routes/repairs.js";
 import { settingsRoutes } from "./routes/settings.js";
 import { usersRoutes } from "./routes/users.js";
 
@@ -35,6 +36,7 @@ await app.register(websocketPlugin);
 app.register(healthRoutes);
 app.register(jobRoutes, { prefix: "/api/jobs" });
 app.register(partsRoutes, { prefix: "/api/parts" });
+app.register(repairCatalogRoutes, { prefix: "/api/repairs" });
 app.register(customersRoutes, { prefix: "/api/customers" });
 app.register(usersRoutes, { prefix: "/api/users" });
 app.register(notificationsRoutes, { prefix: "/api/notifications" });

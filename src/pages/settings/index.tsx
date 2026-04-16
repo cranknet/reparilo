@@ -1,7 +1,9 @@
+import type { NotificationTemplate } from "@shared/types";
 import type { FormEvent, KeyboardEvent, ReactNode } from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import api from "@/lib/api";
+import { useSettingsStore } from "@/stores/settings";
+import { useUsersStore } from "@/stores/users";
 
 type SettingsTab = "ai" | "shop" | "notifications" | "users";
 
@@ -30,61 +32,6 @@ const AI_MODELS = [
     id: "o1-preview",
     labelKey: "model_label_advanced",
     labelShort: "o1-preview",
-  },
-];
-
-const MOCK_TEMPLATES = [
-  {
-    id: "1",
-    name: "Job Status Update",
-    channel: "WHATSAPP" as const,
-    body: "Hello {{customer}}, your device {{device}} status is now: {{status}}. \u2014 {{shopName}}",
-    isDefault: true,
-  },
-  {
-    id: "2",
-    name: "Job Ready",
-    channel: "WHATSAPP" as const,
-    body: "{{device}} is ready for pickup! Total: {{cost}} {{currency}}. \u2014 {{shopName}}",
-    isDefault: false,
-  },
-  {
-    id: "3",
-    name: "Status SMS",
-    channel: "SMS" as const,
-    body: "{{shopName}}: {{device}} status \u2192 {{status}}. Track: {{trackingUrl}}",
-    isDefault: true,
-  },
-];
-
-const MOCK_USERS = [
-  {
-    id: "1",
-    username: "karim",
-    email: "karim@reparilo.dz",
-    role: "OWNER",
-    isActive: true,
-  },
-  {
-    id: "2",
-    username: "yacine",
-    email: "yacine@reparilo.dz",
-    role: "TECHNICIAN",
-    isActive: true,
-  },
-  {
-    id: "3",
-    username: "amina",
-    email: "amina@reparilo.dz",
-    role: "FRONT_DESK",
-    isActive: true,
-  },
-  {
-    id: "4",
-    username: "said",
-    email: "said@reparilo.dz",
-    role: "TECHNICIAN",
-    isActive: false,
   },
 ];
 
@@ -150,6 +97,19 @@ export default function SettingsPage() {
   });
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
+  const {
+    aiSettings,
+    shopSettings,
+    notificationTemplates,
+    fetchAiSettings,
+    saveAiSettings,
+    testAiConnection,
+    fetchShopSettings,
+    saveShopSettings,
+    fetchNotificationTemplates,
+  } = useSettingsStore();
+  const { users, isLoading: usersLoading, fetchUsers } = useUsersStore();
+
   const [aiForm, setAiForm] = useState({
     endpointUrl: "",
     apiKey: "",
@@ -168,6 +128,66 @@ export default function SettingsPage() {
   const [testStatus, setTestStatus] = useState<
     "idle" | "loading" | "success" | "fail"
   >("idle");
+
+  useEffect(() => {
+    if (aiSettings) {
+      const form = {
+        endpointUrl: aiSettings.endpointUrl ?? "",
+        apiKey: "",
+        model: aiSettings.model ?? "gpt-4o",
+        temperature: aiSettings.temperature ?? 0.4,
+      };
+      setAiForm(form);
+      setAiFormInitial(form);
+    }
+  }, [aiSettings]);
+
+  useEffect(() => {
+    if (shopSettings) {
+      const form = {
+        shopName: shopSettings.shopName ?? "",
+        address: shopSettings.address ?? "",
+        phone: shopSettings.phone ?? "",
+        currency: shopSettings.currency ?? "DZD",
+        receiptFooter: shopSettings.receiptFooter ?? "",
+      };
+      setShopForm(form);
+      setShopFormInitial(form);
+    }
+  }, [shopSettings]);
+
+  useEffect(() => {
+    if (activeTab === "ai" && !aiSettings) {
+      fetchAiSettings().catch(() => {
+        // Error is stored in the Zustand state via fetchAiSettings
+      });
+    }
+    if (activeTab === "shop" && !shopSettings) {
+      fetchShopSettings().catch(() => {
+        // Error is stored in the Zustand state via fetchShopSettings
+      });
+    }
+    if (activeTab === "notifications" && notificationTemplates.length === 0) {
+      fetchNotificationTemplates().catch(() => {
+        // Error is stored in the Zustand state via fetchNotificationTemplates
+      });
+    }
+    if (activeTab === "users" && users.length === 0) {
+      fetchUsers().catch(() => {
+        // Error is stored in the Zustand state via fetchUsers
+      });
+    }
+  }, [
+    activeTab,
+    aiSettings,
+    shopSettings,
+    notificationTemplates.length,
+    users.length,
+    fetchAiSettings,
+    fetchShopSettings,
+    fetchNotificationTemplates,
+    fetchUsers,
+  ]);
 
   const dirty = dirtyTabs.size > 0;
   const currentTabDirty = dirtyTabs.has(activeTab);
@@ -316,10 +336,10 @@ export default function SettingsPage() {
 
   async function handleTestConnection() {
     setTestStatus("loading");
-    try {
-      await api.post("/settings/ai/test");
+    const result = await testAiConnection();
+    if (result.success) {
       setTestStatus("success");
-    } catch {
+    } else {
       setTestStatus("fail");
     }
     setTimeout(() => setTestStatus("idle"), 3000);
@@ -333,7 +353,7 @@ export default function SettingsPage() {
     }
     setSaving(true);
     try {
-      await api.put("/settings/ai", aiForm);
+      await saveAiSettings(aiForm);
       setAiFormInitial({ ...aiForm });
       setDirtyTabs((prev) => {
         const next = new Set(prev);
@@ -356,7 +376,7 @@ export default function SettingsPage() {
     }
     setSaving(true);
     try {
-      await api.put("/settings/shop", shopForm);
+      await saveShopSettings(shopForm);
       setShopFormInitial({ ...shopForm });
       setDirtyTabs((prev) => {
         const next = new Set(prev);
@@ -720,7 +740,7 @@ export default function SettingsPage() {
   function renderTemplateGroup(
     title: string,
     icon: string,
-    templates: typeof MOCK_TEMPLATES
+    templates: NotificationTemplate[]
   ) {
     return (
       <div className="space-y-4">
@@ -784,10 +804,12 @@ export default function SettingsPage() {
   }
 
   function renderNotificationsSection() {
-    const whatsappTemplates = MOCK_TEMPLATES.filter(
+    const whatsappTemplates = notificationTemplates.filter(
       (tpl) => tpl.channel === "WHATSAPP"
     );
-    const smsTemplates = MOCK_TEMPLATES.filter((tpl) => tpl.channel === "SMS");
+    const smsTemplates = notificationTemplates.filter(
+      (tpl) => tpl.channel === "SMS"
+    );
     return (
       <div className="space-y-8">
         {renderTemplateGroup(
@@ -801,6 +823,16 @@ export default function SettingsPage() {
   }
 
   function renderUsersSection() {
+    if (usersLoading) {
+      return (
+        <div className="flex items-center justify-center py-16">
+          <span className="material-symbols-outlined animate-spin text-3xl text-primary">
+            progress_activity
+          </span>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-end">
@@ -814,62 +846,75 @@ export default function SettingsPage() {
             {t("add_user")}
           </button>
         </div>
-        <div className="space-y-3">
-          {MOCK_USERS.map((user) => {
-            const roleCfg = ROLE_CONFIG[user.role] ?? {
-              color: "bg-surface-container text-on-surface-variant",
-              icon: "person",
-            };
-            return (
-              <div
-                className="flex items-center gap-4 rounded-2xl bg-surface-container-low p-4 transition-colors hover:bg-surface-container-high/60"
-                key={user.id}
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-container-lowest font-bold text-on-surface-variant text-sm">
-                  {user.username.charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-bold text-on-surface text-sm">
-                      {user.username}
-                    </span>
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold text-xs uppercase ${roleCfg.color}`}
-                    >
-                      <span className="material-symbols-outlined text-[12px]">
-                        {roleCfg.icon}
-                      </span>
-                      {t(`role.${user.role}`)}
-                    </span>
+        {users.length === 0 ? (
+          <div className="rounded-2xl bg-surface-container-low py-12 text-center">
+            <span className="material-symbols-outlined text-4xl text-on-surface-variant/40">
+              group_off
+            </span>
+            <p className="mt-3 text-on-surface-variant text-sm">
+              {t("no_users_found")}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {users.map((user) => {
+              const roleCfg = ROLE_CONFIG[user.role] ?? {
+                color: "bg-surface-container text-on-surface-variant",
+                icon: "person",
+              };
+              return (
+                <div
+                  className="flex items-center gap-4 rounded-2xl bg-surface-container-low p-4 transition-colors hover:bg-surface-container-high/60"
+                  key={user.id}
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-container-lowest font-bold text-on-surface-variant text-sm">
+                    {user.username.charAt(0).toUpperCase()}
                   </div>
-                  <p className="mt-0.5 truncate text-on-surface-variant text-xs">
-                    {user.email}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <span
-                    className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-medium text-xs ${user.isActive ? "bg-success/10 text-success" : "bg-on-surface-variant/10 text-on-surface-variant"}`}
-                  >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-bold text-on-surface text-sm">
+                        {user.username}
+                      </span>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold text-xs uppercase ${roleCfg.color}`}
+                      >
+                        <span className="material-symbols-outlined text-[12px]">
+                          {roleCfg.icon}
+                        </span>
+                        {t(`role.${user.role}`)}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 truncate text-on-surface-variant text-xs">
+                      {user.email}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
                     <span
-                      className={`inline-block h-1.5 w-1.5 rounded-full ${user.isActive ? "bg-success" : "bg-on-surface-variant/40"}`}
-                    />
-                    {user.isActive ? t("status_active") : t("status_inactive")}
-                  </span>
-                  <button
-                    aria-label={`${t("edit")} ${user.username}`}
-                    className="flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg p-2 text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-primary"
-                    type="button"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">
-                      edit
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-medium text-xs ${user.isActive ? "bg-success/10 text-success" : "bg-on-surface-variant/10 text-on-surface-variant"}`}
+                    >
+                      <span
+                        className={`inline-block h-1.5 w-1.5 rounded-full ${user.isActive ? "bg-success" : "bg-on-surface-variant/40"}`}
+                      />
+                      {user.isActive
+                        ? t("status_active")
+                        : t("status_inactive")}
                     </span>
-                    <span className="hidden sm:inline">{t("edit")}</span>
-                  </button>
+                    <button
+                      aria-label={`${t("edit")} ${user.username}`}
+                      className="flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg p-2 text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-primary"
+                      type="button"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">
+                        edit
+                      </span>
+                      <span className="hidden sm:inline">{t("edit")}</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   }

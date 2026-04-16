@@ -1,5 +1,5 @@
 import type { FormEvent, ReactNode } from "react";
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth";
@@ -30,12 +30,26 @@ const STRENGTH_LABELS = [
   "profile_strength_strong",
 ];
 
-const ACTIVITY_ICONS: Record<string, string> = {
-  edit_square: "bg-secondary-container text-on-secondary-container",
-  inventory_2: "bg-surface-container-high text-on-surface-variant",
-  check_circle: "bg-success/10 text-success",
-  person_add: "bg-primary/10 text-primary",
-  settings: "bg-surface-container-high text-on-surface-variant",
+const ACTION_ICONS: Record<string, string> = {
+  JOB_CREATED: "add_circle",
+  STATUS_CHANGED: "edit_square",
+  TECHNICIAN_ASSIGNED: "person_add",
+  COST_UPDATED: "payments",
+  PART_ADDED: "inventory_2",
+  PART_REMOVED: "remove_circle",
+  REPAIR_ADDED: "build",
+  REPAIR_REMOVED: "remove_circle",
+  NOTE_ADDED: "note_add",
+  PHOTO_ADDED: "photo_camera",
+  PHOTO_REMOVED: "remove_circle",
+  JOB_UPDATED: "edit_square",
+  WARRANTY_RETURN_CREATED: "replay",
+  NOTIFICATION_SENT: "notifications",
+  USER_SIGN_IN: "login",
+  USER_SIGN_OUT: "logout",
+  USER_CREATED: "person_add",
+  PASSWORD_RESET: "lock_reset",
+  API_MUTATION: "api",
 };
 
 const LANGUAGE_OPTIONS = [
@@ -44,49 +58,19 @@ const LANGUAGE_OPTIONS = [
   { value: "ar", label: "العربية" },
 ];
 
-const MOCK_ACTIVITY = [
-  {
-    id: "1",
-    icon: "edit_square",
-    textKey: "profile_activity_status_update",
-    interpolations: { id: "2025-0042", status: "IN_REPAIR" },
-    time: "2h ago",
-  },
-  {
-    id: "2",
-    icon: "inventory_2",
-    textKey: "profile_activity_part_ordered",
-    interpolations: { part: "iPhone 15 Screen Assembly" },
-    time: "Yesterday, 14:22",
-  },
-  {
-    id: "3",
-    icon: "check_circle",
-    textKey: "profile_activity_marked_done",
-    interpolations: { id: "2025-0039" },
-    time: "Yesterday, 11:05",
-  },
-  {
-    id: "4",
-    icon: "person_add",
-    textKey: "profile_activity_user_added",
-    interpolations: { name: "Amina K." },
-    time: "2 days ago",
-  },
-  {
-    id: "5",
-    icon: "settings",
-    textKey: "profile_activity_settings_update",
-    interpolations: {},
-    time: "3 days ago",
-  },
-];
-
 const INPUT_CLS =
   "w-full rounded-xl border-none bg-surface-container-lowest px-4 py-3.5 text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20";
 
 const LABEL_CLS =
   "block font-bold text-xs text-on-surface-variant uppercase tracking-wider";
+
+interface ActivityItem {
+  action: string;
+  createdAt: string;
+  fromValue: string | null;
+  id: string;
+  toValue: string | null;
+}
 
 function getInitials(name: string): string {
   return name
@@ -118,12 +102,43 @@ function passwordStrength(pw: string): number {
   return score;
 }
 
+function formatAction(action: string): string {
+  return `profile_activity_${action.toLowerCase()}`;
+}
+
+function formatTimeAgo(
+  dateStr: string,
+  t: (key: string, opts?: Record<string, unknown>) => string
+): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60_000);
+  const diffHours = Math.floor(diffMs / 3_600_000);
+  const diffDays = Math.floor(diffMs / 86_400_000);
+
+  if (diffMins < 1) {
+    return t("profile_just_now");
+  }
+  if (diffMins < 60) {
+    return t("profile_minutes_ago", { count: diffMins });
+  }
+  if (diffHours < 24) {
+    return t("profile_hours_ago", { count: diffHours });
+  }
+  if (diffDays < 7) {
+    return t("profile_days_ago", { count: diffDays });
+  }
+  return date.toLocaleDateString();
+}
+
 export default function ProfilePage() {
   const { t, i18n } = useTranslation();
+  const user = useAuthStore((s) => s.user);
   const role = useAuthStore((s) => s.role);
-  const username = useAuthStore((s) => s.user?.username);
-
-  const displayName = username || t("default_user_display");
+  const checkSession = useAuthStore((s) => s.checkSession);
+  const userId = user?.id;
+  const displayName = user?.username || t("default_user_display");
   const initials = getInitials(displayName);
 
   const [activeTab, setActiveTab] = useState<ProfileTab>("personal");
@@ -141,9 +156,8 @@ export default function ProfilePage() {
   }
 
   const [personalForm, setPersonalForm] = useState({
-    username: username || "",
+    name: user?.username || "",
     email: "",
-    phone: "",
     language: detectLanguage(),
   });
 
@@ -159,9 +173,32 @@ export default function ProfilePage() {
   const [passwordError, setPasswordError] = useState("");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
 
   const personalFormRef = useRef<HTMLFormElement>(null);
   const securityFormRef = useRef<HTMLFormElement>(null);
+
+  const loadActivity = useCallback(async () => {
+    if (!userId) {
+      return;
+    }
+    setActivityLoading(true);
+    try {
+      const res = await api.get(`/users/${userId}/activity`);
+      setActivity(res.data);
+    } catch {
+      setActivity([]);
+    } finally {
+      setActivityLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (activeTab === "activity") {
+      loadActivity();
+    }
+  }, [activeTab, loadActivity]);
 
   const tabs: { key: ProfileTab; label: string }[] = [
     { key: "personal", label: t("profile_tab_personal") },
@@ -172,10 +209,17 @@ export default function ProfilePage() {
   async function handlePersonalSubmit(e: FormEvent) {
     e.preventDefault();
     setPersonalError("");
+    if (!userId) {
+      return;
+    }
     try {
-      await api.put("/users/me", personalForm);
+      await api.patch(`/users/${userId}`, {
+        name: personalForm.name,
+        email: personalForm.email,
+      });
       setPersonalInitial(personalForm);
       setPersonalDirty(false);
+      await checkSession(true);
     } catch {
       setPersonalError(t("profile_update_failed"));
     }
@@ -200,8 +244,8 @@ export default function ProfilePage() {
 
     setPasswordError("");
     try {
-      await api.put("/users/me/password", {
-        currentPassword: securityForm.currentPassword,
+      await api.post("/auth/change-password", {
+        oldPassword: securityForm.currentPassword,
         newPassword: securityForm.newPassword,
       });
       setSecurityForm({
@@ -248,18 +292,18 @@ export default function ProfilePage() {
         )}
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           <div className="space-y-2">
-            <label className={LABEL_CLS} htmlFor="profile-username">
-              {t("username")}
+            <label className={LABEL_CLS} htmlFor="profile-name">
+              {t("profile_name")}
             </label>
             <input
               className={INPUT_CLS}
-              id="profile-username"
+              id="profile-name"
               onChange={(e) => {
-                setPersonalForm((f) => ({ ...f, username: e.target.value }));
+                setPersonalForm((f) => ({ ...f, name: e.target.value }));
                 setPersonalDirty(true);
               }}
               type="text"
-              value={personalForm.username}
+              value={personalForm.name}
             />
           </div>
 
@@ -280,23 +324,6 @@ export default function ProfilePage() {
           </div>
 
           <div className="space-y-2">
-            <label className={LABEL_CLS} htmlFor="profile-phone">
-              {t("profile_phone")}
-            </label>
-            <input
-              className={INPUT_CLS}
-              id="profile-phone"
-              onChange={(e) => {
-                setPersonalForm((f) => ({ ...f, phone: e.target.value }));
-                setPersonalDirty(true);
-              }}
-              placeholder="+213 XX XXX XXXX"
-              type="tel"
-              value={personalForm.phone}
-            />
-          </div>
-
-          <div className="space-y-2">
             <label className={LABEL_CLS} htmlFor="profile-language">
               {t("profile_language")}
             </label>
@@ -305,6 +332,7 @@ export default function ProfilePage() {
                 className="w-full cursor-pointer appearance-none rounded-xl border-none bg-surface-container-lowest px-4 py-3.5 text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20"
                 id="profile-language"
                 onChange={(e) => {
+                  i18n.changeLanguage(e.target.value);
                   setPersonalForm((f) => ({ ...f, language: e.target.value }));
                   setPersonalDirty(true);
                 }}
@@ -537,6 +565,29 @@ export default function ProfilePage() {
   }
 
   function renderActivitySection() {
+    if (activityLoading) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <span className="material-symbols-outlined animate-spin text-[24px] text-on-surface-variant">
+            progress_activity
+          </span>
+        </div>
+      );
+    }
+
+    if (activity.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <span className="material-symbols-outlined mb-3 text-[48px] text-on-surface-variant/40">
+            timeline
+          </span>
+          <p className="font-semibold text-on-surface-variant text-sm">
+            {t("profile_no_activity")}
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -549,26 +600,29 @@ export default function ProfilePage() {
         </div>
 
         <div className="space-y-6">
-          {MOCK_ACTIVITY.map((item, idx) => (
+          {activity.map((item, idx) => (
             <div className="flex gap-4" key={item.id}>
               <div className="flex flex-col items-center">
                 <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full ${ACTIVITY_ICONS[item.icon] ?? "bg-surface-container-high text-on-surface-variant"}`}
+                  className={`flex h-8 w-8 items-center justify-center rounded-full ${ACTION_ICONS[item.action] ? "bg-primary/10 text-primary" : "bg-surface-container-high text-on-surface-variant"}`}
                 >
                   <span className="material-symbols-outlined text-sm">
-                    {item.icon}
+                    {ACTION_ICONS[item.action] ?? "history"}
                   </span>
                 </div>
-                {idx < MOCK_ACTIVITY.length - 1 && (
+                {idx < activity.length - 1 && (
                   <div className="my-1 h-full w-0.5 bg-surface-container-high" />
                 )}
               </div>
               <div className="pb-2">
                 <p className="font-semibold text-sm">
-                  {t(item.textKey, item.interpolations)}
+                  {t(formatAction(item.action), {
+                    from: item.fromValue ?? "",
+                    to: item.toValue ?? "",
+                  })}
                 </p>
                 <p className="mt-1 font-bold text-on-surface-variant/50 text-xs uppercase">
-                  {item.time}
+                  {formatTimeAgo(item.createdAt, t)}
                 </p>
               </div>
             </div>

@@ -1,22 +1,12 @@
 import type { JobStatusType } from "@shared/constants";
-import type { TFunction } from "i18next";
+import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import AiCallout from "@/components/modules/dashboard/ai-callout";
 import FinancialTrend from "@/components/modules/dashboard/financial-trend";
 import JobPipeline from "@/components/modules/dashboard/job-pipeline";
 import OverdueJobs from "@/components/modules/dashboard/overdue-jobs";
 import MetricCard from "@/components/ui/metric-card";
-
-const MOCK_PIPELINE_COUNTS: Record<JobStatusType, number> = {
-  INTAKE: 5,
-  WAITING_FOR_PARTS: 8,
-  IN_REPAIR: 7,
-  ON_HOLD: 2,
-  DONE: 2,
-  DELIVERED: 0,
-  RETURNED: 0,
-  CANCELLED: 0,
-};
+import { useJobsStore } from "@/stores/jobs";
 
 const MOCK_FINANCIAL_DATA = [
   { revenue: 65, cost: 40 },
@@ -28,7 +18,9 @@ const MOCK_FINANCIAL_DATA = [
   { revenue: 30, cost: 20 },
 ];
 
-const MOCK_OVERDUE_JOBS = (t: TFunction) => [
+const MOCK_OVERDUE_JOBS = (
+  t: (key: string, opts?: Record<string, unknown>) => string
+) => [
   {
     id: "#REP-8821",
     device: "iPhone 14 Pro",
@@ -43,7 +35,9 @@ const MOCK_OVERDUE_JOBS = (t: TFunction) => [
   },
 ];
 
-const MOCK_WARRANTY_RETURNS = (t: TFunction) => [
+const MOCK_WARRANTY_RETURNS = (
+  t: (key: string, opts?: Record<string, unknown>) => string
+) => [
   {
     id: "#WAR-012",
     description: t("dashboard_page.warranty_phantom_touch"),
@@ -57,8 +51,47 @@ const MOCK_WARRANTY_RETURNS = (t: TFunction) => [
   },
 ];
 
+const EMPTY_PIPELINE: Record<JobStatusType, number> = {
+  INTAKE: 0,
+  WAITING_FOR_PARTS: 0,
+  IN_REPAIR: 0,
+  ON_HOLD: 0,
+  DONE: 0,
+  DELIVERED: 0,
+  RETURNED: 0,
+  CANCELLED: 0,
+};
+
 export default function DashboardPage() {
   const { t } = useTranslation();
+  const { metrics, fetchMetrics } = useJobsStore();
+
+  useEffect(() => {
+    fetchMetrics();
+  }, [fetchMetrics]);
+
+  const pipelineCounts: Record<JobStatusType, number> = useMemo(() => {
+    if (!metrics) {
+      return EMPTY_PIPELINE;
+    }
+    return {
+      INTAKE: metrics.INTAKE ?? 0,
+      WAITING_FOR_PARTS: metrics.WAITING_FOR_PARTS ?? 0,
+      IN_REPAIR: metrics.IN_REPAIR ?? 0,
+      ON_HOLD: metrics.ON_HOLD ?? 0,
+      DONE: metrics.DONE ?? 0,
+      DELIVERED: metrics.DELIVERED ?? 0,
+      RETURNED: metrics.RETURNED ?? 0,
+      CANCELLED: metrics.CANCELLED ?? 0,
+    };
+  }, [metrics]);
+
+  const activeJobs =
+    pipelineCounts.INTAKE +
+    pipelineCounts.IN_REPAIR +
+    pipelineCounts.ON_HOLD +
+    pipelineCounts.WAITING_FOR_PARTS;
+  const completedToday = pipelineCounts.DONE;
 
   return (
     <>
@@ -98,7 +131,7 @@ export default function DashboardPage() {
           detail={t("dashboard_page.since_8am", { count: 3 })}
           icon="precision_manufacturing"
           label={t("active_jobs")}
-          value="24"
+          value={String(activeJobs)}
         >
           <div className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
             <div className="h-full w-3/4 bg-primary" />
@@ -110,7 +143,7 @@ export default function DashboardPage() {
           icon="check_circle"
           iconColor="text-on-secondary-container"
           label={t("completed_today")}
-          value="12"
+          value={String(completedToday)}
         >
           <div className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
             <div className="h-full w-4/5 bg-on-secondary-container" />
@@ -123,13 +156,13 @@ export default function DashboardPage() {
           iconColor="text-tertiary"
           label={t("revenue_this_month")}
           unit={t("currency_dzd")}
-          value="452,000"
+          value="--"
         >
           <div className="flex items-center gap-1 font-bold text-tertiary text-xs">
             <span className="material-symbols-outlined text-[14px]">
               trending_up
             </span>
-            12% {t("increase_from_prev")}
+            -- {t("increase_from_prev")}
           </div>
         </MetricCard>
 
@@ -138,7 +171,7 @@ export default function DashboardPage() {
           icon="bar_chart"
           label={t("avg_profit_margin")}
           unit="%"
-          value="38.4"
+          value="--"
         >
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -153,7 +186,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-12 md:gap-8">
         <div className="md:col-span-12 lg:col-span-4">
-          <JobPipeline benchCapacity={82} counts={MOCK_PIPELINE_COUNTS} />
+          <JobPipeline benchCapacity={82} counts={pipelineCounts} />
         </div>
 
         <div className="space-y-8 md:col-span-12 lg:col-span-5">

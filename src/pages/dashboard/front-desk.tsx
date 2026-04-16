@@ -1,4 +1,9 @@
-import type { JobStatusType } from "@shared/constants";
+import {
+  ACTIVE_STATUSES,
+  COMPLETED_STATUSES,
+  type JobStatusType,
+} from "@shared/constants";
+import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import ActiveRepairsQueue from "@/components/modules/dashboard/active-repairs-queue";
 import PriorityAlertsPanel from "@/components/modules/dashboard/priority-alerts-panel";
@@ -6,70 +11,38 @@ import QuickIntakeForm from "@/components/modules/dashboard/quick-intake-form";
 import QuickStatsChips from "@/components/modules/dashboard/quick-stats-chips";
 import TodayOverview from "@/components/modules/dashboard/today-overview";
 import WaitingCustomers from "@/components/modules/dashboard/waiting-customers";
+import { useJobsStore } from "@/stores/jobs";
 
-const MOCK_REPAIRS: {
-  customerName: string;
-  completedAt?: string;
-  estimatedCompletion?: string;
-  id: string;
-  deviceModel: string;
-  status: JobStatusType;
-  technician: string;
-}[] = [
-  {
-    id: "#8821",
-    deviceModel: "iPhone 15 Pro Max",
-    customerName: "Liam Sterling",
-    status: "IN_REPAIR",
-    estimatedCompletion: "Today, 4:30 PM",
-    technician: "Marco Ross",
-  },
-  {
-    id: "#8819",
-    deviceModel: "MacBook Air M2",
-    customerName: "Elena Vance",
-    status: "WAITING_FOR_PARTS",
-    estimatedCompletion: "Oct 26, 11:00 AM",
-    technician: "Unassigned",
-  },
-  {
-    id: "#8815",
-    deviceModel: "Samsung S24 Ultra",
-    customerName: "David Chen",
-    status: "DONE",
-    completedAt: "2 Hours Ago",
-    technician: "Sarah Jenkins",
-  },
-  {
-    id: "#8810",
-    deviceModel: "iPad Pro 12.9",
-    customerName: "Nora Fields",
-    status: "INTAKE",
-    estimatedCompletion: "Oct 27, 2:00 PM",
-    technician: "Unassigned",
-  },
-];
+/** Format a date as a relative time string (e.g. "5m ago", "2h ago") */
+function timeAgo(date: Date | string): string {
+  const now = Date.now();
+  const then = new Date(date).getTime();
+  const diffMs = now - then;
+  const diffMin = Math.floor(diffMs / 60_000);
+  if (diffMin < 1) {
+    return "just now";
+  }
+  if (diffMin < 60) {
+    return `${diffMin}m ago`;
+  }
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) {
+    return `${diffH}h ago`;
+  }
+  const diffD = Math.floor(diffH / 24);
+  return `${diffD}d ago`;
+}
 
-const MOCK_RECENT_INTAKES: {
-  id: string;
-  device: string;
-  status: JobStatusType;
-  timeAgo: string;
-}[] = [
-  { id: "#8822", device: "Pixel 8 Pro", status: "INTAKE", timeAgo: "5m ago" },
-  {
-    id: "#8821",
-    device: "iPhone 15 Pro Max",
-    status: "IN_REPAIR",
-    timeAgo: "22m ago",
-  },
-  {
-    id: "#8819",
-    device: "MacBook Air M2",
-    status: "WAITING_FOR_PARTS",
-    timeAgo: "1h ago",
-  },
-];
+/** Format a date for display as an estimated completion or completed-at string */
+function formatDate(date: Date | string): string {
+  const d = new Date(date);
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
 
 const MOCK_ALERTS = [
   {
@@ -102,6 +75,79 @@ const MOCK_WAITING = [
 
 export default function FrontDeskPage() {
   const { t } = useTranslation();
+  const { jobs, isLoadingJobs, fetchJobs } = useJobsStore();
+
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
+
+  // Map real jobs to the shape expected by ActiveRepairsQueue
+  const activeRepairs = useMemo(() => {
+    const isCompleted = (s: JobStatusType) =>
+      COMPLETED_STATUSES.includes(s) || s === "CANCELLED";
+    return jobs
+      .filter(
+        (j) => ACTIVE_STATUSES.includes(j.status) || isCompleted(j.status)
+      )
+      .map((j) => ({
+        id: j.jobCode,
+        deviceModel: `${j.device.brand} ${j.device.model}`,
+        customerName: j.customer.name,
+        status: j.status,
+        estimatedCompletion: j.estimatedDate
+          ? formatDate(j.estimatedDate)
+          : undefined,
+        completedAt:
+          COMPLETED_STATUSES.includes(j.status) && j.updatedAt
+            ? timeAgo(j.updatedAt)
+            : undefined,
+        technician: j.technician?.name ?? "Unassigned",
+      }));
+  }, [jobs]);
+
+  // Recent intakes: latest 3 jobs with INTAKE status
+  const recentIntakes = useMemo(() => {
+    return jobs
+      .filter((j) => j.status === "INTAKE")
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+      .slice(0, 3)
+      .map((j) => ({
+        id: j.jobCode,
+        device: `${j.device.brand} ${j.device.model}`,
+        status: j.status,
+        timeAgo: timeAgo(j.createdAt),
+      }));
+  }, [jobs]);
+
+  // Today's overview counts derived from jobs created today
+  const todayStart = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  }, []);
+
+  const { completedToday, totalToday } = useMemo(() => {
+    const todayJobs = jobs.filter(
+      (j) => new Date(j.createdAt).getTime() >= todayStart
+    );
+    const completed = todayJobs.filter((j) =>
+      COMPLETED_STATUSES.includes(j.status)
+    ).length;
+    return { completedToday: completed, totalToday: todayJobs.length };
+  }, [jobs, todayStart]);
+
+  if (isLoadingJobs && jobs.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <span className="material-symbols-outlined animate-spin text-4xl text-primary">
+          progress_activity
+        </span>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -162,14 +208,14 @@ export default function FrontDeskPage() {
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
         <div className="md:col-span-12 lg:col-span-5">
-          <ActiveRepairsQueue jobs={MOCK_REPAIRS} />
+          <ActiveRepairsQueue jobs={activeRepairs} />
         </div>
 
         <div className="flex flex-col gap-8 md:col-span-12 lg:col-span-4">
           <TodayOverview
-            completedToday={15}
-            recentIntakes={MOCK_RECENT_INTAKES}
-            totalToday={23}
+            completedToday={completedToday}
+            recentIntakes={recentIntakes}
+            totalToday={totalToday}
           />
           <QuickIntakeForm />
         </div>
