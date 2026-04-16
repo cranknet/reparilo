@@ -1,9 +1,14 @@
 import type { PrismaClient } from "@prisma/client";
 import { AuditAction } from "@prisma/client";
+import { INACTIVE_STATUSES } from "@shared/constants";
 import type { AddJobNoteInput } from "@shared/schemas";
 import { createAuditLog } from "./audit.service.js";
 
-export function list(prisma: PrismaClient, jobId: string) {
+export async function list(prisma: PrismaClient, jobId: string) {
+  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  if (!job) {
+    return null;
+  }
   return prisma.jobNote.findMany({
     where: { jobId },
     include: {
@@ -22,6 +27,9 @@ export async function add(
   const job = await prisma.job.findUnique({ where: { id: jobId } });
   if (!job) {
     return null;
+  }
+  if (INACTIVE_STATUSES.includes(job.status)) {
+    return { error: "JOB_IN_TERMINAL_STATUS" as const };
   }
 
   const note = await prisma.jobNote.create({

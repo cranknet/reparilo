@@ -32,6 +32,7 @@ export const updateJobSchema = z.object({
   conditionNotes: z.string().optional(),
   estimatedCost: z.number().min(0).optional(),
   estimatedDate: z.string().min(1).nullable().optional(),
+  depositAmount: z.number().min(0).nullable().optional(),
   technicianId: z.string().min(1).nullable().optional(),
   color: z.string().optional(),
 });

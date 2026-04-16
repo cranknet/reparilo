@@ -216,13 +216,17 @@ export async function update(
     }
   }
 
-  const { technicianId, estimatedDate, ...rest } = input;
+  const { depositAmount, estimatedDate, technicianId, ...rest } = input;
   const data: Prisma.JobUpdateInput = { ...rest };
 
   if (estimatedDate === null) {
     data.estimatedDate = null;
   } else if (estimatedDate) {
     data.estimatedDate = new Date(estimatedDate);
+  }
+
+  if (depositAmount === null) {
+    data.depositAmount = null;
   }
 
   if (technicianId === null) {

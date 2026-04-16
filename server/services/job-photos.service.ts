@@ -108,7 +108,7 @@ export async function remove(
     return null;
   }
 
-  const fullPath = path.join(UPLOAD_DIR, "..", photo.path);
+  const fullPath = path.resolve("uploads", photo.path);
   try {
     await fs.unlink(fullPath);
   } catch {

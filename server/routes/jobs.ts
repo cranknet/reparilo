@@ -212,6 +212,9 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
   app.get("/:id/notes", async (req, reply) => {
     const { id } = req.params as { id: string };
     const notes = await listNotes(app.prisma, id);
+    if (!notes) {
+      return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+    }
     return reply.send(notes);
   });
 
@@ -236,6 +239,14 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const note = await addNote(app.prisma, id, parsed.data, userId);
       if (!note) {
         return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+      }
+      if ("error" in note && note.error === "JOB_IN_TERMINAL_STATUS") {
+        return sendError(
+          reply,
+          409,
+          "JOB_IN_TERMINAL_STATUS",
+          "Cannot add notes to a job in terminal status"
+        );
       }
       return reply.status(201).send(note);
     }
