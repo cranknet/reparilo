@@ -30,6 +30,7 @@
   "shop_owner": "Shop Owner",
   "repair_dashboard": "Repair Dashboard",
   "shop_overview": "Shop Overview",
+  "dashboard_greeting": "Welcome back, {{name}}",
   "realtime_status": "What's happening right now",
   "daily_summary": "Daily Summary",
   "active_jobs": "Active Jobs",

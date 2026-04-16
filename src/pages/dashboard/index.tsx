@@ -6,6 +6,7 @@ import FinancialTrend from "@/components/modules/dashboard/financial-trend";
 import JobPipeline from "@/components/modules/dashboard/job-pipeline";
 import OverdueJobs from "@/components/modules/dashboard/overdue-jobs";
 import MetricCard from "@/components/ui/metric-card";
+import { useAuthStore } from "@/stores/auth";
 import { useJobsStore } from "@/stores/jobs";
 
 const MOCK_FINANCIAL_DATA = [
@@ -64,6 +65,7 @@ const EMPTY_PIPELINE: Record<JobStatusType, number> = {
 
 export default function DashboardPage() {
   const { t } = useTranslation();
+  const userName = useAuthStore((s) => s.user?.name || s.user?.username || "");
   const { metrics, fetchMetrics } = useJobsStore();
 
   useEffect(() => {
@@ -98,7 +100,7 @@ export default function DashboardPage() {
       <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <h2 className="font-extrabold font-headline text-2xl text-on-surface tracking-tight md:text-3xl">
-            {t("shop_overview")}
+            {t("dashboard_greeting", { name: userName })}
           </h2>
           <p className="mt-1 font-medium text-on-surface-variant text-sm md:text-base">
             {t("realtime_status")}

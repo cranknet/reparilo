@@ -30,6 +30,7 @@
   "shop_owner": "Propriétaire",
   "repair_dashboard": "Tableau de réparation",
   "shop_overview": "Aperçu de la boutique",
+  "dashboard_greeting": "Bon retour, {{name}}",
   "realtime_status": "Statut en direct du jour",
   "daily_summary": "Résumé quotidien",
   "active_jobs": "Travaux actifs",

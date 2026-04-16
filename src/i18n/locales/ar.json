@@ -30,6 +30,7 @@
   "shop_owner": "صاحب الورشة",
   "repair_dashboard": "لوحة الإصلاح",
   "shop_overview": "نظرة عامة على المتجر",
+  "dashboard_greeting": "مرحبًا بعودتك، {{name}}",
   "realtime_status": "الحالة اللحظية لليوم",
   "daily_summary": "ملخص يومي",
   "active_jobs": "أعمال نشطة",
