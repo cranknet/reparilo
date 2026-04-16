@@ -3,9 +3,11 @@ import { create } from "zustand";
 import api from "@/lib/api";
 
 interface AuthUser {
+  email: string;
   id: string;
   isActive: boolean;
   mustChangePassword: boolean;
+  name: string;
   role: RoleType;
   username: string;
 }
