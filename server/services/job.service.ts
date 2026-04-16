@@ -158,7 +158,7 @@ export async function create(
       depositAmount: input.depositAmount ?? null,
       deviceId: device.id,
       estimatedCost: input.estimatedCost,
-      estimatedDate: input.estimatedDate ?? null,
+      estimatedDate: input.estimatedDate ? new Date(input.estimatedDate) : null,
       isWarrantyReturn: input.isWarrantyReturn ?? false,
       jobCode,
       reportedProblem: input.reportedProblem,
