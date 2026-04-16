@@ -52,7 +52,7 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
   await app.register(cors, {
     origin: allowedOrigins,
     credentials: true,
-    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"],
     exposedHeaders: ["X-Request-Id"],
     maxAge: 86_400,
@@ -90,19 +90,33 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
   });
 
   // ── Layer 5: Request Sanitization ───────────────────────────────────────
-  app.addHook("preHandler", (request, _reply, done) => {
-    if (
-      request.body &&
-      typeof request.body === "object" &&
-      !Array.isArray(request.body) &&
-      !request.routeOptions.config.allowSensitiveKeys
-    ) {
-      const body = request.body as Record<string, unknown>;
-      for (const key of Object.keys(body)) {
-        if (SENSITIVE_KEYS.has(key)) {
-          delete body[key];
+  function isObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+  }
+
+  function sanitizeObject(obj: Record<string, unknown>): void {
+    for (const key of Object.keys(obj)) {
+      if (SENSITIVE_KEYS.has(key)) {
+        delete obj[key];
+        continue;
+      }
+      if (isObject(obj[key])) {
+        sanitizeObject(obj[key]);
+      } else if (Array.isArray(obj[key])) {
+        for (const item of obj[key] as unknown[]) {
+          if (isObject(item)) {
+            sanitizeObject(item);
+          }
         }
       }
+    }
+  }
+
+  app.addHook("preHandler", (request, _reply, done) => {
+    const allowSensitive =
+      request.routeOptions?.config?.allowSensitiveKeys ?? false;
+    if (isObject(request.body) && !allowSensitive) {
+      sanitizeObject(request.body as Record<string, unknown>);
     }
     done();
   });
