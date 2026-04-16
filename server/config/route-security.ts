@@ -60,9 +60,14 @@ function routeMatchesPattern(url: string, pattern: string): boolean {
 
 export const routeSecurity: [string, RouteSecurityOverride][] = [
   ["/health", { rateLimit: false, csrf: false }],
+  ["/api/csrf-token", { rateLimit: false, csrf: false }],
   [
     "/api/auth/change-password",
-    { rateLimit: { max: 5, timeWindow: "1 minute" }, allowSensitiveKeys: true },
+    {
+      rateLimit: { max: 5, timeWindow: "1 minute" },
+      csrf: false,
+      allowSensitiveKeys: true,
+    },
   ],
   [
     "/api/auth/must-change-password",

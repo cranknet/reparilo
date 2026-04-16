@@ -7,7 +7,6 @@ import { useAuthStore } from "@/stores/auth";
 export default function ChangePasswordPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const checkSession = useAuthStore((s) => s.checkSession);
   const logout = useAuthStore((s) => s.logout);
 
   const [oldPassword, setOldPassword] = useState("");
@@ -40,8 +39,9 @@ export default function ChangePasswordPage() {
         user: state.user
           ? { ...state.user, mustChangePassword: false }
           : state.user,
+        isAuthenticated: true,
+        isLoading: false,
       }));
-      await checkSession(true);
       navigate("/", { replace: true });
     } catch (err: unknown) {
       const axiosErr = err as {
