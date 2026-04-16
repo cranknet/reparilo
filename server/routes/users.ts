@@ -329,4 +329,38 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
     return reply.send(logs);
   });
+
+  app.get("/:id/stats", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const requestingUser = request.user;
+
+    if (!requestingUser) {
+      return reply.status(401).send({ error: "Authentication required" });
+    }
+
+    if (!canViewUserActivity(requestingUser.id, id, requestingUser.role)) {
+      return reply.status(403).send({ error: "Insufficient permissions" });
+    }
+
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [completedJobs, monthlyJobs] = await Promise.all([
+      app.prisma.job.count({
+        where: {
+          technicianId: id,
+          status: { in: ["DONE", "DELIVERED"] },
+        },
+      }),
+      app.prisma.job.count({
+        where: {
+          technicianId: id,
+          status: { in: ["DONE", "DELIVERED"] },
+          createdAt: { gte: monthStart },
+        },
+      }),
+    ]);
+
+    return reply.send({ completedJobs, monthlyJobs });
+  });
 };
