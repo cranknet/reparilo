@@ -77,6 +77,7 @@ enum AuditAction {
   USER_SIGN_OUT
   USER_CREATED
   PASSWORD_RESET
+  API_MUTATION
 }
 
 enum AiRole {
