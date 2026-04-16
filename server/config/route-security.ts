@@ -36,16 +36,21 @@ function routeMatchesPattern(url: string, pattern: string): boolean {
   const urlSegments = url.split("/");
   const patternSegments = pattern.split("/");
 
-  if (urlSegments.length !== patternSegments.length) {
+  // URL must have at least as many segments as the pattern
+  // (prefix match: /api/jobs matches /api/jobs/:id)
+  if (urlSegments.length < patternSegments.length) {
     return false;
   }
 
   for (let i = 0; i < patternSegments.length; i++) {
-    const seg = patternSegments[i];
-    if (seg === "*" || seg.startsWith(":")) {
+    const patSeg = patternSegments[i];
+    if (patSeg === "*") {
       continue;
     }
-    if (urlSegments[i] !== seg) {
+    if (patSeg.startsWith(":")) {
+      continue;
+    }
+    if (urlSegments[i] !== patSeg) {
       return false;
     }
   }
@@ -63,7 +68,7 @@ export const routeSecurity: [string, RouteSecurityOverride][] = [
     "/api/auth/must-change-password",
     { rateLimit: { max: 20, timeWindow: "1 minute" }, csrf: false },
   ],
-  ["/api/auth/*", { csrf: false }],
+  ["/api/auth/*", { csrf: false, allowSensitiveKeys: true }],
   [
     "/api/users/:id/reset-password",
     {
