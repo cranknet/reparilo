@@ -19,12 +19,7 @@ import {
 const IS_PROD = process.env.NODE_ENV === "production";
 const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://localhost:5173";
 
-const SENSITIVE_KEYS = new Set([
-  "password",
-  "isActive",
-  "role",
-  "mustChangePassword",
-]);
+const SENSITIVE_KEYS = new Set(["password", "role", "mustChangePassword"]);
 
 const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
   // ── Layer 1: Security Headers ──────────────────────────────────────────
@@ -99,6 +94,11 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
       secure: IS_PROD,
       signed: IS_PROD,
     },
+  });
+
+  app.get("/api/csrf-token", async (_req, reply) => {
+    const token = await reply.generateCsrf();
+    return { token };
   });
 
   // ── Layer 5: Auto-apply route security from config map ──────────────────
