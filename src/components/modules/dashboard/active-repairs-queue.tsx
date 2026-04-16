@@ -2,9 +2,10 @@ import type { JobStatusType } from "@shared/constants";
 import { useTranslation } from "react-i18next";
 
 interface RepairJob {
+  completedAt?: string;
   customerName: string;
   deviceModel: string;
-  estimatedCompletion: string;
+  estimatedCompletion?: string;
   id: string;
   status: JobStatusType;
   technician: string;
@@ -85,10 +86,12 @@ export default function ActiveRepairsQueue({ jobs }: ActiveRepairsQueueProps) {
                 <div className="flex items-center justify-between border-outline-variant/5 border-t pt-4">
                   <div>
                     <p className="font-bold text-on-surface-variant text-xs uppercase">
-                      {t("front_desk.estimated_completion")}
+                      {job.status === "DONE" || job.status === "DELIVERED"
+                        ? t("front_desk.completed_at")
+                        : t("front_desk.estimated_completion")}
                     </p>
                     <p className="font-bold text-sm">
-                      {job.estimatedCompletion}
+                      {job.completedAt ?? job.estimatedCompletion}
                     </p>
                   </div>
                   <div className="text-right">

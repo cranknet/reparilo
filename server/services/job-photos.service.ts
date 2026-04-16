@@ -81,9 +81,17 @@ export async function upload(
   await fs.writeFile(filePath, buffer);
 
   const relativePath = `job-photos/${jobId}/${filename}`;
-  const photo = await prisma.jobPhoto.create({
-    data: { jobId, path: relativePath },
-  });
+  let photo: Awaited<ReturnType<typeof prisma.jobPhoto.create>>;
+  try {
+    photo = await prisma.jobPhoto.create({
+      data: { jobId, path: relativePath },
+    });
+  } catch (err) {
+    await fs.unlink(filePath).catch(() => {
+      /* intentionally ignored */
+    });
+    throw err;
+  }
 
   await createAuditLog(prisma, {
     jobId,

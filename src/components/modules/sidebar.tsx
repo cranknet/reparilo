@@ -1,5 +1,5 @@
 import type { RoleType } from "@shared/constants";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router";
 import { useAuthStore } from "@/stores/auth";
@@ -61,15 +61,24 @@ export default function Sidebar() {
   const username = useAuthStore((s) => s.user?.username ?? "");
   const navItems = NAV_ITEMS_BY_ROLE[role] ?? [];
   const [logoutPending, setLogoutPending] = useState(false);
+  const logoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleLogoutClick = () => {
+  useEffect(() => {
+    return () => {
+      if (logoutTimerRef.current) {
+        clearTimeout(logoutTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleLogoutClick = useCallback(() => {
     if (!logoutPending) {
       setLogoutPending(true);
-      setTimeout(() => setLogoutPending(false), 3000);
+      logoutTimerRef.current = setTimeout(() => setLogoutPending(false), 3000);
       return;
     }
     useAuthStore.getState().logout();
-  };
+  }, [logoutPending]);
 
   return (
     <aside className="fixed start-0 top-0 z-40 hidden h-screen w-64 flex-col bg-surface-container-low p-4 lg:flex">

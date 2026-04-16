@@ -9,7 +9,8 @@ import WaitingCustomers from "@/components/modules/dashboard/waiting-customers";
 
 const MOCK_REPAIRS: {
   customerName: string;
-  estimatedCompletion: string;
+  completedAt?: string;
+  estimatedCompletion?: string;
   id: string;
   deviceModel: string;
   status: JobStatusType;
@@ -36,7 +37,7 @@ const MOCK_REPAIRS: {
     deviceModel: "Samsung S24 Ultra",
     customerName: "David Chen",
     status: "DONE",
-    estimatedCompletion: "2 Hours Ago",
+    completedAt: "2 Hours Ago",
     technician: "Sarah Jenkins",
   },
   {

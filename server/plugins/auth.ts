@@ -25,7 +25,7 @@ interface RateLimitEntry {
 const signInRateLimitStore: Record<string, RateLimitEntry> = {};
 
 const RATE_LIMIT_CLEANUP_MS = 5 * 60_000;
-setInterval(() => {
+const cleanupInterval = setInterval(() => {
   const now = Date.now();
   for (const ip of Object.keys(signInRateLimitStore)) {
     if (now - signInRateLimitStore[ip].start > SIGN_IN_WINDOW_MS) {
@@ -33,6 +33,7 @@ setInterval(() => {
     }
   }
 }, RATE_LIMIT_CLEANUP_MS);
+cleanupInterval.unref();
 
 /** Returns true if the IP is rate-limited (too many attempts). */
 function isRateLimited(ip: string): boolean {
@@ -92,6 +93,10 @@ const authPlugin: FastifyPluginAsync = async (app) => {
 
   app.decorate("auth", auth);
   app.decorateRequest("user", null);
+
+  app.addHook("onClose", () => {
+    clearInterval(cleanupInterval);
+  });
 
   app.all("/api/auth/*", async (request, reply) => {
     try {

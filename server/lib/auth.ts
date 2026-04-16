@@ -68,8 +68,9 @@ export function createAuth(prisma: PrismaClient) {
       sendResetPassword: async ({ user, url }) => {
         try {
           await sendPasswordResetEmail(user.email, url);
-        } catch {
-          console.error("[auth] Failed to send password reset email");
+        } catch (error) {
+          console.error("[auth] Failed to send password reset email", error);
+          throw error;
         }
       },
       onPasswordReset: async ({ user }) => {

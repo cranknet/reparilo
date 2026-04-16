@@ -49,15 +49,16 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
 
     const hashedNewPassword = await hashPassword(newPassword);
 
-    await app.prisma.account.updateMany({
-      where: { userId: session.user.id, providerId: "credential" },
-      data: { password: hashedNewPassword },
-    });
-
-    await app.prisma.user.update({
-      where: { id: session.user.id },
-      data: { mustChangePassword: false },
-    });
+    await app.prisma.$transaction([
+      app.prisma.account.updateMany({
+        where: { userId: session.user.id, providerId: "credential" },
+        data: { password: hashedNewPassword },
+      }),
+      app.prisma.user.update({
+        where: { id: session.user.id },
+        data: { mustChangePassword: false },
+      }),
+    ]);
 
     return reply.send({ success: true });
   });

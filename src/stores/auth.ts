@@ -42,6 +42,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         : "/auth/get-session";
       const res = await api.get(url);
       const user = res.data.user;
+      if (!user) {
+        throw new Error("No user in session response");
+      }
       set({
         user,
         isAuthenticated: true,
@@ -70,6 +73,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
       const res = await api.get("/auth/get-session");
       const user = res.data.user;
+      if (!user) {
+        throw new Error("No user in session response");
+      }
       set({
         user,
         isAuthenticated: true,

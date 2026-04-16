@@ -18,23 +18,27 @@ export async function add(
     return { error: "JOB_IN_TERMINAL_STATUS" as const };
   }
 
-  const jobRepair = await prisma.jobRepair.create({
-    data: {
-      jobId,
-      repairId: input.repairId ?? null,
-      repairName: input.repairName,
-      category: input.category,
-      price: input.price,
-      createdById: userId,
-    },
-  });
+  const jobRepair = await prisma.$transaction(async (tx) => {
+    const created = await tx.jobRepair.create({
+      data: {
+        jobId,
+        repairId: input.repairId ?? null,
+        repairName: input.repairName,
+        category: input.category,
+        price: input.price,
+        createdById: userId,
+      },
+    });
 
-  await createAuditLog(prisma, {
-    jobId,
-    userId,
-    action: AuditAction.REPAIR_ADDED,
-    toValue: `${input.repairName} — ${input.price}`,
-    metadata: { repairId: input.repairId },
+    await createAuditLog(tx, {
+      jobId,
+      userId,
+      action: AuditAction.REPAIR_ADDED,
+      toValue: `${input.repairName} — ${input.price}`,
+      metadata: { repairId: input.repairId },
+    });
+
+    return created;
   });
 
   return jobRepair;
@@ -48,18 +52,23 @@ export async function remove(
 ) {
   const repair = await prisma.jobRepair.findFirst({
     where: { id: repairId, jobId },
+    include: { job: { select: { status: true } } },
   });
   if (!repair) {
     return null;
   }
+  if (INACTIVE_STATUSES.includes(repair.job.status)) {
+    return { error: "JOB_IN_TERMINAL_STATUS" as const };
+  }
 
-  await prisma.jobRepair.delete({ where: { id: repairId } });
-
-  await createAuditLog(prisma, {
-    jobId,
-    userId,
-    action: AuditAction.REPAIR_REMOVED,
-    fromValue: `${repair.repairName} — ${repair.price}`,
+  await prisma.$transaction(async (tx) => {
+    await tx.jobRepair.delete({ where: { id: repairId } });
+    await createAuditLog(tx, {
+      jobId,
+      userId,
+      action: AuditAction.REPAIR_REMOVED,
+      fromValue: `${repair.repairName} — ${repair.price}`,
+    });
   });
 
   return true;

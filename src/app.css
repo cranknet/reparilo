@@ -151,6 +151,7 @@ h3,
 @media (prefers-reduced-motion: reduce) {
   .animate-spin,
   .animate-pulse,
+  .animate-fade-slide-up,
   .typing-dot {
     animation: none;
   }

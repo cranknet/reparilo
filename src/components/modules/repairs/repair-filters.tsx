@@ -58,7 +58,7 @@ export default function RepairFilters({
       <div className="flex items-center gap-2">
         <div className="relative sm:hidden">
           <select
-            aria-label={t("all_repairs")}
+            aria-label={t("filter_by_category")}
             className="h-10 w-full appearance-none rounded-xl border-none bg-surface-container-highest px-4 pe-10 text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/20"
             onChange={(e) =>
               onCategoryChange(

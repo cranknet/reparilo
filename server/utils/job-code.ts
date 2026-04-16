@@ -1,6 +1,8 @@
 import crypto from "node:crypto";
 import type { PrismaClient } from "@prisma/client";
 
+const MAX_SEQ = 999_999;
+
 export async function generateJobCode(prisma: PrismaClient): Promise<{
   jobCode: string;
   accessCode: string;
@@ -8,20 +10,19 @@ export async function generateJobCode(prisma: PrismaClient): Promise<{
   const year = new Date().getFullYear();
   const accessCode = crypto.randomBytes(8).toString("hex");
 
-  const counter = await prisma.$transaction(async (tx) => {
-    const existing = await tx.jobCounter.findUnique({ where: { year } });
-    if (existing) {
-      return tx.jobCounter.update({
-        where: { year },
-        data: { lastSeq: { increment: 1 } },
-      });
-    }
-    return tx.jobCounter.create({
-      data: { year, lastSeq: 1 },
-    });
+  const counter = await prisma.jobCounter.upsert({
+    where: { year },
+    update: { lastSeq: { increment: 1 } },
+    create: { year, lastSeq: 1 },
   });
 
-  const seq = counter.lastSeq.toString().padStart(4, "0");
+  if (counter.lastSeq > MAX_SEQ) {
+    throw new Error(
+      `Job sequence overflow: ${counter.lastSeq} exceeds ${MAX_SEQ} for year ${year}`
+    );
+  }
+
+  const seq = counter.lastSeq.toString().padStart(6, "0");
   const suffix = crypto
     .randomBytes(2)
     .toString("hex")

@@ -82,7 +82,14 @@ export default function PartsAlert({ items }: PartsAlertProps) {
                     : `${item.quantity} ${t(status.labelKey)}`}
                 </span>
               </div>
-              <div className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
+              <div
+                aria-label={`${item.name} stock level`}
+                aria-valuemax={item.stockLevel}
+                aria-valuemin={0}
+                aria-valuenow={item.quantity}
+                className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest"
+                role="progressbar"
+              >
                 <div
                   className={`h-full rounded-full ${status.color}`}
                   style={{ width: status.width }}

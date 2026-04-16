@@ -32,27 +32,31 @@ export async function add(
     return { error: "JOB_IN_TERMINAL_STATUS" as const };
   }
 
-  const note = await prisma.jobNote.create({
-    data: {
-      jobId,
-      content: input.content,
-      isCustomerVisible: input.isCustomerVisible,
-      createdById: userId,
-    },
-    include: {
-      createdBy: { select: { id: true, name: true, username: true } },
-    },
-  });
+  const note = await prisma.$transaction(async (tx) => {
+    const created = await tx.jobNote.create({
+      data: {
+        jobId,
+        content: input.content,
+        isCustomerVisible: input.isCustomerVisible,
+        createdById: userId,
+      },
+      include: {
+        createdBy: { select: { id: true, name: true, username: true } },
+      },
+    });
 
-  await createAuditLog(prisma, {
-    jobId,
-    userId,
-    action: AuditAction.NOTE_ADDED,
-    note: input.isCustomerVisible ? "Customer-visible note" : "Internal note",
-    metadata: {
-      contentLength: input.content.length,
-      isCustomerVisible: input.isCustomerVisible,
-    },
+    await createAuditLog(tx, {
+      jobId,
+      userId,
+      action: AuditAction.NOTE_ADDED,
+      note: input.isCustomerVisible ? "Customer-visible note" : "Internal note",
+      metadata: {
+        contentLength: input.content.length,
+        isCustomerVisible: input.isCustomerVisible,
+      },
+    });
+
+    return created;
   });
 
   return note;

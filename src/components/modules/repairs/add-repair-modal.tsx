@@ -149,6 +149,7 @@ export default function AddRepairModal({
     }
     setForm(INITIAL_FORM);
     setTouched({});
+    setErrors({});
     setIsSubmitting(false);
     onClose();
   };
@@ -193,6 +194,7 @@ export default function AddRepairModal({
               </h1>
             </div>
             <button
+              aria-label={t("close")}
               className="flex h-11 w-11 items-center justify-center rounded-full text-outline transition-colors hover:bg-surface-container-high"
               onClick={onClose}
               type="button"

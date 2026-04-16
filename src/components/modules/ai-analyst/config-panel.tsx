@@ -67,7 +67,7 @@ export default function AiConfigPanel({ open, onClose }: AiConfigPanelProps) {
     <aside
       aria-label={t("ai_configuration")}
       className={`fixed end-0 top-0 z-40 h-full w-80 max-w-[85vw] overflow-y-auto bg-surface-container-high transition-transform duration-300 md:w-96 md:max-w-none xl:static xl:z-auto xl:h-auto xl:translate-x-0 ${open ? "translate-x-0" : "translate-x-full rtl:-translate-x-full"}`}
-      role={open ? "dialog" : undefined}
+      {...(open ? { role: "dialog", "aria-modal": true as const } : {})}
     >
       <div className="p-6">
         <div className="mb-8 flex items-center justify-between">

@@ -1,5 +1,10 @@
 import type { AuditAction, Prisma, PrismaClient } from "@prisma/client";
 
+type PrismaOrTx = Omit<
+  PrismaClient,
+  "$connect" | "$disconnect" | "$on" | "$use" | "$extends"
+>;
+
 interface AuditInput {
   action: AuditAction;
   fromValue?: string;
@@ -11,7 +16,7 @@ interface AuditInput {
 }
 
 export async function createAuditLog(
-  prisma: PrismaClient,
+  prisma: PrismaOrTx,
   input: AuditInput
 ): Promise<void> {
   await prisma.auditLog.create({

@@ -31,9 +31,9 @@ export default function TodayOverview({
   recentIntakes,
 }: TodayOverviewProps) {
   const { t } = useTranslation();
-  const remaining = totalToday - completedToday;
+  const remaining = Math.max(0, totalToday - completedToday);
   const progressPercent =
-    totalToday > 0 ? (completedToday / totalToday) * 100 : 0;
+    totalToday > 0 ? Math.min((completedToday / totalToday) * 100, 100) : 0;
 
   return (
     <div className="flex flex-col gap-8">

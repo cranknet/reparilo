@@ -53,18 +53,23 @@ export async function remove(
 ) {
   const part = await prisma.jobPart.findFirst({
     where: { id: partId, jobId },
+    include: { job: { select: { status: true } } },
   });
   if (!part) {
     return null;
   }
+  if (INACTIVE_STATUSES.includes(part.job.status)) {
+    return { error: "JOB_IN_TERMINAL_STATUS" as const };
+  }
 
-  await prisma.jobPart.delete({ where: { id: partId } });
-
-  await createAuditLog(prisma, {
-    action: AuditAction.PART_REMOVED,
-    fromValue: `${part.partName} x${part.quantity}`,
-    jobId,
-    userId,
+  await prisma.$transaction(async (tx) => {
+    await tx.jobPart.delete({ where: { id: partId } });
+    await createAuditLog(tx, {
+      action: AuditAction.PART_REMOVED,
+      fromValue: `${part.partName} x${part.quantity}`,
+      jobId,
+      userId,
+    });
   });
 
   return true;

@@ -227,9 +227,16 @@ function StatusView({
   onBack: () => void;
 }) {
   const { t } = useTranslation();
-  const currentIdx = STATUS_FLOW.indexOf(
-    data.status as (typeof STATUS_FLOW)[number]
-  );
+  const resolvedIdx = (() => {
+    const idx = STATUS_FLOW.indexOf(
+      data.status as (typeof STATUS_FLOW)[number]
+    );
+    if (idx === -1) {
+      console.warn(`[Tracking] Unknown status: ${data.status}`);
+      return 0;
+    }
+    return idx;
+  })();
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -316,9 +323,9 @@ function StatusView({
                     <div className="absolute start-[11px] top-2 bottom-2 w-[2px] bg-surface-container-high" />
 
                     {data.timeline.map((step, idx) => {
-                      const isCompleted = idx < currentIdx;
-                      const isCurrent = idx === currentIdx;
-                      const isPending = idx > currentIdx;
+                      const isCompleted = idx < resolvedIdx;
+                      const isCurrent = idx === resolvedIdx;
+                      const isPending = idx > resolvedIdx;
 
                       return (
                         <div

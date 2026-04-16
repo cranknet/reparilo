@@ -63,7 +63,7 @@ reparilo/
 - Never suppress lint warnings — always apply best practices
 - Explain tasks, errors, and solutions in plain English with minimal jargon
 - after using SKILL audit or critique, run recommanded actions in parallel and finish with polish 
-
+- Do not launch parallel agents when tasks are targeted to same file.
 ## Database
 
 - Create Prisma migrations after every schema change

@@ -74,6 +74,7 @@ export function Button({
       )}
       {!loading && icon && <Icon name={icon} size={ICON_SIZE[size]} />}
       {!iconOnly && children}
+      {iconOnly && !loading && !icon && children}
     </button>
   );
 }
