@@ -1,3 +1,4 @@
+import type { PrismaClient } from "@prisma/client";
 import { ROLE_PERMISSIONS, type RoleType } from "@shared/constants/roles";
 import {
   createUserSchema,
@@ -7,6 +8,23 @@ import {
 import { hashPassword } from "better-auth/crypto";
 import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
+
+async function checkUniqueFields(
+  prisma: PrismaClient,
+  checks: Array<{ field: "email" | "username"; value: string }>,
+  excludeId: string
+): Promise<string | null> {
+  for (const { field, value } of checks) {
+    const existing = await prisma.user.findFirst({
+      where: { [field]: value, NOT: { id: excludeId } },
+    });
+    if (existing) {
+      const label = field.charAt(0).toUpperCase() + field.slice(1);
+      return `${label} already in use`;
+    }
+  }
+  return null;
+}
 
 function canModifyUser(
   requestingUserId: string,
@@ -232,29 +250,38 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       });
     }
 
-    const { name, email } = parsed.data;
+    const { name, email, username } = parsed.data;
 
-    if (name === undefined && email === undefined) {
+    const data = Object.fromEntries(
+      Object.entries({ name, email, username }).filter(([, v]) => v)
+    ) as Record<string, string>;
+
+    if (Object.keys(data).length === 0) {
       return reply
         .status(400)
         .send({ error: "At least one field is required" });
     }
 
+    const uniquenessChecks: Array<{
+      field: "email" | "username";
+      value: string;
+    }> = [];
     if (email) {
-      const existing = await app.prisma.user.findFirst({
-        where: { email, NOT: { id } },
-      });
-      if (existing) {
-        return reply.status(409).send({ error: "Email already in use" });
-      }
+      uniquenessChecks.push({ field: "email", value: email });
+    }
+    if (username) {
+      uniquenessChecks.push({ field: "username", value: username });
     }
 
-    const data: { name?: string; email?: string } = {};
-    if (name) {
-      data.name = name;
-    }
-    if (email) {
-      data.email = email;
+    if (uniquenessChecks.length > 0) {
+      const conflict = await checkUniqueFields(
+        app.prisma,
+        uniquenessChecks,
+        id
+      );
+      if (conflict) {
+        return reply.status(409).send({ error: conflict });
+      }
     }
 
     const updated = await app.prisma.user.update({
