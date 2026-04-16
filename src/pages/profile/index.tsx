@@ -2,6 +2,7 @@ import type { FormEvent, ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import api from "@/lib/api";
+import { getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
 
 type ProfileTab = "personal" | "security" | "activity";
@@ -79,16 +80,6 @@ interface SessionItem {
   ipAddress: string | null;
   isCurrent: boolean;
   userAgent: string | null;
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .map((w) => w.charAt(0))
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
 }
 
 function parseUserAgent(ua: string): string {

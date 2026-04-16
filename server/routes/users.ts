@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { ROLE_PERMISSIONS, type RoleType } from "@shared/constants/roles";
 import {
   createUserSchema,
@@ -24,6 +25,68 @@ async function checkUniqueFields(
     }
   }
   return null;
+}
+
+function updateProfile(
+  prisma: PrismaClient,
+  id: string,
+  data: { name?: string; email?: string; username?: string }
+) {
+  return prisma.user.update({
+    where: { id },
+    data,
+    select: {
+      id: true,
+      name: true,
+      username: true,
+      email: true,
+      role: true,
+      isActive: true,
+      mustChangePassword: true,
+      createdAt: true,
+    },
+  });
+}
+
+function buildUpdateData(
+  fields: Record<string, string | undefined>
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(fields).filter(([, v]) => v)
+  ) as Record<string, string>;
+}
+
+function checkProfileUniqueness(
+  prisma: PrismaClient,
+  id: string,
+  email?: string,
+  username?: string
+): Promise<string | null> {
+  const checks: Array<{ field: "email" | "username"; value: string }> = [];
+  if (email) {
+    checks.push({ field: "email", value: email });
+  }
+  if (username) {
+    checks.push({ field: "username", value: username });
+  }
+  if (checks.length === 0) {
+    return Promise.resolve(null);
+  }
+  return checkUniqueFields(prisma, checks, id);
+}
+
+function isUniqueViolation(err: unknown): string | null {
+  if (
+    !(err instanceof Prisma.PrismaClientKnownRequestError) ||
+    err.code !== "P2002"
+  ) {
+    return null;
+  }
+  const target = (err.meta as { target: string[] })?.target?.[0];
+  const label = target
+    ? target.charAt(0).toUpperCase() + target.slice(1)
+    : "Field";
+  return `${label} already in use`;
 }
 
 function canModifyUser(
@@ -252,9 +315,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
     const { name, email, username } = parsed.data;
 
-    const data = Object.fromEntries(
-      Object.entries({ name, email, username }).filter(([, v]) => v)
-    ) as Record<string, string>;
+    const data = buildUpdateData({ name, email, username });
 
     if (Object.keys(data).length === 0) {
       return reply
@@ -262,44 +323,26 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
         .send({ error: "At least one field is required" });
     }
 
-    const uniquenessChecks: Array<{
-      field: "email" | "username";
-      value: string;
-    }> = [];
-    if (email) {
-      uniquenessChecks.push({ field: "email", value: email });
-    }
-    if (username) {
-      uniquenessChecks.push({ field: "username", value: username });
+    const conflict = await checkProfileUniqueness(
+      app.prisma,
+      id,
+      email,
+      username
+    );
+    if (conflict) {
+      return reply.status(409).send({ error: conflict });
     }
 
-    if (uniquenessChecks.length > 0) {
-      const conflict = await checkUniqueFields(
-        app.prisma,
-        uniquenessChecks,
-        id
-      );
+    try {
+      const updated = await updateProfile(app.prisma, id, data);
+      return reply.send(updated);
+    } catch (err) {
+      const conflict = isUniqueViolation(err);
       if (conflict) {
         return reply.status(409).send({ error: conflict });
       }
+      throw err;
     }
-
-    const updated = await app.prisma.user.update({
-      where: { id },
-      data,
-      select: {
-        id: true,
-        name: true,
-        username: true,
-        email: true,
-        role: true,
-        isActive: true,
-        mustChangePassword: true,
-        createdAt: true,
-      },
-    });
-
-    return reply.send(updated);
   });
 
   app.get("/:id/activity", async (request, reply) => {

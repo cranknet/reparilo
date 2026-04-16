@@ -2,6 +2,7 @@ import type { RoleType } from "@shared/constants";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router";
+import { getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
 
 interface NavItem {
@@ -41,20 +42,6 @@ const ROLE_LABEL_KEYS: Record<RoleType, string> = {
 
 const FOCUS_VISIBLE =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
-
-const WORD_BOUNDARY = /\s+/;
-
-function getInitials(name: string): string {
-  if (!name) {
-    return "?";
-  }
-  const parts = name.trim().split(WORD_BOUNDARY);
-  if (parts.length >= 2) {
-    const last = parts.at(-1);
-    return (parts[0][0] + (last?.[0] ?? "")).toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase();
-}
 
 export default function Sidebar() {
   const { t } = useTranslation();
