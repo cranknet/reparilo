@@ -4,7 +4,10 @@ dist
 .env.*
 !.env.example
 !.env.test
-uploads/
+uploads/*
+!uploads/job-photos/
+uploads/job-photos/*
+!uploads/job-photos/.gitkeep
 *.log
 android/
 .turbo
