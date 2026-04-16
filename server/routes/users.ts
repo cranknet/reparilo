@@ -12,7 +12,6 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/",
     {
-      config: { rateLimit: { max: 100, timeWindow: "1 minute" } },
       preHandler: [requirePermission("users:read")],
     },
     async (_request, reply) => {
@@ -35,10 +34,6 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     "/",
     {
-      config: {
-        rateLimit: { max: 10, timeWindow: "1 minute" },
-        allowSensitiveKeys: true,
-      },
       preHandler: [requirePermission("users:write")],
     },
     async (request, reply) => {
@@ -111,10 +106,6 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.patch(
     "/:id/status",
     {
-      config: {
-        rateLimit: { max: 30, timeWindow: "1 minute" },
-        allowSensitiveKeys: true,
-      },
       preHandler: [requirePermission("users:write")],
     },
     async (request, reply) => {
@@ -148,10 +139,6 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     "/:id/reset-password",
     {
-      config: {
-        rateLimit: { max: 10, timeWindow: "1 minute" },
-        allowSensitiveKeys: true,
-      },
       preHandler: [requirePermission("users:write")],
     },
     async (request, reply) => {
