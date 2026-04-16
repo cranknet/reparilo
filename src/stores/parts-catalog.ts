@@ -100,6 +100,7 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
       const message =
         err instanceof Error ? err.message : "Failed to toggle part status";
       set({ error: message });
+      throw new Error(message);
     }
   },
 

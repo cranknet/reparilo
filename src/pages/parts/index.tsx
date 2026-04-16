@@ -400,11 +400,14 @@ export default function PartsCatalogPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showCategoryFilters, setShowCategoryFilters] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    isError: boolean;
+    message: string;
+  } | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  const showToast = useCallback((message: string) => {
-    setToast(message);
+  const showToast = useCallback((message: string, isError = false) => {
+    setToast({ isError, message });
     setTimeout(() => setToast(null), 3000);
   }, []);
 
@@ -422,7 +425,7 @@ export default function PartsCatalogPage() {
 
   useEffect(() => {
     if (error) {
-      showToast(error);
+      showToast(error, true);
       clearError();
     }
   }, [error, showToast, clearError]);
@@ -450,19 +453,20 @@ export default function PartsCatalogPage() {
     });
   }, []);
 
-  const activeCount = parts.filter((p) => p.isActive).length;
-  const catalogValue = parts
-    .filter((p) => p.isActive)
-    .reduce((acc, p) => acc + Number(p.defaultPrice), 0);
-  const uniqueSuppliers = [
-    ...new Set(
-      parts
-        .filter(
-          (p): p is PartsCatalog & { supplier: string } => p.supplier !== null
-        )
-        .map((p) => p.supplier)
-    ),
-  ].length;
+  const { activeCount, catalogValue, uniqueSuppliers } = useMemo(() => {
+    const active = parts.filter((p) => p.isActive);
+    return {
+      activeCount: active.length,
+      catalogValue: active.reduce((acc, p) => acc + Number(p.defaultPrice), 0),
+      uniqueSuppliers: new Set(
+        parts
+          .filter(
+            (p): p is PartsCatalog & { supplier: string } => p.supplier !== null
+          )
+          .map((p) => p.supplier)
+      ).size,
+    };
+  }, [parts]);
 
   const handleAddPart = async (
     data: Omit<
@@ -475,6 +479,10 @@ export default function PartsCatalogPage() {
       "defaultPrice"
     > & { defaultPrice: number }
   ) => {
+    if (!data.category) {
+      showToast(t("failed_to_create_part"), true);
+      return;
+    }
     try {
       await createPart({
         category: data.category,
@@ -486,7 +494,7 @@ export default function PartsCatalogPage() {
       showToast(t("part_added_successfully"));
       await fetchParts(fetchParams);
     } catch {
-      showToast(t("failed_to_create_part"));
+      showToast(t("failed_to_create_part"), true);
     }
   };
 
@@ -496,7 +504,7 @@ export default function PartsCatalogPage() {
       await togglePartActive(part.id, !part.isActive);
       showToast(t("part_status_changed"));
     } catch {
-      showToast(t("failed_to_update_status"));
+      showToast(t("failed_to_update_status"), true);
     } finally {
       setTogglingId(null);
     }
@@ -690,11 +698,15 @@ export default function PartsCatalogPage() {
       {toast && (
         <div
           aria-live="polite"
-          className="fixed end-6 bottom-6 z-50 flex animate-[fadeSlideUp_0.3s_ease-out] items-center gap-2 rounded-2xl bg-on-surface px-5 py-3 font-bold text-on-primary text-sm shadow-2xl"
+          className={`fixed end-6 bottom-6 z-50 flex animate-[fadeSlideUp_0.3s_ease-out] items-center gap-2 rounded-2xl px-5 py-3 font-bold text-sm shadow-2xl ${
+            toast.isError
+              ? "bg-error text-on-error"
+              : "bg-on-surface text-on-primary"
+          }`}
           role="status"
         >
-          <Icon name="check_circle" size="sm" />
-          {toast}
+          <Icon name={toast.isError ? "error" : "check_circle"} size="sm" />
+          {toast.message}
         </div>
       )}
     </>
