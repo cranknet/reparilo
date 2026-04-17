@@ -618,6 +618,7 @@
   "profile_activity_password_reset": "Reset password",
   "profile_activity_api_mutation": "API change",
   "profile_avatar_uploading": "Uploading avatar...",
+  "profile_avatar_upload_failed": "Failed to upload avatar",
   "profile_avatar_updated": "Avatar updated",
   "profile_avatar_removed": "Avatar removed",
   "profile_avatar_too_large": "Image must be smaller than 2MB",

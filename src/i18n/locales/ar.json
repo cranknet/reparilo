@@ -618,6 +618,7 @@
   "profile_activity_password_reset": "إعادة تعيين كلمة المرور",
   "profile_activity_api_mutation": "تغيير واجهة برمجة التطبيقات",
   "profile_avatar_uploading": "جارٍ تحميل الصورة الرمزية...",
+  "profile_avatar_upload_failed": "فشل تحميل الصورة الرمزية",
   "profile_avatar_updated": "تم تحديث الصورة الرمزية",
   "profile_avatar_removed": "تمت إزالة الصورة الرمزية",
   "profile_avatar_too_large": "يجب أن يكون حجم الصورة أصغر من 2 ميغابايت",

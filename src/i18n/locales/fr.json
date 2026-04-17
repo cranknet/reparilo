@@ -618,6 +618,7 @@
   "profile_activity_password_reset": "Réinitialiser le mot de passe",
   "profile_activity_api_mutation": "Changement d'API",
   "profile_avatar_uploading": "Téléchargement de l'avatar...",
+  "profile_avatar_upload_failed": "Échec du téléchargement de l'avatar",
   "profile_avatar_updated": "Avatar mis à jour",
   "profile_avatar_removed": "Avatar supprimé",
   "profile_avatar_too_large": "L'image doit être inférieure à 2 Mo",

@@ -72,7 +72,6 @@ export function useProfileMultiUser(role: string) {
         headers: { "Content-Type": "multipart/form-data" },
       });
       await checkSession(true);
-      await checkSession(true);
       setLocalImage(null);
     } catch (err: unknown) {
       setLocalImage(null);
@@ -86,7 +85,7 @@ export function useProfileMultiUser(role: string) {
       ) {
         onError("profile_avatar_invalid_type");
       } else {
-        onError("profile_avatar_uploading");
+        onError("profile_avatar_upload_failed");
       }
     } finally {
       setAvatarUploading(false);
