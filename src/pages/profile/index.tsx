@@ -158,7 +158,6 @@ export default function ProfilePage() {
   const { t, i18n } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const role = useAuthStore((s) => s.role);
-  const checkSession = useAuthStore((s) => s.checkSession);
   const navigate = useNavigate();
   const {
     avatarUploading,
@@ -329,9 +328,18 @@ export default function ProfilePage() {
         email: personalForm.email,
         username: personalForm.username,
       });
+      useAuthStore.setState((state) => ({
+        user: state.user
+          ? {
+              ...state.user,
+              name: personalForm.name,
+              email: personalForm.email,
+              username: personalForm.username,
+            }
+          : state.user,
+      }));
       setPersonalInitial(personalForm);
       setPersonalDirty(false);
-      await checkSession(true);
     } catch {
       setPersonalError(t("profile_update_failed"));
     }
