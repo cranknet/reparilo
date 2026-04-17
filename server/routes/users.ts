@@ -349,6 +349,10 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
   app.get("/:id/activity", async (request, reply) => {
     const { id } = request.params as { id: string };
+    const { cursor, limit } = request.query as {
+      cursor?: string;
+      limit?: string;
+    };
     const requestingUser = request.user;
 
     if (!requestingUser) {
@@ -359,20 +363,25 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(403).send({ error: "Insufficient permissions" });
     }
 
+    const take = Math.min(Math.max(Number(limit) || 20, 1), 100);
+
     const logs = await app.prisma.auditLog.findMany({
-      where: { userId: id },
+      where: { userId: id, ...(cursor ? { id: { lt: cursor } } : {}) },
       select: {
         id: true,
         action: true,
         fromValue: true,
         toValue: true,
+        metadata: true,
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take,
     });
 
-    return reply.send(logs);
+    const nextCursor = logs.length === take ? logs.at(-1)?.id : null;
+
+    return reply.send({ items: logs, nextCursor });
   });
 
   app.get("/:id/stats", async (request, reply) => {
@@ -417,8 +426,10 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(401).send({ error: "Authentication required" });
     }
 
-    if (requestingUser.id !== id) {
-      return reply.status(403).send({ error: "Can only view own sessions" });
+    const perms = ROLE_PERMISSIONS[requestingUser.role as RoleType] ?? [];
+    const isAdmin = perms.includes("users:write");
+    if (requestingUser.id !== id && !isAdmin) {
+      return reply.status(403).send({ error: "Insufficient permissions" });
     }
 
     const currentToken =
