@@ -1,0 +1,182 @@
+import { createAccessControl } from "better-auth/plugins/access";
+import { defaultStatements } from "better-auth/plugins/admin/access";
+
+// ---------------------------------------------------------------------------
+// Statement — single source of truth for every resource × action pair.
+//
+// The `user` and `session` keys are required by Better Auth's admin plugin.
+// We spread them from `defaultStatements` to stay in sync with the library.
+// ---------------------------------------------------------------------------
+
+export const statement = {
+  // Admin-plugin resources (keep in sync with better-auth internals)
+  ...defaultStatements,
+
+  // Business resources
+  jobs: [
+    "view",
+    "create",
+    "edit",
+    "delete",
+    "cancel",
+    "assign",
+    "selfAssign",
+    "viewMargin",
+  ] as const,
+
+  jobStatus: [
+    "INTAKE",
+    "WAITING_FOR_PARTS",
+    "IN_REPAIR",
+    "ON_HOLD",
+    "DONE",
+    "DELIVERED",
+    "RETURNED",
+    "CANCELLED",
+  ] as const,
+
+  parts: [
+    "viewCatalog",
+    "manageCatalog",
+    "add",
+    "remove",
+    "viewCost",
+    "setCost",
+    "overridePrice",
+  ] as const,
+
+  customers: ["view", "create", "edit"] as const,
+
+  repairs: ["viewCatalog", "manageCatalog"] as const,
+
+  reports: ["viewSelf", "viewShop", "viewMargin"] as const,
+
+  settings: ["view", "edit"] as const,
+
+  notifications: ["read", "send", "manage"] as const,
+
+  ai: ["access"] as const,
+} as const;
+
+// ---------------------------------------------------------------------------
+// Access control instance
+// ---------------------------------------------------------------------------
+
+export const ac = createAccessControl(statement);
+
+// ---------------------------------------------------------------------------
+// Role definitions
+// ---------------------------------------------------------------------------
+
+export const ownerRole = ac.newRole({
+  // Admin-plugin resources
+  user: [
+    "create",
+    "list",
+    "set-role",
+    "ban",
+    "impersonate",
+    "delete",
+    "set-password",
+    "get",
+    "update",
+  ],
+  session: ["list", "revoke", "delete"],
+
+  // Business resources
+  jobs: [
+    "view",
+    "create",
+    "edit",
+    "delete",
+    "cancel",
+    "assign",
+    "selfAssign",
+    "viewMargin",
+  ],
+  jobStatus: [
+    "INTAKE",
+    "WAITING_FOR_PARTS",
+    "IN_REPAIR",
+    "ON_HOLD",
+    "DONE",
+    "DELIVERED",
+    "RETURNED",
+    "CANCELLED",
+  ],
+  parts: [
+    "viewCatalog",
+    "manageCatalog",
+    "add",
+    "remove",
+    "viewCost",
+    "setCost",
+    "overridePrice",
+  ],
+  customers: ["view", "create", "edit"],
+  repairs: ["viewCatalog", "manageCatalog"],
+  reports: ["viewSelf", "viewShop", "viewMargin"],
+  settings: ["view", "edit"],
+  notifications: ["read", "send", "manage"],
+  ai: ["access"],
+});
+
+export const technicianRole = ac.newRole({
+  // Admin-plugin resources — limited access
+  user: ["list", "get"],
+  // No session access
+
+  // Business resources
+  jobs: ["view", "create", "edit", "selfAssign", "viewMargin"],
+  jobStatus: ["WAITING_FOR_PARTS", "IN_REPAIR", "ON_HOLD", "DONE", "CANCELLED"],
+  parts: [
+    "viewCatalog",
+    "add",
+    "remove",
+    "viewCost",
+    "setCost",
+    "overridePrice",
+  ],
+  customers: ["view"],
+  repairs: ["viewCatalog"],
+  reports: ["viewSelf"],
+  notifications: ["read"],
+  // No settings
+  // No ai
+});
+
+export const frontDeskRole = ac.newRole({
+  // Admin-plugin resources — limited access
+  user: ["create", "list", "get", "update"],
+  // No session access
+
+  // Business resources
+  jobs: ["view", "create", "cancel"],
+  jobStatus: ["DELIVERED", "RETURNED", "CANCELLED"],
+  // No parts
+  customers: ["view", "create", "edit"],
+  // No repairs
+  // No reports
+  // No settings
+  notifications: ["read", "send"],
+  ai: ["access"],
+});
+
+// ---------------------------------------------------------------------------
+// Convenience map (used when Better Auth reads the role string from the DB)
+// ---------------------------------------------------------------------------
+
+export const roles = {
+  OWNER: ownerRole,
+  TECHNICIAN: technicianRole,
+  FRONT_DESK: frontDeskRole,
+} as const;
+
+// ---------------------------------------------------------------------------
+// Utility types
+// ---------------------------------------------------------------------------
+
+export type Statement = typeof statement;
+export type PermissionCheck = {
+  [K in keyof Statement]?: Statement[K][number][];
+};
