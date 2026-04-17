@@ -298,3 +298,23 @@ describe("FRONT_DESK role", () => {
     expect(frontDeskRole.statements).not.toHaveProperty("session");
   });
 });
+
+// ---------------------------------------------------------------------------
+// authorize() runtime behavior
+// ---------------------------------------------------------------------------
+
+describe("authorize() runtime behavior", () => {
+  it("denies TECHNICIAN the assign action", () => {
+    expect(technicianRole.authorize({ jobs: ["assign"] }).success).toBe(false);
+  });
+  it("grants FRONT_DESK the DELIVERED status transition", () => {
+    expect(frontDeskRole.authorize({ jobStatus: ["DELIVERED"] }).success).toBe(
+      true
+    );
+  });
+  it("denies FRONT_DESK the IN_REPAIR status transition", () => {
+    expect(frontDeskRole.authorize({ jobStatus: ["IN_REPAIR"] }).success).toBe(
+      false
+    );
+  });
+});

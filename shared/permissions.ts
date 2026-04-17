@@ -1,5 +1,5 @@
 import { createAccessControl } from "better-auth/plugins/access";
-import { defaultStatements } from "better-auth/plugins/admin/access";
+import { adminAc, defaultStatements } from "better-auth/plugins/admin/access";
 
 // ---------------------------------------------------------------------------
 // Statement — single source of truth for every resource × action pair.
@@ -69,19 +69,10 @@ export const ac = createAccessControl(statement);
 // ---------------------------------------------------------------------------
 
 export const ownerRole = ac.newRole({
-  // Admin-plugin resources
-  user: [
-    "create",
-    "list",
-    "set-role",
-    "ban",
-    "impersonate",
-    "delete",
-    "set-password",
-    "get",
-    "update",
-  ],
-  session: ["list", "revoke", "delete"],
+  // Admin-plugin resources — spread adminAc.statements then override user with
+  // defaultStatements.user to capture all 10 actions including "impersonate-admins"
+  ...adminAc.statements,
+  user: defaultStatements.user,
 
   // Business resources
   jobs: [
@@ -177,6 +168,7 @@ export const roles = {
 // ---------------------------------------------------------------------------
 
 export type Statement = typeof statement;
+type NonEmptyArray<T> = [T, ...T[]];
 export type PermissionCheck = {
-  [K in keyof Statement]?: Statement[K][number][];
+  [K in keyof Statement]?: NonEmptyArray<Statement[K][number]>;
 };
