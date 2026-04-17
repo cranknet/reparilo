@@ -1,9 +1,14 @@
 import type { FormEvent, ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
+import ResetPasswordModal from "@/components/modules/settings/reset-password-modal";
+import { Avatar } from "@/components/ui/avatar";
+import { useProfileMultiUser } from "@/hooks/use-profile-multi-user";
 import api from "@/lib/api";
 import { getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
+import { useUsersStore } from "@/stores/users";
 
 type ProfileTab = "personal" | "security" | "activity";
 
@@ -70,6 +75,7 @@ interface ActivityItem {
   createdAt: string;
   fromValue: string | null;
   id: string;
+  metadata?: { jobId?: string } | null;
   toValue: string | null;
 }
 
@@ -153,8 +159,18 @@ export default function ProfilePage() {
   const user = useAuthStore((s) => s.user);
   const role = useAuthStore((s) => s.role);
   const checkSession = useAuthStore((s) => s.checkSession);
-  const userId = user?.id;
-  const displayName = user?.name || user?.username || t("default_user_display");
+  const navigate = useNavigate();
+  const {
+    avatarUploading,
+    displayUser,
+    fileInputRef,
+    handleAvatarRemove,
+    handleAvatarUpload,
+    isSelf,
+    userId,
+  } = useProfileMultiUser(role);
+
+  const displayName = displayUser.name || t("default_user_display");
   const initials = getInitials(displayName);
 
   const [activeTab, setActiveTab] = useState<ProfileTab>("personal");
@@ -192,28 +208,48 @@ export default function ProfilePage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [activityLoading, setActivityLoading] = useState(false);
+  const [activityCursor, setActivityCursor] = useState<string | null>(null);
+  const [hasMoreActivity, setHasMoreActivity] = useState(false);
   const [stats, setStats] = useState({ completedJobs: 0, monthlyJobs: 0 });
   const [statsLoading, setStatsLoading] = useState(false);
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
 
   const personalFormRef = useRef<HTMLFormElement>(null);
   const securityFormRef = useRef<HTMLFormElement>(null);
 
-  const loadActivity = useCallback(async () => {
-    if (!userId) {
-      return;
-    }
-    setActivityLoading(true);
-    try {
-      const res = await api.get(`/users/${userId}/activity`);
-      setActivity(res.data);
-    } catch {
-      setActivity([]);
-    } finally {
-      setActivityLoading(false);
-    }
-  }, [userId]);
+  const loadActivity = useCallback(
+    async (append = false) => {
+      if (!userId) {
+        return;
+      }
+      setActivityLoading(true);
+      try {
+        const params: Record<string, string> = {};
+        if (append && activityCursor) {
+          params.cursor = activityCursor;
+        }
+        const res = await api.get(`/users/${userId}/activity`, { params });
+        const data = res.data;
+        const items: ActivityItem[] = data.items ?? data;
+        if (append) {
+          setActivity((prev) => [...prev, ...items]);
+        } else {
+          setActivity(items);
+        }
+        setActivityCursor(data.nextCursor ?? null);
+        setHasMoreActivity(!!data.nextCursor);
+      } catch {
+        if (!append) {
+          setActivity([]);
+        }
+      } finally {
+        setActivityLoading(false);
+      }
+    },
+    [userId, activityCursor]
+  );
 
   const loadStats = useCallback(async () => {
     if (!userId) {
@@ -259,6 +295,8 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (activeTab === "activity") {
+      setActivityCursor(null);
+      setHasMoreActivity(false);
       loadActivity();
     }
   }, [activeTab, loadActivity]);
@@ -466,15 +504,85 @@ export default function ProfilePage() {
     );
   }
 
-  function renderSecuritySection() {
+  function renderSessionList() {
+    return (
+      <div className="space-y-4">
+        <h4 className="font-bold font-headline text-on-surface text-sm">
+          {t("profile_active_sessions")}
+        </h4>
+
+        <div className="space-y-3">
+          {sessionsLoading && (
+            <div className="flex items-center justify-center py-6">
+              <span className="material-symbols-outlined animate-spin text-[24px] text-on-surface-variant">
+                progress_activity
+              </span>
+            </div>
+          )}
+          {!sessionsLoading && sessions.length === 0 && (
+            <p className="text-on-surface-variant text-sm">
+              {t("profile_no_sessions")}
+            </p>
+          )}
+          {sessions.map((session) => (
+            <div
+              className="flex items-center justify-between rounded-xl bg-surface-container-lowest p-4"
+              key={session.id}
+            >
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-[20px] text-on-surface-variant">
+                  {session.userAgent?.includes("Mobile")
+                    ? "smartphone"
+                    : "laptop_mac"}
+                </span>
+                <div>
+                  <p className="font-semibold text-sm">
+                    {session.userAgent
+                      ? parseUserAgent(session.userAgent)
+                      : t("profile_unknown_device")}
+                    {session.isCurrent
+                      ? ` — ${t("profile_current_session")}`
+                      : ""}
+                  </p>
+                  <p className="text-on-surface-variant text-xs">
+                    {session.ipAddress ?? t("profile_unknown_ip")}
+                  </p>
+                  <p className="mt-0.5 text-on-surface-variant/60 text-xs">
+                    {t("profile_login_time")}:{" "}
+                    {new Date(session.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {session.isCurrent ? (
+                  <>
+                    <div className="h-2.5 w-2.5 rounded-full bg-success" />
+                    <span className="font-bold text-success text-xs uppercase">
+                      {t("profile_active")}
+                    </span>
+                  </>
+                ) : (
+                  <button
+                    className="font-bold text-tertiary text-xs transition-colors hover:text-tertiary-container"
+                    onClick={() => handleRevokeSession(session.id)}
+                    type="button"
+                  >
+                    {t("profile_end_session")}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function renderPasswordForm() {
     const strength = passwordStrength(securityForm.newPassword);
 
     return (
-      <form
-        className="space-y-8"
-        onSubmit={handleSecuritySubmit}
-        ref={securityFormRef}
-      >
+      <>
         <h4 className="font-bold font-headline text-on-surface text-sm">
           {t("profile_change_password")}
         </h4>
@@ -598,74 +706,48 @@ export default function ProfilePage() {
             {t("profile_update_password")}
           </button>
         </div>
+      </>
+    );
+  }
+
+  function renderSecuritySection() {
+    if (!isSelf) {
+      return (
+        <div className="space-y-8">
+          <div className="flex items-center justify-between">
+            <h4 className="font-bold font-headline text-on-surface text-sm">
+              {t("profile_change_password")}
+            </h4>
+            <button
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-primary to-surface-tint px-5 py-2.5 font-bold text-on-primary text-sm shadow-lg shadow-primary/20 transition-all active:opacity-80"
+              onClick={() => setShowResetModal(true)}
+              type="button"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                lock_reset
+              </span>
+              {t("reset_password_title")}
+            </button>
+          </div>
+
+          <div className="h-px bg-outline-variant/10" />
+
+          {renderSessionList()}
+        </div>
+      );
+    }
+
+    return (
+      <form
+        className="space-y-8"
+        onSubmit={handleSecuritySubmit}
+        ref={securityFormRef}
+      >
+        {renderPasswordForm()}
 
         <div className="h-px bg-outline-variant/10" />
 
-        <div className="space-y-4">
-          <h4 className="font-bold font-headline text-on-surface text-sm">
-            {t("profile_active_sessions")}
-          </h4>
-
-          <div className="space-y-3">
-            {sessionsLoading && (
-              <div className="flex items-center justify-center py-6">
-                <span className="material-symbols-outlined animate-spin text-[24px] text-on-surface-variant">
-                  progress_activity
-                </span>
-              </div>
-            )}
-            {!sessionsLoading && sessions.length === 0 && (
-              <p className="text-on-surface-variant text-sm">
-                {t("profile_no_sessions")}
-              </p>
-            )}
-            {sessions.map((session) => (
-              <div
-                className="flex items-center justify-between rounded-xl bg-surface-container-lowest p-4"
-                key={session.id}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-[20px] text-on-surface-variant">
-                    {session.userAgent?.includes("Mobile")
-                      ? "smartphone"
-                      : "laptop_mac"}
-                  </span>
-                  <div>
-                    <p className="font-semibold text-sm">
-                      {session.userAgent
-                        ? parseUserAgent(session.userAgent)
-                        : t("profile_unknown_device")}
-                      {session.isCurrent
-                        ? ` — ${t("profile_current_session")}`
-                        : ""}
-                    </p>
-                    <p className="text-on-surface-variant text-xs">
-                      {session.ipAddress ?? t("profile_unknown_ip")}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {session.isCurrent ? (
-                    <>
-                      <div className="h-2.5 w-2.5 rounded-full bg-success" />
-                      <span className="font-bold text-success text-xs uppercase">
-                        {t("profile_active")}
-                      </span>
-                    </>
-                  ) : (
-                    <button
-                      className="font-bold text-tertiary text-xs transition-colors hover:text-tertiary-container"
-                      onClick={() => handleRevokeSession(session.id)}
-                      type="button"
-                    >
-                      {t("profile_end_session")}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {renderSessionList()}
       </form>
     );
   }
@@ -734,6 +816,28 @@ export default function ProfilePage() {
             </div>
           ))}
         </div>
+
+        {hasMoreActivity && (
+          <div className="flex justify-center pt-4">
+            <button
+              className="flex items-center gap-2 rounded-xl bg-surface-container-low px-5 py-2.5 font-bold text-primary text-sm transition-all hover:bg-surface-container-high active:opacity-80"
+              disabled={activityLoading}
+              onClick={() => loadActivity(true)}
+              type="button"
+            >
+              {activityLoading ? (
+                <span className="material-symbols-outlined animate-spin text-[18px]">
+                  progress_activity
+                </span>
+              ) : (
+                <span className="material-symbols-outlined text-[18px]">
+                  expand_more
+                </span>
+              )}
+              {t("load_more")}
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -746,9 +850,24 @@ export default function ProfilePage() {
 
   return (
     <>
+      {!isSelf && (
+        <button
+          className="mb-4 flex items-center gap-1 font-semibold text-primary text-sm transition-colors hover:underline"
+          onClick={() => navigate("/settings")}
+          type="button"
+        >
+          <span className="material-symbols-outlined text-[18px]">
+            arrow_back
+          </span>
+          {t("profile_back_to_users")}
+        </button>
+      )}
+
       <div className="mb-8">
         <h2 className="font-extrabold font-headline text-2xl text-on-surface tracking-tight md:text-3xl">
-          {t("profile_title")}
+          {isSelf
+            ? t("profile_title")
+            : t("profile_viewing_user", { name: displayName })}
         </h2>
         <p className="mt-1 text-on-surface-variant text-sm md:text-base">
           {t("profile_subtitle")}
@@ -758,17 +877,52 @@ export default function ProfilePage() {
       <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
         <section className="flex w-full flex-col items-center rounded-xl bg-surface-container-lowest/95 p-8 text-center shadow-[0_40px_80px_-20px_rgba(0,64,161,0.06)] lg:w-[320px] lg:shrink-0">
           <div className="relative">
-            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-surface-container-low font-bold font-headline text-3xl text-primary">
-              {initials}
-            </div>
+            <Avatar
+              alt={displayName}
+              className="h-24 w-24 text-3xl"
+              initials={initials}
+              size="md"
+              src={displayUser.image ?? undefined}
+            />
+            {isSelf && (
+              <button
+                className="absolute end-0 bottom-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-on-primary shadow-md transition-all hover:bg-primary/90 active:scale-95"
+                onClick={() => fileInputRef.current?.click()}
+                type="button"
+              >
+                <span className="material-symbols-outlined text-[16px]">
+                  photo_camera
+                </span>
+              </button>
+            )}
+            {avatarUploading && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-on-surface/30">
+                <span className="material-symbols-outlined animate-spin text-[24px] text-on-primary">
+                  progress_activity
+                </span>
+              </div>
+            )}
             <div className="absolute end-0 bottom-1 h-4 w-4 rounded-full border-4 border-surface-container-lowest bg-success" />
+            <input
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  handleAvatarUpload(file, (msg) => setPersonalError(t(msg)));
+                }
+                e.target.value = "";
+              }}
+              ref={fileInputRef}
+              type="file"
+            />
           </div>
 
           <h3 className="mt-4 font-bold font-headline text-on-surface text-xl">
             {displayName}
           </h3>
           <div className="mt-2 rounded-full bg-primary/10 px-3 py-1 font-bold text-primary text-xs tracking-wide">
-            {t(`role.${role}`)}
+            {t(`role.${displayUser.role}`)}
           </div>
 
           <div className="mt-6 grid w-full grid-cols-2 gap-4 border-surface-container-high border-t pt-6">
@@ -796,15 +950,32 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <button
-            className="mt-6 flex items-center gap-2 font-semibold text-primary text-sm transition-colors hover:underline"
-            type="button"
-          >
-            <span className="material-symbols-outlined text-sm">
-              photo_camera
-            </span>
-            {t("profile_change_avatar")}
-          </button>
+          {isSelf && (
+            <div className="mt-6 flex items-center gap-3">
+              <button
+                className="flex items-center gap-2 font-semibold text-primary text-sm transition-colors hover:underline"
+                onClick={() => fileInputRef.current?.click()}
+                type="button"
+              >
+                <span className="material-symbols-outlined text-sm">
+                  photo_camera
+                </span>
+                {t("profile_change_avatar")}
+              </button>
+              {displayUser.image && (
+                <button
+                  className="flex items-center gap-2 font-semibold text-sm text-tertiary transition-colors hover:underline"
+                  onClick={handleAvatarRemove}
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-sm">
+                    delete
+                  </span>
+                  {t("remove")}
+                </button>
+              )}
+            </div>
+          )}
         </section>
 
         <section className="min-w-0 flex-1 space-y-6">
@@ -881,6 +1052,17 @@ export default function ProfilePage() {
           )}
         </section>
       </div>
+
+      {showResetModal && !isSelf && userId && (
+        <ResetPasswordModal
+          onClose={() => setShowResetModal(false)}
+          onSubmit={async (password) => {
+            await useUsersStore.getState().resetUserPassword(userId, password);
+            setShowResetModal(false);
+          }}
+          username={displayUser.username}
+        />
+      )}
     </>
   );
 }
