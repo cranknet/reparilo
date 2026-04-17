@@ -22,7 +22,7 @@ function sendError(
 export const notificationsRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/templates",
-    { preHandler: [requirePermission("notifications:read")] },
+    { preHandler: [requirePermission({ notifications: ["read"] })] },
     async (_req, reply) => {
       const templates = await getNotificationTemplates(app.prisma);
       return reply.send(templates);
@@ -31,7 +31,7 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
 
   app.put(
     "/templates/:id",
-    { preHandler: [requirePermission("notifications:manage")] },
+    { preHandler: [requirePermission({ notifications: ["manage"] })] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = updateNotificationTemplateSchema.safeParse(req.body);

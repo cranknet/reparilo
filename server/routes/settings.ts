@@ -29,7 +29,7 @@ function sendError(
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const settingsRoutes: FastifyPluginAsync = async (app) => {
-  app.addHook("preHandler", requirePermission("settings:read"));
+  app.addHook("preHandler", requirePermission({ settings: ["view"] }));
 
   app.get("/", async (_req, reply) => {
     const [ai, shop] = await Promise.all([
@@ -46,7 +46,7 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
 
   app.put(
     "/ai",
-    { preHandler: [requirePermission("settings:write")] },
+    { preHandler: [requirePermission({ settings: ["edit"] })] },
     async (req, reply) => {
       const parsed = updateAiSettingsSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -65,7 +65,7 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/ai/test",
-    { preHandler: [requirePermission("settings:write")] },
+    { preHandler: [requirePermission({ settings: ["edit"] })] },
     async (_req, reply) => {
       const result = await testAiConnection(app.prisma);
       return reply.send(result);
@@ -79,7 +79,7 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
 
   app.put(
     "/shop",
-    { preHandler: [requirePermission("settings:write")] },
+    { preHandler: [requirePermission({ settings: ["edit"] })] },
     async (req, reply) => {
       const parsed = updateShopSettingsSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -103,7 +103,7 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
 
   app.put(
     "/notifications/templates/:id",
-    { preHandler: [requirePermission("notifications:manage")] },
+    { preHandler: [requirePermission({ notifications: ["manage"] })] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = updateNotificationTemplateSchema.safeParse(req.body);

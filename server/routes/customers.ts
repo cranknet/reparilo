@@ -25,11 +25,11 @@ function sendError(
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const customersRoutes: FastifyPluginAsync = async (app) => {
-  app.addHook("preHandler", requirePermission("customers:read"));
+  app.addHook("preHandler", requirePermission({ customers: ["view"] }));
 
   app.post(
     "/",
-    { preHandler: [requirePermission("customers:write")] },
+    { preHandler: [requirePermission({ customers: ["create"] })] },
     async (req, reply) => {
       const parsed = createCustomerSchema.safeParse(req.body);
       if (!parsed.success) {
