@@ -38,16 +38,14 @@ export default function QuickAddCustomer({
   const update = useCallback(
     <K extends keyof CustomerFormData>(key: K, value: CustomerFormData[K]) => {
       setForm((prev) => ({ ...prev, [key]: value }));
-      if (fieldErrors[key]) {
-        setFieldErrors((prev) => {
-          const next = { ...prev };
-          delete next[key];
-          return next;
-        });
-      }
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
       clearError();
     },
-    [fieldErrors, clearError]
+    [clearError]
   );
 
   const validate = useCallback((): boolean => {

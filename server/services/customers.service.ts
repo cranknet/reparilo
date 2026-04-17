@@ -8,12 +8,17 @@ import type {
 export async function create(prisma: PrismaClient, input: CreateCustomerInput) {
   const email = input.email?.trim() || null;
 
+  const updateData: Record<string, unknown> = {};
+  if (input.name) {
+    updateData.name = input.name;
+  }
+  if (email) {
+    updateData.email = email;
+  }
+
   return await prisma.customer.upsert({
     where: { phone: input.phone },
-    update: {
-      ...(input.name ? { name: input.name } : {}),
-      ...(email === null || email ? { email } : {}),
-    },
+    update: updateData,
     create: {
       email,
       name: input.name,

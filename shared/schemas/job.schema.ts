@@ -6,7 +6,7 @@ import { z } from "zod";
 
 export const createJobSchema = z.object({
   customerEmail: z.string().email().optional().or(z.literal("")),
-  customerId: z.string().min(1).optional(),
+  customerId: z.string().cuid().optional(),
   customerName: z.string().min(1, { error: "Enter a customer name" }),
   customerPhone: z.string().min(1, { error: "Enter a phone number" }),
   deviceBrand: z.string().min(1, { error: "Enter a device brand" }),

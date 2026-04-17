@@ -523,7 +523,8 @@
     "searching": "جارٍ البحث...",
     "no_customer_found": "لم يتم العثور على أي عميل.",
     "create_new": "إنشاء جديد",
-    "customer_linked": "العميل الحالي مرتبط"
+    "customer_linked": "العميل الحالي مرتبط",
+    "error_create_customer": "فشل في إنشاء العميل"
   },
   "profile_title": "ملفي الشخصي",
   "profile_subtitle": "إدارة حسابك وتفضيلاتك",

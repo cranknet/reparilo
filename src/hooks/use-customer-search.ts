@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import api from "@/lib/api";
 
-interface CustomerSearchResult {
+export interface CustomerSearchResult {
   email: string | null;
   id: string;
   name: string;
@@ -12,6 +12,7 @@ export function useCustomerSearch(debounceMs = 250) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<CustomerSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const search = useCallback(async (q: string) => {
@@ -26,8 +27,10 @@ export function useCustomerSearch(debounceMs = 250) {
         params: { q, limit: 8 },
       });
       setResults(res.data as CustomerSearchResult[]);
+      setSearchError(false);
     } catch {
       setResults([]);
+      setSearchError(true);
     } finally {
       setIsSearching(false);
     }
@@ -50,7 +53,8 @@ export function useCustomerSearch(debounceMs = 250) {
   const clear = useCallback(() => {
     setQuery("");
     setResults([]);
+    setSearchError(false);
   }, []);
 
-  return { clear, isSearching, query, results, setQuery };
+  return { clear, isSearching, query, results, searchError, setQuery };
 }

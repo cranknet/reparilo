@@ -519,11 +519,12 @@
     "warranty_yes": "Oui",
     "warranty_no": "Non",
     "creating_job": "Création...",
-    "creating_customer": "Économie...",
+    "creating_customer": "Création en cours...",
     "searching": "Recherche...",
     "no_customer_found": "Aucun client trouvé.",
     "create_new": "Créer nouveau",
-    "customer_linked": "Client existant lié"
+    "customer_linked": "Client existant lié",
+    "error_create_customer": "Échec de la création du client"
   },
   "profile_title": "Mon profil",
   "profile_subtitle": "Gérez votre compte et vos préférences",

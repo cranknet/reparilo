@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import api from "@/lib/api";
 
 interface CreatedCustomer {
@@ -15,6 +16,7 @@ interface CreateCustomerInput {
 }
 
 export function useCreateCustomer() {
+  const { t } = useTranslation();
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +28,7 @@ export function useCreateCustomer() {
         const res = await api.post("/customers", input);
         return res.data as CreatedCustomer;
       } catch (err: unknown) {
-        let message = "Failed to create customer";
+        let message = t("intake.error_create_customer");
         if (err && typeof err === "object" && "response" in err) {
           const resp = (err as { response?: { data?: { message?: string } } })
             .response;
@@ -40,7 +42,7 @@ export function useCreateCustomer() {
         setIsCreating(false);
       }
     },
-    []
+    [t]
   );
 
   const clearError = useCallback(() => setError(null), []);

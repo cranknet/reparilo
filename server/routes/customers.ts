@@ -41,8 +41,17 @@ export const customersRoutes: FastifyPluginAsync = async (app) => {
           { errors: parsed.error.flatten().fieldErrors }
         );
       }
-      const customer = await createCustomer(app.prisma, parsed.data);
-      return reply.status(201).send(customer);
+      try {
+        const customer = await createCustomer(app.prisma, parsed.data);
+        return reply.status(201).send(customer);
+      } catch {
+        return sendError(
+          reply,
+          500,
+          "INTERNAL_ERROR",
+          "Failed to create customer"
+        );
+      }
     }
   );
 

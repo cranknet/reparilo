@@ -130,6 +130,9 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       }
       const userId = getUserId(req);
       const result = await createJob(app.prisma, parsed.data, userId);
+      if ("error" in result && result.error === "INVALID_CUSTOMER") {
+        return sendError(reply, 400, "INVALID_CUSTOMER", "Customer not found");
+      }
       if ("error" in result && result.error === "INVALID_WARRANTY_REFERENCE") {
         return sendError(
           reply,
