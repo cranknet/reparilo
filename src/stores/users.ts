@@ -6,6 +6,7 @@ interface UserRow {
   createdAt: string;
   email: string;
   id: string;
+  image: string | null;
   isActive: boolean;
   mustChangePassword: boolean;
   role: RoleType;
@@ -26,6 +27,7 @@ interface UsersState {
   isLoading: boolean;
   resetUserPassword: (id: string, password: string) => Promise<void>;
   toggleUserStatus: (id: string, isActive: boolean) => Promise<void>;
+  updateUserAvatar: (id: string, imagePath: string | null) => void;
   users: UserRow[];
 }
 
@@ -86,6 +88,14 @@ export const useUsersStore = create<UsersState>((set) => ({
       set({ error: message });
       throw new Error(message);
     }
+  },
+
+  updateUserAvatar: (id, imagePath) => {
+    set((state) => ({
+      users: state.users.map((u) =>
+        u.id === id ? { ...u, image: imagePath } : u
+      ),
+    }));
   },
 
   clearError: () => set({ error: null }),
