@@ -1,7 +1,13 @@
+import type { RoleType } from "@shared/constants";
 import type { NotificationTemplate } from "@shared/types";
 import type { FormEvent, KeyboardEvent, ReactNode } from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
+import AddUserModal from "@/components/modules/settings/add-user-modal";
+import ResetPasswordModal from "@/components/modules/settings/reset-password-modal";
+import { Avatar } from "@/components/ui/avatar";
+import { useAuthStore } from "@/stores/auth";
 import { useSettingsStore } from "@/stores/settings";
 import { useUsersStore } from "@/stores/users";
 
@@ -70,6 +76,116 @@ function getCreativityLabel(value: number, t: (key: string) => string): string {
   return t("creativity_creative");
 }
 
+interface UserRowData {
+  email: string;
+  id: string;
+  image: string | null;
+  isActive: boolean;
+  role: string;
+  username: string;
+}
+
+function UserRow({
+  user,
+  isSelf,
+  onEdit,
+  onResetPassword,
+  onToggleStatus,
+  t,
+}: {
+  isSelf: boolean;
+  onEdit: () => void;
+  onResetPassword: () => void;
+  onToggleStatus: () => void;
+  t: (key: string, options?: Record<string, string>) => string;
+  user: UserRowData;
+}) {
+  const roleCfg = ROLE_CONFIG[user.role] ?? {
+    color: "bg-surface-container text-on-surface-variant",
+    icon: "person",
+  };
+  return (
+    <div className="flex items-center gap-4 rounded-2xl bg-surface-container-low p-4 transition-colors hover:bg-surface-container-high/60">
+      <Avatar
+        alt={user.username}
+        initials={user.username.charAt(0).toUpperCase()}
+        size="md"
+        src={user.image ? `/api/uploads/${user.image}` : undefined}
+      />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-bold text-on-surface text-sm">
+            {user.username}
+          </span>
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold text-xs uppercase ${roleCfg.color}`}
+          >
+            <span className="material-symbols-outlined text-[12px]">
+              {roleCfg.icon}
+            </span>
+            {t(`role.${user.role}`)}
+          </span>
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-medium text-xs ${user.isActive ? "bg-success/10 text-success" : "bg-on-surface-variant/10 text-on-surface-variant"}`}
+          >
+            <span
+              className={`inline-block h-1.5 w-1.5 rounded-full ${user.isActive ? "bg-success" : "bg-on-surface-variant/40"}`}
+            />
+            {user.isActive ? t("status_active") : t("status_inactive")}
+          </span>
+        </div>
+        <p className="mt-0.5 truncate text-on-surface-variant text-xs">
+          {user.email}
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        {!isSelf && (
+          <button
+            aria-checked={user.isActive}
+            aria-label={
+              user.isActive
+                ? t("disable_user", { name: user.username })
+                : t("enable_user", { name: user.username })
+            }
+            className="relative h-6 w-11 rounded-full transition-colors"
+            onClick={onToggleStatus}
+            role="switch"
+            style={{
+              backgroundColor: user.isActive
+                ? "var(--color-primary)"
+                : "var(--color-outline-variant)",
+            }}
+            type="button"
+          >
+            <span
+              className="absolute top-0.5 h-5 w-5 rounded-full bg-on-primary shadow-sm transition-all"
+              style={{ left: user.isActive ? "22px" : "2px" }}
+            />
+          </button>
+        )}
+        <button
+          aria-label={t("reset_password_title")}
+          className="flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg p-2 text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-primary"
+          onClick={onResetPassword}
+          title={t("reset_password_title")}
+          type="button"
+        >
+          <span className="material-symbols-outlined text-[16px]">key</span>
+        </button>
+        <button
+          aria-label={`${t("edit")} ${user.username}`}
+          className="flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg p-2 text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-primary"
+          onClick={onEdit}
+          type="button"
+        >
+          <span className="material-symbols-outlined text-[16px]">edit</span>
+          <span className="hidden sm:inline">{t("edit")}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { t } = useTranslation();
   const baseId = useId();
@@ -128,6 +244,14 @@ export default function SettingsPage() {
   const [testStatus, setTestStatus] = useState<
     "idle" | "loading" | "success" | "fail"
   >("idle");
+  const navigate = useNavigate();
+  const currentUser = useAuthStore((s) => s.user);
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetTarget, setResetTarget] = useState<{
+    id: string;
+    username: string;
+  } | null>(null);
 
   useEffect(() => {
     if (aiSettings) {
@@ -402,6 +526,25 @@ export default function SettingsPage() {
       next.delete(activeTab);
       return next;
     });
+  }
+
+  async function handleCreateUser(data: {
+    username: string;
+    email: string;
+    password: string;
+    role: RoleType;
+  }) {
+    await useUsersStore.getState().createUser(data);
+    setShowAddUserModal(false);
+  }
+
+  async function handleResetPassword(password: string) {
+    if (!resetTarget) {
+      return;
+    }
+    await useUsersStore.getState().resetUserPassword(resetTarget.id, password);
+    setShowResetModal(false);
+    setResetTarget(null);
   }
 
   function renderAiSection() {
@@ -838,6 +981,7 @@ export default function SettingsPage() {
         <div className="flex items-center justify-end">
           <button
             className="flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 py-2.5 font-bold text-on-primary text-sm transition-all active:opacity-80"
+            onClick={() => setShowAddUserModal(true)}
             type="button"
           >
             <span className="material-symbols-outlined text-[18px]">
@@ -857,62 +1001,26 @@ export default function SettingsPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {users.map((user) => {
-              const roleCfg = ROLE_CONFIG[user.role] ?? {
-                color: "bg-surface-container text-on-surface-variant",
-                icon: "person",
-              };
-              return (
-                <div
-                  className="flex items-center gap-4 rounded-2xl bg-surface-container-low p-4 transition-colors hover:bg-surface-container-high/60"
-                  key={user.id}
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-container-lowest font-bold text-on-surface-variant text-sm">
-                    {user.username.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-bold text-on-surface text-sm">
-                        {user.username}
-                      </span>
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold text-xs uppercase ${roleCfg.color}`}
-                      >
-                        <span className="material-symbols-outlined text-[12px]">
-                          {roleCfg.icon}
-                        </span>
-                        {t(`role.${user.role}`)}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 truncate text-on-surface-variant text-xs">
-                      {user.email}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-medium text-xs ${user.isActive ? "bg-success/10 text-success" : "bg-on-surface-variant/10 text-on-surface-variant"}`}
-                    >
-                      <span
-                        className={`inline-block h-1.5 w-1.5 rounded-full ${user.isActive ? "bg-success" : "bg-on-surface-variant/40"}`}
-                      />
-                      {user.isActive
-                        ? t("status_active")
-                        : t("status_inactive")}
-                    </span>
-                    <button
-                      aria-label={`${t("edit")} ${user.username}`}
-                      className="flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg p-2 text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-primary"
-                      type="button"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">
-                        edit
-                      </span>
-                      <span className="hidden sm:inline">{t("edit")}</span>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+            {users.map((user) => (
+              <UserRow
+                isSelf={currentUser?.id === user.id}
+                key={user.id}
+                onEdit={() => {
+                  navigate(`/profile/${user.id}`);
+                }}
+                onResetPassword={() => {
+                  setResetTarget({ id: user.id, username: user.username });
+                  setShowResetModal(true);
+                }}
+                onToggleStatus={() => {
+                  useUsersStore
+                    .getState()
+                    .toggleUserStatus(user.id, !user.isActive);
+                }}
+                t={t}
+                user={user}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -1118,6 +1226,23 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showAddUserModal && (
+        <AddUserModal
+          onClose={() => setShowAddUserModal(false)}
+          onSubmit={handleCreateUser}
+        />
+      )}
+      {showResetModal && resetTarget && (
+        <ResetPasswordModal
+          onClose={() => {
+            setShowResetModal(false);
+            setResetTarget(null);
+          }}
+          onSubmit={handleResetPassword}
+          username={resetTarget.username}
+        />
       )}
     </>
   );
