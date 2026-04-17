@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/auth";
+import { useUiStore } from "@/stores/ui";
 import LanguageToggle from "./language-toggle";
 
 export default function TopBar() {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const role = useAuthStore((s) => s.role);
+  const openIntakeModal = useUiStore((s) => s.openIntakeModal);
 
   return (
     <header className="fixed top-0 right-0 z-40 flex h-16 w-full items-center justify-between border-outline-variant border-b bg-surface/95 px-4 shadow-sm backdrop-blur-sm md:px-8 lg:w-[calc(100%-16rem)]">
@@ -44,6 +46,12 @@ export default function TopBar() {
         <div className="hidden h-8 w-px bg-outline-variant md:block" />
         <button
           className="hidden items-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-br from-primary to-surface-tint px-3 py-2 font-semibold text-on-primary text-xs shadow-md transition-transform hover:scale-95 md:flex md:px-4 md:text-sm"
+          onClick={() => {
+            if (role === "TECHNICIAN") {
+              return;
+            }
+            openIntakeModal();
+          }}
           type="button"
         >
           <span className="material-symbols-outlined">

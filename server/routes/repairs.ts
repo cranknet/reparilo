@@ -27,7 +27,7 @@ function sendError(
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
-  app.addHook("preHandler", requirePermission("parts:read"));
+  app.addHook("preHandler", requirePermission("repairs:read"));
 
   app.get("/", async (req, reply) => {
     const parsed = listRepairsQuerySchema.safeParse(req.query);
@@ -55,7 +55,7 @@ export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/",
-    { preHandler: [requirePermission("parts:write")] },
+    { preHandler: [requirePermission("repairs:write")] },
     async (req, reply) => {
       const parsed = createRepairSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -74,7 +74,7 @@ export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
 
   app.patch(
     "/:id",
-    { preHandler: [requirePermission("parts:write")] },
+    { preHandler: [requirePermission("repairs:write")] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = updateRepairSchema.safeParse(req.body);
@@ -97,7 +97,7 @@ export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
 
   app.patch(
     "/:id/status",
-    { preHandler: [requirePermission("parts:write")] },
+    { preHandler: [requirePermission("repairs:write")] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const { isActive } = req.body as { isActive: boolean };

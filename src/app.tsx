@@ -3,7 +3,9 @@ import { Role } from "@shared/constants";
 import { useEffect } from "react";
 import { Route, Routes } from "react-router";
 import DashboardLayout from "@/components/modules/dashboard-layout";
-import ProtectedRoute from "@/components/modules/protected-route";
+import ProtectedRoute, {
+  RequireRole,
+} from "@/components/modules/protected-route";
 import AiAnalystPage from "@/pages/ai-analyst";
 import ChangePasswordPage from "@/pages/auth/change-password";
 import LoginPage from "@/pages/auth/login";
@@ -60,22 +62,24 @@ export default function App() {
           }
           path="/jobs"
         />
-        <Route
-          element={
-            <DashboardLayout>
-              <PartsCatalogPage />
-            </DashboardLayout>
-          }
-          path="/parts"
-        />
-        <Route
-          element={
-            <DashboardLayout>
-              <RepairsPage />
-            </DashboardLayout>
-          }
-          path="/repairs"
-        />
+        <Route element={<RequireRole roles={["OWNER", "TECHNICIAN"]} />}>
+          <Route
+            element={
+              <DashboardLayout>
+                <PartsCatalogPage />
+              </DashboardLayout>
+            }
+            path="/parts"
+          />
+          <Route
+            element={
+              <DashboardLayout>
+                <RepairsPage />
+              </DashboardLayout>
+            }
+            path="/repairs"
+          />
+        </Route>
         <Route
           element={
             <DashboardLayout>

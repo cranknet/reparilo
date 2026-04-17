@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router";
 import { getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
+import { useUiStore } from "@/stores/ui";
 
 interface NavItem {
   icon: string;
@@ -28,10 +29,18 @@ const TECHNICIAN_NAV_ITEMS: NavItem[] = [
   { icon: "notifications", labelKey: "notifications", to: "/notifications" },
 ];
 
+const FRONT_DESK_NAV_ITEMS: NavItem[] = [
+  { icon: "dashboard", labelKey: "dashboard", to: "/" },
+  { icon: "build", labelKey: "jobs", to: "/jobs" },
+  { icon: "psychology", labelKey: "ai_assistant", to: "/ai-analyst" },
+  { icon: "notifications", labelKey: "notifications", to: "/notifications" },
+  { icon: "settings", labelKey: "settings", to: "/settings" },
+];
+
 const NAV_ITEMS_BY_ROLE: Record<RoleType, NavItem[]> = {
   OWNER: OWNER_NAV_ITEMS,
   TECHNICIAN: TECHNICIAN_NAV_ITEMS,
-  FRONT_DESK: OWNER_NAV_ITEMS,
+  FRONT_DESK: FRONT_DESK_NAV_ITEMS,
 };
 
 const ROLE_LABEL_KEYS: Record<RoleType, string> = {
@@ -50,6 +59,7 @@ export default function Sidebar() {
   const navItems = NAV_ITEMS_BY_ROLE[role] ?? [];
   const [logoutPending, setLogoutPending] = useState(false);
   const logoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openIntakeModal = useUiStore((s) => s.openIntakeModal);
 
   useEffect(() => {
     return () => {
@@ -103,6 +113,12 @@ export default function Sidebar() {
       <div className="mt-auto space-y-3">
         <button
           className={`flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-on-primary transition-all duration-200 active:scale-[0.98] ${FOCUS_VISIBLE}`}
+          onClick={() => {
+            if (role === "TECHNICIAN") {
+              return;
+            }
+            openIntakeModal();
+          }}
           type="button"
         >
           <span aria-hidden="true" className="material-symbols-outlined">

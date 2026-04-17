@@ -1,13 +1,46 @@
 import type { ReactNode } from "react";
+import { useCallback } from "react";
 import BottomNav from "@/components/modules/bottom-nav";
+import type { IntakeFormData } from "@/components/modules/jobs/intake-modal";
+import IntakeModal from "@/components/modules/jobs/intake-modal";
 import Sidebar from "@/components/modules/sidebar";
 import TopBar from "@/components/modules/top-bar";
+import { useJobsStore } from "@/stores/jobs";
+import { useUiStore } from "@/stores/ui";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const intakeModalOpen = useUiStore((s) => s.intakeModalOpen);
+  const closeIntakeModal = useUiStore((s) => s.closeIntakeModal);
+  const { createJob, fetchJobs, fetchMetrics } = useJobsStore();
+
+  const handleIntakeSubmit = useCallback(
+    async (data: IntakeFormData) => {
+      await createJob({
+        customerEmail: data.customerEmail || undefined,
+        customerId: data.customerId || undefined,
+        customerName: data.customerName,
+        customerPhone: data.customerPhone,
+        deviceBrand: data.brand || data.model,
+        deviceModel: data.model,
+        color: data.color || undefined,
+        reportedProblem: data.reportedProblem,
+        conditionNotes: data.conditionNotes || undefined,
+        estimatedCost: Number.parseFloat(data.estimatedCost) || 0,
+        estimatedDate: data.estimatedDelivery || undefined,
+        depositAmount: data.deposit
+          ? Number.parseFloat(data.deposit)
+          : undefined,
+      });
+      await fetchJobs();
+      await fetchMetrics();
+    },
+    [createJob, fetchJobs, fetchMetrics]
+  );
+
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-on-background">
       <Sidebar />
@@ -16,6 +49,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         {children}
       </main>
       <BottomNav />
+      <IntakeModal
+        onClose={closeIntakeModal}
+        onSubmit={handleIntakeSubmit}
+        open={intakeModalOpen}
+      />
     </div>
   );
 }

@@ -2,8 +2,6 @@ import type { JobStatusType } from "@shared/constants";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import JobsFilters from "@/components/modules/jobs/filters";
-import type { IntakeFormData } from "@/components/modules/jobs/intake-modal";
-import IntakeModal from "@/components/modules/jobs/intake-modal";
 import type { StatusGroupKey } from "@/components/modules/jobs/jobs-shared";
 import { jobToRow, STATUS_GROUPS } from "@/components/modules/jobs/jobs-shared";
 import type { JobRow } from "@/components/modules/jobs/jobs-table";
@@ -11,17 +9,18 @@ import JobsTable from "@/components/modules/jobs/jobs-table";
 import JobMobileCard from "@/components/modules/jobs/mobile-card";
 import StatusCounter from "@/components/modules/jobs/status-counter";
 import { useJobsStore } from "@/stores/jobs";
+import { useUiStore } from "@/stores/ui";
 
 export default function JobsPage() {
   const { t } = useTranslation();
-  const { jobs, metrics, isLoadingJobs, fetchJobs, fetchMetrics, createJob } =
+  const { jobs, metrics, isLoadingJobs, fetchJobs, fetchMetrics } =
     useJobsStore();
   const [statusFilter, setStatusFilter] = useState<JobStatusType | "ALL">(
     "ALL"
   );
   const [groupFilter, setGroupFilter] = useState<StatusGroupKey | "ALL">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
-  const [intakeOpen, setIntakeOpen] = useState(false);
+  const openIntakeModal = useUiStore((s) => s.openIntakeModal);
 
   useEffect(() => {
     fetchJobs();
@@ -104,25 +103,6 @@ export default function JobsPage() {
     setStatusFilter("ALL");
   };
 
-  const handleIntakeSubmit = async (data: IntakeFormData) => {
-    await createJob({
-      customerEmail: data.customerEmail || undefined,
-      customerId: data.customerId || undefined,
-      customerName: data.customerName,
-      customerPhone: data.customerPhone,
-      deviceBrand: data.brand || data.model,
-      deviceModel: data.model,
-      color: data.color || undefined,
-      reportedProblem: data.reportedProblem,
-      conditionNotes: data.conditionNotes || undefined,
-      estimatedCost: Number.parseFloat(data.estimatedCost) || 0,
-      estimatedDate: data.estimatedDelivery || undefined,
-      depositAmount: data.deposit ? Number.parseFloat(data.deposit) : undefined,
-    });
-    await fetchJobs();
-    await fetchMetrics();
-  };
-
   if (isLoadingJobs && jobs.length === 0) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -157,7 +137,7 @@ export default function JobsPage() {
           </button>
           <button
             className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-bold font-headline text-on-primary text-sm transition-all hover:bg-primary-container sm:flex-none md:px-8"
-            onClick={() => setIntakeOpen(true)}
+            onClick={() => openIntakeModal()}
             type="button"
           >
             <span className="material-symbols-outlined text-[18px] md:text-[20px]">
@@ -225,12 +205,6 @@ export default function JobsPage() {
           </div>
         )}
       </section>
-
-      <IntakeModal
-        onClose={() => setIntakeOpen(false)}
-        onSubmit={handleIntakeSubmit}
-        open={intakeOpen}
-      />
     </>
   );
 }

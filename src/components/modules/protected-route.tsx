@@ -1,3 +1,4 @@
+import type { RoleType } from "@shared/constants";
 import { Navigate, Outlet } from "react-router";
 import { useAuthStore } from "@/stores/auth";
 
@@ -33,6 +34,20 @@ export default function ProtectedRoute({
 
   if (requireMustChangePassword && mustChangePassword) {
     return <Navigate replace to="/change-password" />;
+  }
+
+  return <Outlet />;
+}
+
+interface RequireRoleProps {
+  roles: RoleType[];
+}
+
+export function RequireRole({ roles }: RequireRoleProps) {
+  const role = useAuthStore((s) => s.role);
+
+  if (!roles.includes(role)) {
+    return <Navigate replace to="/" />;
   }
 
   return <Outlet />;

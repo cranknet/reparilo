@@ -1,20 +1,57 @@
+import type { RoleType } from "@shared/constants";
 import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router";
+import { useAuthStore } from "@/stores/auth";
 
-const NAV_ITEMS = [
-  { icon: "dashboard", labelKey: "dashboard", to: "/" },
-  { icon: "build", labelKey: "jobs", to: "/jobs" },
-  { icon: "menu_book", labelKey: "repair_services", to: "/repairs" },
-  { icon: "psychology", labelKey: "ai_assistant", to: "/ai-analyst" },
-  { icon: "settings", labelKey: "settings", to: "/settings" },
-] as const;
+interface NavItem {
+  icon: string;
+  labelKey: string;
+  roles: RoleType[];
+  to: string;
+}
+
+const NAV_ITEMS: NavItem[] = [
+  {
+    icon: "dashboard",
+    labelKey: "dashboard",
+    roles: ["OWNER", "TECHNICIAN", "FRONT_DESK"],
+    to: "/",
+  },
+  {
+    icon: "build",
+    labelKey: "jobs",
+    roles: ["OWNER", "TECHNICIAN", "FRONT_DESK"],
+    to: "/jobs",
+  },
+  {
+    icon: "menu_book",
+    labelKey: "repair_services",
+    roles: ["OWNER", "TECHNICIAN"],
+    to: "/repairs",
+  },
+  {
+    icon: "psychology",
+    labelKey: "ai_assistant",
+    roles: ["OWNER", "FRONT_DESK"],
+    to: "/ai-analyst",
+  },
+  {
+    icon: "settings",
+    labelKey: "settings",
+    roles: ["OWNER", "TECHNICIAN", "FRONT_DESK"],
+    to: "/settings",
+  },
+];
 
 export default function BottomNav() {
   const { t } = useTranslation();
+  const role = useAuthStore((s) => s.role);
+
+  const visibleItems = NAV_ITEMS.filter((item) => item.roles.includes(role));
 
   return (
     <nav className="fixed right-0 bottom-0 left-0 z-50 flex items-center justify-around border-outline-variant border-t bg-surface/80 px-2 py-1 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] backdrop-blur-lg lg:hidden">
-      {NAV_ITEMS.map(({ icon, labelKey, to }) => (
+      {visibleItems.map(({ icon, labelKey, to }) => (
         <NavLink
           className={({ isActive }) =>
             `flex min-w-0 flex-col items-center rounded-xl px-3 py-2 transition-colors ${
