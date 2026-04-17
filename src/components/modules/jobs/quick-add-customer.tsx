@@ -60,30 +60,26 @@ export default function QuickAddCustomer({
     return Object.keys(errs).length === 0;
   }, [form, t]);
 
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!validate()) {
-        return;
-      }
-      try {
-        const customer = await create({
-          email: form.email,
-          name: form.name,
-          phone: form.phone,
-        });
-        onAdd({
-          email: customer.email ?? "",
-          id: customer.id,
-          name: customer.name,
-          phone: customer.phone,
-        });
-      } catch {
-        // error is set in the hook
-      }
-    },
-    [form, validate, create, onAdd]
-  );
+  const handleSubmit = useCallback(async () => {
+    if (!validate()) {
+      return;
+    }
+    try {
+      const customer = await create({
+        email: form.email,
+        name: form.name,
+        phone: form.phone,
+      });
+      onAdd({
+        email: customer.email ?? "",
+        id: customer.id,
+        name: customer.name,
+        phone: customer.phone,
+      });
+    } catch {
+      // error is set in the hook
+    }
+  }, [form, validate, create, onAdd]);
 
   return (
     <section className="relative">
@@ -119,7 +115,7 @@ export default function QuickAddCustomer({
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="group md:col-span-2">
               <label className={labelCls} htmlFor="qa-name">
@@ -198,7 +194,8 @@ export default function QuickAddCustomer({
             <button
               className="flex h-12 items-center gap-2 rounded-xl bg-primary px-6 font-bold font-headline text-on-primary text-sm transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isCreating}
-              type="submit"
+              onClick={handleSubmit}
+              type="button"
             >
               {isCreating ? (
                 <span className="material-symbols-outlined animate-spin text-sm">
@@ -212,7 +209,7 @@ export default function QuickAddCustomer({
                 : t("intake.add_customer")}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </section>
   );
