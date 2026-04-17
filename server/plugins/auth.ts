@@ -82,22 +82,6 @@ const authPlugin: FastifyPluginAsync = async (app) => {
 
   app.addHook("preHandler", async (request, reply) => {
     if (
-      process.env.AUTH_BYPASS === "true" &&
-      process.env.NODE_ENV !== "production"
-    ) {
-      request.user = {
-        id: "dev",
-        name: "Developer",
-        username: "dev",
-        email: "dev@reparilo.local",
-        role: "OWNER",
-        isActive: true,
-        mustChangePassword: false,
-      };
-      return;
-    }
-
-    if (
       request.url === "/health" ||
       request.url === "/api/csrf-token" ||
       request.url.startsWith("/tracking") ||
