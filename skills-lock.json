@@ -21,6 +21,11 @@
       "sourceType": "github",
       "computedHash": "a73a8b85ccc0898d759f204a4d90c97d65341b6c972b36037bb96cf828074e93"
     },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
+    },
     "prisma-expert": {
       "source": "sickn33/antigravity-awesome-skills",
       "sourceType": "github",

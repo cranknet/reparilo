@@ -518,8 +518,10 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(401).send({ error: "Authentication required" });
     }
 
-    if (requestingUser.id !== id) {
-      return reply.status(403).send({ error: "Can only revoke own sessions" });
+    const perms = ROLE_PERMISSIONS[requestingUser.role as RoleType] ?? [];
+    const isAdmin = perms.includes("users:write");
+    if (requestingUser.id !== id && !isAdmin) {
+      return reply.status(403).send({ error: "Insufficient permissions" });
     }
 
     const session = await app.prisma.session.findUnique({

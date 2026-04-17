@@ -115,10 +115,7 @@ export default function Sidebar() {
           </span>
         </button>
 
-        <NavLink
-          className="rounded-xl bg-surface-container-high p-3 transition-colors hover:bg-surface-container-highest"
-          to="/profile"
-        >
+        <NavLink className="rounded-xl p-3 transition-colors" to="/profile">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-on-primary text-sm">
               {getInitials(userName)}

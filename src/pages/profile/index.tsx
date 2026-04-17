@@ -2,6 +2,7 @@ import type { FormEvent, ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import SessionsModal from "@/components/modules/profile/sessions-modal";
 import ResetPasswordModal from "@/components/modules/settings/reset-password-modal";
 import { Avatar } from "@/components/ui/avatar";
 import { useProfileMultiUser } from "@/hooks/use-profile-multi-user";
@@ -86,22 +87,6 @@ interface SessionItem {
   ipAddress: string | null;
   isCurrent: boolean;
   userAgent: string | null;
-}
-
-function parseUserAgent(ua: string): string {
-  if (ua.includes("Firefox")) {
-    return "Firefox";
-  }
-  if (ua.includes("Edg")) {
-    return "Edge";
-  }
-  if (ua.includes("Chrome")) {
-    return "Chrome";
-  }
-  if (ua.includes("Safari")) {
-    return "Safari";
-  }
-  return ua.slice(0, 30);
 }
 
 function passwordStrength(pw: string): number {
@@ -214,6 +199,7 @@ export default function ProfilePage() {
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [showSessionsModal, setShowSessionsModal] = useState(false);
 
   const personalFormRef = useRef<HTMLFormElement>(null);
   const securityFormRef = useRef<HTMLFormElement>(null);
@@ -494,76 +480,34 @@ export default function ProfilePage() {
     );
   }
 
-  function renderSessionList() {
+  function renderSessionButton() {
     return (
       <div className="space-y-4">
         <h4 className="font-bold font-headline text-on-surface text-sm">
           {t("profile_active_sessions")}
         </h4>
-
-        <div className="space-y-3">
-          {sessionsLoading && (
-            <div className="flex items-center justify-center py-6">
-              <span className="material-symbols-outlined animate-spin text-[24px] text-on-surface-variant">
-                progress_activity
-              </span>
-            </div>
-          )}
-          {!sessionsLoading && sessions.length === 0 && (
-            <p className="text-on-surface-variant text-sm">
-              {t("profile_no_sessions")}
-            </p>
-          )}
-          {sessions.map((session) => (
-            <div
-              className="flex items-center justify-between rounded-xl bg-surface-container-lowest p-4"
-              key={session.id}
-            >
-              <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined text-[20px] text-on-surface-variant">
-                  {session.userAgent?.includes("Mobile")
-                    ? "smartphone"
-                    : "laptop_mac"}
-                </span>
-                <div>
-                  <p className="font-semibold text-sm">
-                    {session.userAgent
-                      ? parseUserAgent(session.userAgent)
-                      : t("profile_unknown_device")}
-                    {session.isCurrent
-                      ? ` — ${t("profile_current_session")}`
-                      : ""}
-                  </p>
-                  <p className="text-on-surface-variant text-xs">
-                    {session.ipAddress ?? t("profile_unknown_ip")}
-                  </p>
-                  <p className="mt-0.5 text-on-surface-variant/60 text-xs">
-                    {t("profile_login_time")}:{" "}
-                    {new Date(session.createdAt).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {session.isCurrent ? (
-                  <>
-                    <div className="h-2.5 w-2.5 rounded-full bg-success" />
-                    <span className="font-bold text-success text-xs uppercase">
-                      {t("profile_active")}
-                    </span>
-                  </>
-                ) : (
-                  <button
-                    className="font-bold text-tertiary text-xs transition-colors hover:text-tertiary-container"
-                    onClick={() => handleRevokeSession(session.id)}
-                    type="button"
-                  >
-                    {t("profile_end_session")}
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        <button
+          className="flex w-full items-center justify-between rounded-xl bg-surface-container-lowest p-4 transition-colors hover:bg-surface-container-low"
+          onClick={() => {
+            loadSessions();
+            setShowSessionsModal(true);
+          }}
+          type="button"
+        >
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-[20px] text-on-surface-variant">
+              devices
+            </span>
+            <span className="font-medium text-sm">
+              {sessionsLoading
+                ? t("loading")
+                : t("profile_sessions_count", { count: sessions.length })}
+            </span>
+          </div>
+          <span className="material-symbols-outlined text-[18px] text-on-surface-variant">
+            chevron_right
+          </span>
+        </button>
       </div>
     );
   }
@@ -722,7 +666,7 @@ export default function ProfilePage() {
 
           <div className="h-px bg-outline-variant/10" />
 
-          {renderSessionList()}
+          {renderSessionButton()}
         </div>
       );
     }
@@ -737,7 +681,7 @@ export default function ProfilePage() {
 
         <div className="h-px bg-outline-variant/10" />
 
-        {renderSessionList()}
+        {renderSessionButton()}
       </form>
     );
   }
@@ -1055,6 +999,15 @@ export default function ProfilePage() {
             setShowResetModal(false);
           }}
           username={displayUser.username}
+        />
+      )}
+
+      {showSessionsModal && (
+        <SessionsModal
+          loading={sessionsLoading}
+          onClose={() => setShowSessionsModal(false)}
+          onRevoke={handleRevokeSession}
+          sessions={sessions}
         />
       )}
     </>

@@ -1,16 +1,12 @@
-import type { RoleType } from "@shared/constants";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/auth";
 import LanguageToggle from "./language-toggle";
 
-const DEV_ROLES: RoleType[] = ["OWNER", "TECHNICIAN", "FRONT_DESK"];
-
 export default function TopBar() {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const role = useAuthStore((s) => s.role);
-  const setRole = useAuthStore((s) => s.setRole);
 
   return (
     <header className="fixed top-0 right-0 z-40 flex h-16 w-full items-center justify-between border-outline-variant border-b bg-surface/95 px-4 shadow-sm backdrop-blur-sm md:px-8 lg:w-[calc(100%-16rem)]">
@@ -37,21 +33,6 @@ export default function TopBar() {
         </div>
       </div>
       <div className="flex items-center gap-2 md:gap-3">
-        {import.meta.env.DEV && (
-          <select
-            aria-label="DEV: Switch role"
-            className="rounded-lg border border-tertiary-container bg-tertiary-container px-2 py-1 font-bold text-on-tertiary-container text-xs uppercase"
-            onChange={(e) => setRole(e.target.value as RoleType)}
-            title="DEV: Switch role"
-            value={role}
-          >
-            {DEV_ROLES.map((r) => (
-              <option key={r} value={r}>
-                DEV: {r}
-              </option>
-            ))}
-          </select>
-        )}
         <LanguageToggle />
         <button
           aria-label={t("notifications")}
@@ -62,7 +43,7 @@ export default function TopBar() {
         </button>
         <div className="hidden h-8 w-px bg-outline-variant md:block" />
         <button
-          className="hidden items-center gap-2 rounded-xl bg-gradient-to-br from-primary to-surface-tint px-3 py-2 font-semibold text-on-primary text-xs shadow-md transition-transform hover:scale-95 md:flex md:px-4 md:text-sm"
+          className="hidden items-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-br from-primary to-surface-tint px-3 py-2 font-semibold text-on-primary text-xs shadow-md transition-transform hover:scale-95 md:flex md:px-4 md:text-sm"
           type="button"
         >
           <span className="material-symbols-outlined">

@@ -625,6 +625,7 @@
   "profile_viewing_user": "Profil de {{name}}",
   "profile_back_to_users": "Retour aux utilisateurs",
   "profile_login_time": "Heure de connexion",
+  "profile_sessions_count": "{{count}} session(s) active(s)",
   "profile_expires": "Expire",
   "profile_load_more": "Charger plus",
   "send_message": "Envoyer un message",
