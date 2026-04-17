@@ -7,8 +7,10 @@ import { useAuthStore } from "@/stores/auth";
  */
 export function can(role: string, permissions: PermissionCheck): boolean {
   return authClient.admin.checkRolePermission({
-    permissions: permissions as never,
+    // BA's generic infers keyof roles, not string; cast bridges the gap safely.
     role: role as never,
+    // BA expects plain array; PermissionCheck uses NonEmptyArray — identical at runtime.
+    permissions: permissions as never,
   });
 }
 

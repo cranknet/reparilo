@@ -10,5 +10,5 @@ interface CanProps {
 
 export function Can({ perm, children, fallback = null }: CanProps) {
   const allowed = useCan(perm);
-  return <>{allowed ? children : fallback}</>;
+  return allowed ? children : fallback;
 }
