@@ -28,7 +28,7 @@ function sendError(
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const partsRoutes: FastifyPluginAsync = async (app) => {
-  app.addHook("preHandler", requirePermission("parts:read"));
+  app.addHook("preHandler", requirePermission({ parts: ["viewCatalog"] }));
 
   app.get("/", async (req, reply) => {
     const parsed = listPartsQuerySchema.safeParse(req.query);
@@ -56,7 +56,7 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/",
-    { preHandler: [requirePermission("parts:write")] },
+    { preHandler: [requirePermission({ parts: ["manageCatalog"] })] },
     async (req, reply) => {
       const parsed = createPartSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -75,7 +75,7 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
 
   app.patch(
     "/:id",
-    { preHandler: [requirePermission("parts:write")] },
+    { preHandler: [requirePermission({ parts: ["manageCatalog"] })] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = updatePartSchema.safeParse(req.body);
@@ -98,7 +98,7 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
 
   app.patch(
     "/:id/status",
-    { preHandler: [requirePermission("parts:write")] },
+    { preHandler: [requirePermission({ parts: ["manageCatalog"] })] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = togglePartStatusSchema.safeParse(req.body);
