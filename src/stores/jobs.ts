@@ -35,6 +35,8 @@ interface JobsState {
   ) => Promise<JobRepair>;
   clearError: () => void;
   createJob: (data: {
+    customerEmail?: string;
+    customerId?: string;
     customerName: string;
     customerPhone: string;
     deviceBrand: string;

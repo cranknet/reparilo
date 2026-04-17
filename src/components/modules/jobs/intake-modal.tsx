@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { CustomerFormData } from "@/components/modules/jobs/quick-add-customer";
+import type { CreatedCustomerData } from "@/components/modules/jobs/quick-add-customer";
 import QuickAddCustomer from "@/components/modules/jobs/quick-add-customer";
+import { useCustomerSearch } from "@/hooks/use-customer-search";
 
 type DeviceCategory = "phone" | "tablet" | "laptop" | "watch";
 
@@ -10,6 +11,7 @@ interface IntakeFormData {
   color: string;
   conditionNotes: string;
   customerEmail: string;
+  customerId: string;
   customerName: string;
   customerPhone: string;
   deposit: string;
@@ -26,6 +28,7 @@ const INITIAL_FORM: IntakeFormData = {
   color: "",
   conditionNotes: "",
   customerEmail: "",
+  customerId: "",
   customerName: "",
   customerPhone: "",
   deposit: "",
@@ -67,6 +70,21 @@ const BRANDS = [
 
 export type { IntakeFormData };
 
+function useClickOutside(
+  ref: React.RefObject<HTMLElement | null>,
+  handler: () => void
+) {
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        handler();
+      }
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [ref, handler]);
+}
+
 const labelCls =
   "mb-1.5 ms-1 block font-label text-xs font-bold uppercase tracking-wide text-on-surface-variant";
 const inputCls =
@@ -79,6 +97,100 @@ const textareaErrorCls =
   "w-full resize-none rounded-xl bg-surface-container-low p-4 text-sm text-on-surface ring-2 ring-error transition-all placeholder:text-outline focus:bg-surface-container-lowest focus:ring-primary";
 const errorCls = "ms-1 mt-1 font-label text-xs font-medium text-error";
 const requiredMarkCls = "ms-0.5 text-error";
+const REQUIRED_FIELDS: (keyof IntakeFormData)[] = [
+  "customerName",
+  "model",
+  "reportedProblem",
+];
+
+interface SearchDropdownProps {
+  isSearching: boolean;
+  onCreateNew: () => void;
+  onSelect: (c: {
+    email: string | null;
+    id: string;
+    name: string;
+    phone: string;
+  }) => void;
+  query: string;
+  results: { email: string | null; id: string; name: string; phone: string }[];
+  t: (key: string) => string;
+  visible: boolean;
+}
+
+function CustomerSearchDropdown({
+  isSearching,
+  onCreateNew,
+  onSelect,
+  query,
+  results,
+  t,
+  visible,
+}: SearchDropdownProps) {
+  if (!visible) {
+    return null;
+  }
+
+  return (
+    <div className="absolute inset-x-0 top-full z-20 mt-1 overflow-hidden rounded-xl bg-surface-container-lowest shadow-lg ring-1 ring-outline-variant">
+      {isSearching && (
+        <div className="flex items-center gap-2 px-4 py-3">
+          <span className="material-symbols-outlined animate-spin text-on-surface-variant text-sm">
+            progress_activity
+          </span>
+          <span className="font-label text-on-surface-variant text-xs">
+            {t("intake.searching")}
+          </span>
+        </div>
+      )}
+      {!isSearching && results.length > 0 && (
+        <ul className="max-h-48 overflow-y-auto py-1">
+          {results.map((c) => (
+            <li key={c.id}>
+              <button
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-start transition-colors hover:bg-surface-container-high"
+                onClick={() => onSelect(c)}
+                type="button"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-container">
+                  <span className="material-symbols-outlined text-on-primary-container text-sm">
+                    person
+                  </span>
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-bold font-headline text-on-surface text-sm">
+                    {c.name}
+                  </p>
+                  <p className="truncate font-label text-on-surface-variant text-xs">
+                    {c.phone}
+                    {c.email ? ` · ${c.email}` : ""}
+                  </p>
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {!isSearching && results.length === 0 && query.length >= 2 && (
+        <div className="flex items-center gap-2 px-4 py-3">
+          <span className="material-symbols-outlined text-on-surface-variant text-sm">
+            person_add
+          </span>
+          <span className="font-label text-on-surface-variant text-xs">
+            {t("intake.no_customer_found")}
+          </span>
+          <button
+            className="ms-auto font-bold font-headline text-primary text-xs hover:underline"
+            onClick={onCreateNew}
+            type="button"
+          >
+            {t("intake.create_new")}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function IntakeModal({
   onClose,
@@ -95,6 +207,15 @@ export default function IntakeModal({
   const [touched, setTouched] = useState<
     Partial<Record<keyof IntakeFormData, boolean>>
   >({});
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const {
+    isSearching,
+    query,
+    results,
+    setQuery,
+    clear: clearSearch,
+  } = useCustomerSearch();
 
   const validate = useCallback((): boolean => {
     const newErrors: Partial<Record<keyof IntakeFormData, string>> = {};
@@ -128,27 +249,58 @@ export default function IntakeModal({
   const handleBlur = useCallback(
     (field: keyof IntakeFormData) => {
       setTouched((prev) => ({ ...prev, [field]: true }));
-      if (
-        (field === "customerName" ||
-          field === "model" ||
-          field === "reportedProblem") &&
-        !form[field]?.toString().trim()
-      ) {
+      if (REQUIRED_FIELDS.includes(field) && !form[field]?.toString().trim()) {
         setErrors((prev) => ({ ...prev, [field]: t("intake.error_required") }));
       }
     },
     [form, t]
   );
 
+  const selectCustomer = useCallback(
+    (customer: {
+      email: string | null;
+      id: string;
+      name: string;
+      phone: string;
+    }) => {
+      update("customerId", customer.id);
+      update("customerName", customer.name);
+      update("customerPhone", customer.phone);
+      update("customerEmail", customer.email ?? "");
+      clearSearch();
+      setSearchFocused(false);
+    },
+    [update, clearSearch]
+  );
+
+  const clearCustomer = useCallback(() => {
+    update("customerId", "");
+    update("customerName", "");
+    update("customerPhone", "");
+    update("customerEmail", "");
+    clearSearch();
+  }, [update, clearSearch]);
+
+  const handleQuickAdd = useCallback(
+    (data: CreatedCustomerData) => {
+      update("customerId", data.id);
+      update("customerName", data.name);
+      update("customerPhone", data.phone);
+      update("customerEmail", data.email);
+      setShowQuickAdd(false);
+    },
+    [update]
+  );
+
   useEffect(() => {
     if (!open) {
       return;
     }
-    const onKey = (e: KeyboardEvent) => {
+    function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         onClose();
       }
-    };
+    }
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
     return () => {
@@ -156,6 +308,8 @@ export default function IntakeModal({
       document.body.style.overflow = "";
     };
   }, [open, onClose]);
+
+  useClickOutside(searchRef, () => setSearchFocused(false));
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -186,6 +340,8 @@ export default function IntakeModal({
   if (!open) {
     return null;
   }
+
+  const showDropdown = searchFocused && query.length >= 2 && !form.customerId;
 
   return (
     <div
@@ -258,25 +414,20 @@ export default function IntakeModal({
 
                 {showQuickAdd && (
                   <QuickAddCustomer
-                    onAdd={(data: CustomerFormData) => {
-                      update("customerName", data.name);
-                      update("customerPhone", data.phone);
-                      update("customerEmail", data.email);
-                      setShowQuickAdd(false);
-                    }}
+                    onAdd={handleQuickAdd}
                     onClose={() => setShowQuickAdd(false)}
                   />
                 )}
 
                 <div className="space-y-4">
-                  <div className="relative">
+                  <div className="relative" ref={searchRef}>
                     <label className={labelCls} htmlFor="customer-search">
                       {t("intake.customer_search")}
                       <span className={requiredMarkCls}>*</span>
                     </label>
                     <div className="relative">
                       <span className="material-symbols-outlined absolute end-4 top-1/2 -translate-y-1/2 text-outline">
-                        search
+                        {form.customerId ? "check_circle" : "search"}
                       </span>
                       <input
                         aria-invalid={!!errors.customerName}
@@ -285,13 +436,58 @@ export default function IntakeModal({
                         }
                         id="customer-search"
                         onBlur={() => handleBlur("customerName")}
-                        onChange={(e) => update("customerName", e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          update("customerId", "");
+                          update("customerName", val);
+                          setQuery(val);
+                        }}
+                        onFocus={() => setSearchFocused(true)}
                         placeholder={t("intake.customer_search_placeholder")}
                         required
                         type="text"
                         value={form.customerName}
                       />
+                      {form.customerId && (
+                        <button
+                          className="absolute end-12 top-1/2 -translate-y-1/2 text-outline transition-colors hover:text-on-surface"
+                          onClick={() => {
+                            clearCustomer();
+                          }}
+                          tabIndex={-1}
+                          type="button"
+                        >
+                          <span className="material-symbols-outlined text-sm">
+                            close
+                          </span>
+                        </button>
+                      )}
                     </div>
+
+                    <CustomerSearchDropdown
+                      isSearching={isSearching}
+                      onCreateNew={() => {
+                        setShowQuickAdd(true);
+                        setSearchFocused(false);
+                      }}
+                      onSelect={selectCustomer}
+                      query={query}
+                      results={results}
+                      t={t}
+                      visible={showDropdown}
+                    />
+
+                    {form.customerId && (
+                      <div className="mt-2 flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5">
+                        <span className="material-symbols-outlined text-primary text-sm">
+                          verified
+                        </span>
+                        <span className="font-label font-medium text-primary text-xs">
+                          {t("intake.customer_linked")}
+                        </span>
+                      </div>
+                    )}
+
                     {errors.customerName && touched.customerName && (
                       <p className={errorCls}>{errors.customerName}</p>
                     )}

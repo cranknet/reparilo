@@ -1,18 +1,21 @@
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useCreateCustomer } from "@/hooks/use-create-customer";
 
-interface CustomerFormData {
+export interface CustomerFormData {
   email: string;
   name: string;
   phone: string;
 }
 
-interface QuickAddCustomerProps {
-  onAdd: (data: CustomerFormData) => void;
-  onClose: () => void;
+export interface CreatedCustomerData extends CustomerFormData {
+  id: string;
 }
 
-export type { CustomerFormData };
+interface QuickAddCustomerProps {
+  onAdd: (data: CreatedCustomerData) => void;
+  onClose: () => void;
+}
 
 const labelCls =
   "mb-2 ms-1 block font-bold font-label text-xs uppercase tracking-wide text-on-surface-variant";
@@ -22,25 +25,66 @@ export default function QuickAddCustomer({
   onClose,
 }: QuickAddCustomerProps) {
   const { t } = useTranslation();
+  const { clearError, create, error, isCreating } = useCreateCustomer();
   const [form, setForm] = useState<CustomerFormData>({
     email: "",
     name: "",
     phone: "",
   });
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<keyof CustomerFormData, string>>
+  >({});
 
   const update = useCallback(
     <K extends keyof CustomerFormData>(key: K, value: CustomerFormData[K]) => {
       setForm((prev) => ({ ...prev, [key]: value }));
+      if (fieldErrors[key]) {
+        setFieldErrors((prev) => {
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
+      }
+      clearError();
     },
-    []
+    [fieldErrors, clearError]
   );
 
+  const validate = useCallback((): boolean => {
+    const errs: Partial<Record<keyof CustomerFormData, string>> = {};
+    if (!form.name.trim()) {
+      errs.name = t("intake.error_required");
+    }
+    if (!form.phone.trim()) {
+      errs.phone = t("intake.error_required");
+    }
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  }, [form, t]);
+
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
-      onAdd(form);
+      if (!validate()) {
+        return;
+      }
+      try {
+        const customer = await create({
+          email: form.email,
+          name: form.name,
+          phone: form.phone,
+        });
+        onAdd({
+          email: customer.email ?? "",
+          id: customer.id,
+          name: customer.name,
+          phone: customer.phone,
+        });
+      } catch {
+        // error is set in the hook
+      }
     },
-    [form, onAdd]
+    [form, validate, create, onAdd]
   );
 
   return (
@@ -66,18 +110,31 @@ export default function QuickAddCustomer({
           </button>
         </div>
 
+        {error && (
+          <div className="mb-4 flex items-center gap-2 rounded-xl bg-error-container px-4 py-3">
+            <span className="material-symbols-outlined text-on-error-container text-sm">
+              error
+            </span>
+            <p className="font-bold font-label text-on-error-container text-xs">
+              {error}
+            </p>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="group md:col-span-2">
               <label className={labelCls} htmlFor="qa-name">
-                {t("intake.full_name")}
+                {t("intake.full_name")} *
               </label>
               <div className="relative flex items-center">
                 <span className="material-symbols-outlined absolute start-4 text-lg text-outline">
                   person
                 </span>
                 <input
-                  className="h-[52px] w-full rounded-xl border-none bg-surface-container-highest ps-12 pe-4 font-body text-on-surface text-sm transition-all placeholder:text-outline/50 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
+                  aria-invalid={!!fieldErrors.name}
+                  className={`h-[52px] w-full rounded-xl border-none ps-12 pe-4 font-body text-on-surface text-sm transition-all placeholder:text-outline/50 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 ${fieldErrors.name ? "bg-surface-container-lowest ring-2 ring-error" : "bg-surface-container-highest"}`}
+                  disabled={isCreating}
                   id="qa-name"
                   onChange={(e) => update("name", e.target.value)}
                   placeholder={t("intake.full_name_placeholder")}
@@ -85,18 +142,25 @@ export default function QuickAddCustomer({
                   value={form.name}
                 />
               </div>
+              {fieldErrors.name && (
+                <p className="ms-1 mt-1 font-label font-medium text-error text-xs">
+                  {fieldErrors.name}
+                </p>
+              )}
             </div>
 
             <div className="group">
               <label className={labelCls} htmlFor="qa-phone">
-                {t("intake.phone")}
+                {t("intake.phone")} *
               </label>
               <div className="relative flex items-center">
                 <span className="material-symbols-outlined absolute start-4 text-lg text-outline">
                   phone
                 </span>
                 <input
-                  className="h-[52px] w-full rounded-xl border-none bg-surface-container-highest ps-12 pe-4 font-body text-on-surface text-sm transition-all placeholder:text-outline/50 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
+                  aria-invalid={!!fieldErrors.phone}
+                  className={`h-[52px] w-full rounded-xl border-none ps-12 pe-4 font-body text-on-surface text-sm transition-all placeholder:text-outline/50 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 ${fieldErrors.phone ? "bg-surface-container-lowest ring-2 ring-error" : "bg-surface-container-highest"}`}
+                  disabled={isCreating}
                   id="qa-phone"
                   onChange={(e) => update("phone", e.target.value)}
                   placeholder="+213..."
@@ -104,6 +168,11 @@ export default function QuickAddCustomer({
                   value={form.phone}
                 />
               </div>
+              {fieldErrors.phone && (
+                <p className="ms-1 mt-1 font-label font-medium text-error text-xs">
+                  {fieldErrors.phone}
+                </p>
+              )}
             </div>
 
             <div className="group">
@@ -116,6 +185,7 @@ export default function QuickAddCustomer({
                 </span>
                 <input
                   className="h-[52px] w-full rounded-xl border-none bg-surface-container-highest ps-12 pe-4 font-body text-on-surface text-sm transition-all placeholder:text-outline/50 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
+                  disabled={isCreating}
                   id="qa-email"
                   onChange={(e) => update("email", e.target.value)}
                   placeholder="email@example.com"
@@ -128,11 +198,20 @@ export default function QuickAddCustomer({
 
           <div className="mt-8 flex justify-end">
             <button
-              className="flex h-12 items-center gap-2 rounded-xl bg-primary px-6 font-bold font-headline text-on-primary text-sm transition-all active:scale-[0.98]"
+              className="flex h-12 items-center gap-2 rounded-xl bg-primary px-6 font-bold font-headline text-on-primary text-sm transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={isCreating}
               type="submit"
             >
-              <span className="material-symbols-outlined text-sm">check</span>
-              {t("intake.add_customer")}
+              {isCreating ? (
+                <span className="material-symbols-outlined animate-spin text-sm">
+                  progress_activity
+                </span>
+              ) : (
+                <span className="material-symbols-outlined text-sm">check</span>
+              )}
+              {isCreating
+                ? t("intake.creating_customer")
+                : t("intake.add_customer")}
             </button>
           </div>
         </form>

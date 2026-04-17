@@ -2,10 +2,12 @@ export type { UpdateProfileInput } from "./auth.schema";
 // biome-ignore lint/performance/noBarrelFile: shared schemas barrel is intentional
 export { updateProfileSchema } from "./auth.schema";
 export type {
+  CreateCustomerInput,
   CustomerListQueryInput,
   CustomerSearchQueryInput,
 } from "./customer.schema";
 export {
+  createCustomerSchema,
   customerListQuerySchema,
   customerSearchQuerySchema,
 } from "./customer.schema";

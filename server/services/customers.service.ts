@@ -1,8 +1,26 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import type {
+  CreateCustomerInput,
   CustomerListQueryInput,
   CustomerSearchQueryInput,
 } from "@shared/schemas";
+
+export async function create(prisma: PrismaClient, input: CreateCustomerInput) {
+  const email = input.email?.trim() || null;
+
+  return await prisma.customer.upsert({
+    where: { phone: input.phone },
+    update: {
+      ...(input.name ? { name: input.name } : {}),
+      ...(email === null || email ? { email } : {}),
+    },
+    create: {
+      email,
+      name: input.name,
+      phone: input.phone,
+    },
+  });
+}
 
 export async function list(
   prisma: PrismaClient,

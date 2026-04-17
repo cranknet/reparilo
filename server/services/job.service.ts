@@ -149,11 +149,36 @@ export async function create(
     }
   }
 
-  const customer = await prisma.customer.upsert({
-    where: { phone: input.customerPhone },
-    update: { name: input.customerName },
-    create: { name: input.customerName, phone: input.customerPhone },
-  });
+  let customer: {
+    id: string;
+    name: string;
+    phone: string;
+    email: string | null;
+  };
+
+  if (input.customerId) {
+    const found = await prisma.customer.findUnique({
+      where: { id: input.customerId },
+    });
+    if (!found) {
+      return { error: "INVALID_CUSTOMER" as const };
+    }
+    customer = found;
+  } else {
+    const email = input.customerEmail?.trim() || null;
+    customer = await prisma.customer.upsert({
+      where: { phone: input.customerPhone },
+      update: {
+        name: input.customerName,
+        ...(email ? { email } : {}),
+      },
+      create: {
+        email,
+        name: input.customerName,
+        phone: input.customerPhone,
+      },
+    });
+  }
 
   const device = await prisma.device.upsert({
     where: {

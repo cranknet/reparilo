@@ -518,7 +518,12 @@
     "error_summary": "Veuillez remplir tous les champs obligatoires",
     "warranty_yes": "Oui",
     "warranty_no": "Non",
-    "creating_job": "Création..."
+    "creating_job": "Création...",
+    "creating_customer": "Économie...",
+    "searching": "Recherche...",
+    "no_customer_found": "Aucun client trouvé.",
+    "create_new": "Créer nouveau",
+    "customer_linked": "Client existant lié"
   },
   "profile_title": "Mon profil",
   "profile_subtitle": "Gérez votre compte et vos préférences",

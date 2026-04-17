@@ -106,6 +106,8 @@ export default function JobsPage() {
 
   const handleIntakeSubmit = async (data: IntakeFormData) => {
     await createJob({
+      customerEmail: data.customerEmail || undefined,
+      customerId: data.customerId || undefined,
       customerName: data.customerName,
       customerPhone: data.customerPhone,
       deviceBrand: data.brand || data.model,

@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+export const createCustomerSchema = z.object({
+  email: z.string().email().optional().or(z.literal("")),
+  name: z.string().min(1, { error: "Enter a customer name" }),
+  phone: z.string().min(1, { error: "Enter a phone number" }),
+});
+
+export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
+
 export const customerListQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(100).default(20),
