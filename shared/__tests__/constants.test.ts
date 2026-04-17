@@ -4,7 +4,7 @@ import {
   JOB_STATUS_FLOW,
   JobStatus,
 } from "@shared/constants/job-statuses";
-import { ROLE_LABELS, ROLE_PERMISSIONS, Role } from "@shared/constants/roles";
+import { ROLE_LABELS, Role } from "@shared/constants/roles";
 import { describe, expect, it } from "vitest";
 
 describe("Job Status Constants", () => {
@@ -36,13 +36,6 @@ describe("Role Constants", () => {
     expect(Role.OWNER).toBe("OWNER");
     expect(Role.TECHNICIAN).toBe("TECHNICIAN");
     expect(Role.FRONT_DESK).toBe("FRONT_DESK");
-  });
-
-  it("every role has permissions", () => {
-    for (const role of Object.values(Role)) {
-      expect(ROLE_PERMISSIONS[role]).toBeDefined();
-      expect(ROLE_PERMISSIONS[role].length).toBeGreaterThan(0);
-    }
   });
 
   it("every role has a label", () => {

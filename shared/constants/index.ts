@@ -17,4 +17,4 @@ export { PartCategory } from "./part-categories";
 export type { RepairCategoryType } from "./repair-categories";
 export { RepairCategory } from "./repair-categories";
 export type { RoleType } from "./roles";
-export { ROLE_LABELS, ROLE_PERMISSIONS, Role } from "./roles";
+export { ROLE_LABELS, Role } from "./roles";
