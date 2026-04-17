@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { Prisma } from "@prisma/client";
-import { ROLE_PERMISSIONS, type RoleType } from "@shared/constants/roles";
+import type { RoleType } from "@shared/constants/roles";
 import {
   createUserSchema,
   resetPasswordSchema,
@@ -90,36 +90,12 @@ function isUniqueViolation(err: unknown): string | null {
   return `${label} already in use`;
 }
 
-function canModifyUser(
-  requestingUserId: string,
-  targetId: string,
-  requestingRole: string
-): boolean {
-  if (requestingUserId === targetId) {
-    return true;
-  }
-  const perms = ROLE_PERMISSIONS[requestingRole as RoleType] ?? [];
-  return perms.includes("users:write");
-}
-
-function canViewUserActivity(
-  requestingUserId: string,
-  targetId: string,
-  requestingRole: string
-): boolean {
-  if (requestingUserId === targetId) {
-    return true;
-  }
-  const perms = ROLE_PERMISSIONS[requestingRole as RoleType] ?? [];
-  return perms.includes("users:read");
-}
-
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/",
     {
-      preHandler: [requirePermission("users:read")],
+      preHandler: [requirePermission({ user: ["list"] })],
     },
     async (_request, reply) => {
       const users = await app.prisma.user.findMany({
@@ -142,7 +118,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/:id",
     {
-      preHandler: [requirePermission("users:read")],
+      preHandler: [requirePermission({ user: ["get"] })],
     },
     async (request, reply) => {
       const { id } = request.params as { id: string };
@@ -170,7 +146,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     "/",
     {
-      preHandler: [requirePermission("users:write")],
+      preHandler: [requirePermission({ user: ["create"] })],
     },
     async (request, reply) => {
       const parsed = createUserSchema.safeParse(request.body);
@@ -242,7 +218,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.patch(
     "/:id/status",
     {
-      preHandler: [requirePermission("users:write")],
+      preHandler: [requirePermission({ user: ["update"] })],
     },
     async (request, reply) => {
       const { id } = request.params as { id: string };
@@ -275,7 +251,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     "/:id/reset-password",
     {
-      preHandler: [requirePermission("users:write")],
+      preHandler: [requirePermission({ user: ["update"] })],
     },
     async (request, reply) => {
       const { id } = request.params as { id: string };
@@ -331,8 +307,16 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(401).send({ error: "Authentication required" });
     }
 
-    if (!canModifyUser(requestingUser.id, id, requestingUser.role)) {
-      return reply.status(403).send({ error: "Insufficient permissions" });
+    if (requestingUser.id !== id) {
+      const perm = await app.auth.api.userHasPermission({
+        body: {
+          role: requestingUser.role as RoleType,
+          permissions: { user: ["update"] },
+        },
+      });
+      if (!perm.success) {
+        return reply.status(403).send({ error: "Insufficient permissions" });
+      }
     }
 
     const parsed = updateProfileSchema.safeParse(request.body);
@@ -387,8 +371,16 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(401).send({ error: "Authentication required" });
     }
 
-    if (!canViewUserActivity(requestingUser.id, id, requestingUser.role)) {
-      return reply.status(403).send({ error: "Insufficient permissions" });
+    if (requestingUser.id !== id) {
+      const perm = await app.auth.api.userHasPermission({
+        body: {
+          role: requestingUser.role as RoleType,
+          permissions: { user: ["list"] },
+        },
+      });
+      if (!perm.success) {
+        return reply.status(403).send({ error: "Insufficient permissions" });
+      }
     }
 
     const take = Math.min(Math.max(Number(limit) || 4, 1), 100);
@@ -440,8 +432,16 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(401).send({ error: "Authentication required" });
     }
 
-    if (!canViewUserActivity(requestingUser.id, id, requestingUser.role)) {
-      return reply.status(403).send({ error: "Insufficient permissions" });
+    if (requestingUser.id !== id) {
+      const perm = await app.auth.api.userHasPermission({
+        body: {
+          role: requestingUser.role as RoleType,
+          permissions: { user: ["list"] },
+        },
+      });
+      if (!perm.success) {
+        return reply.status(403).send({ error: "Insufficient permissions" });
+      }
     }
 
     const now = new Date();
@@ -474,10 +474,16 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(401).send({ error: "Authentication required" });
     }
 
-    const perms = ROLE_PERMISSIONS[requestingUser.role as RoleType] ?? [];
-    const isAdmin = perms.includes("users:write");
-    if (requestingUser.id !== id && !isAdmin) {
-      return reply.status(403).send({ error: "Insufficient permissions" });
+    if (requestingUser.id !== id) {
+      const perm = await app.auth.api.userHasPermission({
+        body: {
+          role: requestingUser.role as RoleType,
+          permissions: { session: ["list"] },
+        },
+      });
+      if (!perm.success) {
+        return reply.status(403).send({ error: "Insufficient permissions" });
+      }
     }
 
     const currentSessionId = requestingUser.sessionId;
@@ -517,10 +523,16 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(401).send({ error: "Authentication required" });
     }
 
-    const perms = ROLE_PERMISSIONS[requestingUser.role as RoleType] ?? [];
-    const isAdmin = perms.includes("users:write");
-    if (requestingUser.id !== id && !isAdmin) {
-      return reply.status(403).send({ error: "Insufficient permissions" });
+    if (requestingUser.id !== id) {
+      const perm = await app.auth.api.userHasPermission({
+        body: {
+          role: requestingUser.role as RoleType,
+          permissions: { session: ["revoke"] },
+        },
+      });
+      if (!perm.success) {
+        return reply.status(403).send({ error: "Insufficient permissions" });
+      }
     }
 
     const session = await app.prisma.session.findUnique({

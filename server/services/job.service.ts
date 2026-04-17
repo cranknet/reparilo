@@ -17,6 +17,8 @@ import { createAuditLog } from "./audit.service.js";
 
 const VALID_TECH_ROLES = new Set(["OWNER", "TECHNICIAN"]);
 
+const FD_CANCEL_WINDOW_MS = 30 * 60 * 1000;
+
 async function validateTechnician(prisma: PrismaClient, technicianId: string) {
   const tech = await prisma.user.findUnique({ where: { id: technicianId } });
   if (!tech) {
@@ -300,16 +302,42 @@ export async function update(
   return { ...updated, finalCost: computeFinalCost(updated) };
 }
 
+function canFrontDeskCancel(
+  job: { createdById: string; createdAt: Date },
+  userId: string
+):
+  | { ok: true }
+  | { ok: false; reason: "CANCEL_NOT_CREATOR" | "CANCEL_WINDOW_EXPIRED" } {
+  if (job.createdById !== userId) {
+    return { ok: false, reason: "CANCEL_NOT_CREATOR" };
+  }
+  const elapsed = Date.now() - job.createdAt.getTime();
+  if (elapsed > FD_CANCEL_WINDOW_MS) {
+    return { ok: false, reason: "CANCEL_WINDOW_EXPIRED" };
+  }
+  return { ok: true };
+}
+
 export async function transitionStatus(
   prisma: PrismaClient,
   id: string,
   newStatus: JobStatusType,
   userId: string,
-  _options?: { requestingRole: string }
+  options?: { requestingRole: string }
 ) {
   const job = await prisma.job.findUnique({ where: { id } });
   if (!job) {
     return null;
+  }
+
+  if (newStatus === "CANCELLED" && options?.requestingRole === "FRONT_DESK") {
+    const check = canFrontDeskCancel(
+      { createdById: job.createdById, createdAt: job.createdAt },
+      userId
+    );
+    if (!check.ok) {
+      return { error: check.reason };
+    }
   }
 
   const allowed = JOB_STATUS_FLOW[job.status as JobStatusType] ?? [];
