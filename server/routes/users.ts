@@ -9,6 +9,7 @@ import {
 import { hashPassword } from "better-auth/crypto";
 import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
+import { deleteAvatar, uploadAvatar } from "../services/avatar.service.js";
 
 async function checkUniqueFields(
   prisma: PrismaClient,
@@ -129,6 +130,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
           role: true,
           isActive: true,
           mustChangePassword: true,
+          image: true,
           createdAt: true,
         },
         orderBy: { createdAt: "desc" },
@@ -481,4 +483,65 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
     return reply.send({ success: true });
   });
+
+  app.post(
+    "/:id/avatar",
+    {
+      preHandler: [requirePermission("users:write")],
+    },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const requestingUser = request.user;
+
+      if (!requestingUser) {
+        return reply.status(401).send({ error: "Authentication required" });
+      }
+
+      if (requestingUser.id !== id) {
+        return reply.status(403).send({ error: "Can only update own avatar" });
+      }
+
+      const data = await request.file();
+      if (!data) {
+        return reply.status(400).send({ error: "No file provided" });
+      }
+
+      const result = await uploadAvatar(app.prisma, id, data);
+      if (!result) {
+        return reply.status(404).send({ error: "User not found" });
+      }
+      if ("error" in result) {
+        const status = result.error === "FILE_TOO_LARGE" ? 413 : 400;
+        return reply.status(status).send({ error: result.error });
+      }
+
+      return reply.send(result);
+    }
+  );
+
+  app.delete(
+    "/:id/avatar",
+    {
+      preHandler: [requirePermission("users:write")],
+    },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const requestingUser = request.user;
+
+      if (!requestingUser) {
+        return reply.status(401).send({ error: "Authentication required" });
+      }
+
+      if (requestingUser.id !== id) {
+        return reply.status(403).send({ error: "Can only delete own avatar" });
+      }
+
+      const result = await deleteAvatar(app.prisma, id);
+      if (!result) {
+        return reply.status(404).send({ error: "User not found" });
+      }
+
+      return reply.send(result);
+    }
+  );
 };
