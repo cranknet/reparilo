@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { Route, Routes } from "react-router";
 import DashboardLayout from "@/components/modules/dashboard-layout";
 import ProtectedRoute, {
-  RequireRole,
+  RequirePermission,
 } from "@/components/modules/protected-route";
 import AiAnalystPage from "@/pages/ai-analyst";
 import ChangePasswordPage from "@/pages/auth/change-password";
@@ -62,7 +62,9 @@ export default function App() {
           }
           path="/jobs"
         />
-        <Route element={<RequireRole roles={["OWNER", "TECHNICIAN"]} />}>
+        <Route
+          element={<RequirePermission perm={{ parts: ["viewCatalog"] }} />}
+        >
           <Route
             element={
               <DashboardLayout>
@@ -71,6 +73,10 @@ export default function App() {
             }
             path="/parts"
           />
+        </Route>
+        <Route
+          element={<RequirePermission perm={{ repairs: ["viewCatalog"] }} />}
+        >
           <Route
             element={
               <DashboardLayout>

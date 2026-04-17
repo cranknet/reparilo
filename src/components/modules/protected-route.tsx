@@ -1,5 +1,7 @@
 import type { RoleType } from "@shared/constants";
+import type { PermissionCheck } from "@shared/permissions";
 import { Navigate, Outlet } from "react-router";
+import { useCan } from "@/hooks/use-can";
 import { useAuthStore } from "@/stores/auth";
 
 interface ProtectedRouteProps {
@@ -50,5 +52,17 @@ export function RequireRole({ roles }: RequireRoleProps) {
     return <Navigate replace to="/" />;
   }
 
+  return <Outlet />;
+}
+
+interface RequirePermissionProps {
+  perm: PermissionCheck;
+}
+
+export function RequirePermission({ perm }: RequirePermissionProps) {
+  const allowed = useCan(perm);
+  if (!allowed) {
+    return <Navigate replace to="/" />;
+  }
   return <Outlet />;
 }
