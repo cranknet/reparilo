@@ -1,6 +1,6 @@
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { Job, Prisma, PrismaClient } from "@prisma/client";
 import { AuditAction } from "@prisma/client";
-import type { JobStatusType } from "@shared/constants";
+import type { JobStatusType, RoleType } from "@shared/constants";
 import {
   ACTIVE_STATUSES,
   COMPLETED_STATUSES,
@@ -303,7 +303,7 @@ export async function update(
 }
 
 function canFrontDeskCancel(
-  job: { createdById: string; createdAt: Date },
+  job: Pick<Job, "createdById" | "createdAt">,
   userId: string
 ):
   | { ok: true }
@@ -311,6 +311,7 @@ function canFrontDeskCancel(
   if (job.createdById !== userId) {
     return { ok: false, reason: "CANCEL_NOT_CREATOR" };
   }
+  // Both are UTC ms; no timezone concern
   const elapsed = Date.now() - job.createdAt.getTime();
   if (elapsed > FD_CANCEL_WINDOW_MS) {
     return { ok: false, reason: "CANCEL_WINDOW_EXPIRED" };
@@ -323,7 +324,7 @@ export async function transitionStatus(
   id: string,
   newStatus: JobStatusType,
   userId: string,
-  options?: { requestingRole: string }
+  options?: { requestingRole: RoleType }
 ) {
   const job = await prisma.job.findUnique({ where: { id } });
   if (!job) {
@@ -331,10 +332,7 @@ export async function transitionStatus(
   }
 
   if (newStatus === "CANCELLED" && options?.requestingRole === "FRONT_DESK") {
-    const check = canFrontDeskCancel(
-      { createdById: job.createdById, createdAt: job.createdAt },
-      userId
-    );
+    const check = canFrontDeskCancel(job, userId);
     if (!check.ok) {
       return { error: check.reason };
     }

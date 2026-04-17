@@ -222,7 +222,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       id,
       parsed.data.status,
       userId,
-      { requestingRole: req.user.role }
+      { requestingRole: req.user.role as RoleType }
     );
     if (!result) {
       return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
