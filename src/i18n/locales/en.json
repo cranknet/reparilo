@@ -315,6 +315,7 @@
   "add_user_modal_error_password": "Password must be at least 8 characters",
   "add_user_modal_error_role": "Select a role",
   "add_user_modal_error_conflict": "Username or email already in use",
+  "add_user_modal_error_general": "Failed to create user. Please try again.",
   "user_disabled": "{{name}} has been disabled",
   "user_enabled": "{{name}} has been enabled",
   "disable_user": "Disable user",

@@ -159,7 +159,7 @@ function UserRow({
           >
             <span
               className="absolute top-0.5 h-5 w-5 rounded-full bg-on-primary shadow-sm transition-all"
-              style={{ left: user.isActive ? "22px" : "2px" }}
+              style={{ insetInlineStart: user.isActive ? "22px" : "2px" }}
             />
           </button>
         )}

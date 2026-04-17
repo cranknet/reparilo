@@ -80,10 +80,17 @@ export async function uploadAvatar(
   await fs.writeFile(filePath, buffer);
 
   const relativePath = `avatars/${filename}`;
-  await prisma.user.update({
-    where: { id: userId },
-    data: { image: relativePath },
-  });
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { image: relativePath },
+    });
+  } catch (err) {
+    await fs.unlink(filePath).catch(() => {
+      /* intentionally ignored */
+    });
+    throw err;
+  }
 
   return { image: relativePath };
 }

@@ -77,9 +77,11 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
       });
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: string } } };
-      const msg = axiosErr.response?.data?.error || "Failed to create user";
+      const msg = axiosErr.response?.data?.error || "";
       if (msg.toLowerCase().includes("already")) {
         setConflictError(t("add_user_modal_error_conflict"));
+      } else {
+        setConflictError(t("add_user_modal_error_general"));
       }
     } finally {
       setSubmitting(false);

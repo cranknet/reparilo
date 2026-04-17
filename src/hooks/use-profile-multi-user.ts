@@ -23,11 +23,10 @@ const EMPTY_USER: DisplayUser = {
 
 export function useProfileMultiUser(role: string) {
   const { userId: routeUserId } = useParams<{ userId?: string }>();
-  const currentUser = useAuthStore((s) => s.user);
   const user = useAuthStore((s) => s.user);
   const checkSession = useAuthStore((s) => s.checkSession);
-  const isSelf = !routeUserId || routeUserId === currentUser?.id;
-  const userId = isSelf ? currentUser?.id : routeUserId;
+  const isSelf = !routeUserId || routeUserId === user?.id;
+  const userId = isSelf ? user?.id : routeUserId;
 
   const [targetUser, setTargetUser] = useState<DisplayUser | null>(null);
 
@@ -60,7 +59,7 @@ export function useProfileMultiUser(role: string) {
     file: File,
     onError: (msg: string) => void
   ) {
-    if (!isSelf) {
+    if (!(isSelf && userId)) {
       return;
     }
     const formData = new FormData();
@@ -76,8 +75,13 @@ export function useProfileMultiUser(role: string) {
       const errorMsg = axiosErr.response?.data?.error;
       if (errorMsg === "FILE_TOO_LARGE") {
         onError("profile_avatar_too_large");
-      } else if (errorMsg === "INVALID_FILE_TYPE") {
+      } else if (
+        errorMsg === "INVALID_FILE_TYPE" ||
+        errorMsg === "INVALID_FILE_CONTENT"
+      ) {
         onError("profile_avatar_invalid_type");
+      } else {
+        onError("profile_avatar_uploading");
       }
     } finally {
       setAvatarUploading(false);
@@ -85,7 +89,7 @@ export function useProfileMultiUser(role: string) {
   }
 
   async function handleAvatarRemove() {
-    if (!isSelf) {
+    if (!(isSelf && userId)) {
       return;
     }
     try {

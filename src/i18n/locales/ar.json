@@ -315,6 +315,7 @@
   "add_user_modal_error_password": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل",
   "add_user_modal_error_role": "حدد دورًا",
   "add_user_modal_error_conflict": "اسم المستخدم أو البريد الإلكتروني قيد الاستخدام بالفعل",
+  "add_user_modal_error_general": "فشل في إنشاء المستخدم. ",
   "user_disabled": "تم تعطيل {{name}}.",
   "user_enabled": "تم تفعيل {{name}}.",
   "disable_user": "تعطيل المستخدم",
