@@ -524,7 +524,8 @@
     "no_customer_found": "No customer found.",
     "create_new": "Create New",
     "customer_linked": "Existing customer linked",
-    "error_create_customer": "Failed to create customer"
+    "error_create_customer": "Failed to create customer",
+    "clear_customer": "Clear customer"
   },
   "profile_title": "My Profile",
   "profile_subtitle": "Manage your account and preferences",

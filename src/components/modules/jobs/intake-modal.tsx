@@ -470,11 +470,11 @@ export default function IntakeModal({
                       />
                       {form.customerId && (
                         <button
+                          aria-label={t("intake.clear_customer")}
                           className="absolute end-12 top-1/2 -translate-y-1/2 text-outline transition-colors hover:text-on-surface"
                           onClick={() => {
                             clearCustomer();
                           }}
-                          tabIndex={-1}
                           type="button"
                         >
                           <span className="material-symbols-outlined text-sm">

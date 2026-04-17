@@ -14,6 +14,7 @@ export function useCustomerSearch(debounceMs = 250) {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const controllerRef = useRef<AbortController | null>(null);
 
   const search = useCallback(async (q: string) => {
     if (q.trim().length < 2) {
@@ -21,18 +22,35 @@ export function useCustomerSearch(debounceMs = 250) {
       setIsSearching(false);
       return;
     }
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    controllerRef.current = controller;
     setIsSearching(true);
     try {
       const res = await api.get("/customers/search", {
         params: { q, limit: 8 },
+        signal: controller.signal,
       });
+      if (controller.signal.aborted) {
+        return;
+      }
       setResults(res.data as CustomerSearchResult[]);
       setSearchError(false);
-    } catch {
+    } catch (err: unknown) {
+      if (controller.signal.aborted) {
+        return;
+      }
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return;
+      }
       setResults([]);
       setSearchError(true);
     } finally {
-      setIsSearching(false);
+      if (!controller.signal.aborted) {
+        setIsSearching(false);
+      }
     }
   }, []);
 
@@ -51,6 +69,9 @@ export function useCustomerSearch(debounceMs = 250) {
   }, [query, debounceMs, search]);
 
   const clear = useCallback(() => {
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+    }
     setQuery("");
     setResults([]);
     setSearchError(false);

@@ -524,7 +524,8 @@
     "no_customer_found": "Aucun client trouvé.",
     "create_new": "Créer nouveau",
     "customer_linked": "Client existant lié",
-    "error_create_customer": "Échec de la création du client"
+    "error_create_customer": "Échec de la création du client",
+    "clear_customer": "Client clair"
   },
   "profile_title": "Mon profil",
   "profile_subtitle": "Gérez votre compte et vos préférences",
