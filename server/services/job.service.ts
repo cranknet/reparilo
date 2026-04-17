@@ -304,7 +304,8 @@ export async function transitionStatus(
   prisma: PrismaClient,
   id: string,
   newStatus: JobStatusType,
-  userId: string
+  userId: string,
+  _options?: { requestingRole: string }
 ) {
   const job = await prisma.job.findUnique({ where: { id } });
   if (!job) {

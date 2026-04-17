@@ -1,3 +1,4 @@
+import type { RoleType } from "@shared/constants/roles";
 import {
   addJobNoteSchema,
   addJobPartSchema,
@@ -62,7 +63,7 @@ function getUserId(req: FastifyRequest): string {
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const jobRoutes: FastifyPluginAsync = async (app) => {
-  app.addHook("preHandler", requirePermission("jobs:read"));
+  app.addHook("preHandler", requirePermission({ jobs: ["view"] }));
 
   app.get("/lookup", { preHandler: [] }, async (req, reply) => {
     const { code } = req.query as { code?: string };
@@ -114,7 +115,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/",
-    { preHandler: [requirePermission("jobs:write")] },
+    { preHandler: [requirePermission({ jobs: ["create"] })] },
     async (req, reply) => {
       const parsed = createJobSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -147,7 +148,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.patch(
     "/:id",
-    { preHandler: [requirePermission("jobs:write")] },
+    { preHandler: [requirePermission({ jobs: ["edit"] })] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = updateJobSchema.safeParse(req.body);
@@ -187,48 +188,75 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
     }
   );
 
-  app.patch(
-    "/:id/status",
-    { preHandler: [requirePermission("jobs:update_status")] },
-    async (req, reply) => {
-      const { id } = req.params as { id: string };
-      const parsed = transitionStatusSchema.safeParse(req.body);
-      if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: parsed.error.flatten().fieldErrors,
-          }
-        );
-      }
-      const userId = getUserId(req);
-      const result = await transitionStatus(
-        app.prisma,
-        id,
-        parsed.data.status,
-        userId
-      );
-      if (!result) {
-        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
-      }
-      if ("error" in result && result.error === "CONFLICT_STATUS_TRANSITION") {
-        return sendError(
-          reply,
-          409,
-          "CONFLICT_STATUS_TRANSITION",
-          "Invalid status transition",
-          {
-            allowedTransitions: result.allowedTransitions,
-            currentStatus: result.currentStatus,
-          }
-        );
-      }
-      return reply.send(result);
+  app.patch("/:id/status", async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const parsed = transitionStatusSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return sendError(reply, 400, "VALIDATION_ERROR", "Invalid request body", {
+        errors: parsed.error.flatten().fieldErrors,
+      });
     }
-  );
+
+    if (!req.user) {
+      return sendError(reply, 401, "UNAUTHORIZED", "Authentication required");
+    }
+
+    const permCheck = await app.auth.api.userHasPermission({
+      body: {
+        role: req.user.role as RoleType,
+        permissions: { jobStatus: [parsed.data.status] },
+      },
+    });
+    if (!permCheck.success) {
+      return sendError(
+        reply,
+        403,
+        "FORBIDDEN_STATUS_TRANSITION",
+        `Role ${req.user.role} cannot transition to ${parsed.data.status}`
+      );
+    }
+
+    const userId = getUserId(req);
+    const result = await transitionStatus(
+      app.prisma,
+      id,
+      parsed.data.status,
+      userId,
+      { requestingRole: req.user.role }
+    );
+    if (!result) {
+      return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+    }
+    if ("error" in result && result.error === "CONFLICT_STATUS_TRANSITION") {
+      return sendError(
+        reply,
+        409,
+        "CONFLICT_STATUS_TRANSITION",
+        "Invalid status transition",
+        {
+          allowedTransitions: result.allowedTransitions,
+          currentStatus: result.currentStatus,
+        }
+      );
+    }
+    if ("error" in result && result.error === "CANCEL_WINDOW_EXPIRED") {
+      return sendError(
+        reply,
+        403,
+        "CANCEL_WINDOW_EXPIRED",
+        "Cancellation window has expired"
+      );
+    }
+    if ("error" in result && result.error === "CANCEL_NOT_CREATOR") {
+      return sendError(
+        reply,
+        403,
+        "CANCEL_NOT_CREATOR",
+        "Only the job creator can cancel"
+      );
+    }
+    return reply.send(result);
+  });
 
   app.get("/:id/notes", async (req, reply) => {
     const { id } = req.params as { id: string };
@@ -241,7 +269,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/:id/notes",
-    { preHandler: [requirePermission("jobs:write")] },
+    { preHandler: [requirePermission({ jobs: ["edit"] })] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = addJobNoteSchema.safeParse(req.body);
@@ -275,7 +303,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/:id/parts",
-    { preHandler: [requirePermission("jobs:write")] },
+    { preHandler: [requirePermission({ jobs: ["edit"] })] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = addJobPartSchema.safeParse(req.body);
@@ -309,7 +337,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete(
     "/:id/parts/:partId",
-    { preHandler: [requirePermission("jobs:write")] },
+    { preHandler: [requirePermission({ jobs: ["edit"] })] },
     async (req, reply) => {
       const { id, partId } = req.params as { id: string; partId: string };
       const userId = getUserId(req);
@@ -323,7 +351,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/:id/repairs",
-    { preHandler: [requirePermission("jobs:write")] },
+    { preHandler: [requirePermission({ jobs: ["edit"] })] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = addJobRepairSchema.safeParse(req.body);
@@ -357,7 +385,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete(
     "/:id/repairs/:repairId",
-    { preHandler: [requirePermission("jobs:write")] },
+    { preHandler: [requirePermission({ jobs: ["edit"] })] },
     async (req, reply) => {
       const { id, repairId } = req.params as { id: string; repairId: string };
       const userId = getUserId(req);
@@ -371,7 +399,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/:id/photos",
-    { preHandler: [requirePermission("jobs:write")] },
+    { preHandler: [requirePermission({ jobs: ["edit"] })] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const data = await req.file();
@@ -421,7 +449,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete(
     "/:id/photos/:photoId",
-    { preHandler: [requirePermission("jobs:write")] },
+    { preHandler: [requirePermission({ jobs: ["edit"] })] },
     async (req, reply) => {
       const { id, photoId } = req.params as { id: string; photoId: string };
       const userId = getUserId(req);
@@ -435,7 +463,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/:id/waiting-parts",
-    { preHandler: [requirePermission("jobs:write")] },
+    { preHandler: [requirePermission({ jobs: ["edit"] })] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = addWaitingPartSchema.safeParse(req.body);
@@ -469,7 +497,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete(
     "/:id/waiting-parts/:waitingId",
-    { preHandler: [requirePermission("jobs:write")] },
+    { preHandler: [requirePermission({ jobs: ["edit"] })] },
     async (req, reply) => {
       const { id, waitingId } = req.params as { id: string; waitingId: string };
       const userId = getUserId(req);
