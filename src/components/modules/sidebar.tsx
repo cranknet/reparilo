@@ -1,7 +1,9 @@
 import type { RoleType } from "@shared/constants";
+import type { PermissionCheck } from "@shared/permissions";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router";
+import { can, useCan } from "@/hooks/use-can";
 import { getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
 import { useUiStore } from "@/stores/ui";
@@ -9,39 +11,49 @@ import { useUiStore } from "@/stores/ui";
 interface NavItem {
   icon: string;
   labelKey: string;
+  perm: PermissionCheck;
   to: string;
 }
 
-const OWNER_NAV_ITEMS: NavItem[] = [
-  { icon: "dashboard", labelKey: "dashboard", to: "/" },
-  { icon: "build", labelKey: "jobs", to: "/jobs" },
-  { icon: "inventory_2", labelKey: "parts_inventory", to: "/parts" },
-  { icon: "menu_book", labelKey: "repair_services", to: "/repairs" },
-  { icon: "psychology", labelKey: "ai_assistant", to: "/ai-analyst" },
-  { icon: "settings", labelKey: "settings", to: "/settings" },
+const NAV_ITEMS: NavItem[] = [
+  {
+    icon: "dashboard",
+    labelKey: "dashboard",
+    to: "/",
+    perm: { jobs: ["view"] },
+  },
+  { icon: "build", labelKey: "jobs", to: "/jobs", perm: { jobs: ["view"] } },
+  {
+    icon: "inventory_2",
+    labelKey: "parts_inventory",
+    to: "/parts",
+    perm: { parts: ["viewCatalog"] },
+  },
+  {
+    icon: "menu_book",
+    labelKey: "repair_services",
+    to: "/repairs",
+    perm: { repairs: ["viewCatalog"] },
+  },
+  {
+    icon: "psychology",
+    labelKey: "ai_assistant",
+    to: "/ai-analyst",
+    perm: { ai: ["access"] },
+  },
+  {
+    icon: "notifications",
+    labelKey: "notifications",
+    to: "/notifications",
+    perm: { notifications: ["read"] },
+  },
+  {
+    icon: "settings",
+    labelKey: "settings",
+    to: "/settings",
+    perm: { settings: ["view"] },
+  },
 ];
-
-const TECHNICIAN_NAV_ITEMS: NavItem[] = [
-  { icon: "dashboard", labelKey: "dashboard", to: "/" },
-  { icon: "work_history", labelKey: "my_jobs", to: "/jobs" },
-  { icon: "inventory_2", labelKey: "parts_inventory", to: "/parts" },
-  { icon: "build", labelKey: "repair_services", to: "/repairs" },
-  { icon: "notifications", labelKey: "notifications", to: "/notifications" },
-];
-
-const FRONT_DESK_NAV_ITEMS: NavItem[] = [
-  { icon: "dashboard", labelKey: "dashboard", to: "/" },
-  { icon: "build", labelKey: "jobs", to: "/jobs" },
-  { icon: "psychology", labelKey: "ai_assistant", to: "/ai-analyst" },
-  { icon: "notifications", labelKey: "notifications", to: "/notifications" },
-  { icon: "settings", labelKey: "settings", to: "/settings" },
-];
-
-const NAV_ITEMS_BY_ROLE: Record<RoleType, NavItem[]> = {
-  OWNER: OWNER_NAV_ITEMS,
-  TECHNICIAN: TECHNICIAN_NAV_ITEMS,
-  FRONT_DESK: FRONT_DESK_NAV_ITEMS,
-};
 
 const ROLE_LABEL_KEYS: Record<RoleType, string> = {
   OWNER: "role.OWNER",
@@ -56,18 +68,20 @@ export default function Sidebar() {
   const { t } = useTranslation();
   const role = useAuthStore((s) => s.role);
   const userName = useAuthStore((s) => s.user?.name || s.user?.username || "");
-  const navItems = NAV_ITEMS_BY_ROLE[role] ?? [];
+  const navItems = NAV_ITEMS.filter((item) => can(role, item.perm));
+  const canCreateJob = useCan({ jobs: ["create"] });
   const [logoutPending, setLogoutPending] = useState(false);
   const logoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const openIntakeModal = useUiStore((s) => s.openIntakeModal);
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (logoutTimerRef.current) {
         clearTimeout(logoutTimerRef.current);
       }
-    };
-  }, []);
+    },
+    []
+  );
 
   const handleLogoutClick = useCallback(() => {
     if (!logoutPending) {
@@ -114,7 +128,7 @@ export default function Sidebar() {
         <button
           className={`flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-on-primary transition-all duration-200 active:scale-[0.98] ${FOCUS_VISIBLE}`}
           onClick={() => {
-            if (role === "TECHNICIAN") {
+            if (!canCreateJob) {
               return;
             }
             openIntakeModal();
@@ -122,12 +136,12 @@ export default function Sidebar() {
           type="button"
         >
           <span aria-hidden="true" className="material-symbols-outlined">
-            {role === "TECHNICIAN" ? "swap_horiz" : "add_circle"}
+            {canCreateJob ? "add_circle" : "swap_horiz"}
           </span>
           <span>
-            {role === "TECHNICIAN"
-              ? t("tech_dashboard.update_status")
-              : t("new_checkin")}
+            {canCreateJob
+              ? t("new_checkin")
+              : t("tech_dashboard.update_status")}
           </span>
         </button>
 

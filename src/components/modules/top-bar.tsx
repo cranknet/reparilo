@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useAuthStore } from "@/stores/auth";
+import { useCan } from "@/hooks/use-can";
 import { useUiStore } from "@/stores/ui";
 import LanguageToggle from "./language-toggle";
 
 export default function TopBar() {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
-  const role = useAuthStore((s) => s.role);
+  const canCreateJob = useCan({ jobs: ["create"] });
   const openIntakeModal = useUiStore((s) => s.openIntakeModal);
 
   return (
@@ -47,7 +47,7 @@ export default function TopBar() {
         <button
           className="hidden items-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-br from-primary to-surface-tint px-3 py-2 font-semibold text-on-primary text-xs shadow-md transition-transform hover:scale-95 md:flex md:px-4 md:text-sm"
           onClick={() => {
-            if (role === "TECHNICIAN") {
+            if (!canCreateJob) {
               return;
             }
             openIntakeModal();
@@ -55,11 +55,9 @@ export default function TopBar() {
           type="button"
         >
           <span className="material-symbols-outlined">
-            {role === "TECHNICIAN" ? "swap_horiz" : "add_circle"}
+            {canCreateJob ? "add_circle" : "swap_horiz"}
           </span>
-          {role === "TECHNICIAN"
-            ? t("tech_dashboard.update_status")
-            : t("new_checkin")}
+          {canCreateJob ? t("new_checkin") : t("tech_dashboard.update_status")}
         </button>
       </div>
     </header>
