@@ -292,13 +292,17 @@ export default function ProfilePage() {
     }
   }
 
+  const loadActivityRef = useRef(loadActivity);
+  loadActivityRef.current = loadActivity;
+
   useEffect(() => {
     if (activeTab === "activity") {
       setActivityCursor(null);
       setHasMoreActivity(false);
-      loadActivity();
+      setActivity([]);
+      loadActivityRef.current();
     }
-  }, [activeTab, loadActivity]);
+  }, [activeTab]);
 
   useEffect(() => {
     loadStats();
