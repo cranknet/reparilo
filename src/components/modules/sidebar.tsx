@@ -115,7 +115,16 @@ export default function Sidebar() {
           </span>
         </button>
 
-        <NavLink className="rounded-xl p-3 transition-colors" to="/profile">
+        <NavLink
+          className={({ isActive }) =>
+            `rounded-xl p-3 transition-colors ${FOCUS_VISIBLE} ${
+              isActive
+                ? "bg-surface-container-lowest"
+                : "hover:bg-surface-container"
+            }`
+          }
+          to="/profile"
+        >
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-on-primary text-sm">
               {getInitials(userName)}

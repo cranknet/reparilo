@@ -45,15 +45,11 @@ export function useProfileMultiUser(role: string) {
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [localImage, setLocalImage] = useState<string | null>(null);
 
-  const currentImage =
-    localImage ??
-    (isSelf ? (user?.image ?? null) : (targetUser?.image ?? null));
-
   const displayUser: DisplayUser = isSelf
     ? {
         email: user?.email || "",
         id: user?.id || "",
-        image: currentImage,
+        image: localImage ?? user?.image ?? null,
         name: user?.name || user?.username || "",
         role,
         username: user?.username || "",
@@ -69,14 +65,17 @@ export function useProfileMultiUser(role: string) {
     }
     const formData = new FormData();
     formData.append("file", file);
+    setLocalImage(URL.createObjectURL(file));
     setAvatarUploading(true);
     try {
       await api.post(`/users/${userId}/avatar`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       await checkSession(true);
+      await checkSession(true);
       setLocalImage(null);
     } catch (err: unknown) {
+      setLocalImage(null);
       const axiosErr = err as { response?: { data?: { error?: string } } };
       const errorMsg = axiosErr.response?.data?.error;
       if (errorMsg === "FILE_TOO_LARGE") {

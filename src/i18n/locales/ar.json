@@ -626,6 +626,8 @@
   "profile_back_to_users": "العودة إلى المستخدمين",
   "profile_login_time": "وقت تسجيل الدخول",
   "profile_sessions_count": "{{count}} جلسة (جلسات) نشطة",
+  "profile_sessions_count_one": "{{count}} جلسة نشطة",
+  "profile_sessions_count_other": "{{count}} من الجلسات النشطة",
   "profile_expires": "تنتهي",
   "profile_load_more": "تحميل المزيد",
   "send_message": "أرسل رسالة",

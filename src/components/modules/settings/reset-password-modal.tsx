@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useModalEffects } from "@/hooks/use-modal-effects";
 
 interface ResetPasswordModalProps {
   onClose: () => void;
@@ -17,6 +18,8 @@ export default function ResetPasswordModal({
   username,
 }: ResetPasswordModalProps) {
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalEffects(true, onClose, dialogRef);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -43,11 +46,6 @@ export default function ResetPasswordModal({
         aria-hidden="true"
         className="absolute inset-0 bg-on-surface/40 backdrop-blur-[20px]"
         onClick={onClose}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            onClose();
-          }
-        }}
         tabIndex={-1}
         type="button"
       />
@@ -55,6 +53,7 @@ export default function ResetPasswordModal({
         aria-labelledby="reset-password-modal-title"
         aria-modal="true"
         className="relative z-10 mx-4 w-full max-w-[440px] overflow-hidden rounded-2xl bg-surface-container-lowest shadow-2xl"
+        ref={dialogRef}
         role="dialog"
       >
         <form onSubmit={handleSubmit}>

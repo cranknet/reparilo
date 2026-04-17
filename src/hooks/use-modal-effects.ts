@@ -1,0 +1,63 @@
+import { type RefObject, useCallback, useEffect, useRef } from "react";
+
+export function useModalEffects(
+  open: boolean,
+  onClose: () => void,
+  dialogRef?: RefObject<HTMLElement | null>
+) {
+  const previousFocus = useRef<HTMLElement | null>(null);
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key === "Tab" && dialogRef?.current) {
+        trapFocus(e, dialogRef.current);
+      }
+    },
+    [onClose, dialogRef]
+  );
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    previousFocus.current = document.activeElement as HTMLElement;
+    document.addEventListener("keydown", handleKeyDown);
+    if (dialogRef?.current) {
+      const first = dialogRef.current.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      first?.focus();
+    }
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      previousFocus.current?.focus();
+    };
+  }, [open, handleKeyDown, dialogRef]);
+}
+
+function trapFocus(e: KeyboardEvent, container: HTMLElement) {
+  const focusable = Array.from(
+    container.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+  );
+  if (focusable.length === 0) {
+    return;
+  }
+  const first = focusable[0];
+  const last = focusable.at(-1) ?? focusable[0];
+  if (e.shiftKey) {
+    if (document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    }
+  } else if (document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+}

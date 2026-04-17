@@ -53,7 +53,7 @@ function buildUpdateData(
   fields: Record<string, string | undefined>
 ): Record<string, string> {
   return Object.fromEntries(
-    Object.entries(fields).filter(([, v]) => v)
+    Object.entries(fields).filter(([, v]) => v !== undefined)
   ) as Record<string, string>;
 }
 
@@ -399,17 +399,18 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
         where: { id: cursor },
         select: { createdAt: true },
       });
-      if (cursorLog) {
-        cursorFilter = {
-          OR: [
-            { createdAt: { lt: cursorLog.createdAt } },
-            {
-              createdAt: cursorLog.createdAt,
-              id: { lt: cursor },
-            },
-          ],
-        };
+      if (!cursorLog) {
+        return reply.status(400).send({ error: "Invalid cursor" });
       }
+      cursorFilter = {
+        OR: [
+          { createdAt: { lt: cursorLog.createdAt } },
+          {
+            createdAt: cursorLog.createdAt,
+            id: { lt: cursor },
+          },
+        ],
+      };
     }
 
     const logs = await app.prisma.auditLog.findMany({
@@ -479,8 +480,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(403).send({ error: "Insufficient permissions" });
     }
 
-    const currentToken =
-      request.headers.authorization?.replace("Bearer ", "") ?? "";
+    const currentSessionId = requestingUser.sessionId;
 
     const sessions = await app.prisma.session.findMany({
       where: { userId: id, expiresAt: { gt: new Date() } },
@@ -490,7 +490,6 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
         userAgent: true,
         createdAt: true,
         expiresAt: true,
-        token: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -501,7 +500,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       userAgent: s.userAgent,
       createdAt: s.createdAt,
       expiresAt: s.expiresAt,
-      isCurrent: s.token === currentToken,
+      isCurrent: s.id === currentSessionId,
     }));
 
     return reply.send(result);
@@ -526,16 +525,14 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
     const session = await app.prisma.session.findUnique({
       where: { id: sessionId },
-      select: { id: true, userId: true, token: true },
+      select: { id: true, userId: true },
     });
 
     if (!session || session.userId !== id) {
       return reply.status(404).send({ error: "Session not found" });
     }
 
-    const currentToken =
-      request.headers.authorization?.replace("Bearer ", "") ?? "";
-    if (session.token === currentToken) {
+    if (sessionId === requestingUser.sessionId) {
       return reply.status(400).send({ error: "Cannot end current session" });
     }
 

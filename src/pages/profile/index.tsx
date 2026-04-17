@@ -712,14 +712,9 @@ export default function ProfilePage() {
 
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h4 className="font-bold font-headline text-on-surface">
-            {t("profile_recent_activity")}
-          </h4>
-          <button className="font-bold text-primary text-xs" type="button">
-            {t("profile_view_full_history")}
-          </button>
-        </div>
+        <h4 className="font-bold font-headline text-on-surface">
+          {t("profile_recent_activity")}
+        </h4>
 
         <div className="space-y-6">
           {activity.map((item, idx) => (

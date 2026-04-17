@@ -152,7 +152,7 @@ export async function getSessionFromRequest(
   const headers = fromNodeHeaders(request.headers);
   const session = await auth.api.getSession({ headers });
 
-  if (!session?.user) {
+  if (!(session?.user && session.session)) {
     return null;
   }
 
@@ -164,5 +164,6 @@ export async function getSessionFromRequest(
     role: session.user.role as string,
     isActive: session.user.isActive as boolean,
     mustChangePassword: session.user.mustChangePassword as boolean,
+    sessionId: session.session.id,
   };
 }

@@ -1,12 +1,13 @@
 import type { RoleType } from "@shared/constants";
 import { Role } from "@shared/constants";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { useModalEffects } from "@/hooks/use-modal-effects";
 
 interface AddUserModalProps {
   onClose: () => void;
@@ -22,6 +23,8 @@ const ROLES: RoleType[] = Object.values(Role);
 
 export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useModalEffects(true, onClose, dialogRef);
   const [form, setForm] = useState({
     username: "",
     email: "",
@@ -96,11 +99,6 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
         aria-hidden="true"
         className="absolute inset-0 bg-on-surface/40 backdrop-blur-[20px]"
         onClick={onClose}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            onClose();
-          }
-        }}
         tabIndex={-1}
         type="button"
       />
@@ -108,6 +106,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
         aria-labelledby="add-user-modal-title"
         aria-modal="true"
         className="relative z-10 mx-4 w-full max-w-[520px] overflow-hidden rounded-2xl bg-surface-container-lowest shadow-2xl"
+        ref={dialogRef}
         role="dialog"
       >
         <form onSubmit={handleSubmit}>

@@ -122,6 +122,7 @@ declare module "fastify" {
       role: string;
       isActive: boolean;
       mustChangePassword: boolean;
+      sessionId: string;
     } | null;
   }
 }
