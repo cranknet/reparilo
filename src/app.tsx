@@ -100,6 +100,14 @@ export default function App() {
           }
           path="/profile"
         />
+        <Route
+          element={
+            <DashboardLayout>
+              <ProfilePage />
+            </DashboardLayout>
+          }
+          path="/profile/:userId"
+        />
       </Route>
       <Route element={<TrackingPage />} path="/tracking/:jobCode?" />
     </Routes>
