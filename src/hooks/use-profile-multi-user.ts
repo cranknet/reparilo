@@ -41,19 +41,24 @@ export function useProfileMultiUser(role: string) {
     }
   }, [isSelf, routeUserId]);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [localImage, setLocalImage] = useState<string | null>(null);
+
+  const currentImage =
+    localImage ??
+    (isSelf ? (user?.image ?? null) : (targetUser?.image ?? null));
+
   const displayUser: DisplayUser = isSelf
     ? {
         email: user?.email || "",
         id: user?.id || "",
-        image: (user as typeof user & { image?: string | null })?.image ?? null,
+        image: currentImage,
         name: user?.name || user?.username || "",
         role,
         username: user?.username || "",
       }
     : (targetUser ?? { ...EMPTY_USER, id: routeUserId || "" });
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [avatarUploading, setAvatarUploading] = useState(false);
 
   async function handleAvatarUpload(
     file: File,
@@ -70,6 +75,7 @@ export function useProfileMultiUser(role: string) {
         headers: { "Content-Type": "multipart/form-data" },
       });
       await checkSession(true);
+      setLocalImage(null);
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: string } } };
       const errorMsg = axiosErr.response?.data?.error;
@@ -95,6 +101,7 @@ export function useProfileMultiUser(role: string) {
     try {
       await api.delete(`/users/${userId}/avatar`);
       await checkSession(true);
+      setLocalImage(null);
     } catch {
       // error handled by interceptor
     }

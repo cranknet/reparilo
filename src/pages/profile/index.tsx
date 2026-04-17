@@ -478,28 +478,6 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-
-        <div className="flex items-center justify-between gap-4 rounded-xl bg-surface-container-low p-5">
-          <div>
-            <h4 className="font-bold font-headline text-on-surface text-sm">
-              {t("profile_data_storage")}
-            </h4>
-            <p className="text-on-surface-variant text-xs">
-              {t("profile_data_storage_desc")}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span
-              className="material-symbols-outlined text-[20px] text-primary"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              verified_user
-            </span>
-            <span className="font-semibold text-sm">
-              {t("profile_data_protection")}
-            </span>
-          </div>
-        </div>
       </form>
     );
   }
@@ -882,7 +860,11 @@ export default function ProfilePage() {
               className="h-24 w-24 text-3xl"
               initials={initials}
               size="md"
-              src={displayUser.image ?? undefined}
+              src={
+                displayUser.image
+                  ? `/api/uploads/${displayUser.image}`
+                  : undefined
+              }
             />
             {isSelf && (
               <button

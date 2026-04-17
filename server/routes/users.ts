@@ -139,6 +139,34 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     }
   );
 
+  app.get(
+    "/:id",
+    {
+      preHandler: [requirePermission("users:read")],
+    },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const user = await app.prisma.user.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          name: true,
+          role: true,
+          isActive: true,
+          mustChangePassword: true,
+          image: true,
+          createdAt: true,
+        },
+      });
+      if (!user) {
+        return reply.status(404).send({ error: "User not found" });
+      }
+      return reply.send(user);
+    }
+  );
+
   app.post(
     "/",
     {
@@ -363,7 +391,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(403).send({ error: "Insufficient permissions" });
     }
 
-    const take = Math.min(Math.max(Number(limit) || 20, 1), 100);
+    const take = Math.min(Math.max(Number(limit) || 4, 1), 100);
 
     let cursorFilter = {};
     if (cursor) {

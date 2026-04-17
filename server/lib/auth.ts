@@ -116,6 +116,12 @@ export function createAuth(prisma: PrismaClient) {
           defaultValue: false,
           input: false,
         },
+        image: {
+          type: "string",
+          required: false,
+          defaultValue: null,
+          input: false,
+        },
       },
     },
     plugins: [

@@ -5,6 +5,7 @@ import api from "@/lib/api";
 interface AuthUser {
   email: string;
   id: string;
+  image: string | null;
   isActive: boolean;
   mustChangePassword: boolean;
   name: string;
