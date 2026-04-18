@@ -102,7 +102,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     try {
       await api.post("/auth/sign-out");
-    } catch (_error) {
+    } catch {
       // Intentionally ignored: clear local state regardless of API result
     }
     set({

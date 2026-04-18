@@ -48,9 +48,7 @@ if (process.env.NODE_ENV === "production") {
     root: path.resolve("dist"),
     wildcard: false,
   });
-  app.setNotFoundHandler((_req, reply) => {
-    return reply.sendFile("index.html");
-  });
+  app.setNotFoundHandler((_req, reply) => reply.sendFile("index.html"));
 }
 
 await app.register(staticPlugin, {

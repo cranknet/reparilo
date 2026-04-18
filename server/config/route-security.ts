@@ -29,7 +29,7 @@ export function matchRoute(
       return config;
     }
   }
-  return undefined;
+  return;
 }
 
 function routeMatchesPattern(url: string, pattern: string): boolean {

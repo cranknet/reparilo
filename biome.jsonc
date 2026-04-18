@@ -1,10 +1,12 @@
 {
-  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "extends": [
     "ultracite/biome/core",
     "ultracite/biome/react",
-    "ultracite/biome/vitest"
+    "ultracite/biome/vitest",
+    "ultracite/biome/vue",
+    "ultracite/biome/remix"
   ],
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
     "includes": ["src/**", "server/**", "shared/**", "prisma/**", "index.html"]
   },

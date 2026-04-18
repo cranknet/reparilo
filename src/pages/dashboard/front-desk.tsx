@@ -106,21 +106,23 @@ export default function FrontDeskPage() {
   }, [jobs]);
 
   // Recent intakes: latest 3 jobs with INTAKE status
-  const recentIntakes = useMemo(() => {
-    return jobs
-      .filter((j) => j.status === "INTAKE")
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
-      .slice(0, 3)
-      .map((j) => ({
-        id: j.jobCode,
-        device: `${j.device.brand} ${j.device.model}`,
-        status: j.status,
-        timeAgo: timeAgo(j.createdAt),
-      }));
-  }, [jobs]);
+  const recentIntakes = useMemo(
+    () =>
+      jobs
+        .filter((j) => j.status === "INTAKE")
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+        .slice(0, 3)
+        .map((j) => ({
+          id: j.jobCode,
+          device: `${j.device.brand} ${j.device.model}`,
+          status: j.status,
+          timeAgo: timeAgo(j.createdAt),
+        })),
+    [jobs]
+  );
 
   // Today's overview counts derived from jobs created today
   const todayStart = useMemo(() => {

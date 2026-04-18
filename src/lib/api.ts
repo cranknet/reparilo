@@ -25,9 +25,7 @@ function fetchCsrfToken(): Promise<string | null> {
       csrfToken = res.data.token;
       return csrfToken;
     })
-    .catch(() => {
-      return null;
-    })
+    .catch(() => null)
     .finally(() => {
       csrfPromise = null;
     });

@@ -1,3 +1,6 @@
+pnpm test
+
+# ultracite
 #!/bin/sh
 # Exit on any error
 set -e
@@ -9,7 +12,7 @@ if [ -z "$STAGED_FILES" ]; then
   exit 0
 fi
 
-# Run formatter+lint
+# Run formatter
 pnpm dlx ultracite fix
 FORMAT_EXIT_CODE=$?
 

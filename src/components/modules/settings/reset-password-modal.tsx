@@ -33,7 +33,7 @@ export default function ResetPasswordModal({
     setSubmitting(true);
     try {
       await onSubmit(password);
-    } catch (_err: unknown) {
+    } catch {
       setError(t("profile_password_update_failed"));
     } finally {
       setSubmitting(false);

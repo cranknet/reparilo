@@ -96,13 +96,14 @@ export default function AiAnalystPage() {
     }
   };
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (clearTimerRef.current) {
         clearTimeout(clearTimerRef.current);
       }
-    };
-  }, []);
+    },
+    []
+  );
 
   function getModelLabel(m: ModelOption): string {
     if (m === "gpt-4o") {

@@ -430,17 +430,19 @@ export default function PartsCatalogPage() {
     }
   }, [error, showToast, clearError]);
 
-  const sorted = useMemo(() => {
-    return [...parts].sort((a, b) => {
-      const mul = sortDir === "asc" ? 1 : -1;
-      const av = a[sortBy];
-      const bv = b[sortBy];
-      if (typeof av === "string" && typeof bv === "string") {
-        return mul * av.localeCompare(bv);
-      }
-      return mul * (Number(av) - Number(bv));
-    });
-  }, [parts, sortBy, sortDir]);
+  const sorted = useMemo(
+    () =>
+      [...parts].sort((a, b) => {
+        const mul = sortDir === "asc" ? 1 : -1;
+        const av = a[sortBy];
+        const bv = b[sortBy];
+        if (typeof av === "string" && typeof bv === "string") {
+          return mul * av.localeCompare(bv);
+        }
+        return mul * (Number(av) - Number(bv));
+      }),
+    [parts, sortBy, sortDir]
+  );
 
   const toggleSort = useCallback((field: SortField) => {
     setSortBy((prev) => {

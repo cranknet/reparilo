@@ -333,13 +333,14 @@ export default function SettingsPage() {
     }
   }, [toastTimer]);
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (toastTimer) {
         clearTimeout(toastTimer);
       }
-    };
-  }, [toastTimer]);
+    },
+    [toastTimer]
+  );
 
   useEffect(() => {
     if (!dirty) {
