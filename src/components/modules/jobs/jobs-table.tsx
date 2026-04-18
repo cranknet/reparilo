@@ -6,7 +6,6 @@ import type { JobRow } from "./jobs-shared";
 export type { JobRow } from "./jobs-shared";
 
 import StatusBadge from "./status-badge";
-import StatusChangeMenu from "./status-change-menu";
 
 interface JobsTableProps {
   jobs: JobRow[];
@@ -92,11 +91,7 @@ export default function JobsTable({ jobs }: JobsTableProps) {
                 </td>
                 <td className="p-4">
                   <div className="flex justify-center">
-                    {job.rawJob ? (
-                      <StatusChangeMenu job={job.rawJob} />
-                    ) : (
-                      <StatusBadge status={job.status} />
-                    )}
+                    <StatusBadge status={job.status} />
                   </div>
                 </td>
                 <td className="p-4">

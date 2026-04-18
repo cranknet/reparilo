@@ -1,10 +1,8 @@
 import type { JobStatusType } from "@shared/constants";
 import { DEVICE_ICONS } from "@shared/constants";
-import type { Job } from "@shared/types";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import StatusBadge from "./status-badge";
-import StatusChangeMenu from "./status-change-menu";
 
 interface JobMobileCardProps {
   customer: string;
@@ -12,7 +10,6 @@ interface JobMobileCardProps {
   device: string;
   deviceIcon?: string;
   id: string;
-  rawJob?: Job;
   status: JobStatusType;
   technician?: string;
 }
@@ -24,7 +21,6 @@ export default function JobMobileCard({
   status,
   customer,
   customerTier,
-  rawJob,
   technician,
 }: JobMobileCardProps) {
   const { t } = useTranslation();
@@ -45,11 +41,7 @@ export default function JobMobileCard({
             <h3 className="font-bold font-headline text-sm">{device}</h3>
           </div>
         </div>
-        {rawJob ? (
-          <StatusChangeMenu job={rawJob} />
-        ) : (
-          <StatusBadge status={status} />
-        )}
+        <StatusBadge status={status} />
       </div>
 
       <div className="mt-2 flex items-center gap-2 text-on-surface-variant">
@@ -74,7 +66,7 @@ export default function JobMobileCard({
         </div>
         <Link
           className="flex min-h-[44px] min-w-[44px] items-center gap-1 rounded-lg px-2 py-2 font-bold font-label text-primary text-xs uppercase tracking-wider transition-colors hover:bg-surface-container-high"
-          to={`/jobs/${rawJob?.id ?? id}`}
+          to={`/jobs/${id}`}
         >
           {t("details")}
           <span className="material-symbols-outlined text-sm">

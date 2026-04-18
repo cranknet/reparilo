@@ -185,7 +185,6 @@ export default function JobsPage() {
               deviceIcon={job.deviceIcon}
               id={job.id}
               key={job.id}
-              rawJob={job.rawJob}
               status={job.status}
               technician={job.technician}
             />
