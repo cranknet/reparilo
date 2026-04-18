@@ -39,18 +39,31 @@ export const updateJobSchema = z.object({
   color: z.string().optional(),
 });
 
-export const transitionStatusSchema = z.object({
-  status: z.enum([
-    JobStatus.INTAKE,
-    JobStatus.WAITING_FOR_PARTS,
-    JobStatus.IN_REPAIR,
-    JobStatus.ON_HOLD,
-    JobStatus.DONE,
-    JobStatus.DELIVERED,
-    JobStatus.RETURNED,
-    JobStatus.CANCELLED,
-  ]),
-});
+export const transitionStatusSchema = z
+  .object({
+    status: z.enum([
+      JobStatus.INTAKE,
+      JobStatus.WAITING_FOR_PARTS,
+      JobStatus.IN_REPAIR,
+      JobStatus.ON_HOLD,
+      JobStatus.DONE,
+      JobStatus.DELIVERED,
+      JobStatus.RETURNED,
+      JobStatus.CANCELLED,
+    ]),
+    reason: z.string().trim().max(500).optional(),
+  })
+  .superRefine((val, ctx) => {
+    const requiresReason =
+      val.status === JobStatus.CANCELLED || val.status === JobStatus.ON_HOLD;
+    if (requiresReason && (!val.reason || val.reason.length === 0)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["reason"],
+        message: "Reason is required for CANCELLED and ON_HOLD",
+      });
+    }
+  });
 
 export const addJobPartSchema = z.object({
   partId: z.string().optional(),

@@ -114,6 +114,20 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
     return reply.send(job);
   });
 
+  app.get("/:id/history", async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const job = await getJobById(app.prisma, id);
+    if (!job) {
+      return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+    }
+    const entries = await app.prisma.auditLog.findMany({
+      where: { jobId: id },
+      include: { user: { select: { id: true, name: true, role: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+    return reply.send(entries);
+  });
+
   app.post(
     "/",
     { preHandler: [requirePermission({ jobs: ["create"] })] },
@@ -223,7 +237,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       id,
       parsed.data.status,
       userId,
-      { requestingRole: req.user.role as RoleType }
+      {
+        requestingRole: req.user.role as RoleType,
+        reason: parsed.data.reason,
+      }
     );
     if (!result) {
       return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");

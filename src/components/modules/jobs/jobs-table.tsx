@@ -1,10 +1,12 @@
 import { DEVICE_ICONS } from "@shared/constants";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import type { JobRow } from "./jobs-shared";
 
 export type { JobRow } from "./jobs-shared";
 
 import StatusBadge from "./status-badge";
+import StatusChangeMenu from "./status-change-menu";
 
 interface JobsTableProps {
   jobs: JobRow[];
@@ -46,29 +48,37 @@ export default function JobsTable({ jobs }: JobsTableProps) {
                 key={job.id}
               >
                 <td className="p-4">
-                  <span className="font-bold font-headline text-primary text-xs tracking-tight lg:text-sm">
+                  <Link
+                    className="font-bold font-headline text-primary text-xs tracking-tight hover:underline lg:text-sm"
+                    to={`/jobs/${job.rawJob?.id ?? job.id}`}
+                  >
                     {job.id}
-                  </span>
+                  </Link>
                 </td>
                 <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-container-high">
-                      <span className="material-symbols-outlined text-lg text-secondary lg:text-xl">
-                        {DEVICE_ICONS[job.deviceIcon ?? "other"] ??
-                          "precision_manufacturing"}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-bold font-headline text-xs lg:text-sm">
-                        {job.device}
-                      </p>
-                      {job.deviceSpec && (
-                        <p className="font-body text-on-surface-variant text-xs">
-                          {job.deviceSpec}
+                  <Link
+                    className="block"
+                    to={`/jobs/${job.rawJob?.id ?? job.id}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-container-high">
+                        <span className="material-symbols-outlined text-lg text-secondary lg:text-xl">
+                          {DEVICE_ICONS[job.deviceIcon ?? "other"] ??
+                            "precision_manufacturing"}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-bold font-headline text-xs lg:text-sm">
+                          {job.device}
                         </p>
-                      )}
+                        {job.deviceSpec && (
+                          <p className="font-body text-on-surface-variant text-xs">
+                            {job.deviceSpec}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </Link>
                 </td>
                 <td className="hidden p-4 lg:table-cell">
                   <p className="font-body font-semibold text-sm">
@@ -82,7 +92,11 @@ export default function JobsTable({ jobs }: JobsTableProps) {
                 </td>
                 <td className="p-4">
                   <div className="flex justify-center">
-                    <StatusBadge status={job.status} />
+                    {job.rawJob ? (
+                      <StatusChangeMenu job={job.rawJob} />
+                    ) : (
+                      <StatusBadge status={job.status} />
+                    )}
                   </div>
                 </td>
                 <td className="p-4">

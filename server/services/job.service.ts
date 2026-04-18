@@ -325,7 +325,7 @@ export async function transitionStatus(
   id: string,
   newStatus: JobStatusType,
   userId: string,
-  options?: { requestingRole: RoleType }
+  options?: { reason?: string; requestingRole: RoleType }
 ) {
   const job = await prisma.job.findUnique({ where: { id } });
   if (!job) {
@@ -361,6 +361,8 @@ export async function transitionStatus(
     action: AuditAction.STATUS_CHANGED,
     fromValue: job.status,
     jobId: id,
+    metadata: options?.reason ? { reason: options.reason } : undefined,
+    note: options?.reason,
     toValue: newStatus,
     userId,
   });

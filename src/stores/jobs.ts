@@ -52,6 +52,7 @@ interface JobsState {
     warrantyForJobId?: string;
   }) => Promise<Job>;
   error: string | null;
+  fetchJobById: (id: string) => Promise<Job>;
 
   fetchJobs: (params?: {
     cursor?: string;
@@ -70,7 +71,11 @@ interface JobsState {
   removePart: (jobId: string, partId: string) => Promise<void>;
   removeRepair: (jobId: string, repairId: string) => Promise<void>;
   totalCount: number;
-  transitionStatus: (id: string, status: JobStatusType) => Promise<Job>;
+  transitionStatus: (
+    id: string,
+    status: JobStatusType,
+    reason?: string
+  ) => Promise<Job>;
   updateJob: (id: string, data: Record<string, unknown>) => Promise<Job>;
 }
 
@@ -149,10 +154,10 @@ export const useJobsStore = create<JobsState>((set) => ({
     }
   },
 
-  transitionStatus: async (id, status) => {
+  transitionStatus: async (id, status, reason) => {
     set({ error: null });
     try {
-      const res = await api.patch(`/jobs/${id}/status`, { status });
+      const res = await api.patch(`/jobs/${id}/status`, { status, reason });
       const updated = res.data as Job;
       set((state) => ({
         jobs: state.jobs.map((j) => (j.id === id ? updated : j)),
@@ -268,4 +273,26 @@ export const useJobsStore = create<JobsState>((set) => ({
   },
 
   clearError: () => set({ error: null }),
+
+  fetchJobById: async (id) => {
+    set({ error: null });
+    try {
+      const res = await api.get(`/jobs/${id}`);
+      const job = res.data as Job;
+      set((state) => {
+        const exists = state.jobs.some((j) => j.id === id);
+        return {
+          jobs: exists
+            ? state.jobs.map((j) => (j.id === id ? job : j))
+            : [job, ...state.jobs],
+        };
+      });
+      return job;
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to fetch job";
+      set({ error: message });
+      throw new Error(message);
+    }
+  },
 }));
