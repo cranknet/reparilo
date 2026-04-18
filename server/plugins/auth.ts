@@ -33,6 +33,27 @@ function extractBody(method: string, body: unknown): string | undefined {
   return isMutation && body ? JSON.stringify(body) : undefined;
 }
 
+function sanitizeSignInResponse(
+  text: string,
+  method: string,
+  pathname: string
+): string {
+  if (!text || method !== "POST" || !pathname.includes("sign-in")) {
+    return text;
+  }
+  try {
+    const json = JSON.parse(text);
+    if (json.user) {
+      const { image: _image, ...userWithoutImage } = json.user;
+      json.user = userWithoutImage;
+    }
+    return JSON.stringify(json);
+  } catch {
+    // Non-JSON response, return as-is
+    return text;
+  }
+}
+
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 const authPlugin: FastifyPluginAsync = async (app) => {
   const prisma = app.prisma;
@@ -70,10 +91,18 @@ const authPlugin: FastifyPluginAsync = async (app) => {
 
       reply.status(response.status);
       for (const [key, value] of response.headers.entries()) {
-        reply.header(key, value);
+        if (key.toLowerCase() !== "content-length") {
+          reply.header(key, value);
+        }
       }
+
       const text = await response.text();
-      reply.send(text || null);
+      const sanitized = sanitizeSignInResponse(
+        text,
+        request.method,
+        url.pathname
+      );
+      reply.send(sanitized || null);
     } catch (err) {
       app.log.error(err, "Better Auth handler error");
       reply.status(500).send({ error: "Internal authentication error" });

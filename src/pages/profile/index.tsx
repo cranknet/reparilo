@@ -318,16 +318,12 @@ export default function ProfilePage() {
         email: personalForm.email,
         username: personalForm.username,
       });
-      useAuthStore.setState((state) => ({
-        user: state.user
-          ? {
-              ...state.user,
-              name: personalForm.name,
-              email: personalForm.email,
-              username: personalForm.username,
-            }
-          : state.user,
-      }));
+      const { updateUser } = useAuthStore.getState();
+      updateUser({
+        name: personalForm.name,
+        email: personalForm.email,
+        username: personalForm.username,
+      });
       setPersonalInitial(personalForm);
       setPersonalDirty(false);
     } catch {

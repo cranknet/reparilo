@@ -248,6 +248,17 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     }
   );
 
+  app.post("/me/acknowledge-password-change", async (request, reply) => {
+    if (!request.user) {
+      return reply.status(401).send({ error: "Authentication required" });
+    }
+    await app.prisma.user.update({
+      where: { id: request.user.id },
+      data: { mustChangePassword: false },
+    });
+    return reply.send({ success: true });
+  });
+
   app.post(
     "/:id/reset-password",
     {

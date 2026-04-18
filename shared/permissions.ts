@@ -128,12 +128,12 @@ export const technicianRole = ac.newRole({
     "setCost",
     "overridePrice",
   ],
-  customers: ["view"],
-  repairs: ["viewCatalog"],
+  customers: ["view", "create"],
+  repairs: ["viewCatalog", "manageCatalog"],
   reports: ["viewSelf"],
   notifications: ["read"],
   // No settings
-  // No ai
+  ai: ["access"],
 });
 
 export const frontDeskRole = ac.newRole({
@@ -150,7 +150,7 @@ export const frontDeskRole = ac.newRole({
   // No reports
   // No settings
   notifications: ["read", "send"],
-  ai: ["access"],
+  // No ai
 });
 
 // ---------------------------------------------------------------------------

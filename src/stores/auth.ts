@@ -27,6 +27,7 @@ interface AuthState {
   logout: () => Promise<void>;
   role: RoleType;
   setRole: (role: RoleType) => void;
+  updateUser: (updates: Partial<AuthUser>) => void;
   user: AuthUser | null;
 }
 
@@ -118,4 +119,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   clearError: () => set({ error: null }),
 
   setRole: (role) => set({ role }),
+  updateUser: (updates) =>
+    set((state) =>
+      state.user ? { user: { ...state.user, ...updates } } : state
+    ),
 }));

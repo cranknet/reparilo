@@ -122,9 +122,8 @@ describe("OWNER role", () => {
     expect(settings).toContain("edit");
   });
 
-  it("has ai access", () => {
-    const { ai } = ownerRole.statements as { ai: readonly string[] };
-    expect(ai).toContain("access");
+  it("has NO ai access", () => {
+    expect(frontDeskRole.statements).not.toHaveProperty("ai");
   });
 
   it("has full user admin actions", () => {
@@ -215,6 +214,12 @@ describe("TECHNICIAN role", () => {
   it("has NO session access", () => {
     expect(technicianRole.statements).not.toHaveProperty("session");
   });
+
+  it("has ai access", () => {
+    expect(technicianRole.statements).toHaveProperty("ai");
+    const ai = technicianRole.statements.ai as readonly string[];
+    expect(ai).toContain("access");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -278,9 +283,8 @@ describe("FRONT_DESK role", () => {
     expect(notifications).not.toContain("manage");
   });
 
-  it("has ai access", () => {
-    const { ai } = frontDeskRole.statements as { ai: readonly string[] };
-    expect(ai).toContain("access");
+  it("has NO ai access", () => {
+    expect(frontDeskRole.statements).not.toHaveProperty("ai");
   });
 
   it("has user create, list, get, update", () => {

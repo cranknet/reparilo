@@ -24,7 +24,7 @@ const EMPTY_USER: DisplayUser = {
 export function useProfileMultiUser(role: string) {
   const { userId: routeUserId } = useParams<{ userId?: string }>();
   const user = useAuthStore((s) => s.user);
-  const checkSession = useAuthStore((s) => s.checkSession);
+  const updateUserImage = useAuthStore((s) => s.updateUser);
   const isSelf = !routeUserId || routeUserId === user?.id;
   const userId = isSelf ? user?.id : routeUserId;
 
@@ -68,11 +68,11 @@ export function useProfileMultiUser(role: string) {
     setLocalImage(URL.createObjectURL(file));
     setAvatarUploading(true);
     try {
-      await api.post(`/users/${userId}/avatar`, formData, {
+      const res = await api.post(`/users/${userId}/avatar`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      await checkSession(true);
       setLocalImage(null);
+      updateUserImage({ image: res.data.image });
     } catch (err: unknown) {
       setLocalImage(null);
       const axiosErr = err as { response?: { data?: { error?: string } } };
@@ -96,10 +96,10 @@ export function useProfileMultiUser(role: string) {
     if (!(isSelf && userId)) {
       return;
     }
+    setLocalImage(null);
     try {
       await api.delete(`/users/${userId}/avatar`);
-      await checkSession(true);
-      setLocalImage(null);
+      updateUserImage({ image: null });
     } catch {
       // error handled by interceptor
     }
