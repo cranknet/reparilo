@@ -7,7 +7,7 @@ import ResetPasswordModal from "@/components/modules/settings/reset-password-mod
 import { Avatar } from "@/components/ui/avatar";
 import { useProfileMultiUser } from "@/hooks/use-profile-multi-user";
 import api from "@/lib/api";
-import { getInitials } from "@/lib/utils";
+import { getAvatarSrc, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
 import { useUsersStore } from "@/stores/users";
 
@@ -811,11 +811,7 @@ export default function ProfilePage() {
               className="h-24 w-24 text-3xl"
               initials={initials}
               size="md"
-              src={
-                displayUser.image
-                  ? `/api/uploads/${displayUser.image}`
-                  : undefined
-              }
+              src={getAvatarSrc(displayUser.image)}
             />
             {isSelf && (
               <button

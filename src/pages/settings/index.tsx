@@ -7,6 +7,7 @@ import { useNavigate } from "react-router";
 import AddUserModal from "@/components/modules/settings/add-user-modal";
 import ResetPasswordModal from "@/components/modules/settings/reset-password-modal";
 import { Avatar } from "@/components/ui/avatar";
+import { getAvatarSrc } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
 import { useSettingsStore } from "@/stores/settings";
 import { useUsersStore } from "@/stores/users";
@@ -110,7 +111,7 @@ function UserRow({
         alt={user.username}
         initials={user.username.charAt(0).toUpperCase()}
         size="md"
-        src={user.image ? `/api/uploads/${user.image}` : undefined}
+        src={getAvatarSrc(user.image)}
       />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">

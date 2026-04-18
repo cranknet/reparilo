@@ -1,9 +1,5 @@
-import crypto from "node:crypto";
-import fs from "node:fs/promises";
-import path from "node:path";
 import type { PrismaClient } from "@prisma/client";
 
-const UPLOAD_DIR = path.resolve("uploads/avatars");
 const ALLOWED_MIMES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE = 2 * 1024 * 1024;
 
@@ -14,16 +10,6 @@ const MAGIC_BYTES: Record<string, number[]> = {
 };
 
 const WEBP_MARKER = [0x57, 0x45, 0x42, 0x50];
-
-function extFromMime(mime: string): string {
-  if (mime === "image/png") {
-    return "png";
-  }
-  if (mime === "image/webp") {
-    return "webp";
-  }
-  return "jpg";
-}
 
 function validateMagicBytes(buffer: Buffer, mime: string): boolean {
   const expected = MAGIC_BYTES[mime];
@@ -66,33 +52,14 @@ export async function uploadAvatar(
     return null;
   }
 
-  if (user.image) {
-    const oldPath = path.resolve("uploads", user.image);
-    await fs.unlink(oldPath).catch(() => {
-      /* intentionally ignored */
-    });
-  }
+  const dataUrl = `data:${file.mimetype};base64,${buffer.toString("base64")}`;
 
-  const ext = extFromMime(file.mimetype);
-  const filename = `${userId}_${crypto.randomUUID()}.${ext}`;
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
-  const filePath = path.join(UPLOAD_DIR, filename);
-  await fs.writeFile(filePath, buffer);
+  await prisma.user.update({
+    where: { id: userId },
+    data: { image: dataUrl },
+  });
 
-  const relativePath = `avatars/${filename}`;
-  try {
-    await prisma.user.update({
-      where: { id: userId },
-      data: { image: relativePath },
-    });
-  } catch (err) {
-    await fs.unlink(filePath).catch(() => {
-      /* intentionally ignored */
-    });
-    throw err;
-  }
-
-  return { image: relativePath };
+  return { image: dataUrl };
 }
 
 export async function deleteAvatar(prisma: PrismaClient, userId: string) {
@@ -106,11 +73,6 @@ export async function deleteAvatar(prisma: PrismaClient, userId: string) {
   if (!user.image) {
     return { image: null };
   }
-
-  const fullPath = path.resolve("uploads", user.image);
-  await fs.unlink(fullPath).catch(() => {
-    /* intentionally ignored */
-  });
 
   await prisma.user.update({
     where: { id: userId },

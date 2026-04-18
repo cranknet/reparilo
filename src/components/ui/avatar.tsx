@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 type AvatarSize = "sm" | "md" | "lg";
 
 const SIZE_CLASSES: Record<AvatarSize, string> = {
@@ -27,15 +29,21 @@ export function Avatar({
   size = "md",
   className,
 }: AvatarProps) {
-  if (src) {
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+
+  const safeSrc = src && src !== failedSrc ? src : undefined;
+
+  if (safeSrc) {
     return (
+      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: img onError is for fallback behavior, not user interaction
       <img
         alt={alt ?? ""}
         className={["rounded-full object-cover", SIZE_CLASSES[size], className]
           .filter(Boolean)
           .join(" ")}
         height={SIZE_PX[size]}
-        src={src}
+        onError={() => setFailedSrc(src ?? null)}
+        src={safeSrc}
         width={SIZE_PX[size]}
       />
     );
