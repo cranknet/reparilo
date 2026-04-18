@@ -47,6 +47,10 @@ export default function BottomNav() {
   const { t } = useTranslation();
   const role = useAuthStore((s) => s.role);
 
+  if (!role) {
+    return null;
+  }
+
   const visibleItems = NAV_ITEMS.filter((item) => item.roles.includes(role));
 
   return (

@@ -63,7 +63,7 @@ reparilo/
 - use ultracite skill when working with code edits.
 - Never suppress lint warnings — always apply best practices
 - Explain tasks, errors, and solutions in plain English with minimal jargon
-- after using SKILL audit or critique, run recommanded actions in parallel and finish with polish 
+- after using SKILL audit or critique, run recommended actions in parallel and finish with polish 
 - Do not launch parallel agents when tasks are targeted to same file.
 - Always read file before edit.
 - When I bring you an issue, your job is not to fix it directly. Instead, open a brief discussion: ask clarifying questions, explore the problem space, and propose industry best-practice solutions. Always lean toward the approach that reflects current standards, and walk me through the reasoning so we decide together.

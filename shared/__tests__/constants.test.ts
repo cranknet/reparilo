@@ -5,6 +5,7 @@ import {
   JobStatus,
 } from "@shared/constants/job-statuses";
 import { ROLE_LABELS, Role } from "@shared/constants/roles";
+import { roles } from "@shared/permissions";
 import { describe, expect, it } from "vitest";
 
 describe("Job Status Constants", () => {
@@ -41,6 +42,14 @@ describe("Role Constants", () => {
   it("every role has a label", () => {
     for (const role of Object.values(Role)) {
       expect(ROLE_LABELS[role]).toBeDefined();
+    }
+  });
+
+  it("every role has defined permissions", () => {
+    for (const role of Object.values(Role)) {
+      const roleDef = roles[role as keyof typeof roles];
+      expect(roleDef).toBeDefined();
+      expect(typeof roleDef.authorize).toBe("function");
     }
   });
 });

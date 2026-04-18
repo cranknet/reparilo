@@ -19,26 +19,31 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const handleIntakeSubmit = useCallback(
     async (data: IntakeFormData) => {
-      await createJob({
-        customerEmail: data.customerEmail || undefined,
-        customerId: data.customerId || undefined,
-        customerName: data.customerName,
-        customerPhone: data.customerPhone,
-        deviceBrand: data.brand || data.model,
-        deviceModel: data.model,
-        color: data.color || undefined,
-        reportedProblem: data.reportedProblem,
-        conditionNotes: data.conditionNotes || undefined,
-        estimatedCost: Number.parseFloat(data.estimatedCost) || 0,
-        estimatedDate: data.estimatedDelivery || undefined,
-        depositAmount: data.deposit
-          ? Number.parseFloat(data.deposit)
-          : undefined,
-      });
-      await fetchJobs();
-      await fetchMetrics();
+      try {
+        await createJob({
+          customerEmail: data.customerEmail || undefined,
+          customerId: data.customerId || undefined,
+          customerName: data.customerName,
+          customerPhone: data.customerPhone,
+          deviceBrand: data.brand || undefined,
+          deviceModel: data.model,
+          color: data.color || undefined,
+          reportedProblem: data.reportedProblem,
+          conditionNotes: data.conditionNotes || undefined,
+          estimatedCost: Number.parseFloat(data.estimatedCost) || 0,
+          estimatedDate: data.estimatedDelivery || undefined,
+          depositAmount: data.deposit
+            ? Number.parseFloat(data.deposit)
+            : undefined,
+        });
+        await fetchJobs();
+        await fetchMetrics();
+        closeIntakeModal();
+      } catch (error) {
+        console.error("Failed to create job:", error);
+      }
     },
-    [createJob, fetchJobs, fetchMetrics]
+    [createJob, fetchJobs, fetchMetrics, closeIntakeModal]
   );
 
   return (

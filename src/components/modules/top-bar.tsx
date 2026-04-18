@@ -45,19 +45,13 @@ export default function TopBar() {
         </button>
         <div className="hidden h-8 w-px bg-outline-variant md:block" />
         <button
-          className="hidden items-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-br from-primary to-surface-tint px-3 py-2 font-semibold text-on-primary text-xs shadow-md transition-transform hover:scale-95 md:flex md:px-4 md:text-sm"
-          onClick={() => {
-            if (!canCreateJob) {
-              return;
-            }
-            openIntakeModal();
-          }}
+          className={`hidden items-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-br from-primary to-surface-tint px-3 py-2 font-semibold text-on-primary text-xs shadow-md transition-transform hover:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 md:flex md:px-4 md:text-sm ${canCreateJob ? "" : "cursor-not-allowed opacity-50"}`}
+          disabled={!canCreateJob}
+          onClick={() => openIntakeModal()}
           type="button"
         >
-          <span className="material-symbols-outlined">
-            {canCreateJob ? "add_circle" : "swap_horiz"}
-          </span>
-          {canCreateJob ? t("new_checkin") : t("tech_dashboard.update_status")}
+          <span className="material-symbols-outlined">add_circle</span>
+          {t("new_checkin")}
         </button>
       </div>
     </header>

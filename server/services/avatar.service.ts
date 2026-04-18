@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 
 const ALLOWED_MIMES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_SIZE = 2 * 1024 * 1024;
+const MAX_SIZE = 2 * 1024 * 1024; // 2 MB — prevents DB bloat from large base64 avatars
 
 const MAGIC_BYTES: Record<string, number[]> = {
   "image/jpeg": [0xff, 0xd8, 0xff],

@@ -120,7 +120,14 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setRole: (role) => set({ role }),
   updateUser: (updates) =>
-    set((state) =>
-      state.user ? { user: { ...state.user, ...updates } } : state
-    ),
+    set((state) => {
+      if (!state.user) {
+        return state;
+      }
+      const newUser = { ...state.user, ...updates };
+      return {
+        user: newUser,
+        ...(updates.role !== undefined && { role: updates.role }),
+      };
+    }),
 }));

@@ -46,7 +46,12 @@ interface RequireRoleProps {
 }
 
 export function RequireRole({ roles }: RequireRoleProps) {
+  const isLoading = useAuthStore((s) => s.isLoading);
   const role = useAuthStore((s) => s.role);
+
+  if (isLoading) {
+    return null;
+  }
 
   if (!roles.includes(role)) {
     return <Navigate replace to="/" />;
@@ -59,6 +64,7 @@ interface RequirePermissionProps {
   perm: PermissionCheck;
 }
 
+/** Must be nested inside ProtectedRoute to ensure auth has initialized. */
 export function RequirePermission({ perm }: RequirePermissionProps) {
   const allowed = useCan(perm);
   if (!allowed) {

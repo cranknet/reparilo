@@ -129,23 +129,15 @@ export default function Sidebar() {
 
       <div className="mt-auto space-y-3">
         <button
-          className={`flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-on-primary transition-all duration-200 active:scale-[0.98] ${FOCUS_VISIBLE}`}
-          onClick={() => {
-            if (!canCreateJob) {
-              return;
-            }
-            openIntakeModal();
-          }}
+          className={`flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-on-primary transition-all duration-200 active:scale-[0.98] ${FOCUS_VISIBLE} ${canCreateJob ? "" : "cursor-not-allowed opacity-50"}`}
+          disabled={!canCreateJob}
+          onClick={() => openIntakeModal()}
           type="button"
         >
           <span aria-hidden="true" className="material-symbols-outlined">
-            {canCreateJob ? "add_circle" : "swap_horiz"}
+            add_circle
           </span>
-          <span>
-            {canCreateJob
-              ? t("new_checkin")
-              : t("tech_dashboard.update_status")}
-          </span>
+          <span>{t("new_checkin")}</span>
         </button>
 
         <NavLink

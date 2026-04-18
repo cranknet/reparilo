@@ -44,6 +44,17 @@ export function useProfileMultiUser(role: string) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [localImage, setLocalImage] = useState<string | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
+
+  // Revoke blob URL on unmount to prevent memory leaks
+  useEffect(
+    () => () => {
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+      }
+    },
+    []
+  );
 
   const displayUser: DisplayUser = isSelf
     ? {
@@ -65,15 +76,25 @@ export function useProfileMultiUser(role: string) {
     }
     const formData = new FormData();
     formData.append("file", file);
-    setLocalImage(URL.createObjectURL(file));
+    const blobUrl = URL.createObjectURL(file);
+    blobUrlRef.current = blobUrl;
+    setLocalImage(blobUrl);
     setAvatarUploading(true);
     try {
       const res = await api.post(`/users/${userId}/avatar`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
       setLocalImage(null);
       updateUserImage({ image: res.data.image });
     } catch (err: unknown) {
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
       setLocalImage(null);
       const axiosErr = err as { response?: { data?: { error?: string } } };
       const errorMsg = axiosErr.response?.data?.error;
