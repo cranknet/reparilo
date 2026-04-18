@@ -1,35 +1,40 @@
 {
   "version": 1,
   "skills": {
-    "autofix": {
-      "source": "coderabbitai/skills",
+    "nodejs-backend-patterns": {
+      "source": "wshobson/agents",
       "sourceType": "github",
-      "computedHash": "2962bde0a90a52a211f7f752013b0e66997539841da2361e8ca8d14fc8fc20fd"
+      "computedHash": "c6a99966c2565acc388e574039127abc770bb9a3338be761e421e16f023f702b"
     },
-    "brand-guidelines": {
-      "source": "getsentry/skills",
-      "sourceType": "github",
-      "computedHash": "592a5ebea7cd94f9ca3347b3c3f00e2ed54333be5cd5a9278ff098767ebb08d0"
-    },
-    "capacitor-best-practices": {
-      "source": "cap-go/capacitor-skills",
-      "sourceType": "github",
-      "computedHash": "9da56403dfd57025245e260d63d5ed3dcd74982ee8858f3b2186c396c25fac3d"
-    },
-    "code-review": {
-      "source": "coderabbitai/skills",
-      "sourceType": "github",
-      "computedHash": "a73a8b85ccc0898d759f204a4d90c97d65341b6c972b36037bb96cf828074e93"
-    },
-    "frontend-design": {
-      "source": "anthropics/skills",
-      "sourceType": "github",
-      "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
-    },
-    "prisma-expert": {
+    "nodejs-best-practices": {
       "source": "sickn33/antigravity-awesome-skills",
       "sourceType": "github",
-      "computedHash": "ef6d7e3d63d9b028bb52112506dc901b2d94a24918f06865914c8e66bda22c63"
+      "computedHash": "8d2d50c3512cddb15b8d2794b7f18ff69895ea48c8b78bc9feb6b1d9edaa2a9e"
+    },
+    "prisma-cli": {
+      "source": "prisma/skills",
+      "sourceType": "github",
+      "computedHash": "b9d9314e3716af725997843c5026ba0e258fb2d27a986190bf2ad53be67b72b9"
+    },
+    "prisma-postgres": {
+      "source": "prisma/skills",
+      "sourceType": "github",
+      "computedHash": "d090d1206fb6a2dd9f7b9f658d851ccd653132512c53c6e0a164110d9ee80005"
+    },
+    "tailwind-css-patterns": {
+      "source": "giuseppe-trisciuoglio/developer-kit",
+      "sourceType": "github",
+      "computedHash": "6092620c3af955a46ea2b94ca8a40197ac8392e6bbdc8c7515659328b186c770"
+    },
+    "typescript-advanced-types": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "3a3be8c925f96ac4e1280db28a01677e7ca5197f3792de2bbf35ab3bb324b6dd"
+    },
+    "vercel-composition-patterns": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "575757e3e25761c8c562d6e395d29f0b76c98b1273c0bd72d88e6ab1bc9c7d42"
     }
   }
 }
