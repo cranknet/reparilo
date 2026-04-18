@@ -1,10 +1,10 @@
-import type { RefObject } from "react";
+import type { Ref } from "react";
 import { Icon } from "@/components/ui/icon";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   iconEnd?: string;
   iconStart?: string;
-  ref?: RefObject<HTMLInputElement | null>;
+  ref?: Ref<HTMLInputElement>;
 }
 
 export const Input = ({

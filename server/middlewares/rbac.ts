@@ -23,6 +23,7 @@ export function requirePermission(permissions: PermissionCheck) {
 
     if (!result.success) {
       await reply.status(403).send({ error: "Insufficient permissions" });
+      return;
     }
   };
 }

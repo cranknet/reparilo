@@ -1,9 +1,8 @@
-pnpm test
-
-# ultracite
 #!/bin/sh
 # Exit on any error
 set -e
+
+pnpm test
 
 # Check if there are any staged files
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR)

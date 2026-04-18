@@ -1,90 +1,104 @@
 import Fastify from "fastify";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { authRoutes } from "../routes/auth.js";
 
 const mocks = vi.hoisted(() => ({
+  getSession: vi.fn(),
+  accountFindFirst: vi.fn(),
+  accountUpdateMany: vi.fn(),
   userUpdate: vi.fn(),
+  $transaction: vi.fn(),
 }));
 
-vi.mock("@prisma/client", () => ({
-  Prisma: {
-    PrismaClientKnownRequestError: class extends Error {
-      code: string;
-      constructor(message: string, { code }: { code: string }) {
-        super(message);
-        this.code = code;
-      }
-    },
-  },
+vi.mock("better-auth/crypto", () => ({
+  hashPassword: vi.fn().mockResolvedValue("hashed-new-pw"),
+  verifyPassword: vi.fn().mockResolvedValue(true),
 }));
 
-function buildApp(userId: string | null) {
+vi.mock("better-auth/node", () => ({
+  fromNodeHeaders: vi.fn().mockReturnValue(new Headers()),
+}));
+
+function buildApp(userId: string | null, mustChangePassword = true) {
   const app = Fastify();
 
-  app.decorate("prisma", {
-    user: {
-      update: mocks.userUpdate,
-    },
-  });
-
-  app.addHook("preHandler", (request, _reply, done) => {
-    request.user = userId
-      ? {
+  const mockSession = userId
+    ? {
+        user: {
           id: userId,
           name: "Test User",
           username: "testuser",
           email: "test@example.com",
           role: "OWNER",
           isActive: true,
-          mustChangePassword: true,
-          sessionId: "sess-1",
-        }
-      : null;
-    done();
+          mustChangePassword,
+        },
+        session: { id: "sess-1" },
+      }
+    : null;
+
+  mocks.getSession.mockResolvedValue(mockSession);
+
+  (app.decorate as (name: string, value: unknown) => void)("auth", {
+    api: { getSession: mocks.getSession },
   });
 
-  app.post("/me/acknowledge-password-change", async (request, reply) => {
-    if (!request.user) {
-      return reply.status(401).send({ error: "Authentication required" });
-    }
-    await app.prisma.user.update({
-      where: { id: request.user.id },
-      data: { mustChangePassword: false },
-    });
-    return reply.send({ success: true });
+  mocks.accountUpdateMany.mockResolvedValue({ count: 1 });
+  mocks.userUpdate.mockResolvedValue({
+    id: userId,
+    mustChangePassword: false,
   });
+  mocks.$transaction.mockResolvedValue([
+    { count: 1 },
+    { id: userId, mustChangePassword: false },
+  ]);
+
+  (app.decorate as (name: string, value: unknown) => void)("prisma", {
+    account: {
+      findFirst: mocks.accountFindFirst,
+      updateMany: mocks.accountUpdateMany,
+    },
+    user: { update: mocks.userUpdate },
+    $transaction: mocks.$transaction,
+  });
+
+  app.register(authRoutes);
 
   return app;
 }
 
-describe("POST /me/acknowledge-password-change", () => {
+describe("POST /api/auth/change-password", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("returns 401 when user is not authenticated", async () => {
+    mocks.getSession.mockResolvedValue(null);
     const app = buildApp(null);
     const res = await app.inject({
       method: "POST",
-      url: "/me/acknowledge-password-change",
+      url: "/api/auth/change-password",
+      payload: { oldPassword: "old", newPassword: "newpassword1" },
     });
     expect(res.statusCode).toBe(401);
   });
 
-  it("clears mustChangePassword in DB and returns success", async () => {
-    mocks.userUpdate.mockResolvedValue({
-      id: "user-1",
-      mustChangePassword: false,
-    });
-    const app = buildApp("user-1");
+  it("clears mustChangePassword atomically within the password change transaction", async () => {
+    mocks.accountFindFirst.mockResolvedValue({ password: "hashed-old" });
+
+    const app = buildApp("user-1", true);
     const res = await app.inject({
       method: "POST",
-      url: "/me/acknowledge-password-change",
+      url: "/api/auth/change-password",
+      payload: { oldPassword: "oldpassword", newPassword: "newpassword1" },
     });
+
     expect(res.statusCode).toBe(200);
     expect(JSON.parse(res.body)).toEqual({ success: true });
-    expect(mocks.userUpdate).toHaveBeenCalledWith({
-      where: { id: "user-1" },
-      data: { mustChangePassword: false },
-    });
+    expect(mocks.$transaction).toHaveBeenCalledTimes(1);
+
+    const transactionArg = mocks.$transaction.mock.calls[0][0];
+    expect(Array.isArray(transactionArg)).toBe(true);
+    expect(transactionArg).toHaveLength(2);
   });
 });

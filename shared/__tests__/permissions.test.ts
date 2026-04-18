@@ -122,8 +122,11 @@ describe("OWNER role", () => {
     expect(settings).toContain("edit");
   });
 
-  it("has NO ai access", () => {
-    expect(frontDeskRole.statements).not.toHaveProperty("ai");
+  it("has ai access", () => {
+    expect(ownerRole.statements).toHaveProperty("ai");
+    expect((ownerRole.statements as { ai: readonly string[] }).ai).toContain(
+      "access"
+    );
   });
 
   it("has full user admin actions", () => {

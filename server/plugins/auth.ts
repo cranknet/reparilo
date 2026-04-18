@@ -102,7 +102,7 @@ const authPlugin: FastifyPluginAsync = async (app) => {
         request.method,
         url.pathname
       );
-      reply.send(sanitized || null);
+      reply.send(sanitized ?? null);
     } catch (err) {
       app.log.error(err, "Better Auth handler error");
       reply.status(500).send({ error: "Internal authentication error" });

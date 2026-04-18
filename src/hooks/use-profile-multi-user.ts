@@ -96,9 +96,9 @@ export function useProfileMultiUser(role: string) {
     if (!(isSelf && userId)) {
       return;
     }
-    setLocalImage(null);
     try {
       await api.delete(`/users/${userId}/avatar`);
+      setLocalImage(null);
       updateUserImage({ image: null });
     } catch {
       // error handled by interceptor

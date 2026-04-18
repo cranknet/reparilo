@@ -1,6 +1,6 @@
 import type { RoleType } from "@shared/constants";
 import type { PermissionCheck } from "@shared/permissions";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router";
 import { can, useCan } from "@/hooks/use-can";
@@ -68,7 +68,10 @@ export default function Sidebar() {
   const { t } = useTranslation();
   const role = useAuthStore((s) => s.role);
   const userName = useAuthStore((s) => s.user?.name || s.user?.username || "");
-  const navItems = NAV_ITEMS.filter((item) => can(role, item.perm));
+  const navItems = useMemo(
+    () => NAV_ITEMS.filter((item) => can(role, item.perm)),
+    [role]
+  );
   const canCreateJob = useCan({ jobs: ["create"] });
   const [logoutPending, setLogoutPending] = useState(false);
   const logoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

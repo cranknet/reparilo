@@ -6,6 +6,7 @@ import {
   COMPLETED_STATUSES,
   INACTIVE_STATUSES,
   JOB_STATUS_FLOW,
+  Role,
 } from "@shared/constants";
 import type {
   CreateJobInput,
@@ -15,7 +16,7 @@ import type {
 import { generateJobCode } from "../utils/job-code.js";
 import { createAuditLog } from "./audit.service.js";
 
-const VALID_TECH_ROLES = new Set(["OWNER", "TECHNICIAN"]);
+const VALID_TECH_ROLES: Set<RoleType> = new Set([Role.OWNER, Role.TECHNICIAN]);
 
 const FD_CANCEL_WINDOW_MS = 30 * 60 * 1000;
 
@@ -331,7 +332,10 @@ export async function transitionStatus(
     return null;
   }
 
-  if (newStatus === "CANCELLED" && options?.requestingRole === "FRONT_DESK") {
+  if (
+    newStatus === "CANCELLED" &&
+    options?.requestingRole === Role.FRONT_DESK
+  ) {
     const check = canFrontDeskCancel(job, userId);
     if (!check.ok) {
       return { error: check.reason };

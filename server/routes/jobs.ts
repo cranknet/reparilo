@@ -65,6 +65,7 @@ function getUserId(req: FastifyRequest): string {
 export const jobRoutes: FastifyPluginAsync = async (app) => {
   app.addHook("preHandler", requirePermission({ jobs: ["view"] }));
 
+  // Public: no auth — used by customer self-tracking page
   app.get("/lookup", { preHandler: [] }, async (req, reply) => {
     const { code } = req.query as { code?: string };
     if (!code) {

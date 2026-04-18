@@ -1,11 +1,14 @@
+import { Role } from "@shared/constants";
 import type { PermissionCheck } from "@shared/permissions";
 import { authClient } from "@/lib/auth-client";
 import { useAuthStore } from "@/stores/auth";
 
-/**
- * Non-hook variant — safe to call inside .map / .filter. Caller supplies the role.
- */
+const VALID_ROLES: ReadonlySet<string> = new Set(Object.values(Role));
+
 export function can(role: string, permissions: PermissionCheck): boolean {
+  if (!VALID_ROLES.has(role)) {
+    return false;
+  }
   return authClient.admin.checkRolePermission({
     // BA's generic infers keyof roles, not string; cast bridges the gap safely.
     role: role as never,
@@ -14,10 +17,10 @@ export function can(role: string, permissions: PermissionCheck): boolean {
   });
 }
 
-/**
- * Hook variant — reads role from the auth store, for single checks in component bodies.
- */
 export function useCan(permissions: PermissionCheck): boolean {
   const role = useAuthStore((s) => s.role);
+  if (!role) {
+    return false;
+  }
   return can(role, permissions);
 }
