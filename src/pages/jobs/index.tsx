@@ -2,9 +2,11 @@ import type { JobStatusType } from "@shared/constants";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import JobsFilters from "@/components/modules/jobs/filters";
-import type { StatusGroupKey } from "@/components/modules/jobs/jobs-shared";
+import type {
+  JobRow,
+  StatusGroupKey,
+} from "@/components/modules/jobs/jobs-shared";
 import { jobToRow, STATUS_GROUPS } from "@/components/modules/jobs/jobs-shared";
-import type { JobRow } from "@/components/modules/jobs/jobs-table";
 import JobsTable from "@/components/modules/jobs/jobs-table";
 import JobMobileCard from "@/components/modules/jobs/mobile-card";
 import StatusCounter from "@/components/modules/jobs/status-counter";
@@ -185,6 +187,7 @@ export default function JobsPage() {
               deviceIcon={job.deviceIcon}
               id={job.id}
               key={job.id}
+              rawJob={job.rawJob}
               status={job.status}
               technician={job.technician}
             />

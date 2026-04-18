@@ -2,10 +2,8 @@ import { DEVICE_ICONS } from "@shared/constants";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import type { JobRow } from "./jobs-shared";
-
-export type { JobRow } from "./jobs-shared";
-
 import StatusBadge from "./status-badge";
+import TechnicianSelect from "./technician-select";
 
 interface JobsTableProps {
   jobs: JobRow[];
@@ -20,7 +18,7 @@ export default function JobsTable({ jobs }: JobsTableProps) {
         <table className="w-full min-w-[640px] border-collapse text-left">
           <thead>
             <tr className="bg-surface-container-low">
-              <th className="p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-wide">
+              <th className="hidden p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-wide md:table-cell">
                 {t("job_id")}
               </th>
               <th className="p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-wide">
@@ -43,10 +41,13 @@ export default function JobsTable({ jobs }: JobsTableProps) {
           <tbody>
             {jobs.map((job) => (
               <tr
-                className="transition-colors hover:bg-surface-container-low"
+                className="cursor-pointer transition-colors hover:bg-surface-container-low"
                 key={job.id}
+                onClick={() =>
+                  window.location.assign(`/jobs/${job.rawJob?.id ?? job.id}`)
+                }
               >
-                <td className="p-4">
+                <td className="hidden p-4 md:table-cell">
                   <Link
                     className="font-bold font-headline text-primary text-xs tracking-tight hover:underline lg:text-sm"
                     to={`/jobs/${job.rawJob?.id ?? job.id}`}
@@ -95,17 +96,13 @@ export default function JobsTable({ jobs }: JobsTableProps) {
                   </div>
                 </td>
                 <td className="p-4">
-                  {job.technician ? (
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-container-highest">
-                        <span className="material-symbols-outlined text-on-surface-variant text-sm">
-                          person
-                        </span>
-                      </div>
-                      <span className="font-body font-medium text-xs lg:text-sm">
-                        {job.technician}
-                      </span>
-                    </div>
+                  {job.rawJob ? (
+                    <TechnicianSelect
+                      currentTechnicianId={job.rawJob.technician?.id}
+                      currentTechnicianName={job.rawJob.technician?.name}
+                      jobId={job.rawJob.id}
+                      size="sm"
+                    />
                   ) : (
                     <span className="font-body font-medium text-on-surface-variant text-xs italic">
                       {t("unassigned")}

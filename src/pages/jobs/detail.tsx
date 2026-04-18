@@ -6,6 +6,7 @@ import JobPartsSection from "@/components/modules/jobs/job-parts-section";
 import StatusBadge from "@/components/modules/jobs/status-badge";
 import StatusChangeMenu from "@/components/modules/jobs/status-change-menu";
 import StatusHistoryTimeline from "@/components/modules/jobs/status-history-timeline";
+import TechnicianSelect from "@/components/modules/jobs/technician-select";
 import { useJobsStore } from "@/stores/jobs";
 
 function fmt(n: number): string {
@@ -143,9 +144,14 @@ export default function JobDetailPage() {
             <span className="font-label text-on-surface-variant text-xs uppercase">
               {t("technician")}
             </span>
-            <p className="font-body font-medium text-on-surface text-sm">
-              {job.technician?.name ?? t("unassigned")}
-            </p>
+            <div className="mt-1">
+              <TechnicianSelect
+                currentTechnicianId={job.technician?.id}
+                currentTechnicianName={job.technician?.name}
+                jobId={job.id}
+                onChanged={() => fetchJob()}
+              />
+            </div>
           </div>
           <div>
             <span className="font-label text-on-surface-variant text-xs uppercase">

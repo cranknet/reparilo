@@ -192,6 +192,7 @@
   "status_label": "Status",
   "technician": "Technician",
   "unassigned": "Unassigned",
+  "loading": "Loading...",
   "details": "Details",
   "filter": "Filter",
   "export": "Download List",

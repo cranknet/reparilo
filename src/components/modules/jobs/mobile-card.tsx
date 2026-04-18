@@ -3,6 +3,7 @@ import { DEVICE_ICONS } from "@shared/constants";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import StatusBadge from "./status-badge";
+import TechnicianSelect from "./technician-select";
 
 interface JobMobileCardProps {
   customer: string;
@@ -10,18 +11,22 @@ interface JobMobileCardProps {
   device: string;
   deviceIcon?: string;
   id: string;
+  rawJob?: {
+    id: string;
+    technician?: { id: string; name: string } | null;
+  };
   status: JobStatusType;
   technician?: string;
 }
 
 export default function JobMobileCard({
   id,
+  rawJob,
   device,
   deviceIcon,
   status,
   customer,
   customerTier,
-  technician,
 }: JobMobileCardProps) {
   const { t } = useTranslation();
 
@@ -35,9 +40,6 @@ export default function JobMobileCard({
             </span>
           </div>
           <div>
-            <span className="font-bold font-headline text-primary text-xs tracking-tight">
-              {id}
-            </span>
             <h3 className="font-bold font-headline text-sm">{device}</h3>
           </div>
         </div>
@@ -55,18 +57,27 @@ export default function JobMobileCard({
 
       <div className="-mx-4 mt-3 flex items-center justify-between bg-surface-container-low px-4 py-3">
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-container-highest">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-container-highest">
             <span className="material-symbols-outlined text-on-surface-variant text-sm">
               person
             </span>
           </div>
-          <span className="font-body font-medium text-on-surface-variant text-xs">
-            {technician ?? t("unassigned")}
-          </span>
+          {rawJob ? (
+            <TechnicianSelect
+              currentTechnicianId={rawJob.technician?.id}
+              currentTechnicianName={rawJob.technician?.name}
+              jobId={rawJob.id}
+              size="sm"
+            />
+          ) : (
+            <span className="font-body font-medium text-on-surface-variant text-xs">
+              {t("unassigned")}
+            </span>
+          )}
         </div>
         <Link
           className="flex min-h-[44px] min-w-[44px] items-center gap-1 rounded-lg px-2 py-2 font-bold font-label text-primary text-xs uppercase tracking-wider transition-colors hover:bg-surface-container-high"
-          to={`/jobs/${id}`}
+          to={`/jobs/${rawJob?.id ?? id}`}
         >
           {t("details")}
           <span className="material-symbols-outlined text-sm">
