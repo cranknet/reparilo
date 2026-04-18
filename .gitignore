@@ -12,4 +12,4 @@ uploads/job-photos/*
 android/
 .turbo
 .playwright-mcp/
-.stitch
+.stitch.worktrees/
