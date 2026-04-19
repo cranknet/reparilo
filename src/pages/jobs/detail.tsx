@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
 import JobPartsSection from "@/components/modules/jobs/job-parts-section";
+import JobRepairsSection from "@/components/modules/jobs/job-repairs-section";
 import StatusBadge from "@/components/modules/jobs/status-badge";
 import StatusChangeMenu from "@/components/modules/jobs/status-change-menu";
 import StatusHistoryTimeline from "@/components/modules/jobs/status-history-timeline";
@@ -187,6 +188,10 @@ export default function JobDetailPage() {
 
       <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
         <JobPartsSection job={job} onChanged={() => fetchJob()} />
+      </div>
+
+      <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
+        <JobRepairsSection job={job} onChanged={() => fetchJob()} />
       </div>
 
       <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
