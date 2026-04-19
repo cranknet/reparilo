@@ -15,7 +15,7 @@ export default function JobsTable({ jobs }: JobsTableProps) {
   const navigate = useNavigate();
 
   return (
-    <div className="rounded-xl bg-surface-container-lowest ring-1 ring-outline-variant">
+    <div className="overflow-hidden rounded-xl bg-surface-container-lowest">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-left">
           <thead>

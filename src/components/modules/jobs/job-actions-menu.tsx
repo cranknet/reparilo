@@ -1,6 +1,13 @@
 import type { JobStatusType } from "@shared/constants";
 import { INACTIVE_STATUSES, JOB_STATUS_FLOW } from "@shared/constants";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useJobsStore } from "@/stores/jobs";
 import JobCancelDialog from "./job-cancel-dialog";
@@ -18,7 +25,9 @@ export default function JobActionsMenu({ job }: JobActionsMenuProps) {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const transitionStatus = useJobsStore((s) => s.transitionStatus);
 
   const isTerminal = INACTIVE_STATUSES.includes(job.status);
@@ -31,8 +40,17 @@ export default function JobActionsMenu({ job }: JobActionsMenuProps) {
 
   const close = useCallback(() => {
     setOpen(false);
+    setMenuPos(null);
     setError(null);
   }, []);
+
+  useLayoutEffect(() => {
+    if (!(open && triggerRef.current)) {
+      return;
+    }
+    const rect = triggerRef.current.getBoundingClientRect();
+    setMenuPos({ x: rect.right - 256, y: rect.bottom + 8 });
+  }, [open]);
 
   useEffect(() => {
     if (!open) {
@@ -96,21 +114,29 @@ export default function JobActionsMenu({ job }: JobActionsMenuProps) {
 
   return (
     <>
-      <div className="relative" ref={menuRef}>
+      <div>
         <button
           aria-expanded={open}
           aria-haspopup="true"
           aria-label={t("job_actions")}
           className={`min-h-[44px] min-w-[44px] rounded-lg p-2 transition-colors hover:bg-surface-container-high hover:text-primary ${open ? "bg-primary-container text-on-primary" : "text-on-surface-variant"}`}
           onClick={() => setOpen((prev) => !prev)}
+          ref={triggerRef}
           title={t("job_actions")}
           type="button"
         >
           <span className="material-symbols-outlined">more_vert</span>
         </button>
+      </div>
 
-        {open && (
-          <div className="absolute top-full right-0 z-50 mt-2 w-64 rounded-xl border border-outline-variant/20 bg-surface-container-lowest/95 py-2 shadow-2xl backdrop-blur-xl">
+      {open &&
+        menuPos &&
+        createPortal(
+          <div
+            className="fixed z-50 w-64 rounded-xl border border-outline-variant/20 bg-surface-container-lowest/95 py-2 shadow-2xl backdrop-blur-xl"
+            ref={menuRef}
+            style={{ left: menuPos.x, top: menuPos.y }}
+          >
             {statusTransitions.length > 0 && (
               <>
                 <div className="px-3 py-2 font-bold font-label text-[10px] text-outline uppercase tracking-wider">
@@ -188,9 +214,9 @@ export default function JobActionsMenu({ job }: JobActionsMenuProps) {
                 <p className="font-body text-error text-xs">{error}</p>
               </div>
             )}
-          </div>
+          </div>,
+          document.body
         )}
-      </div>
 
       {noteDialogOpen && job.rawJob?.id && (
         <JobNoteDialog
