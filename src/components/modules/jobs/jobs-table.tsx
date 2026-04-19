@@ -1,6 +1,7 @@
 import { DEVICE_ICONS } from "@shared/constants";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
+import JobActionsMenu from "./job-actions-menu";
 import type { JobRow } from "./jobs-shared";
 import StatusBadge from "./status-badge";
 import TechnicianSelect from "./technician-select";
@@ -119,15 +120,15 @@ export default function JobsTable({ jobs }: JobsTableProps) {
                   </span>
                 </td>
                 <td className="p-4 text-right">
-                  <button
-                    aria-label={t("job_actions")}
-                    className="min-h-[44px] min-w-[44px] rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
+                  {/* biome-ignore lint/a11y/useKeyWithClickEvents: stopPropagation only */}
+                  {/* biome-ignore lint/a11y/noStaticElementInteractions: wrapper to prevent row click */}
+                  {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: stopPropagation only */}
+                  <span
+                    className="inline-block"
                     onClick={(e) => e.stopPropagation()}
-                    title={t("job_actions")}
-                    type="button"
                   >
-                    <span className="material-symbols-outlined">more_vert</span>
-                  </button>
+                    <JobActionsMenu job={job} />
+                  </span>
                 </td>
               </tr>
             ))}

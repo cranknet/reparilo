@@ -2,6 +2,8 @@ import type { JobStatusType } from "@shared/constants";
 import { DEVICE_ICONS } from "@shared/constants";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import JobActionsMenu from "./job-actions-menu";
+import type { JobRow } from "./jobs-shared";
 import StatusBadge from "./status-badge";
 import TechnicianSelect from "./technician-select";
 
@@ -74,15 +76,27 @@ export default function JobMobileCard({
             </span>
           )}
         </div>
-        <Link
-          className="flex min-h-[44px] min-w-[44px] items-center gap-1 rounded-lg px-2 py-2 font-bold font-label text-primary text-xs uppercase tracking-wider transition-colors hover:bg-surface-container-high"
-          to={`/jobs/${rawJob?.id ?? id}`}
-        >
-          {t("details")}
-          <span className="material-symbols-outlined text-sm">
-            chevron_right
-          </span>
-        </Link>
+        <div className="flex items-center gap-2">
+          <JobActionsMenu
+            job={{
+              id,
+              device,
+              deviceIcon,
+              status,
+              customer,
+              rawJob: rawJob as JobRow["rawJob"],
+            }}
+          />
+          <Link
+            className="flex min-h-[44px] min-w-[44px] items-center gap-1 rounded-lg px-2 py-2 font-bold font-label text-primary text-xs uppercase tracking-wider transition-colors hover:bg-surface-container-high"
+            to={`/jobs/${rawJob?.id ?? id}`}
+          >
+            {t("details")}
+            <span className="material-symbols-outlined text-sm">
+              chevron_right
+            </span>
+          </Link>
+        </div>
       </div>
     </div>
   );
