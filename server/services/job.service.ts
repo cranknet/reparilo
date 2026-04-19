@@ -193,34 +193,67 @@ export async function create(
 
   const { accessCode, jobCode } = await generateJobCode(prisma);
 
-  const job = await prisma.job.create({
-    data: {
-      accessCode,
-      color: input.color ?? null,
-      conditionNotes: input.conditionNotes ?? null,
-      createdById: userId,
-      customerId: customer.id,
-      depositAmount: input.depositAmount ?? null,
-      deviceId: device.id,
-      estimatedCost: input.estimatedCost,
-      estimatedDate: input.estimatedDate ? new Date(input.estimatedDate) : null,
-      isWarrantyReturn: input.isWarrantyReturn ?? false,
-      jobCode,
-      reportedProblem: input.reportedProblem,
-      technicianId: input.technicianId ?? null,
-      warrantyForJobId: input.warrantyForJobId ?? null,
-    },
+  const job = await prisma.$transaction(async (tx) => {
+    const created = await tx.job.create({
+      data: {
+        accessCode,
+        color: input.color ?? null,
+        conditionNotes: input.conditionNotes ?? null,
+        createdById: userId,
+        customerId: customer.id,
+        depositAmount: input.depositAmount ?? null,
+        deviceId: device.id,
+        estimatedCost: input.estimatedCost,
+        estimatedDate: input.estimatedDate
+          ? new Date(input.estimatedDate)
+          : null,
+        isWarrantyReturn: input.isWarrantyReturn ?? false,
+        jobCode,
+        reportedProblem: input.reportedProblem,
+        technicianId: input.technicianId ?? null,
+        warrantyForJobId: input.warrantyForJobId ?? null,
+      },
+      include: JOB_INCLUDE,
+    });
+
+    if (input.repairs && input.repairs.length > 0) {
+      for (const repair of input.repairs) {
+        await tx.jobRepair.create({
+          data: {
+            category: repair.category,
+            createdById: userId,
+            jobId: created.id,
+            price: repair.price,
+            repairId: repair.repairId ?? null,
+            repairName: repair.repairName,
+          },
+        });
+        await createAuditLog(tx, {
+          action: AuditAction.REPAIR_ADDED,
+          jobId: created.id,
+          metadata: { repairId: repair.repairId },
+          toValue: `${repair.repairName} — ${repair.price}`,
+          userId,
+        });
+      }
+    }
+
+    await createAuditLog(tx, {
+      action: AuditAction.JOB_CREATED,
+      jobId: created.id,
+      toValue: jobCode,
+      userId,
+    });
+
+    return created;
+  });
+
+  const fullJob = await prisma.job.findUnique({
+    where: { id: job.id },
     include: JOB_INCLUDE,
   });
 
-  await createAuditLog(prisma, {
-    action: AuditAction.JOB_CREATED,
-    jobId: job.id,
-    toValue: jobCode,
-    userId,
-  });
-
-  return { ...job, finalCost: computeFinalCost(job) };
+  return { ...(fullJob ?? job), finalCost: computeFinalCost(fullJob ?? job) };
 }
 
 export async function update(

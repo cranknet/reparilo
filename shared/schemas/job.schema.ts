@@ -4,6 +4,18 @@
 import { JobStatus, PartCategory, RepairCategory } from "@shared/constants";
 import { z } from "zod";
 
+export const intakeRepairItemSchema = z.object({
+  repairId: z.string().optional(),
+  repairName: z.string().min(1),
+  category: z.enum([
+    RepairCategory.HARDWARE,
+    RepairCategory.SOFTWARE,
+    RepairCategory.DIAGNOSTIC,
+    RepairCategory.OTHER,
+  ]),
+  price: z.number().min(0),
+});
+
 export const createJobSchema = z.object({
   customerEmail: z.string().email().optional().or(z.literal("")),
   customerId: z.string().cuid().optional(),
@@ -25,6 +37,7 @@ export const createJobSchema = z.object({
   technicianId: z.string().min(1).optional(),
   isWarrantyReturn: z.boolean().optional(),
   warrantyForJobId: z.string().optional(),
+  repairs: z.array(intakeRepairItemSchema).optional(),
 });
 
 export type CreateJobInput = z.infer<typeof createJobSchema>;
@@ -122,3 +135,4 @@ export type AddJobRepairInput = z.infer<typeof addJobRepairSchema>;
 export type AddJobNoteInput = z.infer<typeof addJobNoteSchema>;
 export type AddWaitingPartInput = z.infer<typeof addWaitingPartSchema>;
 export type JobListQueryInput = z.infer<typeof jobListQuerySchema>;
+export type IntakeRepairItem = z.infer<typeof intakeRepairItemSchema>;
