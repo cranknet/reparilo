@@ -706,5 +706,6 @@
   "jobs_history_action_NOTE_ADDED": "Note added",
   "jobs_history_action_PHOTO_ADDED": "Photo added",
   "jobs_history_action_PHOTO_REMOVED": "Photo removed",
-  "jobs_history_action_JOB_UPDATED": "Job updated"
+  "jobs_history_action_JOB_UPDATED": "Job updated",
+  "jobs_technician_assign_error": "Failed to assign technician"
 }

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCan } from "@/hooks/use-can";
 import { useTechnicians } from "@/hooks/use-technicians";
@@ -24,21 +24,27 @@ export default function TechnicianSelect({
   const { technicians, isLoading } = useTechnicians();
   const updateJob = useJobsStore((s) => s.updateJob);
   const [assigning, setAssigning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const selectRef = useRef<HTMLSelectElement>(null);
 
   const handleChange = useCallback(
     async (techId: string) => {
       const value = techId === "__none__" ? null : techId;
       setAssigning(true);
+      setError(null);
       try {
         await updateJob(jobId, { technicianId: value });
         onChanged?.();
-      } catch (err: unknown) {
-        window.console.error(err);
+      } catch {
+        setError(t("jobs_technician_assign_error"));
+        if (selectRef.current) {
+          selectRef.current.value = currentTechnicianId ?? "__none__";
+        }
       } finally {
         setAssigning(false);
       }
     },
-    [jobId, updateJob, onChanged]
+    [jobId, updateJob, onChanged, currentTechnicianId, t]
   );
 
   if (!canEdit) {
@@ -67,18 +73,23 @@ export default function TechnicianSelect({
       : "rounded-lg border border-outline-variant bg-surface-container-low px-3 py-1.5 font-body text-sm text-on-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary";
 
   return (
-    <select
-      className={selectClass}
-      disabled={assigning}
-      onChange={(e) => handleChange(e.target.value)}
-      value={currentTechnicianId ?? "__none__"}
-    >
-      <option value="__none__">{t("unassigned")}</option>
-      {technicians.map((tech) => (
-        <option key={tech.id} value={tech.id}>
-          {tech.name}
-        </option>
-      ))}
-    </select>
+    <div className="flex flex-col gap-0.5">
+      <select
+        aria-label={t("technician")}
+        className={selectClass}
+        disabled={assigning}
+        onChange={(e) => handleChange(e.target.value)}
+        ref={selectRef}
+        value={currentTechnicianId ?? "__none__"}
+      >
+        <option value="__none__">{t("unassigned")}</option>
+        {technicians.map((tech) => (
+          <option key={tech.id} value={tech.id}>
+            {tech.name}
+          </option>
+        ))}
+      </select>
+      {error && <span className="font-label text-error text-xs">{error}</span>}
+    </div>
   );
 }

@@ -8,10 +8,10 @@ export function useTechnicians() {
   const isLoading = useUsersStore((s) => s.isLoading);
 
   useEffect(() => {
-    if (users.length === 0) {
+    if (users.length === 0 && !isLoading) {
       fetchUsers();
     }
-  }, [users.length, fetchUsers]);
+  }, [users.length, isLoading, fetchUsers]);
 
   const technicians = useMemo(
     () =>

@@ -1,6 +1,6 @@
 import { DEVICE_ICONS } from "@shared/constants";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import type { JobRow } from "./jobs-shared";
 import StatusBadge from "./status-badge";
 import TechnicianSelect from "./technician-select";
@@ -11,6 +11,7 @@ interface JobsTableProps {
 
 export default function JobsTable({ jobs }: JobsTableProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   return (
     <div className="overflow-hidden rounded-xl bg-surface-container-lowest">
@@ -43,13 +44,12 @@ export default function JobsTable({ jobs }: JobsTableProps) {
               <tr
                 className="cursor-pointer transition-colors hover:bg-surface-container-low"
                 key={job.id}
-                onClick={() =>
-                  window.location.assign(`/jobs/${job.rawJob?.id ?? job.id}`)
-                }
+                onClick={() => navigate(`/jobs/${job.rawJob?.id ?? job.id}`)}
               >
                 <td className="hidden p-4 md:table-cell">
                   <Link
                     className="font-bold font-headline text-primary text-xs tracking-tight hover:underline lg:text-sm"
+                    onClick={(e) => e.stopPropagation()}
                     to={`/jobs/${job.rawJob?.id ?? job.id}`}
                   >
                     {job.id}
@@ -58,6 +58,7 @@ export default function JobsTable({ jobs }: JobsTableProps) {
                 <td className="p-4">
                   <Link
                     className="block"
+                    onClick={(e) => e.stopPropagation()}
                     to={`/jobs/${job.rawJob?.id ?? job.id}`}
                   >
                     <div className="flex items-center gap-3">
@@ -96,23 +97,32 @@ export default function JobsTable({ jobs }: JobsTableProps) {
                   </div>
                 </td>
                 <td className="p-4">
-                  {job.rawJob ? (
-                    <TechnicianSelect
-                      currentTechnicianId={job.rawJob.technician?.id}
-                      currentTechnicianName={job.rawJob.technician?.name}
-                      jobId={job.rawJob.id}
-                      size="sm"
-                    />
-                  ) : (
-                    <span className="font-body font-medium text-on-surface-variant text-xs italic">
-                      {t("unassigned")}
-                    </span>
-                  )}
+                  {/* biome-ignore lint/a11y/useKeyWithClickEvents: stopPropagation only */}
+                  {/* biome-ignore lint/a11y/noStaticElementInteractions: wrapper to prevent row click */}
+                  {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: stopPropagation only */}
+                  <span
+                    className="inline-block"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {job.rawJob ? (
+                      <TechnicianSelect
+                        currentTechnicianId={job.rawJob.technician?.id}
+                        currentTechnicianName={job.rawJob.technician?.name}
+                        jobId={job.rawJob.id}
+                        size="sm"
+                      />
+                    ) : (
+                      <span className="font-body font-medium text-on-surface-variant text-xs italic">
+                        {t("unassigned")}
+                      </span>
+                    )}
+                  </span>
                 </td>
                 <td className="p-4 text-right">
                   <button
                     aria-label={t("job_actions")}
                     className="min-h-[44px] min-w-[44px] rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
+                    onClick={(e) => e.stopPropagation()}
                     title={t("job_actions")}
                     type="button"
                   >

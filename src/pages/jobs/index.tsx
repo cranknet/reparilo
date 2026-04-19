@@ -189,7 +189,6 @@ export default function JobsPage() {
               key={job.id}
               rawJob={job.rawJob}
               status={job.status}
-              technician={job.technician}
             />
           ))}
         </div>

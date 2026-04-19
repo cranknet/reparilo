@@ -706,5 +706,6 @@
   "jobs_history_action_NOTE_ADDED": "Remarque ajoutée",
   "jobs_history_action_PHOTO_ADDED": "Photo ajoutée",
   "jobs_history_action_PHOTO_REMOVED": "Photo supprimée",
-  "jobs_history_action_JOB_UPDATED": "Emploi mis à jour"
+  "jobs_history_action_JOB_UPDATED": "Emploi mis à jour",
+  "jobs_technician_assign_error": "Échec de l'affectation du technicien"
 }

@@ -706,5 +706,6 @@
   "jobs_history_action_NOTE_ADDED": "تمت إضافة الملاحظة",
   "jobs_history_action_PHOTO_ADDED": "تمت إضافة الصورة",
   "jobs_history_action_PHOTO_REMOVED": "تمت إزالة الصورة",
-  "jobs_history_action_JOB_UPDATED": "تم تحديث الوظيفة"
+  "jobs_history_action_JOB_UPDATED": "تم تحديث الوظيفة",
+  "jobs_technician_assign_error": "فشل في تعيين فني"
 }

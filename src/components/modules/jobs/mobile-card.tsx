@@ -16,7 +16,6 @@ interface JobMobileCardProps {
     technician?: { id: string; name: string } | null;
   };
   status: JobStatusType;
-  technician?: string;
 }
 
 export default function JobMobileCard({
