@@ -1,7 +1,9 @@
+import type { RepairCatalog } from "@shared/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { CreatedCustomerData } from "@/components/modules/jobs/quick-add-customer";
 import QuickAddCustomer from "@/components/modules/jobs/quick-add-customer";
+import RepairServicePicker from "@/components/modules/jobs/repair-service-picker";
 import type { CustomerSearchResult } from "@/hooks/use-customer-search";
 import { useCustomerSearch } from "@/hooks/use-customer-search";
 
@@ -21,6 +23,12 @@ interface IntakeFormData {
   estimatedDelivery: string;
   isWarrantyReturn: boolean;
   model: string;
+  repairs: Array<{
+    repairId: string;
+    repairName: string;
+    category: string;
+    price: number;
+  }>;
   reportedProblem: string;
 }
 
@@ -38,6 +46,7 @@ const INITIAL_FORM: IntakeFormData = {
   estimatedDelivery: "",
   isWarrantyReturn: false,
   model: "",
+  repairs: [],
   reportedProblem: "",
 };
 
@@ -205,6 +214,133 @@ function CustomerSearchDropdown({
   );
 }
 
+function useRepairHandlers(
+  setForm: React.Dispatch<React.SetStateAction<IntakeFormData>>
+) {
+  const handleSelectRepair = useCallback(
+    (repair: RepairCatalog) => {
+      setForm((prev) => ({
+        ...prev,
+        repairs: [
+          ...prev.repairs,
+          {
+            repairId: repair.id,
+            repairName: repair.name,
+            category: repair.category,
+            price: Number(repair.defaultPrice),
+          },
+        ],
+      }));
+    },
+    [setForm]
+  );
+
+  const handleRemoveRepair = useCallback(
+    (index: number) => {
+      setForm((prev) => ({
+        ...prev,
+        repairs: prev.repairs.filter((_, i) => i !== index),
+      }));
+    },
+    [setForm]
+  );
+
+  const handleRepairPriceChange = useCallback(
+    (index: number, newPrice: number) => {
+      setForm((prev) => ({
+        ...prev,
+        repairs: prev.repairs.map((r, i) =>
+          i === index ? { ...r, price: newPrice } : r
+        ),
+      }));
+    },
+    [setForm]
+  );
+
+  return { handleSelectRepair, handleRemoveRepair, handleRepairPriceChange };
+}
+
+interface RepairServicesSectionProps {
+  onPriceChange: (index: number, price: number) => void;
+  onRemove: (index: number) => void;
+  onSelect: (repair: RepairCatalog) => void;
+  repairs: IntakeFormData["repairs"];
+  t: (key: string, opts?: Record<string, unknown>) => string;
+}
+
+function RepairServicesSection({
+  onPriceChange,
+  onRemove,
+  onSelect,
+  repairs,
+  t,
+}: RepairServicesSectionProps) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-2 font-bold font-headline text-on-surface text-sm">
+          <span className="material-symbols-outlined text-primary text-sm">
+            build
+          </span>
+          {t("intake.repair_services")}
+        </span>
+        {repairs.length > 0 && (
+          <span className="rounded-full bg-primary-fixed px-2 py-0.5 font-bold font-label text-on-primary-fixed text-xs">
+            {t("intake.repair_services_count", { count: repairs.length })}
+          </span>
+        )}
+      </div>
+
+      <RepairServicePicker
+        compact
+        onSelect={onSelect}
+        selectedIds={repairs.map((r) => r.repairId)}
+      />
+
+      {repairs.length > 0 && (
+        <div className="space-y-1.5">
+          {repairs.map((repair, idx) => (
+            <div
+              className="flex items-center gap-2 rounded-lg bg-surface-container-low px-3 py-2"
+              key={repair.repairId}
+            >
+              <div className="min-w-0 flex-1">
+                <p className="font-body font-medium text-on-surface text-sm">
+                  {repair.repairName}
+                </p>
+                <p className="font-label text-on-surface-variant text-xs">
+                  {t(`repair_category.${repair.category}`)}
+                </p>
+              </div>
+              <div className="flex items-center gap-1">
+                <input
+                  className="w-20 rounded-lg bg-surface-container-lowest px-2 py-1 text-end font-body text-on-surface text-xs outline-none focus:ring-1 focus:ring-primary/20"
+                  min="0"
+                  onChange={(e) => onPriceChange(idx, Number(e.target.value))}
+                  step="0.01"
+                  type="number"
+                  value={repair.price}
+                />
+                <span className="font-label text-on-surface-variant text-xs">
+                  DZD
+                </span>
+              </div>
+              <button
+                className="flex h-6 w-6 items-center justify-center rounded text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
+                onClick={() => onRemove(idx)}
+                title={t("intake.remove_repair")}
+                type="button"
+              >
+                <span className="material-symbols-outlined text-xs">close</span>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function IntakeModal({
   onClose,
   onSubmit,
@@ -309,6 +445,11 @@ export default function IntakeModal({
     }));
     setShowQuickAdd(false);
   }, []);
+
+  const { handleSelectRepair, handleRemoveRepair, handleRepairPriceChange } =
+    useRepairHandlers(setForm);
+
+  const computedEstCost = form.repairs.reduce((s, r) => s + r.price, 0);
 
   useEffect(() => {
     if (!open) {
@@ -687,6 +828,14 @@ export default function IntakeModal({
                   />
                 </div>
 
+                <RepairServicesSection
+                  onPriceChange={handleRepairPriceChange}
+                  onRemove={handleRemoveRepair}
+                  onSelect={handleSelectRepair}
+                  repairs={form.repairs}
+                  t={t}
+                />
+
                 {/* Estimated Cost & Deposit — Small Label / Big Value */}
                 <div className="grid grid-cols-2 gap-6 py-4">
                   <div>
@@ -705,7 +854,7 @@ export default function IntakeModal({
                         onChange={(e) =>
                           update("estimatedCost", e.target.value)
                         }
-                        placeholder="0"
+                        placeholder={String(computedEstCost)}
                         step="0.01"
                         type="number"
                         value={form.estimatedCost}

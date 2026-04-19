@@ -30,11 +30,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           color: data.color || undefined,
           reportedProblem: data.reportedProblem,
           conditionNotes: data.conditionNotes || undefined,
-          estimatedCost: Number.parseFloat(data.estimatedCost) || 0,
+          estimatedCost:
+            Number.parseFloat(data.estimatedCost) ||
+            data.repairs.reduce((s, r) => s + r.price, 0) ||
+            0,
           estimatedDate: data.estimatedDelivery || undefined,
           depositAmount: data.deposit
             ? Number.parseFloat(data.deposit)
             : undefined,
+          repairs: data.repairs.length > 0 ? data.repairs : undefined,
         });
         await fetchJobs();
         await fetchMetrics();

@@ -50,6 +50,12 @@ interface JobsState {
     technicianId?: string;
     isWarrantyReturn?: boolean;
     warrantyForJobId?: string;
+    repairs?: Array<{
+      repairId?: string;
+      repairName: string;
+      category: string;
+      price: number;
+    }>;
   }) => Promise<Job>;
   error: string | null;
   fetchJobById: (id: string) => Promise<Job>;
