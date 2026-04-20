@@ -9,10 +9,7 @@ uploads/*
 uploads/job-photos/*
 !uploads/job-photos/.gitkeep
 *.log
-android/.gradle/
-android/app/build/
-android/build/
-android/local.properties
+android/
 .turbo
 .playwright-mcp/
 .stitch.worktrees/
