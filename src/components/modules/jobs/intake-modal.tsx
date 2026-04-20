@@ -1,3 +1,4 @@
+import type { RepairCategoryType } from "@shared/constants";
 import type { RepairCatalog } from "@shared/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -8,6 +9,11 @@ import type { CustomerSearchResult } from "@/hooks/use-customer-search";
 import { useCustomerSearch } from "@/hooks/use-customer-search";
 
 type DeviceCategory = "phone" | "tablet" | "laptop" | "watch";
+
+interface PhotoPreview {
+  file: File;
+  url: string;
+}
 
 interface IntakeFormData {
   brand: string;
@@ -23,13 +29,116 @@ interface IntakeFormData {
   estimatedDelivery: string;
   isWarrantyReturn: boolean;
   model: string;
+  photos: File[];
   repairs: Array<{
     repairId: string;
     repairName: string;
-    category: string;
+    category: RepairCategoryType;
     price: number;
   }>;
   reportedProblem: string;
+}
+
+const MAX_PHOTOS = 5;
+
+interface PhotoUploadZoneProps {
+  onPhotoRemove: (index: number) => void;
+  onPhotoSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  photoCount: number;
+  photoPreviews: PhotoPreview[];
+  t: (key: string, opts?: Record<string, unknown>) => string;
+}
+
+function PhotoUploadZone({
+  onPhotoSelect,
+  onPhotoRemove,
+  photoCount,
+  photoPreviews,
+  t,
+}: PhotoUploadZoneProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div>
+      <label className={labelCls} htmlFor="photo-upload">
+        {t("intake.device_photos")}
+      </label>
+      <input
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        id="photo-upload"
+        multiple
+        onChange={onPhotoSelect}
+        ref={fileInputRef}
+        type="file"
+      />
+      {photoPreviews.length === 0 && (
+        <button
+          className="group flex min-h-[44px] w-full cursor-pointer items-center gap-4 rounded-xl bg-surface-container-low px-5 py-4 ring-1 ring-outline-variant transition-all hover:ring-primary/50"
+          onClick={() => fileInputRef.current?.click()}
+          type="button"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-container-highest">
+            <span className="material-symbols-outlined text-on-surface-variant text-xl transition-colors group-hover:text-primary">
+              add_a_photo
+            </span>
+          </div>
+          <div className="text-left">
+            <p className="font-bold font-headline text-on-surface text-sm">
+              {t("intake.photo_upload_title")}
+            </p>
+            <p className="font-label font-medium text-on-surface-variant text-xs">
+              {t("intake.photo_upload_hint")}
+            </p>
+          </div>
+        </button>
+      )}
+      {photoPreviews.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {photoPreviews.map((photo, idx) => (
+              <div
+                className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-xl ring-1 ring-outline-variant"
+                key={photo.url}
+              >
+                <img
+                  alt={`Device ${idx + 1}`}
+                  className="h-full w-full object-cover"
+                  height={80}
+                  src={photo.url}
+                  width={80}
+                />
+                <button
+                  aria-label={t("intake.remove_photo")}
+                  className="absolute inset-0 flex items-center justify-center bg-on-surface/50 opacity-0 transition-opacity group-hover:opacity-100"
+                  onClick={() => onPhotoRemove(idx)}
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-lg text-on-primary">
+                    close
+                  </span>
+                </button>
+              </div>
+            ))}
+            {photoCount < MAX_PHOTOS && (
+              <button
+                className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl ring-1 ring-dashed ring-outline-variant transition-all hover:bg-surface-container-highest hover:ring-primary/50"
+                onClick={() => fileInputRef.current?.click()}
+                type="button"
+              >
+                <span className="material-symbols-outlined text-2xl text-on-surface-variant transition-colors hover:text-primary">
+                  add_photo_alternate
+                </span>
+              </button>
+            )}
+          </div>
+          <p className="font-label text-on-surface-variant text-xs">
+            {t("intake.photo_count", { current: photoCount, max: MAX_PHOTOS })}
+          </p>
+        </div>
+      )}
+    </div>
+  );
 }
 
 const INITIAL_FORM: IntakeFormData = {
@@ -46,6 +155,7 @@ const INITIAL_FORM: IntakeFormData = {
   estimatedDelivery: "",
   isWarrantyReturn: false,
   model: "",
+  photos: [],
   repairs: [],
   reportedProblem: "",
 };
@@ -367,6 +477,8 @@ export default function IntakeModal({
     clear: clearSearch,
   } = useCustomerSearch();
 
+  const [photoPreviews, setPhotoPreviews] = useState<PhotoPreview[]>([]);
+
   const validate = useCallback((): boolean => {
     const newErrors: Partial<Record<keyof IntakeFormData, string>> = {};
     if (!form.customerName.trim()) {
@@ -446,6 +558,37 @@ export default function IntakeModal({
     setShowQuickAdd(false);
   }, []);
 
+  const handlePhotoSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files ?? []);
+      const remaining = MAX_PHOTOS - form.photos.length;
+      const toAdd = files.slice(0, remaining);
+      if (toAdd.length === 0) {
+        return;
+      }
+      const newPreviews: PhotoPreview[] = toAdd.map((f) => ({
+        file: f,
+        url: URL.createObjectURL(f),
+      }));
+      setPhotoPreviews((prev) => [...prev, ...newPreviews]);
+      setForm((prev) => ({ ...prev, photos: [...prev.photos, ...toAdd] }));
+      e.target.value = "";
+    },
+    [form.photos.length]
+  );
+
+  const handlePhotoRemove = useCallback(
+    (index: number) => {
+      URL.revokeObjectURL(photoPreviews[index].url);
+      setPhotoPreviews((prev) => prev.filter((_, i) => i !== index));
+      setForm((prev) => ({
+        ...prev,
+        photos: prev.photos.filter((_, i) => i !== index),
+      }));
+    },
+    [photoPreviews]
+  );
+
   const { handleSelectRepair, handleRemoveRepair, handleRepairPriceChange } =
     useRepairHandlers(setForm);
 
@@ -493,9 +636,13 @@ export default function IntakeModal({
       setForm(INITIAL_FORM);
       setTouched({});
       setIsSubmitting(false);
+      for (const p of photoPreviews) {
+        URL.revokeObjectURL(p.url);
+      }
+      setPhotoPreviews([]);
       onClose();
     },
-    [form, onSubmit, onClose, validate]
+    [form, onSubmit, onClose, validate, photoPreviews]
   );
 
   if (!open) {
@@ -953,33 +1100,13 @@ export default function IntakeModal({
                 </div>
 
                 {/* Photo Upload Zone */}
-                <div>
-                  <label className={labelCls} htmlFor="photo-upload">
-                    {t("intake.device_photos")}
-                  </label>
-                  <button
-                    className="group flex min-h-[44px] w-full cursor-pointer items-center gap-4 rounded-xl bg-surface-container-low px-5 py-4 ring-1 ring-outline-variant transition-all hover:ring-primary/50"
-                    id="photo-upload"
-                    type="button"
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-container-highest">
-                      <span className="material-symbols-outlined text-on-surface-variant text-xl transition-colors group-hover:text-primary">
-                        add_a_photo
-                      </span>
-                    </div>
-                    <div className="text-left">
-                      <p className="font-bold font-headline text-on-surface text-sm">
-                        {t("intake.photo_upload_title")}
-                      </p>
-                      <p className="font-label font-medium text-on-surface-variant text-xs">
-                        {t("intake.photo_upload_hint")}
-                      </p>
-                    </div>
-                    <span className="ms-auto rounded-full bg-primary-fixed px-2.5 py-1 font-bold font-label text-on-primary-fixed text-xs">
-                      0 {t("intake.photo_count_label")}
-                    </span>
-                  </button>
-                </div>
+                <PhotoUploadZone
+                  onPhotoRemove={handlePhotoRemove}
+                  onPhotoSelect={handlePhotoSelect}
+                  photoCount={form.photos.length}
+                  photoPreviews={photoPreviews}
+                  t={t}
+                />
               </div>
             </section>
           </div>

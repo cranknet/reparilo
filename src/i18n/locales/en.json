@@ -243,7 +243,8 @@
   "repair_category": {
     "HARDWARE": "Hardware",
     "SOFTWARE": "Software",
-    "DIAGNOSTIC": "Diagnostic"
+    "DIAGNOSTIC": "Diagnostic",
+    "OTHER": "Other"
   },
   "settings_page": "Settings",
   "settings_page_desc": "Shop settings, AI, and notification preferences",
@@ -532,6 +533,8 @@
     "photo_upload_hint": "Add photos showing device condition",
     "photo_upload_title": "Add Photos",
     "photo_count_label": "photos",
+    "photo_count": "{{current}}/{{max}} photos",
+    "remove_photo": "Remove photo",
     "repair_services": "Repair Services",
     "repair_services_count": "{{count}} selected",
     "search_repairs": "Search repair services...",

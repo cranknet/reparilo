@@ -243,7 +243,8 @@
   "repair_category": {
     "HARDWARE": "Matériel",
     "SOFTWARE": "Logiciel",
-    "DIAGNOSTIC": "Diagnostic"
+    "DIAGNOSTIC": "Diagnostic",
+    "OTHER": "Autre"
   },
   "settings_page": "Paramètres",
   "settings_page_desc": "Paramètres atelier, IA et notifications",
@@ -532,6 +533,8 @@
     "photo_upload_hint": "Cliquez pour capturer ou faire glisser des photos",
     "photo_upload_title": "Ajouter des photos",
     "photo_count_label": "des photos",
+    "photo_count": "{{current}}/{{max}} photos",
+    "remove_photo": "Supprimer la photo",
     "repair_services": "Services de réparation",
     "repair_services_count": "{{count}} sélectionnés",
     "search_repairs": "Rechercher des services de réparation...",

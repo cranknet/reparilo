@@ -243,7 +243,8 @@
   "repair_category": {
     "HARDWARE": "هادروير",
     "SOFTWARE": "برمجيات",
-    "DIAGNOSTIC": "تشخيص"
+    "DIAGNOSTIC": "تشخيص",
+    "OTHER": "أخرى"
   },
   "settings_page": "الإعدادات",
   "settings_page_desc": "إعدادات المتجر والذكاء الاصطناعي والإشعارات",
@@ -532,6 +533,8 @@
     "photo_upload_hint": "انقر لالتقاط الصور أو سحبها",
     "photo_upload_title": "إضافة صور",
     "photo_count_label": "صور",
+    "photo_count": "{{current}}/{{max}} من الصور",
+    "remove_photo": "إزالة الصورة",
     "repair_services": "خدمات الإصلاح",
     "repair_services_count": "تم تحديد {{count}}.",
     "search_repairs": "بحث عن خدمات الإصلاح...",

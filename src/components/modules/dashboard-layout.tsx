@@ -5,6 +5,7 @@ import type { IntakeFormData } from "@/components/modules/jobs/intake-modal";
 import IntakeModal from "@/components/modules/jobs/intake-modal";
 import Sidebar from "@/components/modules/sidebar";
 import TopBar from "@/components/modules/top-bar";
+import api from "@/lib/api";
 import { useJobsStore } from "@/stores/jobs";
 import { useUiStore } from "@/stores/ui";
 
@@ -20,7 +21,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const handleIntakeSubmit = useCallback(
     async (data: IntakeFormData) => {
       try {
-        await createJob({
+        const job = await createJob({
           customerEmail: data.customerEmail || undefined,
           customerId: data.customerId || undefined,
           customerName: data.customerName,
@@ -38,8 +39,25 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           depositAmount: data.deposit
             ? Number.parseFloat(data.deposit)
             : undefined,
-          repairs: data.repairs.length > 0 ? data.repairs : undefined,
+          repairs:
+            data.repairs.length > 0
+              ? data.repairs.map((r) => ({
+                  ...r,
+                  price: Number(r.price) || 0,
+                }))
+              : undefined,
         });
+        if (data.photos.length > 0) {
+          await Promise.allSettled(
+            data.photos.map((file) => {
+              const formData = new FormData();
+              formData.append("file", file);
+              return api.post(`/jobs/${job.id}/photos`, formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+              });
+            })
+          );
+        }
         await fetchJobs();
         await fetchMetrics();
         closeIntakeModal();
