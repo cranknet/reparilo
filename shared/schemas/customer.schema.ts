@@ -11,7 +11,7 @@ export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
 export const updateCustomerSchema = z.object({
   name: z.string().min(1, { error: "Enter a customer name" }).optional(),
   phone: z.string().min(1, { error: "Enter a phone number" }).optional(),
-  email: z.string().email().optional().or(z.literal("")).optional(),
+  email: z.string().email().or(z.literal("")).optional(),
 });
 
 export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;

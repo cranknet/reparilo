@@ -61,7 +61,7 @@ const JOB_INCLUDE = {
   technician: true,
 } as const satisfies Prisma.JobInclude;
 
-function computeFinalCost(job: {
+export function computeFinalCost(job: {
   partsUsed: { totalCost: { toNumber: () => number } }[];
   repairs: { price: { toNumber: () => number } }[];
 }): number {
