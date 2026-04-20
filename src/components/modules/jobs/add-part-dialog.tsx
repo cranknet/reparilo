@@ -2,8 +2,8 @@ import { PartCategory } from "@shared/constants";
 import type { PartsCatalog } from "@shared/types";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import api from "@/lib/api";
 import { useJobsStore } from "@/stores/jobs";
+import { usePartsCatalogStore } from "@/stores/parts-catalog";
 
 const PART_CATEGORIES = Object.values(PartCategory);
 
@@ -42,10 +42,13 @@ export default function AddPartDialog({
   const { t } = useTranslation();
   const [mode, setMode] = useState<Mode>("catalog");
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
-  const [catalogItems, setCatalogItems] = useState<PartsCatalog[]>([]);
   const [catalogSearch, setCatalogSearch] = useState("");
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const {
+    parts: catalogItems,
+    isLoading: loading,
+    fetchParts: fetchCatalogParts,
+  } = usePartsCatalogStore();
 
   useEffect(() => {
     if (!open) {
@@ -74,21 +77,11 @@ export default function AddPartDialog({
   }, [open, onClose]);
 
   useEffect(() => {
-    if (!open || mode !== "catalog") {
+    if (!open) {
       return;
     }
-    setLoading(true);
-    const params = new URLSearchParams();
-    if (catalogSearch) {
-      params.set("search", catalogSearch);
-    }
-    params.set("isActive", "true");
-    api
-      .get(`/parts-catalog?${params.toString()}`)
-      .then((res) => setCatalogItems(res.data.parts ?? res.data ?? []))
-      .catch(() => setCatalogItems([]))
-      .finally(() => setLoading(false));
-  }, [open, mode, catalogSearch]);
+    fetchCatalogParts({ isActive: true, search: catalogSearch || undefined });
+  }, [open, catalogSearch, fetchCatalogParts]);
 
   const pickCatalogItem = useCallback((item: PartsCatalog) => {
     setForm({
