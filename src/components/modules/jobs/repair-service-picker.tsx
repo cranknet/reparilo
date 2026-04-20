@@ -1,6 +1,7 @@
 import type { RepairCatalog } from "@shared/types";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { formatDzd } from "@/lib/format";
 import { useRepairCatalogStore } from "@/stores/repair-catalog";
 
 const CATEGORY_FILTERS = [
@@ -30,8 +31,10 @@ export default function RepairServicePicker({
   const { repairs, fetchRepairs, isLoading } = useRepairCatalogStore();
 
   useEffect(() => {
-    fetchRepairs({ isActive: true, limit: 100 });
-  }, [fetchRepairs]);
+    if (repairs.length === 0) {
+      fetchRepairs({ isActive: true, limit: 100 });
+    }
+  }, [fetchRepairs, repairs.length]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -46,7 +49,7 @@ export default function RepairServicePicker({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const filtered = useCallback(() => {
+  const filtered = useMemo(() => {
     let results = repairs;
     if (categoryFilter) {
       results = results.filter((r) => r.category === categoryFilter);
@@ -67,8 +70,6 @@ export default function RepairServicePicker({
     [onSelect]
   );
 
-  const results = filtered();
-
   return (
     <div className={compact ? "space-y-2" : "space-y-3"} ref={containerRef}>
       <div className="relative">
@@ -77,7 +78,7 @@ export default function RepairServicePicker({
         </span>
         <input
           className="h-11 w-full rounded-xl bg-surface-container-highest ps-9 pe-4 font-body text-on-surface text-sm outline-none transition-all placeholder:text-outline focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary"
-          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          onBlur={() => setOpen(false)}
           onChange={(e) => {
             setQuery(e.target.value);
             setOpen(true);
@@ -100,9 +101,9 @@ export default function RepairServicePicker({
                 </span>
               </div>
             )}
-            {!isLoading && results.length > 0 && (
+            {!isLoading && filtered.length > 0 && (
               <ul className="max-h-48 overflow-y-auto py-1">
-                {results.map((r) => {
+                {filtered.map((r) => {
                   const alreadySelected = selectedIds.includes(r.id);
                   return (
                     <li key={r.id}>
@@ -122,7 +123,8 @@ export default function RepairServicePicker({
                           </p>
                           <p className="font-label text-on-surface-variant text-xs">
                             {t(`repair_category.${r.category}`)} ·{" "}
-                            {Number(r.defaultPrice).toLocaleString()} DZD
+                            {formatDzd(Number(r.defaultPrice))}{" "}
+                            {t("currency_dzd")}
                           </p>
                         </div>
                         {alreadySelected && (
@@ -136,13 +138,15 @@ export default function RepairServicePicker({
                 })}
               </ul>
             )}
-            {!isLoading && results.length === 0 && query.trim().length >= 1 && (
-              <div className="px-4 py-3">
-                <span className="font-label text-on-surface-variant text-xs">
-                  {t("intake.no_repairs_found")}
-                </span>
-              </div>
-            )}
+            {!isLoading &&
+              filtered.length === 0 &&
+              query.trim().length >= 1 && (
+                <div className="px-4 py-3">
+                  <span className="font-label text-on-surface-variant text-xs">
+                    {t("intake.no_repairs_found")}
+                  </span>
+                </div>
+              )}
           </div>
         )}
       </div>
@@ -156,7 +160,10 @@ export default function RepairServicePicker({
                 : "bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high"
             }`}
             key={cat.key}
-            onClick={() => setCategoryFilter(cat.key)}
+            onClick={() => {
+              setCategoryFilter(cat.key);
+              setQuery("");
+            }}
             type="button"
           >
             {t(cat.labelKey)}

@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import { AuditAction } from "@prisma/client";
+import { AuditAction, type RepairCategory } from "@prisma/client";
 import { INACTIVE_STATUSES } from "@shared/constants";
 import type { AddJobRepairInput } from "@shared/schemas";
 import { createAuditLog } from "./audit.service.js";
@@ -18,13 +18,22 @@ export async function add(
     return { error: "JOB_IN_TERMINAL_STATUS" as const };
   }
 
+  if (input.repairId) {
+    const existing = await prisma.jobRepair.findFirst({
+      where: { jobId, repairId: input.repairId },
+    });
+    if (existing) {
+      return { error: "DUPLICATE_REPAIR" as const };
+    }
+  }
+
   const jobRepair = await prisma.$transaction(async (tx) => {
     const created = await tx.jobRepair.create({
       data: {
         jobId,
         repairId: input.repairId ?? null,
         repairName: input.repairName,
-        category: input.category,
+        category: input.category as RepairCategory,
         price: input.price,
         createdById: userId,
       },

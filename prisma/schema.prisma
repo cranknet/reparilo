@@ -402,6 +402,7 @@ model JobRepair {
   createdBy   User            @relation(fields: [createdById], references: [id], onDelete: Restrict)
   createdAt   DateTime        @default(now()) @db.Timestamptz
 
+  @@unique([jobId, repairId])
   @@index([jobId])
   @@map("job_repairs")
 }

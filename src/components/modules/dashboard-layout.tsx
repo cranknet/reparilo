@@ -26,7 +26,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           customerId: data.customerId || undefined,
           customerName: data.customerName,
           customerPhone: data.customerPhone,
-          deviceBrand: data.brand || undefined,
+          deviceBrand: data.brand || "Unknown",
           deviceModel: data.model,
           color: data.color || undefined,
           reportedProblem: data.reportedProblem,

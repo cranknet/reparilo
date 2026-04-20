@@ -360,7 +360,7 @@ function useRepairHandlers(
       setForm((prev) => ({
         ...prev,
         repairs: prev.repairs.map((r, i) =>
-          i === index ? { ...r, price: newPrice } : r
+          i === index ? { ...r, price: Number(newPrice) || 0 } : r
         ),
       }));
     },
@@ -432,7 +432,7 @@ function RepairServicesSection({
                   value={repair.price}
                 />
                 <span className="font-label text-on-surface-variant text-xs">
-                  DZD
+                  {t("currency_dzd")}
                 </span>
               </div>
               <button

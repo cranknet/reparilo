@@ -145,7 +145,20 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         );
       }
       const userId = getUserId(req);
-      const result = await createJob(app.prisma, parsed.data, userId);
+      let result: Awaited<ReturnType<typeof createJob>>;
+      try {
+        result = await createJob(app.prisma, parsed.data, userId);
+      } catch (err: unknown) {
+        if (err instanceof Error && err.message === "DUPLICATE_REPAIR") {
+          return sendError(
+            reply,
+            409,
+            "DUPLICATE_REPAIR",
+            "Duplicate repair in request"
+          );
+        }
+        throw err;
+      }
       if ("error" in result && result.error === "INVALID_CUSTOMER") {
         return sendError(reply, 400, "INVALID_CUSTOMER", "Customer not found");
       }
@@ -155,6 +168,14 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
           400,
           "INVALID_WARRANTY_REFERENCE",
           "Warranty reference must be a completed job for the same customer"
+        );
+      }
+      if ("error" in result && result.error === "DUPLICATE_REPAIR") {
+        return sendError(
+          reply,
+          409,
+          "DUPLICATE_REPAIR",
+          "Duplicate repair in request"
         );
       }
       return reply.status(201).send(result);
@@ -395,6 +416,14 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
           409,
           "JOB_IN_TERMINAL_STATUS",
           "Cannot add repairs to a job in terminal status"
+        );
+      }
+      if ("error" in result && result.error === "DUPLICATE_REPAIR") {
+        return sendError(
+          reply,
+          409,
+          "DUPLICATE_REPAIR",
+          "This repair has already been added to the job"
         );
       }
       return reply.status(201).send(result);

@@ -1,6 +1,7 @@
 import type { Job } from "@shared/types";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { formatDzd } from "@/lib/format";
 import { useJobsStore } from "@/stores/jobs";
 
 interface JobPartsSectionProps {
@@ -9,7 +10,7 @@ interface JobPartsSectionProps {
 }
 
 function fmt(n: number): string {
-  return `${n.toLocaleString()} DZD`;
+  return `${formatDzd(n)} DZD`;
 }
 
 export default function JobPartsSection({

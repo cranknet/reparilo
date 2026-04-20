@@ -4,15 +4,15 @@
 import { JobStatus, PartCategory, RepairCategory } from "@shared/constants";
 import { z } from "zod";
 
+const repairCategoryValues = Object.values(RepairCategory) as [
+  string,
+  ...string[],
+];
+
 export const intakeRepairItemSchema = z.object({
   repairId: z.string().optional(),
   repairName: z.string().min(1),
-  category: z.enum([
-    RepairCategory.HARDWARE,
-    RepairCategory.SOFTWARE,
-    RepairCategory.DIAGNOSTIC,
-    RepairCategory.OTHER,
-  ]),
+  category: z.enum(repairCategoryValues),
   price: z.number().min(0),
 });
 
@@ -101,12 +101,7 @@ export const addJobPartSchema = z.object({
 export const addJobRepairSchema = z.object({
   repairId: z.string().optional(),
   repairName: z.string().min(1),
-  category: z.enum([
-    RepairCategory.HARDWARE,
-    RepairCategory.SOFTWARE,
-    RepairCategory.DIAGNOSTIC,
-    RepairCategory.OTHER,
-  ]),
+  category: z.enum(repairCategoryValues),
   price: z.number().min(0),
 });
 

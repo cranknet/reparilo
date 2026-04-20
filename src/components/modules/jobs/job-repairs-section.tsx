@@ -2,15 +2,12 @@ import type { Job, RepairCatalog } from "@shared/types";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import RepairServicePicker from "@/components/modules/jobs/repair-service-picker";
+import { formatDzd } from "@/lib/format";
 import { useJobsStore } from "@/stores/jobs";
 
 interface JobRepairsSectionProps {
   job: Job;
   onChanged?: () => void;
-}
-
-function fmt(n: number): string {
-  return `${n.toLocaleString()} DZD`;
 }
 
 export default function JobRepairsSection({
@@ -37,7 +34,7 @@ export default function JobRepairsSection({
     setPrice(String(Number(repair.defaultPrice)));
   }, []);
 
-  const handleAddRepair = useCallback(async () => {
+  const handleAddRepair = async () => {
     if (!(selectedRepair && price)) {
       return;
     }
@@ -48,7 +45,7 @@ export default function JobRepairsSection({
         repairId: selectedRepair.id,
         repairName: selectedRepair.name,
         category: selectedRepair.category,
-        price: Number(price),
+        price: Number(price) || 0,
       });
       setSelectedRepair(null);
       setPrice("");
@@ -63,7 +60,7 @@ export default function JobRepairsSection({
     } finally {
       setLoading(false);
     }
-  }, [addRepair, job.id, selectedRepair, price, onChanged, t]);
+  };
 
   const handleRemoveRepair = useCallback(
     async (repairId: string) => {
@@ -79,8 +76,8 @@ export default function JobRepairsSection({
 
   const repairs = job.repairs ?? [];
   const selectedIds = repairs
-    .map((r) => (r as { repairId?: string }).repairId)
-    .filter(Boolean) as string[];
+    .map((r) => r.repairId)
+    .filter((id): id is string => id != null);
 
   return (
     <div>
@@ -127,7 +124,7 @@ export default function JobRepairsSection({
                   value={price}
                 />
                 <span className="font-label text-on-surface-variant text-xs">
-                  DZD
+                  {t("currency_dzd")}
                 </span>
               </div>
               <button
@@ -195,7 +192,7 @@ export default function JobRepairsSection({
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-bold font-headline text-on-surface text-xs">
-                  {fmt(Number(repair.price))}
+                  {formatDzd(Number(repair.price))} {t("currency_dzd")}
                 </span>
                 {!isTerminal && (
                   <button

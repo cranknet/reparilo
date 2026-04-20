@@ -1,5 +1,5 @@
 import type { Job, Prisma, PrismaClient } from "@prisma/client";
-import { AuditAction } from "@prisma/client";
+import { AuditAction, type RepairCategory } from "@prisma/client";
 import type { JobStatusType, RoleType } from "@shared/constants";
 import {
   ACTIVE_STATUSES,
@@ -217,10 +217,17 @@ export async function create(
     });
 
     if (input.repairs && input.repairs.length > 0) {
+      const repairIds = input.repairs
+        .map((r) => r.repairId)
+        .filter((id): id is string => id != null);
+      const uniqueRepairIds = new Set(repairIds);
+      if (uniqueRepairIds.size !== repairIds.length) {
+        throw new Error("DUPLICATE_REPAIR");
+      }
       for (const repair of input.repairs) {
         await tx.jobRepair.create({
           data: {
-            category: repair.category,
+            category: repair.category as RepairCategory,
             createdById: userId,
             jobId: created.id,
             price: repair.price,
