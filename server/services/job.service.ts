@@ -410,15 +410,19 @@ export async function transitionStatus(
   return { ...updated, finalCost: computeFinalCost(updated) };
 }
 
-export async function lookupByCode(prisma: PrismaClient, code: string) {
+export async function lookupByCode(
+  prisma: PrismaClient,
+  jobCode: string,
+  phone4: string
+): Promise<{ job: Record<string, unknown> | null; jobExists: boolean }> {
   const job = await prisma.job.findFirst({
-    where: { OR: [{ jobCode: code }, { accessCode: code }] },
+    where: { jobCode },
     include: {
+      // phone is fetched for comparison only — never included in the response
       customer: { select: { name: true, phone: true } },
       device: { select: { brand: true, model: true } },
       repairs: { select: { name: true, price: true } },
       partsUsed: { select: { partName: true, totalCost: true } },
-      technician: { select: { name: true, role: true } },
       notes: {
         where: { isCustomerVisible: true },
         select: { content: true, createdAt: true },
@@ -427,27 +431,37 @@ export async function lookupByCode(prisma: PrismaClient, code: string) {
     },
   });
   if (!job) {
-    return null;
+    return { job: null, jobExists: false };
+  }
+
+  // Normalize: strip non-digits from stored phone, compare last 4
+  const storedPhone = job.customer.phone;
+  if (!storedPhone) {
+    return { job: null, jobExists: true };
+  }
+  const normalizedPhone = storedPhone.replace(/\D/g, "");
+  if (normalizedPhone.length < 4 || normalizedPhone.slice(-4) !== phone4) {
+    return { job: null, jobExists: true };
   }
 
   return {
-    jobCode: job.jobCode,
-    status: job.status,
-    device: `${job.device.brand} ${job.device.model}`,
-    reportedProblem: job.reportedProblem,
-    estimatedDate: job.estimatedDate,
-    createdAt: job.createdAt,
-    customer: { name: job.customer.name, phone: job.customer.phone },
-    technician: job.technician
-      ? { name: job.technician.name, role: job.technician.role }
-      : null,
-    notes: job.notes.map((n) => ({
-      content: n.content,
-      createdAt: n.createdAt,
-    })),
-    repairs: job.repairs.map((r) => ({
-      name: r.name,
-      price: r.price.toNumber(),
-    })),
+    jobExists: true,
+    job: {
+      jobCode: job.jobCode,
+      status: job.status,
+      device: `${job.device.brand} ${job.device.model}`,
+      reportedProblem: job.reportedProblem,
+      estimatedDate: job.estimatedDate,
+      createdAt: job.createdAt,
+      customer: { name: job.customer.name },
+      notes: job.notes.map((n) => ({
+        content: n.content,
+        createdAt: n.createdAt,
+      })),
+      repairs: job.repairs.map((r) => ({
+        name: r.name,
+        price: r.price.toNumber(),
+      })),
+    },
   };
 }

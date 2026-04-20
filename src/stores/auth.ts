@@ -1,5 +1,6 @@
 import type { RoleType } from "@shared/constants";
 import { create } from "zustand";
+import i18n from "@/i18n";
 import api from "@/lib/api";
 
 interface AuthUser {
@@ -47,7 +48,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const res = await api.get(url);
       const user = res.data.user;
       if (!user) {
-        throw new Error("No user in session response");
+        throw new Error(i18n.t("errors.no_user_session"));
       }
       set({
         user,
@@ -78,7 +79,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const res = await api.get("/auth/get-session");
       const user = res.data.user;
       if (!user) {
-        throw new Error("No user in session response");
+        throw new Error(i18n.t("errors.no_user_session"));
       }
       set({
         user,

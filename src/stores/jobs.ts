@@ -1,6 +1,7 @@
 import type { JobStatusType } from "@shared/constants";
 import type { Job, JobNote, JobPart, JobRepair } from "@shared/types";
 import { create } from "zustand";
+import i18n from "@/i18n";
 import api from "@/lib/api";
 
 interface JobMetrics {
@@ -107,7 +108,7 @@ export const useJobsStore = create<JobsState>((set) => ({
       });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to fetch jobs";
+        err instanceof Error ? err.message : i18n.t("errors.fetch_jobs");
       set({ isLoadingJobs: false, error: message });
     }
   },
@@ -119,7 +120,7 @@ export const useJobsStore = create<JobsState>((set) => ({
       set({ metrics: res.data, isLoadingMetrics: false });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to fetch metrics";
+        err instanceof Error ? err.message : i18n.t("errors.fetch_metrics");
       set({ isLoadingMetrics: false, error: message });
     }
   },
@@ -137,7 +138,7 @@ export const useJobsStore = create<JobsState>((set) => ({
       return newJob;
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to create job";
+        err instanceof Error ? err.message : i18n.t("errors.create_job");
       set({ isCreatingJob: false, error: message });
       throw new Error(message);
     }
@@ -154,7 +155,7 @@ export const useJobsStore = create<JobsState>((set) => ({
       return updated;
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to update job";
+        err instanceof Error ? err.message : i18n.t("errors.update_job");
       set({ error: message });
       throw new Error(message);
     }
@@ -171,7 +172,7 @@ export const useJobsStore = create<JobsState>((set) => ({
       return updated;
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to transition status";
+        err instanceof Error ? err.message : i18n.t("errors.transition_status");
       set({ error: message });
       throw new Error(message);
     }
@@ -191,7 +192,8 @@ export const useJobsStore = create<JobsState>((set) => ({
       }));
       return res.data as JobNote;
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to add note";
+      const message =
+        err instanceof Error ? err.message : i18n.t("errors.add_note");
       set({ error: message });
       throw new Error(message);
     }
@@ -210,7 +212,8 @@ export const useJobsStore = create<JobsState>((set) => ({
       }));
       return res.data as JobPart;
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to add part";
+      const message =
+        err instanceof Error ? err.message : i18n.t("errors.add_part");
       set({ error: message });
       throw new Error(message);
     }
@@ -232,7 +235,7 @@ export const useJobsStore = create<JobsState>((set) => ({
       }));
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to remove part";
+        err instanceof Error ? err.message : i18n.t("errors.remove_part");
       set({ error: message });
     }
   },
@@ -251,7 +254,7 @@ export const useJobsStore = create<JobsState>((set) => ({
       return res.data as JobRepair;
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to add repair";
+        err instanceof Error ? err.message : i18n.t("errors.add_repair");
       set({ error: message });
       throw new Error(message);
     }
@@ -273,7 +276,7 @@ export const useJobsStore = create<JobsState>((set) => ({
       }));
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to remove repair";
+        err instanceof Error ? err.message : i18n.t("errors.remove_repair");
       set({ error: message });
     }
   },
@@ -296,7 +299,7 @@ export const useJobsStore = create<JobsState>((set) => ({
       return job;
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to fetch job";
+        err instanceof Error ? err.message : i18n.t("errors.fetch_job");
       set({ error: message });
       throw new Error(message);
     }

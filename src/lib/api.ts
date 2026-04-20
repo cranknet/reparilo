@@ -11,10 +11,27 @@ const api = axios.create({
 let csrfToken: string | null = null;
 let csrfPromise: Promise<string | null> | null = null;
 
+// Consecutive-failure counter for CSRF token fetch
+let csrfFetchFailures = 0;
+let csrfCooldownUntil = 0;
+const CSRF_FAILURE_THRESHOLD = 3;
+const CSRF_COOLDOWN_MS = 30_000;
+
 function fetchCsrfToken(): Promise<string | null> {
   if (csrfToken) {
     return Promise.resolve(csrfToken);
   }
+
+  // Check if we're in cooldown after repeated failures
+  if (Date.now() < csrfCooldownUntil) {
+    return Promise.resolve(null);
+  }
+  // Cooldown expired — reset
+  if (csrfCooldownUntil > 0) {
+    csrfFetchFailures = 0;
+    csrfCooldownUntil = 0;
+  }
+
   if (csrfPromise) {
     return csrfPromise;
   }
@@ -22,10 +39,17 @@ function fetchCsrfToken(): Promise<string | null> {
   csrfPromise = axios
     .get(`${baseURL}/api/csrf-token`, { withCredentials: true })
     .then((res) => {
+      csrfFetchFailures = 0;
       csrfToken = res.data.token;
       return csrfToken;
     })
-    .catch(() => null)
+    .catch(() => {
+      csrfFetchFailures += 1;
+      if (csrfFetchFailures >= CSRF_FAILURE_THRESHOLD) {
+        csrfCooldownUntil = Date.now() + CSRF_COOLDOWN_MS;
+      }
+      return null;
+    })
     .finally(() => {
       csrfPromise = null;
     });

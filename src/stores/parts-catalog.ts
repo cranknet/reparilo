@@ -1,5 +1,6 @@
 import type { PartsCatalog } from "@shared/types";
 import { create } from "zustand";
+import i18n from "@/i18n";
 import api from "@/lib/api";
 
 interface PartsCatalogState {
@@ -48,7 +49,7 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
       });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to fetch parts";
+        err instanceof Error ? err.message : i18n.t("errors.fetch_parts");
       set({ isLoading: false, error: message });
     }
   },
@@ -65,7 +66,7 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
       return newPart;
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to create part";
+        err instanceof Error ? err.message : i18n.t("errors.create_part");
       set({ error: message });
       throw new Error(message);
     }
@@ -82,7 +83,7 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
       return updated;
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to update part";
+        err instanceof Error ? err.message : i18n.t("errors.update_part");
       set({ error: message });
       throw new Error(message);
     }
@@ -98,7 +99,9 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
       }));
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to toggle part status";
+        err instanceof Error
+          ? err.message
+          : i18n.t("errors.toggle_part_status");
       set({ error: message });
       throw new Error(message);
     }

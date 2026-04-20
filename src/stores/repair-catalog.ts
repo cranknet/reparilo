@@ -1,5 +1,6 @@
 import type { RepairCatalog } from "@shared/types";
 import { create } from "zustand";
+import i18n from "@/i18n";
 import api from "@/lib/api";
 
 interface RepairCatalogState {
@@ -47,7 +48,7 @@ export const useRepairCatalogStore = create<RepairCatalogState>((set) => ({
       });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to fetch repairs";
+        err instanceof Error ? err.message : i18n.t("errors.fetch_repairs");
       set({ isLoading: false, error: message });
     }
   },
@@ -64,7 +65,7 @@ export const useRepairCatalogStore = create<RepairCatalogState>((set) => ({
       return newRepair;
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to create repair";
+        err instanceof Error ? err.message : i18n.t("errors.create_repair");
       set({ error: message });
       throw new Error(message);
     }
@@ -81,7 +82,7 @@ export const useRepairCatalogStore = create<RepairCatalogState>((set) => ({
       return updated;
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to update repair";
+        err instanceof Error ? err.message : i18n.t("errors.update_repair");
       set({ error: message });
       throw new Error(message);
     }
@@ -97,7 +98,9 @@ export const useRepairCatalogStore = create<RepairCatalogState>((set) => ({
       }));
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to toggle repair status";
+        err instanceof Error
+          ? err.message
+          : i18n.t("errors.toggle_repair_status");
       set({ error: message });
     }
   },

@@ -6,6 +6,7 @@ import ReactDOM from "react-dom/client";
 import { I18nextProvider } from "react-i18next";
 import { BrowserRouter } from "react-router";
 import App from "./app";
+import { ErrorBoundary } from "./components/error-boundary";
 import i18n from "./i18n";
 import "./app.css";
 
@@ -18,6 +19,9 @@ const queryClient = new QueryClient({
   },
 });
 
+// Expose queryClient for error-boundary reset
+(window as unknown as Record<string, unknown>).__reactQueryClient = queryClient;
+
 const rootElement = document.getElementById("root");
 if (!rootElement) {
   throw new Error("Root element not found");
@@ -25,13 +29,15 @@ if (!rootElement) {
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <I18nextProvider i18n={i18n}>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </I18nextProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <I18nextProvider i18n={i18n}>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </I18nextProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );
 

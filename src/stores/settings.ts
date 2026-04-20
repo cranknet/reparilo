@@ -4,6 +4,7 @@ import type {
   ShopSettings,
 } from "@shared/types";
 import { create } from "zustand";
+import i18n from "@/i18n";
 import api from "@/lib/api";
 
 interface SettingsState {
@@ -60,7 +61,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to fetch settings";
+        err instanceof Error ? err.message : i18n.t("errors.fetch_settings");
       set({ isLoading: false, error: message });
     }
   },
@@ -72,7 +73,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       set({ aiSettings: res.data, isLoading: false });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to fetch AI settings";
+        err instanceof Error ? err.message : i18n.t("errors.fetch_ai_settings");
       set({ isLoading: false, error: message });
     }
   },
@@ -86,7 +87,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       return updated;
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to save AI settings";
+        err instanceof Error ? err.message : i18n.t("errors.save_ai_settings");
       set({ error: message });
       throw new Error(message);
     }
@@ -99,7 +100,9 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       return res.data as { success: boolean; message: string };
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to test AI connection";
+        err instanceof Error
+          ? err.message
+          : i18n.t("errors.test_ai_connection");
       set({ error: message });
       return { success: false, message };
     }
@@ -112,7 +115,9 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       set({ shopSettings: res.data, isLoading: false });
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to fetch shop settings";
+        err instanceof Error
+          ? err.message
+          : i18n.t("errors.fetch_shop_settings");
       set({ isLoading: false, error: message });
     }
   },
@@ -126,7 +131,9 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       return updated;
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Failed to save shop settings";
+        err instanceof Error
+          ? err.message
+          : i18n.t("errors.save_shop_settings");
       set({ error: message });
       throw new Error(message);
     }
@@ -141,7 +148,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       const message =
         err instanceof Error
           ? err.message
-          : "Failed to fetch notification templates";
+          : i18n.t("errors.fetch_notifications");
       set({ isLoading: false, error: message });
     }
   },
@@ -164,7 +171,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       const message =
         err instanceof Error
           ? err.message
-          : "Failed to update notification template";
+          : i18n.t("errors.update_notification_template");
       set({ error: message });
       throw new Error(message);
     }

@@ -41,6 +41,57 @@ import {
   remove as removeWaitingPart,
 } from "../services/job-waiting-parts.service.js";
 
+const JOB_CODE_RE = /^[A-Za-z0-9-]+$/;
+const PHONE4_RE = /^\d{4}$/;
+
+interface LockoutEntry {
+  failures: number;
+  lockedUntil: number;
+}
+
+function sendNotFound(reply: FastifyReply) {
+  return reply
+    .status(404)
+    .send({ error: "JOB_NOT_FOUND", message: "Job not found" });
+}
+
+function validateLookupParams(
+  code: string | undefined,
+  phone4: string | undefined
+): ((reply: FastifyReply) => unknown) | null {
+  if (!(code && phone4)) {
+    return (reply) =>
+      reply.status(400).send({
+        error: "MISSING_CODE",
+        message: "code and phone4 query parameters are required",
+      });
+  }
+  if (code.length > 50 || !JOB_CODE_RE.test(code)) {
+    return (reply) =>
+      reply.status(400).send({
+        error: "INVALID_CODE",
+        message: "Invalid job code format",
+      });
+  }
+  if (!PHONE4_RE.test(phone4)) {
+    return (reply) =>
+      reply.status(400).send({
+        error: "INVALID_PHONE4",
+        message: "phone4 must be exactly 4 digits",
+      });
+  }
+  return null;
+}
+
+function trackFailedAttempt(lockouts: Map<string, LockoutEntry>, code: string) {
+  const existing = lockouts.get(code) ?? { failures: 0, lockedUntil: 0 };
+  existing.failures += 1;
+  if (existing.failures >= 5) {
+    existing.lockedUntil = Date.now() + 60 * 60 * 1000;
+  }
+  lockouts.set(code, existing);
+}
+
 function sendError(
   reply: FastifyReply,
   status: number,
@@ -65,22 +116,69 @@ function getUserId(req: FastifyRequest): string {
 export const jobRoutes: FastifyPluginAsync = async (app) => {
   app.addHook("preHandler", requirePermission({ jobs: ["view"] }));
 
+  // In-memory lockout store: jobCode → { failures, lockedUntil }
+  // Periodic cleanup runs every 15 min to prune expired entries
+  const codeLockouts = new Map<
+    string,
+    { failures: number; lockedUntil: number }
+  >();
+  const cleanupInterval = setInterval(
+    () => {
+      const now = Date.now();
+      for (const [key, val] of codeLockouts) {
+        if (val.lockedUntil > 0 && val.lockedUntil <= now) {
+          codeLockouts.delete(key);
+        }
+      }
+    },
+    15 * 60 * 1000
+  );
+  // Prevent cleanup from keeping the process alive
+  if (cleanupInterval.unref) {
+    cleanupInterval.unref();
+  }
+
   // Public: no auth — used by customer self-tracking page
-  app.get("/lookup", { preHandler: [] }, async (req, reply) => {
-    const { code } = req.query as { code?: string };
-    if (!code) {
-      return reply.status(400).send({
-        error: "MISSING_CODE",
-        message: "code query parameter is required",
-      });
-    }
-    const job = await lookupByCode(app.prisma, code);
-    if (!job) {
-      return reply
-        .status(404)
-        .send({ error: "JOB_NOT_FOUND", message: "Job not found" });
-    }
-    return reply.send(job);
+  // Per-IP rate limit: 10 attempts / 15 min (generous for shared NAT)
+  app.get("/lookup", {
+    preHandler: [],
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: 15 * 60 * 1000, // 15 min
+        keyGenerator: (req: FastifyRequest) => (req.ip as string) ?? "unknown",
+      },
+    },
+    handler: async (req, reply) => {
+      const { code, phone4 } = req.query as {
+        code?: string;
+        phone4?: string;
+      };
+      const validation = validateLookupParams(code, phone4);
+      if (validation) {
+        return validation(reply);
+      }
+
+      const lockout = codeLockouts.get(code);
+      if (lockout && lockout.lockedUntil > Date.now()) {
+        return sendNotFound(reply);
+      }
+      if (lockout?.lockedUntil && lockout.lockedUntil <= Date.now()) {
+        codeLockouts.delete(code);
+      }
+
+      const result = await lookupByCode(app.prisma, code, phone4);
+      if (!result.jobExists) {
+        return sendNotFound(reply);
+      }
+      if (!result.job) {
+        trackFailedAttempt(codeLockouts, code);
+        return sendNotFound(reply);
+      }
+
+      codeLockouts.delete(code);
+      return reply.send(result.job);
+    },
   });
 
   app.get("/metrics", async (_req, reply) => {

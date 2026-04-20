@@ -47,13 +47,17 @@ interface TrackingData {
   shopName: string;
   shopPhone: string;
   status: string;
-  technician: { initials: string; name: string; level: string };
   timeline: { status: string; note: string; date: string }[];
 }
 
-function LookupForm({ onSearch }: { onSearch: (code: string) => void }) {
+function LookupForm({
+  onSearch,
+}: {
+  onSearch: (code: string, phone4: string) => void;
+}) {
   const { t } = useTranslation();
   const [code, setCode] = useState("");
+  const [phone4, setPhone4] = useState("");
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -95,8 +99,8 @@ function LookupForm({ onSearch }: { onSearch: (code: string) => void }) {
                 className="w-full space-y-4"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  if (code.trim()) {
-                    onSearch(code.trim());
+                  if (code.trim() && phone4.trim()) {
+                    onSearch(code.trim(), phone4.trim());
                   }
                 }}
               >
@@ -113,8 +117,26 @@ function LookupForm({ onSearch }: { onSearch: (code: string) => void }) {
                     <span className="material-symbols-outlined">search</span>
                   </div>
                 </div>
+                <div className="group relative">
+                  <input
+                    aria-label={t("tracking_phone4_placeholder")}
+                    className="h-16 w-full rounded-xl bg-surface-container-highest px-6 font-medium text-lg outline-none transition-all placeholder:text-outline focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
+                    inputMode="numeric"
+                    maxLength={4}
+                    onChange={(e) =>
+                      setPhone4(e.target.value.replace(/\D/g, "").slice(0, 4))
+                    }
+                    placeholder={t("tracking_phone4_placeholder")}
+                    type="text"
+                    value={phone4}
+                  />
+                  <div className="absolute end-4 top-1/2 -translate-y-1/2 text-outline transition-colors group-focus-within:text-primary">
+                    <span className="material-symbols-outlined">lock</span>
+                  </div>
+                </div>
                 <button
-                  className="flex h-16 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container font-bold font-headline text-lg text-on-primary shadow-lg shadow-primary/10 transition-all duration-150 active:opacity-80"
+                  className="flex h-16 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container font-bold font-headline text-lg text-on-primary shadow-lg shadow-primary/10 transition-all duration-150 active:opacity-80 disabled:opacity-50"
+                  disabled={!(code.trim() && phone4.trim())}
                   type="submit"
                 >
                   <span>{t("tracking_track_btn")}</span>
@@ -381,47 +403,39 @@ function StatusView({
               <div className="space-y-6">
                 <div>
                   <p className="mb-2 font-bold font-label text-on-surface-variant text-xs uppercase tracking-wide">
-                    {t("tracking_technician")}
+                    {t("tracking_repair_guarantee")}
                   </p>
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-container font-bold font-headline text-on-primary text-xs">
-                      {data.technician.initials}
+                  <div className="space-y-3 rounded-xl bg-surface-container-lowest/50 p-4 backdrop-blur-md">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-lg text-primary">
+                        verified_user
+                      </span>
+                      <span className="font-bold text-xs uppercase tracking-wide">
+                        {t("tracking_repair_guarantee")}
+                      </span>
                     </div>
-                    <div>
-                      <p className="font-bold text-on-surface text-sm">
-                        {data.technician.name}
-                      </p>
-                      <p className="text-on-surface-variant text-xs">
-                        {data.technician.level}
-                      </p>
-                    </div>
+                    <p className="text-on-surface-variant text-xs leading-relaxed">
+                      {t("tracking_guarantee_desc")}
+                    </p>
                   </div>
                 </div>
 
-                <div className="space-y-3 rounded-xl bg-surface-container-lowest/50 p-4 backdrop-blur-md">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-lg text-primary">
-                      verified_user
-                    </span>
-                    <span className="font-bold text-xs uppercase tracking-wide">
-                      {t("tracking_repair_guarantee")}
-                    </span>
-                  </div>
-                  <p className="text-on-surface-variant text-xs leading-relaxed">
-                    {t("tracking_guarantee_desc")}
-                  </p>
-                </div>
+                <button
+                  className="group mt-auto flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-6 py-4 font-bold text-on-primary text-sm tracking-wide shadow-lg shadow-primary/20 transition-all hover:opacity-90"
+                  disabled={!data.shopPhone}
+                  onClick={() => {
+                    if (data.shopPhone) {
+                      window.location.href = `tel:${data.shopPhone}`;
+                    }
+                  }}
+                  type="button"
+                >
+                  {t("tracking_contact_shop")}
+                  <span className="material-symbols-outlined text-sm transition-transform group-hover:translate-x-1">
+                    arrow_forward
+                  </span>
+                </button>
               </div>
-
-              <button
-                className="group mt-auto flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-6 py-4 font-bold text-on-primary text-sm tracking-wide shadow-lg shadow-primary/20 transition-all hover:opacity-90"
-                type="button"
-              >
-                {t("tracking_contact_shop")}
-                <span className="material-symbols-outlined text-sm transition-transform group-hover:translate-x-1">
-                  arrow_forward
-                </span>
-              </button>
             </div>
           </div>
         </div>
@@ -449,12 +463,12 @@ export default function TrackingPage() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchJob = useCallback(
-    async (code: string) => {
+    async (code: string, phone4: string) => {
       setIsLoading(true);
       setError(null);
       try {
         const res = await api.get(
-          `/jobs/lookup?code=${encodeURIComponent(code)}`
+          `/jobs/lookup?code=${encodeURIComponent(code)}&phone4=${encodeURIComponent(phone4)}`
         );
         const data = res.data;
         const createdDate = new Date(data.createdAt);
@@ -464,14 +478,6 @@ export default function TrackingPage() {
             (Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24)
           )
         );
-        const technicianInitials = data.technician
-          ? data.technician.name
-              .split(" ")
-              .map((n: string) => n[0])
-              .join("")
-              .toUpperCase()
-              .slice(0, 2)
-          : "?";
         const resolvedStatus = STATUS_FLOW.indexOf(
           data.status as (typeof STATUS_FLOW)[number]
         );
@@ -509,13 +515,6 @@ export default function TrackingPage() {
               year: "numeric",
             })
           : t("tracking_tbd");
-        const technician = data.technician
-          ? {
-              initials: technicianInitials,
-              name: data.technician.name,
-              level: data.technician.role,
-            }
-          : { initials: "?", name: t("tracking_unassigned"), level: "" };
 
         setTrackedJob({
           jobCode: data.jobCode,
@@ -527,11 +526,24 @@ export default function TrackingPage() {
           shopName: "Reparilo",
           shopPhone: "",
           shopAddress: "",
-          technician,
           timeline,
         });
-      } catch {
-        setError(t("tracking_job_not_found"));
+      } catch (err: unknown) {
+        const status =
+          err &&
+          typeof err === "object" &&
+          "response" in err &&
+          (err.response as { status?: number })?.status;
+        if (status === 429) {
+          setError(
+            t(
+              "errors.too_many_attempts",
+              "Too many attempts. Please try again later."
+            )
+          );
+        } else {
+          setError(t("tracking_job_not_found"));
+        }
       } finally {
         setIsLoading(false);
       }
@@ -541,7 +553,12 @@ export default function TrackingPage() {
 
   useEffect(() => {
     if (jobCode) {
-      fetchJob(jobCode);
+      // URL-based lookup requires phone4 in query param
+      const params = new URLSearchParams(window.location.search);
+      const phone4 = params.get("phone4");
+      if (phone4) {
+        fetchJob(jobCode, phone4);
+      }
     }
   }, [jobCode, fetchJob]);
 
@@ -616,8 +633,8 @@ export default function TrackingPage() {
 
   return (
     <LookupForm
-      onSearch={(code) => {
-        fetchJob(code);
+      onSearch={(code, phone4) => {
+        fetchJob(code, phone4);
       }}
     />
   );
