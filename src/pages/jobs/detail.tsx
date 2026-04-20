@@ -3,10 +3,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
 import JobPartsSection from "@/components/modules/jobs/job-parts-section";
+import JobPhotosSection from "@/components/modules/jobs/job-photos-section";
 import JobRepairsSection from "@/components/modules/jobs/job-repairs-section";
-import StatusBadge from "@/components/modules/jobs/status-badge";
-import StatusChangeMenu from "@/components/modules/jobs/status-change-menu";
 import StatusHistoryTimeline from "@/components/modules/jobs/status-history-timeline";
+import StatusPopover from "@/components/modules/jobs/status-popover";
 import TechnicianSelect from "@/components/modules/jobs/technician-select";
 import { formatDzd } from "@/lib/format";
 import { useJobsStore } from "@/stores/jobs";
@@ -21,7 +21,7 @@ export default function JobDetailPage() {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [trackCopied, setTrackCopied] = useState(false);
 
   const fetchJob = useCallback(async () => {
     if (!id) {
@@ -43,13 +43,14 @@ export default function JobDetailPage() {
     fetchJob();
   }, [fetchJob]);
 
-  const handleCopyCode = useCallback(() => {
+  const handleCopyTrackLink = useCallback(() => {
     if (!job?.jobCode) {
       return;
     }
-    navigator.clipboard.writeText(job.jobCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const url = `${window.location.origin}/tracking/${job.jobCode}`;
+    navigator.clipboard.writeText(url);
+    setTrackCopied(true);
+    setTimeout(() => setTrackCopied(false), 2000);
   }, [job?.jobCode]);
 
   if (loading) {
@@ -107,30 +108,28 @@ export default function JobDetailPage() {
       </Link>
 
       <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <button
-              className="flex items-center gap-2 hover:opacity-80"
-              onClick={handleCopyCode}
-              type="button"
-            >
-              <h1 className="font-extrabold font-headline text-2xl text-primary tracking-tight">
-                {job.jobCode}
-              </h1>
-              <span className="material-symbols-outlined text-on-surface-variant text-sm">
-                {copied ? "check" : "content_copy"}
-              </span>
-            </button>
-            <p className="mt-1 font-body text-on-surface text-sm">
-              {job.device?.brand} {job.device?.model}
-              {(job.device?.brand || job.device?.model) && " · "}
-              {job.reportedProblem}
-            </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="font-extrabold font-headline text-lg text-on-surface tracking-tight sm:truncate sm:text-2xl">
+              {[job.device?.brand, job.device?.model]
+                .filter(Boolean)
+                .join(" ") || t("intake.device_section")}
+            </h1>
+            {job.reportedProblem && (
+              <p className="mt-1 line-clamp-2 font-body text-on-surface-variant text-sm">
+                {job.reportedProblem}
+              </p>
+            )}
           </div>
-          <StatusBadge status={job.status} />
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="font-label text-on-surface-variant text-xs uppercase sm:hidden">
+              {t("status_label")}
+            </span>
+            <StatusPopover job={job} onChanged={() => fetchJob()} />
+          </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
           <div>
             <span className="font-label text-on-surface-variant text-xs uppercase">
               {t("customers")}
@@ -152,6 +151,7 @@ export default function JobDetailPage() {
                 currentTechnicianName={job.technician?.name}
                 jobId={job.id}
                 onChanged={() => fetchJob()}
+                size="sm"
               />
             </div>
           </div>
@@ -178,14 +178,37 @@ export default function JobDetailPage() {
             </div>
           )}
         </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2 border-outline-variant border-t pt-4">
+          <Link
+            className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 font-bold font-label text-primary text-xs transition-colors hover:bg-primary/20"
+            to={`/tracking/${job.jobCode}`}
+          >
+            <span className="material-symbols-outlined text-sm">
+              open_in_new
+            </span>
+            {t("jobs_detail_track")}
+          </Link>
+          <button
+            className="inline-flex items-center gap-1 rounded-full bg-surface-container-high px-3 py-1.5 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container-highest hover:text-on-surface"
+            onClick={handleCopyTrackLink}
+            type="button"
+          >
+            <span className="material-symbols-outlined text-sm">
+              {trackCopied ? "check" : "share"}
+            </span>
+            {trackCopied
+              ? t("jobs_detail_track_link_copied")
+              : t("jobs_detail_share")}
+          </button>
+        </div>
       </div>
 
-      <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
-        <h2 className="mb-4 font-bold font-headline text-base text-on-surface">
-          {t("jobs_detail_change_to")}
-        </h2>
-        <StatusChangeMenu job={job} onChanged={() => fetchJob()} />
-      </div>
+      {job.photos && job.photos.length > 0 && (
+        <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
+          <JobPhotosSection job={job} onChanged={() => fetchJob()} />
+        </div>
+      )}
 
       <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
         <JobPartsSection job={job} onChanged={() => fetchJob()} />
@@ -243,7 +266,9 @@ export default function JobDetailPage() {
         <h2 className="mb-4 font-bold font-headline text-base text-on-surface">
           {t("jobs_detail_history")}
         </h2>
-        <StatusHistoryTimeline jobId={job.id} />
+        <div className="max-h-80 overflow-y-auto">
+          <StatusHistoryTimeline jobId={job.id} />
+        </div>
       </div>
     </div>
   );

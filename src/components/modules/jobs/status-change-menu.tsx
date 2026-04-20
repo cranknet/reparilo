@@ -1,7 +1,7 @@
 import type { JobStatusType } from "@shared/constants";
 import { JOB_STATUS_FLOW } from "@shared/constants";
 import type { Job } from "@shared/types";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useJobsStore } from "@/stores/jobs";
 import StatusBadge from "./status-badge";
@@ -23,13 +23,32 @@ export default function StatusChangeMenu({
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const availableStatuses = JOB_STATUS_FLOW[job.status] ?? [];
+
+  useEffect(() => {
+    if (!dropdownOpen) {
+      return;
+    }
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dropdownOpen]);
 
   const handleSelect = useCallback((status: JobStatusType) => {
     setSelectedStatus(status);
     setReason("");
     setError(null);
+    setDropdownOpen(false);
   }, []);
 
   const handleCancel = useCallback(() => {
@@ -114,17 +133,39 @@ export default function StatusChangeMenu({
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {availableStatuses.map((status) => (
-        <button
-          className="rounded-full bg-surface-container-high px-3 py-1.5 font-bold font-label text-on-surface-variant text-xs uppercase tracking-wider transition-colors hover:bg-primary hover:text-on-primary"
-          key={status}
-          onClick={() => handleSelect(status)}
-          type="button"
+    <div className="relative" ref={dropdownRef}>
+      <button
+        className="flex items-center gap-2 rounded-xl bg-surface-container-high px-4 py-2.5 font-bold font-headline text-on-surface text-sm transition-colors hover:bg-surface-container-highest"
+        onClick={() => setDropdownOpen((prev) => !prev)}
+        type="button"
+      >
+        <StatusBadge status={job.status} />
+        <span className="material-symbols-outlined text-on-surface-variant text-sm">
+          {dropdownOpen ? "expand_less" : "expand_more"}
+        </span>
+      </button>
+
+      {dropdownOpen && (
+        <div
+          className="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-xl bg-surface-container-lowest shadow-lg ring-1 ring-outline-variant"
+          role="listbox"
         >
-          {t(`status.${status}`)}
-        </button>
-      ))}
+          <ul className="py-1">
+            {availableStatuses.map((status) => (
+              <li key={status}>
+                <button
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-start transition-colors hover:bg-surface-container-high"
+                  onClick={() => handleSelect(status)}
+                  role="option"
+                  type="button"
+                >
+                  <StatusBadge status={status} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

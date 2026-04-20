@@ -152,7 +152,7 @@ const INITIAL_FORM: IntakeFormData = {
   deposit: "",
   deviceCategory: "phone",
   estimatedCost: "",
-  estimatedDelivery: "",
+  estimatedDelivery: new Date().toISOString().split("T")[0],
   isWarrantyReturn: false,
   model: "",
   photos: [],
@@ -547,16 +547,22 @@ export default function IntakeModal({
     clearSearch();
   }, [clearSearch]);
 
-  const handleQuickAdd = useCallback((data: CreatedCustomerData) => {
-    setForm((prev) => ({
-      ...prev,
-      customerId: data.id,
-      customerName: data.name,
-      customerPhone: data.phone,
-      customerEmail: data.email,
-    }));
-    setShowQuickAdd(false);
-  }, []);
+  const handleQuickAdd = useCallback(
+    (data: CreatedCustomerData) => {
+      setForm((prev) => ({
+        ...prev,
+        customerId: data.id,
+        customerName: data.name,
+        customerPhone: data.phone,
+        customerEmail: data.email ?? "",
+      }));
+      setQuery("");
+      clearSearch();
+      setSearchFocused(false);
+      setShowQuickAdd(false);
+    },
+    [clearSearch, setQuery]
+  );
 
   const handlePhotoSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -598,6 +604,13 @@ export default function IntakeModal({
     if (!open) {
       return;
     }
+    setForm({
+      ...INITIAL_FORM,
+      estimatedDelivery: new Date().toISOString().split("T")[0],
+    });
+    setTouched({});
+    setErrors({});
+    setPhotoPreviews([]);
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         onClose();
@@ -712,10 +725,13 @@ export default function IntakeModal({
                     {t("intake.customer_section")}
                   </h2>
                   <button
-                    className="font-bold font-headline text-primary text-sm hover:underline"
+                    className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 font-bold font-label text-primary text-xs transition-colors hover:bg-primary/20"
                     onClick={() => setShowQuickAdd(!showQuickAdd)}
                     type="button"
                   >
+                    <span className="material-symbols-outlined text-sm">
+                      person_add
+                    </span>
                     {t("intake.add_customer")}
                   </button>
                 </div>
@@ -877,19 +893,20 @@ export default function IntakeModal({
                     <label className={labelCls} htmlFor="device-brand">
                       {t("intake.brand")}
                     </label>
-                    <select
-                      className="h-12 w-full appearance-none rounded-xl bg-surface-container-highest px-4 text-on-surface transition-all focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary"
+                    <input
+                      className={inputCls}
                       id="device-brand"
+                      list="brand-suggestions"
                       onChange={(e) => update("brand", e.target.value)}
+                      placeholder={t("intake.brand")}
+                      type="text"
                       value={form.brand}
-                    >
-                      <option value="">{t("intake.brand")}</option>
+                    />
+                    <datalist id="brand-suggestions">
                       {BRANDS.map((b) => (
-                        <option key={b} value={b}>
-                          {b}
-                        </option>
+                        <option key={b} value={b} />
                       ))}
-                    </select>
+                    </datalist>
                   </div>
                   <div>
                     <label className={labelCls} htmlFor="device-model">
@@ -1050,20 +1067,15 @@ export default function IntakeModal({
                   <label className={labelCls} htmlFor="delivery-date">
                     {t("intake.delivery_date")}
                   </label>
-                  <div className="relative">
-                    <span className="material-symbols-outlined absolute end-4 top-1/2 -translate-y-1/2 text-outline">
-                      calendar_today
-                    </span>
-                    <input
-                      className="h-11 w-full rounded-xl bg-surface-container-low px-4 text-on-surface text-sm transition-all focus:ring-2 focus:ring-primary"
-                      id="delivery-date"
-                      onChange={(e) =>
-                        update("estimatedDelivery", e.target.value)
-                      }
-                      type="date"
-                      value={form.estimatedDelivery}
-                    />
-                  </div>
+                  <input
+                    className="h-12 w-full rounded-xl bg-surface-container-highest px-4 text-on-surface transition-all focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary"
+                    id="delivery-date"
+                    onChange={(e) =>
+                      update("estimatedDelivery", e.target.value)
+                    }
+                    type="date"
+                    value={form.estimatedDelivery}
+                  />
                 </div>
               </div>
             </section>

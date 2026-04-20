@@ -4,14 +4,6 @@ import { useTranslation } from "react-i18next";
 import { formatDzd } from "@/lib/format";
 import { useRepairCatalogStore } from "@/stores/repair-catalog";
 
-const CATEGORY_FILTERS = [
-  { key: "", labelKey: "intake.repair_category_all" },
-  { key: "HARDWARE", labelKey: "repair_category.HARDWARE" },
-  { key: "SOFTWARE", labelKey: "repair_category.SOFTWARE" },
-  { key: "DIAGNOSTIC", labelKey: "repair_category.DIAGNOSTIC" },
-  { key: "OTHER", labelKey: "repair_category.OTHER" },
-];
-
 interface RepairServicePickerProps {
   compact?: boolean;
   onSelect: (repair: RepairCatalog) => void;
@@ -25,7 +17,6 @@ export default function RepairServicePicker({
 }: RepairServicePickerProps) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { repairs, fetchRepairs, isLoading } = useRepairCatalogStore();
@@ -50,16 +41,12 @@ export default function RepairServicePicker({
   }, []);
 
   const filtered = useMemo(() => {
-    let results = repairs;
-    if (categoryFilter) {
-      results = results.filter((r) => r.category === categoryFilter);
+    if (!query.trim()) {
+      return repairs;
     }
-    if (query.trim()) {
-      const q = query.toLowerCase();
-      results = results.filter((r) => r.name.toLowerCase().includes(q));
-    }
-    return results;
-  }, [repairs, categoryFilter, query]);
+    const q = query.toLowerCase();
+    return repairs.filter((r) => r.name.toLowerCase().includes(q));
+  }, [repairs, query]);
 
   const handleSelect = useCallback(
     (repair: RepairCatalog) => {
@@ -78,7 +65,6 @@ export default function RepairServicePicker({
         </span>
         <input
           className="h-11 w-full rounded-xl bg-surface-container-highest ps-9 pe-4 font-body text-on-surface text-sm outline-none transition-all placeholder:text-outline focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary"
-          onBlur={() => setOpen(false)}
           onChange={(e) => {
             setQuery(e.target.value);
             setOpen(true);
@@ -149,26 +135,6 @@ export default function RepairServicePicker({
               )}
           </div>
         )}
-      </div>
-
-      <div className="flex flex-wrap gap-1.5">
-        {CATEGORY_FILTERS.map((cat) => (
-          <button
-            className={`rounded-full px-3 py-1 font-bold font-label text-xs transition-all ${
-              categoryFilter === cat.key
-                ? "bg-primary text-on-primary"
-                : "bg-surface-container-highest text-on-surface-variant hover:bg-surface-container-high"
-            }`}
-            key={cat.key}
-            onClick={() => {
-              setCategoryFilter(cat.key);
-              setQuery("");
-            }}
-            type="button"
-          >
-            {t(cat.labelKey)}
-          </button>
-        ))}
       </div>
     </div>
   );
