@@ -44,6 +44,7 @@ export default function AddPartDialog({
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [catalogSearch, setCatalogSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const {
     parts: catalogItems,
     isLoading: loading,
@@ -57,6 +58,7 @@ export default function AddPartDialog({
     setForm(INITIAL_FORM);
     setCatalogSearch("");
     setMode("catalog");
+    setSubmitError(null);
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";
@@ -117,9 +119,9 @@ export default function AddPartDialog({
       const axiosErr = err as { response?: { data?: { error?: string } } };
       const code = axiosErr.response?.data?.error;
       if (code === "JOB_IN_TERMINAL_STATUS") {
-        window.console.error(t("jobs_parts_terminal_status_error"));
+        setSubmitError(t("jobs_parts_terminal_status_error"));
       } else {
-        window.console.error(t("jobs_status_change_error_unknown"));
+        setSubmitError(t("jobs_status_change_error_unknown"));
       }
     } finally {
       setSubmitting(false);
@@ -359,6 +361,12 @@ export default function AddPartDialog({
             </div>
           </div>
         </div>
+
+        {submitError && (
+          <div className="border-outline-variant border-t px-6 py-2">
+            <p className="font-body text-error text-xs">{submitError}</p>
+          </div>
+        )}
 
         <div className="flex justify-end gap-3 border-outline-variant border-t px-6 py-4">
           <button
