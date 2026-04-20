@@ -13,3 +13,4 @@ android/
 .turbo
 .playwright-mcp/
 .stitch.worktrees/
+.worktrees/
