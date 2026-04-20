@@ -924,6 +924,15 @@ export default function IntakeModal({
                       value={form.color}
                     />
                   </div>
+                  <div className="sm:col-span-2">
+                    <PhotoUploadZone
+                      onPhotoRemove={handlePhotoRemove}
+                      onPhotoSelect={handlePhotoSelect}
+                      photoCount={form.photos.length}
+                      photoPreviews={photoPreviews}
+                      t={t}
+                    />
+                  </div>
                 </div>
               </div>
             </section>
@@ -1037,76 +1046,25 @@ export default function IntakeModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className={labelCls} htmlFor="delivery-date">
-                      {t("intake.delivery_date")}
-                    </label>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute end-4 top-1/2 -translate-y-1/2 text-outline">
-                        calendar_today
-                      </span>
-                      <input
-                        className="h-11 w-full rounded-xl bg-surface-container-low px-4 text-on-surface text-sm transition-all focus:ring-2 focus:ring-primary"
-                        id="delivery-date"
-                        onChange={(e) =>
-                          update("estimatedDelivery", e.target.value)
-                        }
-                        type="date"
-                        value={form.estimatedDelivery}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex h-full items-center justify-between pt-4">
-                    <label
-                      className="font-bold font-label text-on-surface-variant text-xs uppercase tracking-wider"
-                      htmlFor="warranty-toggle"
-                    >
-                      {t("intake.warranty_return")}
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`font-label font-semibold text-xs ${form.isWarrantyReturn ? "text-primary" : "text-on-surface-variant"}`}
-                      >
-                        {form.isWarrantyReturn
-                          ? t("intake.warranty_yes")
-                          : t("intake.warranty_no")}
-                      </span>
-                      <button
-                        aria-checked={form.isWarrantyReturn}
-                        className={`relative min-h-[44px] min-w-[44px] rounded-full p-4 transition-colors ${
-                          form.isWarrantyReturn
-                            ? "bg-primary"
-                            : "bg-surface-container-highest"
-                        }`}
-                        id="warranty-toggle"
-                        onClick={() =>
-                          update("isWarrantyReturn", !form.isWarrantyReturn)
-                        }
-                        role="switch"
-                        type="button"
-                      >
-                        <span
-                          className={`absolute top-[2px] h-5 w-5 rounded-full bg-white shadow-sm transition-[inset-inline-start] ${
-                            form.isWarrantyReturn
-                              ? "start-[22px]"
-                              : "start-[2px]"
-                          }`}
-                        />
-                      </button>
-                    </div>
+                <div>
+                  <label className={labelCls} htmlFor="delivery-date">
+                    {t("intake.delivery_date")}
+                  </label>
+                  <div className="relative">
+                    <span className="material-symbols-outlined absolute end-4 top-1/2 -translate-y-1/2 text-outline">
+                      calendar_today
+                    </span>
+                    <input
+                      className="h-11 w-full rounded-xl bg-surface-container-low px-4 text-on-surface text-sm transition-all focus:ring-2 focus:ring-primary"
+                      id="delivery-date"
+                      onChange={(e) =>
+                        update("estimatedDelivery", e.target.value)
+                      }
+                      type="date"
+                      value={form.estimatedDelivery}
+                    />
                   </div>
                 </div>
-
-                {/* Photo Upload Zone */}
-                <PhotoUploadZone
-                  onPhotoRemove={handlePhotoRemove}
-                  onPhotoSelect={handlePhotoSelect}
-                  photoCount={form.photos.length}
-                  photoPreviews={photoPreviews}
-                  t={t}
-                />
               </div>
             </section>
           </div>
