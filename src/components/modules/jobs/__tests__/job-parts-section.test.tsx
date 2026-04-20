@@ -56,7 +56,7 @@ vi.mock("@/lib/format", () => ({
 
 import JobPartsSection from "../job-parts-section";
 
-function makeJob(overrides: Partial<Job> = {}): Job {
+function makeJob(overrides: Record<string, unknown> = {}): Job {
   return {
     id: "job-1",
     jobCode: "RPR-001",
@@ -66,13 +66,13 @@ function makeJob(overrides: Partial<Job> = {}): Job {
       id: "cust-1",
       name: "John",
       phone: "+1234567890",
-    } as Job["customer"],
+    },
     deviceId: "dev-1",
     device: {
       id: "dev-1",
       brand: "Apple",
       model: "iPhone 15",
-    } as Job["device"],
+    },
     reportedProblem: "Broken screen",
     status: "IN_REPAIR",
     estimatedCost: 5000,
@@ -82,9 +82,9 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     updatedAt: new Date("2025-01-10"),
     isWarrantyReturn: false,
     createdById: "user-1",
-    createdBy: { id: "user-1", name: "Admin" } as Job["createdBy"],
+    createdBy: { id: "user-1", name: "Admin" },
     updatedById: "user-1",
-    updatedBy: { id: "user-1", name: "Admin" } as Job["updatedBy"],
+    updatedBy: { id: "user-1", name: "Admin" },
     technicianId: null,
     technician: null,
     photos: [],
@@ -98,7 +98,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     color: null,
     conditionNotes: null,
     ...overrides,
-  } as Job;
+  } as unknown as Job;
 }
 
 describe("JobPartsSection", () => {
@@ -154,8 +154,9 @@ describe("JobPartsSection", () => {
           supplier: "Supplier A",
           partId: null,
           createdAt: new Date(),
+          createdById: "user-1",
         },
-      ] as Job["partsUsed"],
+      ] as unknown as Job["partsUsed"],
     });
     render(<JobPartsSection job={job} />);
     expect(screen.queryByText("jobs_parts_empty")).not.toBeInTheDocument();

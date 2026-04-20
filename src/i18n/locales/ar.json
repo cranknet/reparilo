@@ -668,6 +668,8 @@
     "error_summary": "يرجى ملء جميع الحقول المطلوبة"
   },
   "jobs_status_change_menu_label": "تغيير الحالة",
+  "jobs_status_change_select_status": "اختر الحالة",
+  "jobs_status_change_reason_label": "سبب",
   "jobs_status_change_to": "التغيير إلى {{status}}",
   "jobs_status_change_reason_title": "سبب {{status}}",
   "jobs_status_change_reason_placeholder": "أدخل السبب (مطلوب)...",

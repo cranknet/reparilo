@@ -136,7 +136,8 @@ describe("AddPartDialog", () => {
     // fetchParts should not be called again after switching to custom
     // (it was already called once on mount for catalog mode)
     const customCalls = mockFetchParts.mock.calls.filter(
-      (call: [params?: { search?: string }]) => call[0]?.search !== undefined
+      (call) =>
+        (call[0] as { search?: string } | undefined)?.search !== undefined
     );
     expect(customCalls.length).toBe(0);
   });

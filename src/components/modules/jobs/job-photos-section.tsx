@@ -13,7 +13,7 @@ export default function JobPhotosSection({
   onChanged,
 }: JobPhotosSectionProps) {
   const { t } = useTranslation();
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<Set<string>>(new Set());
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const photos = job.photos ?? [];
 
@@ -24,14 +24,18 @@ export default function JobPhotosSection({
   const photoUrl = (path: string) => `${api.defaults.baseURL}/uploads/${path}`;
 
   const handleDelete = async (photoId: string) => {
-    setDeleting(photoId);
+    setDeleting((prev) => new Set(prev).add(photoId));
     try {
       await api.delete(`/jobs/${job.id}/photos/${photoId}`);
       onChanged?.();
     } catch {
       // handled by interceptor
     } finally {
-      setDeleting(null);
+      setDeleting((prev) => {
+        const next = new Set(prev);
+        next.delete(photoId);
+        return next;
+      });
     }
   };
 
@@ -63,14 +67,14 @@ export default function JobPhotosSection({
             <button
               aria-label={t("intake.remove_photo")}
               className="absolute inset-0 flex items-center justify-center bg-on-surface/50 opacity-0 transition-opacity group-hover:opacity-100"
-              disabled={deleting === photo.id}
+              disabled={deleting.has(photo.id)}
               onClick={(e) => {
                 e.stopPropagation();
                 handleDelete(photo.id);
               }}
               type="button"
             >
-              {deleting === photo.id ? (
+              {deleting.has(photo.id) ? (
                 <span className="material-symbols-outlined animate-spin text-lg text-on-primary">
                   progress_activity
                 </span>

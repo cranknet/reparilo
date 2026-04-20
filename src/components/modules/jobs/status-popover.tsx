@@ -123,6 +123,8 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
   return (
     <div className="relative" ref={containerRef}>
       <button
+        aria-expanded={open}
+        aria-haspopup="listbox"
         className="flex items-center gap-1.5 rounded-full transition-colors hover:brightness-95"
         onClick={() => setOpen((prev) => !prev)}
         type="button"
@@ -135,6 +137,7 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
 
       {open && (
         <div
+          aria-label={t("jobs_status_change_select_status")}
           className="absolute end-0 top-full z-30 mt-2 w-56 overflow-hidden rounded-xl bg-surface-container-lowest shadow-lg ring-1 ring-outline-variant"
           role="listbox"
         >
@@ -143,6 +146,7 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
               {availableStatuses.map((status) => (
                 <li key={status}>
                   <button
+                    aria-selected={status === job.status}
                     className="flex w-full items-center gap-2 px-4 py-2.5 text-start transition-colors hover:bg-surface-container-high"
                     disabled={loading}
                     onClick={() => handleSelect(status)}
@@ -165,15 +169,29 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
                 </span>
                 <StatusBadge status={pending} />
               </div>
+              <label className="sr-only" htmlFor="status-reason">
+                {t("jobs_status_change_reason_label")}
+              </label>
               <textarea
+                aria-describedby={error ? "status-reason-error" : undefined}
+                aria-invalid={!!error}
                 className="w-full resize-none rounded-xl bg-surface-container-highest px-4 py-3 font-body text-on-surface text-sm placeholder:text-outline focus:ring-2 focus:ring-primary/20"
                 disabled={loading}
+                id="status-reason"
                 onChange={(e) => setReason(e.target.value)}
                 placeholder={t("jobs_status_change_reason_placeholder")}
                 rows={2}
                 value={reason}
               />
-              {error && <p className="font-body text-error text-xs">{error}</p>}
+              {error && (
+                <p
+                  className="font-body text-error text-xs"
+                  id="status-reason-error"
+                  role="alert"
+                >
+                  {error}
+                </p>
+              )}
               <div className="flex justify-end gap-2">
                 <button
                   className="rounded-xl px-4 py-2 font-bold font-headline text-on-surface-variant text-xs transition-colors hover:bg-surface-container-high"

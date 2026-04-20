@@ -48,9 +48,15 @@ export default function JobDetailPage() {
       return;
     }
     const url = `${window.location.origin}/tracking/${job.jobCode}`;
-    navigator.clipboard.writeText(url);
-    setTrackCopied(true);
-    setTimeout(() => setTrackCopied(false), 2000);
+    navigator.clipboard.writeText(url).then(
+      () => {
+        setTrackCopied(true);
+        setTimeout(() => setTrackCopied(false), 2000);
+      },
+      (err) => {
+        console.error("Failed to copy tracking link:", err);
+      }
+    );
   }, [job?.jobCode]);
 
   if (loading) {

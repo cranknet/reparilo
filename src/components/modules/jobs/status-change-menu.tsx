@@ -96,15 +96,29 @@ export default function StatusChangeMenu({
           </span>
           <StatusBadge status={selectedStatus} />
         </div>
+        <label className="sr-only" htmlFor="status-change-reason">
+          {t("jobs_status_change_reason_label")}
+        </label>
         <textarea
+          aria-describedby={error ? "status-change-reason-error" : undefined}
+          aria-invalid={!!error}
           className="w-full rounded-xl border-none bg-surface-container-lowest px-4 py-3 font-body text-on-surface text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20"
           disabled={loading}
+          id="status-change-reason"
           onChange={(e) => setReason(e.target.value)}
           placeholder={t("jobs_status_change_reason_placeholder")}
           rows={2}
           value={reason}
         />
-        {error && <p className="font-body text-error text-xs">{error}</p>}
+        {error && (
+          <p
+            className="font-body text-error text-xs"
+            id="status-change-reason-error"
+            role="alert"
+          >
+            {error}
+          </p>
+        )}
         <div className="flex gap-2">
           <button
             className="rounded-xl px-4 py-2 font-bold font-headline text-on-surface-variant text-xs transition-colors hover:bg-surface-container-high"
@@ -135,6 +149,8 @@ export default function StatusChangeMenu({
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        aria-expanded={dropdownOpen}
+        aria-haspopup="listbox"
         className="flex items-center gap-2 rounded-xl bg-surface-container-high px-4 py-2.5 font-bold font-headline text-on-surface text-sm transition-colors hover:bg-surface-container-highest"
         onClick={() => setDropdownOpen((prev) => !prev)}
         type="button"
@@ -147,13 +163,39 @@ export default function StatusChangeMenu({
 
       {dropdownOpen && (
         <div
+          aria-label={t("jobs_status_change_select_status")}
           className="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-xl bg-surface-container-lowest shadow-lg ring-1 ring-outline-variant"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              setDropdownOpen(false);
+              return;
+            }
+            const buttons =
+              dropdownRef.current?.querySelectorAll<HTMLButtonElement>(
+                '[role="option"]'
+              );
+            if (!buttons?.length) {
+              return;
+            }
+            const focused = document.activeElement;
+            const idx = Array.from(buttons).indexOf(
+              focused as HTMLButtonElement
+            );
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              buttons[(idx + 1) % buttons.length].focus();
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              buttons[(idx - 1 + buttons.length) % buttons.length].focus();
+            }
+          }}
           role="listbox"
         >
           <ul className="py-1">
             {availableStatuses.map((status) => (
               <li key={status}>
                 <button
+                  aria-selected={status === job.status}
                   className="flex w-full items-center gap-2 px-4 py-2.5 text-start transition-colors hover:bg-surface-container-high"
                   onClick={() => handleSelect(status)}
                   role="option"

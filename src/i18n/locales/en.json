@@ -668,6 +668,8 @@
     "error_summary": "Some required information is missing — check the highlighted fields."
   },
   "jobs_status_change_menu_label": "Change status",
+  "jobs_status_change_select_status": "Select status",
+  "jobs_status_change_reason_label": "Reason",
   "jobs_status_change_to": "Change to {{status}}",
   "jobs_status_change_reason_title": "Reason for {{status}}",
   "jobs_status_change_reason_placeholder": "Enter a reason (required)...",

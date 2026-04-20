@@ -668,6 +668,8 @@
     "error_summary": "Veuillez remplir tous les champs obligatoires"
   },
   "jobs_status_change_menu_label": "Changer de statut",
+  "jobs_status_change_select_status": "Sélectionnez le statut",
+  "jobs_status_change_reason_label": "Raison",
   "jobs_status_change_to": "Passer à {{status}}",
   "jobs_status_change_reason_title": "Raison de {{status}}",
   "jobs_status_change_reason_placeholder": "Entrez une raison (obligatoire)...",
