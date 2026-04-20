@@ -5,11 +5,13 @@ export type {
   CreateCustomerInput,
   CustomerListQueryInput,
   CustomerSearchQueryInput,
+  UpdateCustomerInput,
 } from "./customer.schema";
 export {
   createCustomerSchema,
   customerListQuerySchema,
   customerSearchQuerySchema,
+  updateCustomerSchema,
 } from "./customer.schema";
 export type {
   AddJobNoteInput,

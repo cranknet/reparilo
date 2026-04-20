@@ -290,6 +290,11 @@
   "notifications_settings_desc": "Customize your WhatsApp and SMS messages to customers",
   "whatsapp_templates": "WhatsApp Templates",
   "sms_templates": "SMS Templates",
+  "notifications_edit_template": "Edit Template",
+  "notifications_template_name": "Template Name",
+  "notifications_channel": "Channel",
+  "notifications_template_body": "Message Body",
+  "no_alerts": "No alerts",
   "template_name": "Template Name",
   "template_body": "Template Body",
   "channel": "Channel",
@@ -700,6 +705,7 @@
   "jobs_detail_back": "Back to Jobs",
   "jobs_detail_track": "Track",
   "jobs_detail_share": "Share",
+  "jobs_detail_print": "Print",
   "jobs_detail_track_link_copied": "Link copied!",
   "jobs_detail_history": "History",
   "jobs_detail_no_history": "No history yet",
@@ -709,6 +715,7 @@
   "jobs_detail_repairs_subtotal": "Repairs",
   "jobs_detail_deposit": "Deposit",
   "jobs_detail_final_cost": "Total",
+  "jobs_detail_margin": "Margin",
   "jobs_parts_title": "Parts",
   "jobs_parts_add": "Add Part",
   "jobs_parts_empty": "No parts added yet",
@@ -794,6 +801,13 @@
     "toggle_user_status": "Failed to update user status",
     "reset_password": "Failed to reset password",
     "login_failed": "Login failed",
-    "no_user_session": "No user in session response"
-  }
+    "no_user_session": "No user in session response",
+    "update_customer": "Failed to update customer"
+  },
+  "customer_edit_title": "Edit Customer",
+  "customer_edit_name": "Name",
+  "customer_edit_phone": "Phone",
+  "customer_edit_email": "Email",
+  "customer_edit_save": "Save",
+  "customer_edit_cancel": "Cancel"
 }

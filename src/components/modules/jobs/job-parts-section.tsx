@@ -2,6 +2,7 @@ import { INACTIVE_STATUSES } from "@shared/constants";
 import type { Job } from "@shared/types";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Can } from "@/components/modules/can";
 import { formatDzd } from "@/lib/format";
 import { useJobsStore } from "@/stores/jobs";
 import AddPartDialog from "./add-part-dialog";
@@ -75,14 +76,20 @@ export default function JobPartsSection({
                   {part.partName}
                 </p>
                 <p className="font-label text-on-surface-variant text-xs">
-                  {t(`part_category.${part.category}`)} ·{" "}
-                  {Number(part.unitPrice).toLocaleString()} × {part.quantity}
+                  {t(`part_category.${part.category}`)}
+                  <Can perm={{ parts: ["viewCost"] }}>
+                    {" "}
+                    · {Number(part.unitPrice).toLocaleString()} ×{" "}
+                    {part.quantity}
+                  </Can>
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-bold font-headline text-on-surface text-xs">
-                  {fmt(Number(part.totalCost))}
-                </span>
+                <Can perm={{ parts: ["viewCost"] }}>
+                  <span className="font-bold font-headline text-on-surface text-xs">
+                    {fmt(Number(part.totalCost))}
+                  </span>
+                </Can>
                 {!isTerminal && (
                   <button
                     className="flex h-7 w-7 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"

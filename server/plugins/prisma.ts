@@ -21,5 +21,13 @@ export default fp(prismaPlugin);
 declare module "fastify" {
   interface FastifyInstance {
     prisma: PrismaClient;
+    wsBroadcast?: (
+      predicate: (client: {
+        role: string;
+        socket: import("ws").WebSocket;
+        userId: string;
+      }) => boolean,
+      payload: Record<string, unknown>
+    ) => void;
   }
 }

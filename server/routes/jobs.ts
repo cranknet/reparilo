@@ -12,6 +12,7 @@ import {
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
 import {
+  computeMargin,
   create as createJob,
   getById as getJobById,
   getMetrics,
@@ -209,6 +210,16 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
     if (!job) {
       return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
     }
+    const marginResult = await req.server.auth.api.userHasPermission({
+      body: {
+        role: (req.user?.role ?? "") as RoleType,
+        permissions: { reports: ["viewMargin"] },
+      },
+    });
+    if (marginResult.success) {
+      const margin = computeMargin(job);
+      return reply.send({ ...job, margin });
+    }
     return reply.send(job);
   });
 
@@ -276,6 +287,17 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
           "Duplicate repair in request"
         );
       }
+
+      if (result.isWarrantyReturn && "jobCode" in result) {
+        app.wsBroadcast?.((c) => c.role === "OWNER", {
+          type: "WARRANTY_RETURN_CREATED",
+          job: {
+            id: result.id,
+            jobCode: (result as Record<string, unknown>).jobCode as string,
+          },
+        });
+      }
+
       return reply.status(201).send(result);
     }
   );

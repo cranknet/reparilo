@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import AddUserModal from "@/components/modules/settings/add-user-modal";
 import ResetPasswordModal from "@/components/modules/settings/reset-password-modal";
+import TemplateEditor from "@/components/modules/settings/template-editor";
 import { Avatar } from "@/components/ui/avatar";
 import { getAvatarSrc } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
@@ -213,6 +214,8 @@ export default function SettingsPage() {
     users: null,
   });
   const previousActiveElement = useRef<HTMLElement | null>(null);
+  const [editingTemplate, setEditingTemplate] =
+    useState<NotificationTemplate | null>(null);
 
   const {
     aiSettings,
@@ -932,6 +935,7 @@ export default function SettingsPage() {
                   <button
                     aria-label={`${t("edit")} ${tpl.name}`}
                     className="flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-3 py-2 text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-primary"
+                    onClick={() => setEditingTemplate(tpl)}
                     type="button"
                   >
                     <span className="material-symbols-outlined text-[16px]">
@@ -1246,6 +1250,12 @@ export default function SettingsPage() {
           username={resetTarget.username}
         />
       )}
+      <TemplateEditor
+        onClose={() => setEditingTemplate(null)}
+        onSaved={() => fetchNotificationTemplates()}
+        open={editingTemplate !== null}
+        template={editingTemplate}
+      />
     </>
   );
 }

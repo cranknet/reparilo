@@ -290,6 +290,11 @@
   "notifications_settings_desc": "إدارة قوالب إشعارات واتساب والرسائل القصيرة",
   "whatsapp_templates": "قوالب واتساب",
   "sms_templates": "قوالب الرسائل القصيرة",
+  "notifications_edit_template": "تحرير القالب",
+  "notifications_template_name": "اسم القالب",
+  "notifications_channel": "قناة",
+  "notifications_template_body": "جسم الرسالة",
+  "no_alerts": "لا تنبيهات",
   "template_name": "اسم القالب",
   "template_body": "محتوى القالب",
   "channel": "القناة",
@@ -700,6 +705,7 @@
   "jobs_detail_back": "العودة إلى الوظائف",
   "jobs_detail_track": "مسار",
   "jobs_detail_share": "يشارك",
+  "jobs_detail_print": "مطبعة",
   "jobs_detail_track_link_copied": "تم نسخ الرابط!",
   "jobs_detail_history": "تاريخ",
   "jobs_detail_no_history": "لا يوجد تاريخ بعد",
@@ -709,6 +715,7 @@
   "jobs_detail_repairs_subtotal": "الإصلاحات",
   "jobs_detail_deposit": "إيداع",
   "jobs_detail_final_cost": "المجموع",
+  "jobs_detail_margin": "هامِش",
   "jobs_parts_title": "أجزاء",
   "jobs_parts_add": "أضف جزء",
   "jobs_parts_empty": "لم تتم إضافة أي أجزاء حتى الآن",
@@ -794,6 +801,13 @@
     "toggle_user_status": "فشل في تحديث حالة المستخدم",
     "reset_password": "فشل في إعادة تعيين كلمة المرور",
     "login_failed": "فشل تسجيل الدخول",
-    "no_user_session": "لا يوجد مستخدم في استجابة الجلسة"
-  }
+    "no_user_session": "لا يوجد مستخدم في استجابة الجلسة",
+    "update_customer": "فشل تحديث العميل"
+  },
+  "customer_edit_title": "تحرير العميل",
+  "customer_edit_name": "اسم",
+  "customer_edit_phone": "هاتف",
+  "customer_edit_email": "بريد إلكتروني",
+  "customer_edit_save": "يحفظ",
+  "customer_edit_cancel": "يلغي"
 }

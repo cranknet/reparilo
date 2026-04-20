@@ -58,9 +58,6 @@ function formatValue(
   return value;
 }
 
-// biome-ignore lint/correctness/noUnusedVariables: exported for tests
-export { formatValue };
-
 export default function StatusHistoryTimeline({
   jobId,
 }: StatusHistoryTimelineProps) {

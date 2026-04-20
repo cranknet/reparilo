@@ -4,10 +4,11 @@ import multipart from "@fastify/multipart";
 import staticPlugin from "@fastify/static";
 import websocket from "@fastify/websocket";
 import Fastify from "fastify";
+import { startOverdueScheduler } from "./jobs/overdue-scheduler.js";
 import authPlugin from "./plugins/auth.js";
 import prismaPlugin from "./plugins/prisma.js";
 import securityPlugin from "./plugins/security.js";
-import { websocketPlugin } from "./plugins/websocket.js";
+import { websocketPlugin, wsBroadcast } from "./plugins/websocket.js";
 import { aiRoutes } from "./routes/ai.js";
 import { authRoutes } from "./routes/auth.js";
 import { customersRoutes } from "./routes/customers.js";
@@ -15,6 +16,7 @@ import { healthRoutes } from "./routes/health.js";
 import { jobRoutes } from "./routes/jobs.js";
 import { notificationsRoutes } from "./routes/notifications.js";
 import { partsRoutes } from "./routes/parts.js";
+import { receiptRoutes } from "./routes/receipts.js";
 import { repairCatalogRoutes } from "./routes/repairs.js";
 import { settingsRoutes } from "./routes/settings.js";
 import { usersRoutes } from "./routes/users.js";
@@ -32,9 +34,16 @@ await app.register(prismaPlugin);
 app.register(authRoutes);
 await app.register(authPlugin);
 await app.register(websocketPlugin);
+(app.decorate as (name: string, value: unknown) => void)(
+  "wsBroadcast",
+  wsBroadcast
+);
+
+const stopOverdue = startOverdueScheduler(app);
 
 app.register(healthRoutes);
 app.register(jobRoutes, { prefix: "/api/jobs" });
+app.register(receiptRoutes, { prefix: "/api/receipts" });
 app.register(partsRoutes, { prefix: "/api/parts" });
 app.register(repairCatalogRoutes, { prefix: "/api/repairs" });
 app.register(customersRoutes, { prefix: "/api/customers" });
@@ -70,6 +79,7 @@ process.on("unhandledRejection", (err) => {
 for (const signal of ["SIGINT", "SIGTERM"]) {
   process.on(signal, async () => {
     app.log.info(`Received ${signal}, shutting down...`);
+    stopOverdue();
     await app.close();
     process.exit(0);
   });

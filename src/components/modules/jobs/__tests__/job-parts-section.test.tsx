@@ -54,6 +54,10 @@ vi.mock("@/lib/format", () => ({
   formatDzd: (n: number) => n.toLocaleString(),
 }));
 
+vi.mock("@/components/modules/can", () => ({
+  Can: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 import JobPartsSection from "../job-parts-section";
 
 function makeJob(overrides: Record<string, unknown> = {}): Job {

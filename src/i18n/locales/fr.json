@@ -290,6 +290,11 @@
   "notifications_settings_desc": "Gérez vos modèles de notifications WhatsApp et SMS",
   "whatsapp_templates": "Modèles WhatsApp",
   "sms_templates": "Modèles SMS",
+  "notifications_edit_template": "Modifier le modèle",
+  "notifications_template_name": "Nom du modèle",
+  "notifications_channel": "Canal",
+  "notifications_template_body": "Corps du message",
+  "no_alerts": "Aucune alerte",
   "template_name": "Nom du modèle",
   "template_body": "Corps du modèle",
   "channel": "Canal",
@@ -700,6 +705,7 @@
   "jobs_detail_back": "Retour aux emplois",
   "jobs_detail_track": "Piste",
   "jobs_detail_share": "Partager",
+  "jobs_detail_print": "Imprimer",
   "jobs_detail_track_link_copied": "Lien copié !",
   "jobs_detail_history": "Histoire",
   "jobs_detail_no_history": "Pas encore d'historique",
@@ -709,6 +715,7 @@
   "jobs_detail_repairs_subtotal": "Réparations",
   "jobs_detail_deposit": "Dépôt",
   "jobs_detail_final_cost": "Total",
+  "jobs_detail_margin": "Marge",
   "jobs_parts_title": "Parties",
   "jobs_parts_add": "Ajouter une pièce",
   "jobs_parts_empty": "Aucune pièce ajoutée pour l'instant",
@@ -794,6 +801,13 @@
     "toggle_user_status": "Échec de la mise à jour du statut de l'utilisateur",
     "reset_password": "Échec de la réinitialisation du mot de passe",
     "login_failed": "La connexion a échoué",
-    "no_user_session": "Aucun utilisateur en réponse à la session"
-  }
+    "no_user_session": "Aucun utilisateur en réponse à la session",
+    "update_customer": "Échec de la mise à jour du client"
+  },
+  "customer_edit_title": "Modifier le client",
+  "customer_edit_name": "Nom",
+  "customer_edit_phone": "Téléphone",
+  "customer_edit_email": "E-mail",
+  "customer_edit_save": "Sauvegarder",
+  "customer_edit_cancel": "Annuler"
 }

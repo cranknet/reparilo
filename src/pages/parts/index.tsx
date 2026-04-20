@@ -3,6 +3,7 @@ import { PartCategory } from "@shared/constants";
 import type { PartsCatalog } from "@shared/types";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Can } from "@/components/modules/can";
 import AddPartModal from "@/components/modules/parts/add-part-modal";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
@@ -115,11 +116,13 @@ function DesktopPartRow({
           {part.supplier ?? "\u2014"}
         </span>
       </td>
-      <td className="px-6 py-5">
-        <span className="font-mono font-semibold text-sm">
-          {formatDzd(Number(part.defaultPrice))} {t("currency_dzd")}
-        </span>
-      </td>
+      <Can perm={{ parts: ["viewCost"] }}>
+        <td className="px-6 py-5">
+          <span className="font-mono font-semibold text-sm">
+            {formatDzd(Number(part.defaultPrice))} {t("currency_dzd")}
+          </span>
+        </td>
+      </Can>
       <td className="px-6 py-5">
         <span
           className={`rounded-full px-3 py-1 font-bold text-xs ${statusBadgeCls}`}
@@ -188,9 +191,11 @@ function MobilePartCard({
         >
           {isActive ? t("active") : t("inactive")}
         </span>
-        <span className="font-bold font-mono text-primary text-sm">
-          {formatDzd(Number(part.defaultPrice))} {t("currency_dzd")}
-        </span>
+        <Can perm={{ parts: ["viewCost"] }}>
+          <span className="font-bold font-mono text-primary text-sm">
+            {formatDzd(Number(part.defaultPrice))} {t("currency_dzd")}
+          </span>
+        </Can>
       </div>
       <div className="-mx-1 flex items-center gap-2 rounded-xl bg-surface-container-lowest px-1 py-1">
         {part.supplier && (
@@ -337,20 +342,22 @@ function PartsDesktopTable({
               />
             )}
           </th>
-          <th
-            aria-sort={getAriaSort(sortBy, sortDir, "defaultPrice")}
-            className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
-            onClick={() => onSort("defaultPrice")}
-          >
-            {t("unit_cost")}
-            {sortBy === "defaultPrice" && (
-              <Icon
-                className="ms-1 align-middle text-primary"
-                name={sortDir === "asc" ? "arrow_upward" : "arrow_downward"}
-                size="xs"
-              />
-            )}
-          </th>
+          <Can perm={{ parts: ["viewCost"] }}>
+            <th
+              aria-sort={getAriaSort(sortBy, sortDir, "defaultPrice")}
+              className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
+              onClick={() => onSort("defaultPrice")}
+            >
+              {t("unit_cost")}
+              {sortBy === "defaultPrice" && (
+                <Icon
+                  className="ms-1 align-middle text-primary"
+                  name={sortDir === "asc" ? "arrow_upward" : "arrow_downward"}
+                  size="xs"
+                />
+              )}
+            </th>
+          </Can>
           <th className="px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide">
             {t("status_label")}
           </th>
@@ -554,11 +561,13 @@ export default function PartsCatalogPage() {
           <span className="font-bold text-on-surface">{activeCount}</span>{" "}
           {t("active")}
           <span className="text-outline-variant">&middot;</span>
-          <span className="font-bold text-on-surface">
-            {catalogValue > 0 ? formatDzd(catalogValue) : "0"}
-          </span>{" "}
-          {t("currency_dzd")}
-          <span className="text-outline-variant">&middot;</span>
+          <Can perm={{ parts: ["viewCost"] }}>
+            <span className="font-bold text-on-surface">
+              {catalogValue > 0 ? formatDzd(catalogValue) : "0"}
+            </span>{" "}
+            {t("currency_dzd")}
+            <span className="text-outline-variant">&middot;</span>
+          </Can>
           <span className="font-bold text-on-surface">{uniqueSuppliers}</span>{" "}
           {t("active_suppliers")}
         </div>

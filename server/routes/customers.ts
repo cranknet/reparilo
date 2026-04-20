@@ -2,6 +2,7 @@ import {
   createCustomerSchema,
   customerListQuerySchema,
   customerSearchQuerySchema,
+  updateCustomerSchema,
 } from "@shared/schemas";
 import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
@@ -9,6 +10,7 @@ import {
   create as createCustomer,
   list as listCustomers,
   search as searchCustomers,
+  update as updateCustomer,
 } from "../services/customers.service.js";
 
 function sendError(
@@ -52,6 +54,34 @@ export const customersRoutes: FastifyPluginAsync = async (app) => {
           "Failed to create customer"
         );
       }
+    }
+  );
+
+  app.patch(
+    "/:id",
+    { preHandler: [requirePermission({ customers: ["edit"] })] },
+    async (req, reply) => {
+      const parsed = updateCustomerSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return sendError(
+          reply,
+          400,
+          "VALIDATION_ERROR",
+          "Invalid customer data",
+          { errors: parsed.error.flatten().fieldErrors }
+        );
+      }
+      const { id } = req.params as { id: string };
+      const updated = await updateCustomer(app.prisma, id, parsed.data);
+      if (!updated) {
+        return sendError(
+          reply,
+          404,
+          "CUSTOMER_NOT_FOUND",
+          "Customer not found"
+        );
+      }
+      return reply.send(updated);
     }
   );
 

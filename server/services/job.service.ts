@@ -16,6 +16,22 @@ import type {
 import { generateJobCode } from "../utils/job-code.js";
 import { createAuditLog } from "./audit.service.js";
 
+export function computeMargin(job: {
+  finalCost: number | { toNumber: () => number };
+  partsUsed: Array<{ totalCost: number | { toNumber: () => number } }>;
+}): number {
+  const finalCost =
+    typeof job.finalCost === "number"
+      ? job.finalCost
+      : job.finalCost.toNumber();
+  const partsCost = job.partsUsed.reduce((s, p) => {
+    const cost =
+      typeof p.totalCost === "number" ? p.totalCost : p.totalCost.toNumber();
+    return s + cost;
+  }, 0);
+  return finalCost - partsCost;
+}
+
 const VALID_TECH_ROLES: Set<RoleType> = new Set([Role.OWNER, Role.TECHNICIAN]);
 
 const FD_CANCEL_WINDOW_MS = 30 * 60 * 1000;

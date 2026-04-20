@@ -1,7 +1,10 @@
-import type { Job } from "@shared/types";
+import type { Customer, Job } from "@shared/types";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
+import { Can } from "@/components/modules/can";
+import EditCustomerDialog from "@/components/modules/customers/edit-customer-dialog";
+import CostSummary from "@/components/modules/jobs/cost-summary";
 import JobPartsSection from "@/components/modules/jobs/job-parts-section";
 import JobPhotosSection from "@/components/modules/jobs/job-photos-section";
 import JobRepairsSection from "@/components/modules/jobs/job-repairs-section";
@@ -22,6 +25,7 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [trackCopied, setTrackCopied] = useState(false);
+  const [showEditCustomer, setShowEditCustomer] = useState(false);
 
   const fetchJob = useCallback(async () => {
     if (!id) {
@@ -58,6 +62,15 @@ export default function JobDetailPage() {
       }
     );
   }, [job?.jobCode]);
+
+  const handleCustomerSaved = useCallback(
+    (updated: Customer) => {
+      if (job?.customer) {
+        setJob({ ...job, customer: updated });
+      }
+    },
+    [job]
+  );
 
   if (loading) {
     return (
@@ -102,6 +115,9 @@ export default function JobDetailPage() {
       ? job.depositAmount
       : Number(job.depositAmount ?? 0);
   const finalCost = partsTotal + repairsTotal - deposit;
+  const jobMargin = (job as Record<string, unknown>).margin as
+    | number
+    | undefined;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-6">
@@ -137,15 +153,33 @@ export default function JobDetailPage() {
 
         <div className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
           <div>
-            <span className="font-label text-on-surface-variant text-xs uppercase">
-              {t("customers")}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-label text-on-surface-variant text-xs uppercase">
+                {t("customers")}
+              </span>
+              <Can perm={{ customers: ["edit"] }}>
+                <button
+                  className="inline-flex items-center gap-0.5 text-primary text-xs hover:underline"
+                  onClick={() => setShowEditCustomer(true)}
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-sm">
+                    edit
+                  </span>
+                </button>
+              </Can>
+            </div>
             <p className="font-body font-medium text-on-surface text-sm">
               {job.customer?.name}
             </p>
             <p className="font-label text-on-surface-variant text-xs">
               {job.customer?.phone}
             </p>
+            {job.customer?.email && (
+              <p className="font-label text-on-surface-variant text-xs">
+                {job.customer.email}
+              </p>
+            )}
           </div>
           <div>
             <span className="font-label text-on-surface-variant text-xs uppercase">
@@ -207,6 +241,16 @@ export default function JobDetailPage() {
               ? t("jobs_detail_track_link_copied")
               : t("jobs_detail_share")}
           </button>
+          <button
+            className="inline-flex items-center gap-1 rounded-full bg-surface-container-high px-3 py-1.5 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container-highest hover:text-on-surface"
+            onClick={() =>
+              window.open(`/api/receipts/${job.id}/receipt`, "_blank")
+            }
+            type="button"
+          >
+            <span className="material-symbols-outlined text-sm">print</span>
+            {t("jobs_detail_print")}
+          </button>
         </div>
       </div>
 
@@ -224,49 +268,13 @@ export default function JobDetailPage() {
         <JobRepairsSection job={job} onChanged={() => fetchJob()} />
       </div>
 
-      <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
-        <h2 className="mb-4 font-bold font-headline text-base text-on-surface">
-          {t("jobs_detail_cost_summary")}
-        </h2>
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <span className="font-body text-on-surface-variant text-sm">
-              {t("jobs_detail_parts_subtotal")}
-            </span>
-            <span className="font-body font-medium text-on-surface text-sm">
-              {fmt(partsTotal)}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-body text-on-surface-variant text-sm">
-              {t("jobs_detail_repairs_subtotal")}
-            </span>
-            <span className="font-body font-medium text-on-surface text-sm">
-              {fmt(repairsTotal)}
-            </span>
-          </div>
-          {deposit > 0 && (
-            <div className="flex justify-between">
-              <span className="font-body text-on-surface-variant text-sm">
-                {t("jobs_detail_deposit")}
-              </span>
-              <span className="font-body font-medium text-on-surface text-sm">
-                -{fmt(deposit)}
-              </span>
-            </div>
-          )}
-          <div className="border-outline-variant border-t pt-2">
-            <div className="flex justify-between">
-              <span className="font-bold font-headline text-on-surface text-sm">
-                {t("jobs_detail_final_cost")}
-              </span>
-              <span className="font-extrabold font-headline text-lg text-primary">
-                {fmt(finalCost)}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <CostSummary
+        deposit={deposit}
+        finalCost={finalCost}
+        margin={jobMargin}
+        partsTotal={partsTotal}
+        repairsTotal={repairsTotal}
+      />
 
       <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
         <h2 className="mb-4 font-bold font-headline text-base text-on-surface">
@@ -276,6 +284,15 @@ export default function JobDetailPage() {
           <StatusHistoryTimeline jobId={job.id} />
         </div>
       </div>
+
+      {job.customer && (
+        <EditCustomerDialog
+          customer={job.customer}
+          onClose={() => setShowEditCustomer(false)}
+          onSaved={handleCustomerSaved}
+          open={showEditCustomer}
+        />
+      )}
     </div>
   );
 }
