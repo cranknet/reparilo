@@ -51,9 +51,9 @@ export const websocketPlugin: FastifyPluginAsync = async (app) => {
 
     const client: WsClient = {
       alive: true,
-      role: session.user.role,
+      role: session.role,
       socket: socket as import("ws").WebSocket,
-      userId: session.user.id,
+      userId: session.id,
     };
 
     connections.add(client);
