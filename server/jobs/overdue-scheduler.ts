@@ -2,6 +2,7 @@ import { INACTIVE_STATUSES } from "@shared/constants";
 import type { FastifyInstance } from "fastify";
 
 const alerted = new Set<string>();
+const MAX_ALERTED = 10_000;
 const INTERVAL_MS = 15 * 60 * 1000;
 
 export function startOverdueScheduler(app: FastifyInstance): () => void {
@@ -14,6 +15,22 @@ export function startOverdueScheduler(app: FastifyInstance): () => void {
           status: { notIn: INACTIVE_STATUSES },
         },
       });
+
+      const overdueIds = new Set(overdue.map((j) => j.id));
+
+      for (const id of alerted) {
+        if (!overdueIds.has(id)) {
+          alerted.delete(id);
+        }
+      }
+
+      if (alerted.size > MAX_ALERTED) {
+        const iter = alerted.values();
+        for (let i = 0; i < alerted.size - MAX_ALERTED; i++) {
+          iter.next();
+          alerted.delete(iter.next().value);
+        }
+      }
 
       for (const job of overdue) {
         if (alerted.has(job.id)) {

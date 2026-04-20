@@ -2,12 +2,14 @@ import type { FastifyPluginAsync } from "fastify";
 import { getSessionFromRequest } from "../lib/auth.js";
 
 interface WsClient {
+  alive: boolean;
   role: string;
   socket: import("ws").WebSocket;
   userId: string;
 }
 
 const connections = new Set<WsClient>();
+const HEARTBEAT_MS = 30_000;
 
 export function wsBroadcast(
   predicate: (client: WsClient) => boolean,
@@ -23,6 +25,22 @@ export function wsBroadcast(
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const websocketPlugin: FastifyPluginAsync = async (app) => {
+  const sweepInterval = setInterval(() => {
+    for (const client of connections) {
+      if (!client.alive) {
+        client.socket.terminate();
+        connections.delete(client);
+        continue;
+      }
+      client.alive = false;
+      client.socket.ping();
+    }
+  }, HEARTBEAT_MS);
+
+  app.addHook("onClose", () => {
+    clearInterval(sweepInterval);
+  });
+
   app.get("/ws", { websocket: true }, async (socket, req) => {
     const session = await getSessionFromRequest(app.auth, req);
     if (!session) {
@@ -32,6 +50,7 @@ export const websocketPlugin: FastifyPluginAsync = async (app) => {
     }
 
     const client: WsClient = {
+      alive: true,
       role: session.user.role,
       socket: socket as import("ws").WebSocket,
       userId: session.user.id,
@@ -43,12 +62,18 @@ export const websocketPlugin: FastifyPluginAsync = async (app) => {
       "WS client connected"
     );
 
-    socket.on("close", () => {
+    const ws = socket as import("ws").WebSocket;
+
+    ws.on("pong", () => {
+      client.alive = true;
+    });
+
+    ws.on("close", () => {
       connections.delete(client);
       app.log.info("WS client disconnected");
     });
 
-    socket.on("message", (msg: Buffer) => {
+    ws.on("message", (msg: Buffer) => {
       app.log.debug(`WS message: ${msg.toString()}`);
     });
   });

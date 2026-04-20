@@ -24,10 +24,23 @@ export const receiptRoutes: FastifyPluginAsync = async (app) => {
         return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
       }
 
-      const baseUrl =
-        process.env.SHOP_PUBLIC_URL ??
-        `http://localhost:${process.env.PORT ?? 4000}`;
-      const html = await renderReceiptHtml(app.prisma, job, baseUrl);
+      let baseUrl = process.env.SHOP_PUBLIC_URL;
+      if (!baseUrl) {
+        app.log.warn(
+          "SHOP_PUBLIC_URL is not set — receipt QR and tracking link will not work in production"
+        );
+        baseUrl = `http://localhost:${process.env.PORT ?? 4000}`;
+      }
+
+      const costPerm = await req.server.auth.api.userHasPermission({
+        body: {
+          role: req.user?.role as import("@shared/constants/roles").RoleType,
+          permissions: { parts: ["viewCost"] },
+        },
+      });
+      const html = await renderReceiptHtml(app.prisma, job, baseUrl, {
+        hideCosts: !costPerm.success,
+      });
 
       return reply
         .header("Content-Type", "text/html; charset=utf-8")

@@ -26,7 +26,7 @@
 4. **Notification template management UI**: Edit dialog for existing templates with variable insertion buttons
 5. **Warranty-return owner alerts**: WS broadcast to OWNER role on warranty-return job creation; alerts store + top-bar dropdown UI
 6. **Overdue job scheduler**: 15-min tick, in-memory dedupe, broadcasts `JOB_OVERDUE` to OWNER
-7. **ESC/POS receipt + QR**: `GET /api/receipts/:id/receipt` returns HTML receipt with embedded QR; print button on job detail
+7. **HTML receipt + QR**: `GET /api/receipts/:id/receipt` returns HTML receipt with embedded QR; print button on job detail
 8. **Capacitor Android build**: `android/` scaffold via `npx cap add android`; `docs/android-build.md` for future builds
 
 ### Known follow-ups (post-MVP)

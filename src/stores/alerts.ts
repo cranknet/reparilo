@@ -13,12 +13,12 @@ interface AlertsState {
   addAlert: (alert: Omit<Alert, "id" | "timestamp" | "read">) => void;
   alerts: Alert[];
   markRead: (id: string) => void;
-  unreadCount: () => number;
 }
 
+// Monotonically increasing counter — fine for SPA sessions (not SSR-safe)
 let nextId = 0;
 
-export const useAlertsStore = create<AlertsState>((set, get) => ({
+export const useAlertsStore = create<AlertsState>((set) => ({
   alerts: [],
 
   addAlert: (alert) => {
@@ -35,6 +35,4 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
       alerts: state.alerts.map((a) => (a.id === id ? { ...a, read: true } : a)),
     }));
   },
-
-  unreadCount: () => get().alerts.filter((a) => !a.read).length,
 }));

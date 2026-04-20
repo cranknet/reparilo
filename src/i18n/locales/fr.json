@@ -809,5 +809,7 @@
   "customer_edit_phone": "Téléphone",
   "customer_edit_email": "E-mail",
   "customer_edit_save": "Sauvegarder",
-  "customer_edit_cancel": "Annuler"
+  "customer_edit_cancel": "Annuler",
+  "alert_warranty_return": "Retour sous garantie : {{jobCode}}",
+  "alert_job_overdue": "Travail en retard : {{jobCode}}"
 }

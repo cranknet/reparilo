@@ -33,37 +33,30 @@ export async function update(
   id: string,
   data: UpdateCustomerInput
 ) {
-  try {
-    const updateData: Record<string, unknown> = {};
-    if (data.name !== undefined) {
-      updateData.name = data.name;
-    }
-    if (data.phone !== undefined) {
-      updateData.phone = data.phone;
-    }
-    if (data.email !== undefined) {
-      updateData.email = data.email?.trim() || null;
-    }
-
-    if (Object.keys(updateData).length === 0) {
-      return prisma.customer.findUnique({ where: { id } });
-    }
-
-    return await prisma.customer.update({
-      where: { id },
-      data: updateData,
-    });
-  } catch (e: unknown) {
-    if (
-      typeof e === "object" &&
-      e !== null &&
-      "code" in e &&
-      (e as { code: string }).code === "P2025"
-    ) {
-      return null;
-    }
-    throw e;
+  const existing = await prisma.customer.findUnique({ where: { id } });
+  if (!existing) {
+    return null;
   }
+
+  const updateData: Record<string, unknown> = {};
+  if (data.name !== undefined) {
+    updateData.name = data.name;
+  }
+  if (data.phone !== undefined) {
+    updateData.phone = data.phone;
+  }
+  if (data.email !== undefined) {
+    updateData.email = data.email?.trim() || null;
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return existing;
+  }
+
+  return await prisma.customer.update({
+    where: { id },
+    data: updateData,
+  });
 }
 
 export async function list(

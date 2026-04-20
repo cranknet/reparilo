@@ -809,5 +809,7 @@
   "customer_edit_phone": "هاتف",
   "customer_edit_email": "بريد إلكتروني",
   "customer_edit_save": "يحفظ",
-  "customer_edit_cancel": "يلغي"
+  "customer_edit_cancel": "يلغي",
+  "alert_warranty_return": "إرجاع الضمان: {{jobCode}}",
+  "alert_job_overdue": "الوظيفة المتأخرة: {{jobCode}}"
 }

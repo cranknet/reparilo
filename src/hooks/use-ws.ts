@@ -34,6 +34,8 @@ function connect() {
   }
 
   const url = getWsUrl();
+  // Same-origin WS connections automatically include cookies;
+  // the server validates the session via getSessionFromRequest.
   socket = new WebSocket(url);
 
   socket.onopen = () => {

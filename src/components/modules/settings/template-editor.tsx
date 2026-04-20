@@ -1,5 +1,5 @@
 import type { NotificationTemplate } from "@shared/types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSettingsStore } from "@/stores/settings";
 
@@ -58,9 +58,27 @@ export default function TemplateEditor({
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  const insertVariable = useCallback((variable: string) => {
-    setBody((prev) => prev + variable);
-  }, []);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const insertVariable = useCallback(
+    (variable: string) => {
+      const el = textareaRef.current;
+      if (el) {
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        const before = body.slice(0, start);
+        const after = body.slice(end);
+        setBody(before + variable + after);
+        requestAnimationFrame(() => {
+          el.selectionStart = el.selectionEnd = start + variable.length;
+          el.focus();
+        });
+      } else {
+        setBody((prev) => prev + variable);
+      }
+    },
+    [body]
+  );
 
   const handleSave = useCallback(async () => {
     if (!(template && name.trim() && body.trim())) {
@@ -164,6 +182,7 @@ export default function TemplateEditor({
                 className="min-h-[120px] w-full rounded-xl bg-surface-container-highest p-4 text-on-surface focus:ring-2 focus:ring-primary"
                 id="tpl-body"
                 onChange={(e) => setBody(e.target.value)}
+                ref={textareaRef}
                 rows={5}
                 value={body}
               />

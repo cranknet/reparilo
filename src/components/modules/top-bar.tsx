@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCan } from "@/hooks/use-can";
 import { useWs } from "@/hooks/use-ws";
@@ -15,7 +15,9 @@ export default function TopBar() {
   const alerts = useAlertsStore((s) => s.alerts);
   const addAlert = useAlertsStore((s) => s.addAlert);
   const markRead = useAlertsStore((s) => s.markRead);
-  const unreadCount = useAlertsStore((s) => s.unreadCount());
+  const unreadCount = useAlertsStore(
+    (s) => s.alerts.filter((a) => !a.read).length
+  );
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useWs((msg) => {
@@ -23,13 +25,13 @@ export default function TopBar() {
       addAlert({
         type: msg.type,
         job: msg.job,
-        message: `Warranty return: ${msg.job.jobCode}`,
+        message: t("alert_warranty_return", { jobCode: msg.job.jobCode }),
       });
     } else if (msg.type === "JOB_OVERDUE" && msg.job) {
       addAlert({
         type: msg.type,
         job: msg.job,
-        message: `Job overdue: ${msg.job.jobCode}`,
+        message: t("alert_job_overdue", { jobCode: msg.job.jobCode }),
       });
     }
   });
@@ -37,6 +39,22 @@ export default function TopBar() {
   const handleToggleAlerts = useCallback(() => {
     setShowAlerts((prev) => !prev);
   }, []);
+
+  useEffect(() => {
+    if (!showAlerts) {
+      return;
+    }
+    function onClickOutside(e: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setShowAlerts(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [showAlerts]);
 
   return (
     <header className="fixed top-0 right-0 z-40 flex h-16 w-full items-center justify-between border-outline-variant border-b bg-surface/95 px-4 shadow-sm backdrop-blur-sm md:px-8 lg:w-[calc(100%-16rem)]">
