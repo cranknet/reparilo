@@ -77,11 +77,11 @@ export default function AddPartDialog({
   }, [open, onClose]);
 
   useEffect(() => {
-    if (!open) {
+    if (!open || mode !== "catalog") {
       return;
     }
     fetchCatalogParts({ isActive: true, search: catalogSearch || undefined });
-  }, [open, catalogSearch, fetchCatalogParts]);
+  }, [open, mode, catalogSearch, fetchCatalogParts]);
 
   const pickCatalogItem = useCallback((item: PartsCatalog) => {
     setForm({
