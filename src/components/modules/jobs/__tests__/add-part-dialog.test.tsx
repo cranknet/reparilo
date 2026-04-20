@@ -71,19 +71,21 @@ describe("AddPartDialog", () => {
     open: true,
   };
 
-  it("renders with catalog tab and calls fetchParts on open", () => {
+  it("renders with catalog tab and calls fetchParts on open", async () => {
     render(<AddPartDialog {...defaultProps} />);
 
     expect(screen.getByText("jobs_parts_catalog_tab")).toBeInTheDocument();
     expect(screen.getByText("jobs_parts_custom_tab")).toBeInTheDocument();
-    // "jobs_parts_add" appears as both the h2 heading and the submit button
     expect(
       screen.getByRole("heading", { name: "jobs_parts_add" })
     ).toBeInTheDocument();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(mockFetchParts).toHaveBeenCalledWith({
-      isActive: true,
-      search: undefined,
+
+    await waitFor(() => {
+      expect(mockFetchParts).toHaveBeenCalledWith({
+        isActive: true,
+        search: undefined,
+      });
     });
   });
 

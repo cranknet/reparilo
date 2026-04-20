@@ -1,3 +1,4 @@
+import { INACTIVE_STATUSES } from "@shared/constants";
 import type { Job, RepairCatalog } from "@shared/types";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -25,8 +26,8 @@ export default function JobRepairsSection({
   );
   const [price, setPrice] = useState("");
 
-  const isTerminal = ["DELIVERED", "RETURNED", "CANCELLED"].includes(
-    job.status
+  const isTerminal = INACTIVE_STATUSES.includes(
+    job.status as (typeof INACTIVE_STATUSES)[number]
   );
 
   const handleSelectRepair = useCallback((repair: RepairCatalog) => {

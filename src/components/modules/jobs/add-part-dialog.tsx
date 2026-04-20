@@ -1,6 +1,6 @@
 import { PartCategory } from "@shared/constants";
 import type { PartsCatalog } from "@shared/types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useJobsStore } from "@/stores/jobs";
 import { usePartsCatalogStore } from "@/stores/parts-catalog";
@@ -43,8 +43,10 @@ export default function AddPartDialog({
   const [mode, setMode] = useState<Mode>("catalog");
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [catalogSearch, setCatalogSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const fetchedRef = useRef(false);
   const {
     parts: catalogItems,
     isLoading: loading,
@@ -57,8 +59,10 @@ export default function AddPartDialog({
     }
     setForm(INITIAL_FORM);
     setCatalogSearch("");
+    setDebouncedSearch("");
     setMode("catalog");
     setSubmitError(null);
+    fetchedRef.current = false;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";
@@ -82,8 +86,22 @@ export default function AddPartDialog({
     if (!open || mode !== "catalog") {
       return;
     }
-    fetchCatalogParts({ isActive: true, search: catalogSearch || undefined });
-  }, [open, mode, catalogSearch, fetchCatalogParts]);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(catalogSearch);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [open, mode, catalogSearch]);
+
+  useEffect(() => {
+    if (!open || mode !== "catalog") {
+      return;
+    }
+    if (!debouncedSearch && fetchedRef.current) {
+      return;
+    }
+    fetchedRef.current = true;
+    fetchCatalogParts({ isActive: true, search: debouncedSearch || undefined });
+  }, [open, mode, debouncedSearch, fetchCatalogParts]);
 
   const pickCatalogItem = useCallback((item: PartsCatalog) => {
     setForm({
@@ -104,6 +122,7 @@ export default function AddPartDialog({
     }
 
     setSubmitting(true);
+    setSubmitError(null);
     try {
       await useJobsStore.getState().addPart(jobId, {
         ...(form.partId ? { partId: form.partId } : {}),
@@ -222,6 +241,11 @@ export default function AddPartDialog({
                       </div>
                     </button>
                   ))}
+                {!loading && catalogItems.length === 0 && (
+                  <p className="px-4 py-3 font-body text-on-surface-variant text-sm">
+                    {t("jobs_parts_catalog_empty")}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -363,7 +387,10 @@ export default function AddPartDialog({
         </div>
 
         {submitError && (
-          <div className="border-outline-variant border-t px-6 py-2">
+          <div
+            className="border-outline-variant border-t px-6 py-2"
+            role="alert"
+          >
             <p className="font-body text-error text-xs">{submitError}</p>
           </div>
         )}

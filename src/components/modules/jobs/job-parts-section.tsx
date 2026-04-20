@@ -1,3 +1,4 @@
+import { INACTIVE_STATUSES } from "@shared/constants";
 import type { Job } from "@shared/types";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -22,8 +23,8 @@ export default function JobPartsSection({
   const removePart = useJobsStore((s) => s.removePart);
   const [showAddDialog, setShowAddDialog] = useState(false);
 
-  const isTerminal = ["DELIVERED", "RETURNED", "CANCELLED"].includes(
-    job.status
+  const isTerminal = INACTIVE_STATUSES.includes(
+    job.status as (typeof INACTIVE_STATUSES)[number]
   );
 
   const handleRemovePart = useCallback(

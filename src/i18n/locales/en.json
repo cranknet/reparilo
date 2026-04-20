@@ -717,6 +717,7 @@
   "jobs_parts_catalog_tab": "From Catalog",
   "jobs_parts_custom_tab": "Custom Part",
   "jobs_parts_search_placeholder": "Search parts...",
+  "jobs_parts_catalog_empty": "No parts found",
   "jobs_parts_part_name": "Part Name",
   "jobs_parts_category": "Category",
   "jobs_parts_unit_price": "Unit Price",

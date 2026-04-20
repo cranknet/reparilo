@@ -717,6 +717,7 @@
   "jobs_parts_catalog_tab": "من الكتالوج",
   "jobs_parts_custom_tab": "الجزء المخصص",
   "jobs_parts_search_placeholder": "أجزاء البحث...",
+  "jobs_parts_catalog_empty": "لم يتم العثور على أجزاء",
   "jobs_parts_part_name": "اسم الجزء",
   "jobs_parts_category": "فئة",
   "jobs_parts_unit_price": "سعر الوحدة",
