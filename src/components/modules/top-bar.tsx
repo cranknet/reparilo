@@ -57,7 +57,7 @@ export default function TopBar() {
   }, [showAlerts]);
 
   return (
-    <header className="fixed top-0 right-0 z-40 flex h-16 w-full items-center justify-between border-outline-variant border-b bg-surface/95 px-4 shadow-sm backdrop-blur-sm md:px-8 lg:w-[calc(100%-16rem)]">
+    <header className="fixed start-0 top-0 z-40 flex h-16 w-full items-center justify-between border-outline-variant border-b bg-surface/95 px-4 shadow-sm backdrop-blur-sm md:px-8 lg:w-[calc(100%-16rem)]">
       <div className="flex flex-1 items-center gap-4">
         <div className="flex items-center gap-2 lg:hidden">
           <span className="material-symbols-outlined font-black font-headline text-primary text-sm uppercase tracking-tighter">
@@ -68,11 +68,11 @@ export default function TopBar() {
           </span>
         </div>
         <div className="group relative hidden w-full max-w-xs md:block md:w-96">
-          <span className="material-symbols-outlined absolute top-1/2 left-3 -translate-y-1/2 text-on-surface-variant transition-colors group-focus-within:text-primary">
+          <span className="material-symbols-outlined absolute start-3 top-1/2 -translate-y-1/2 text-on-surface-variant transition-colors group-focus-within:text-primary">
             search
           </span>
           <input
-            className="w-full rounded-full border-none bg-surface-container-high py-2 pr-4 pl-10 text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20"
+            className="w-full rounded-full border-none bg-surface-container-high py-2 ps-10 pe-4 text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20"
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("search")}
             type="text"
@@ -91,13 +91,13 @@ export default function TopBar() {
           >
             <span className="material-symbols-outlined">notifications</span>
             {unreadCount > 0 && (
-              <span className="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 font-bold text-[10px] text-on-error">
+              <span className="absolute end-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 font-bold text-[10px] text-on-error">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
           </button>
           {showAlerts && (
-            <div className="absolute top-full right-0 z-50 mt-2 w-80 rounded-xl bg-surface-container-lowest shadow-xl ring-1 ring-outline-variant">
+            <div className="absolute end-0 top-full z-50 mt-2 w-80 rounded-xl bg-surface-container-lowest shadow-xl ring-1 ring-outline-variant">
               <div className="border-outline-variant border-b px-4 py-3">
                 <h3 className="font-bold font-headline text-on-surface text-sm">
                   {t("notifications")}
