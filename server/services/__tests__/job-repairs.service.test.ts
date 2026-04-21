@@ -37,7 +37,7 @@ describe("add", () => {
       {
         category: "SCREEN_REPAIR",
         price: 100,
-        repairId: null,
+        repairId: undefined,
         repairName: "Screen Replacement",
       },
       "user-1"
@@ -58,7 +58,7 @@ describe("add", () => {
       {
         category: "SCREEN_REPAIR",
         price: 100,
-        repairId: null,
+        repairId: undefined,
         repairName: "Screen Replacement",
       },
       "user-1"
@@ -109,7 +109,7 @@ describe("add", () => {
       {
         category: "SCREEN_REPAIR",
         price: 100,
-        repairId: null,
+        repairId: undefined,
         repairName: "Screen Fix",
       },
       "user-1"

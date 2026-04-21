@@ -160,24 +160,30 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         return validation(reply);
       }
 
-      const lockout = codeLockouts.get(code);
+      // After validation, code and phone4 are guaranteed to exist
+      // biome-ignore lint/style/noNonNullAssertion: validated by validateLookupParams above
+      const codeStr = code!;
+      // biome-ignore lint/style/noNonNullAssertion: validated by validateLookupParams above
+      const phone4Str = phone4!;
+
+      const lockout = codeLockouts.get(codeStr);
       if (lockout && lockout.lockedUntil > Date.now()) {
         return sendNotFound(reply);
       }
       if (lockout?.lockedUntil && lockout.lockedUntil <= Date.now()) {
-        codeLockouts.delete(code);
+        codeLockouts.delete(codeStr);
       }
 
-      const result = await lookupByCode(app.prisma, code, phone4);
+      const result = await lookupByCode(app.prisma, codeStr, phone4Str);
       if (!result.jobExists) {
         return sendNotFound(reply);
       }
       if (!result.job) {
-        trackFailedAttempt(codeLockouts, code);
+        trackFailedAttempt(codeLockouts, codeStr);
         return sendNotFound(reply);
       }
 
-      codeLockouts.delete(code);
+      codeLockouts.delete(codeStr);
       return reply.send(result.job);
     },
   });

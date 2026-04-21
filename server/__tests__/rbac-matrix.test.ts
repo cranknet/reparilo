@@ -1,4 +1,4 @@
-import { Role } from "@shared/constants/roles";
+import { Role, type RoleType } from "@shared/constants/roles";
 import Fastify from "fastify";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { customersRoutes } from "../routes/customers.js";
@@ -140,7 +140,7 @@ vi.mock("../middlewares/rbac.js", () => ({
 }));
 
 // Role permission definitions (from shared/permissions.ts)
-const rolePermissions: Record<Role, Record<string, string[]>> = {
+const rolePermissions: Record<RoleType, Record<string, string[]>> = {
   OWNER: {
     jobs: [
       "view",
@@ -224,7 +224,7 @@ const rolePermissions: Record<Role, Record<string, string[]>> = {
   },
 };
 
-function createMockUser(role: Role) {
+function createMockUser(role: RoleType) {
   return {
     id: `user-${role.toLowerCase()}`,
     name: `Test ${role}`,
@@ -236,7 +236,7 @@ function createMockUser(role: Role) {
   };
 }
 
-function buildApp(userId: string | null, role: Role | null = null) {
+function buildApp(userId: string | null, role: RoleType | null = null) {
   const app = Fastify();
 
   const mockSession = userId
@@ -253,7 +253,7 @@ function buildApp(userId: string | null, role: Role | null = null) {
     ({
       body,
     }: {
-      body: { role: Role; permissions: Record<string, string[]> };
+      body: { role: RoleType; permissions: Record<string, string[]> };
     }) => {
       const rolePerms = rolePermissions[body.role];
       if (!rolePerms) {

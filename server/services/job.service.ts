@@ -106,7 +106,9 @@ export async function list(prisma: PrismaClient, query: JobListQueryInput) {
       orderBy: { id: "desc" },
       take: limit + 1,
     }),
-    cursor ? Promise.resolve(null) : prisma.job.count({ where }),
+    cursor
+      ? (Promise.resolve(null) as Promise<null>)
+      : prisma.job.count({ where }),
   ]);
 
   let nextCursor: string | null = null;

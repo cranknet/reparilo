@@ -34,7 +34,7 @@ export async function renderReceiptHtml(
       totalCost: number | { toNumber: () => number };
     }>;
     repairs: Array<{
-      name: string;
+      repairName: string;
       price: number | { toNumber: () => number };
     }>;
   },
@@ -68,7 +68,7 @@ export async function renderReceiptHtml(
   const repairRows = repairs
     .map(
       (r) =>
-        `<tr><td style="padding:4px 0">${esc(r.name)}</td>${hideCosts ? "" : `<td style="text-align:right">${fmt(r.price)} DZD</td>`}</tr>`
+        `<tr><td style="padding:4px 0">${esc(r.repairName)}</td>${hideCosts ? "" : `<td style="text-align:right">${fmt(r.price)} DZD</td>`}</tr>`
     )
     .join("");
 

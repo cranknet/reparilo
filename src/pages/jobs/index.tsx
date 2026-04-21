@@ -1,5 +1,5 @@
 import type { JobStatusType } from "@shared/constants";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import JobsFilters from "@/components/modules/jobs/filters";
 import type {
@@ -10,6 +10,7 @@ import { jobToRow, STATUS_GROUPS } from "@/components/modules/jobs/jobs-shared";
 import JobsTable from "@/components/modules/jobs/jobs-table";
 import JobMobileCard from "@/components/modules/jobs/mobile-card";
 import StatusCounter from "@/components/modules/jobs/status-counter";
+import { exportJobsPdf } from "@/lib/export-pdf";
 import { useJobsStore } from "@/stores/jobs";
 import { useUiStore } from "@/stores/ui";
 
@@ -105,6 +106,21 @@ export default function JobsPage() {
     setStatusFilter("ALL");
   };
 
+  const handleExport = useCallback(() => {
+    exportJobsPdf({
+      columns: [
+        t("job_id"),
+        t("customer"),
+        t("device"),
+        t("status_label"),
+        t("technician"),
+      ],
+      rows: filteredJobs,
+      title: t("open_repairs"),
+      filename: "jobs.pdf",
+    });
+  }, [filteredJobs, t]);
+
   if (isLoadingJobs && jobs.length === 0) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -130,6 +146,7 @@ export default function JobsPage() {
           <button
             aria-label={t("download_list")}
             className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-surface-container-low px-4 py-2.5 font-bold font-headline text-on-surface-variant text-sm transition-all hover:bg-surface-container-high sm:flex-none md:px-6"
+            onClick={handleExport}
             type="button"
           >
             <span className="material-symbols-outlined text-[18px] md:text-[20px]">

@@ -1,4 +1,5 @@
 import { JobStatus } from "@shared/constants";
+import type { TFunction } from "i18next";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import api from "@/lib/api";
@@ -44,16 +45,20 @@ const STATUS_SET = new Set<string>(Object.values(JobStatus));
 function formatValue(
   action: string,
   value: string | null | undefined,
-  t: (key: string, fallback?: string) => string
+  t: TFunction
 ): string | null {
   if (!value) {
     return null;
   }
   if (action === "STATUS_CHANGED") {
-    return STATUS_SET.has(value) ? t(`status.${value}`, value) : value;
+    return STATUS_SET.has(value)
+      ? t(`status.${value}`, { defaultValue: value })
+      : value;
   }
   if (action === "TECHNICIAN_ASSIGNED") {
-    return value === "unassigned" ? t("unassigned", "Unassigned") : value;
+    return value === "unassigned"
+      ? t("unassigned", { defaultValue: "Unassigned" })
+      : value;
   }
   return value;
 }
@@ -118,7 +123,9 @@ export default function StatusHistoryTimeline({
             <div className="min-w-0 flex-1 pt-0.5">
               <div className="flex flex-wrap items-baseline gap-x-2">
                 <span className="font-body font-medium text-on-surface text-sm">
-                  {t(`jobs_history_action_${entry.action}`, `${entry.action}`)}
+                  {t(`jobs_history_action_${entry.action}`, {
+                    defaultValue: entry.action,
+                  })}
                 </span>
                 {fromLabel && toLabel && (
                   <span className="font-body text-on-surface-variant text-xs">

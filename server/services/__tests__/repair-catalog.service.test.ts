@@ -30,14 +30,14 @@ describe("list", () => {
   it("returns repairs with pagination", async () => {
     const mockRepairs = [
       {
-        category: "SCREEN_REPAIR",
+        category: "HARDWARE",
         defaultPrice: 100,
         id: "1",
         isActive: true,
         name: "Screen Replacement",
       },
       {
-        category: "BATTERY_REPLACEMENT",
+        category: "HARDWARE",
         defaultPrice: 80,
         id: "2",
         isActive: true,
@@ -52,11 +52,11 @@ describe("list", () => {
     );
 
     const result = await list(prisma, {
-      category: null,
-      cursor: null,
-      isActive: null,
+      category: undefined,
+      cursor: undefined,
+      isActive: undefined,
       limit: 10,
-      search: null,
+      search: undefined,
     });
 
     expect(result.repairs).toHaveLength(2);
@@ -73,17 +73,17 @@ describe("list", () => {
     );
 
     await list(prisma, {
-      category: "SCREEN_REPAIR",
-      cursor: null,
-      isActive: null,
+      category: "HARDWARE",
+      cursor: undefined,
+      isActive: undefined,
       limit: 10,
-      search: null,
+      search: undefined,
     });
 
     const findManyCall = (
       prisma.repairCatalog.findMany as ReturnType<typeof vi.fn>
     ).mock.calls[0];
-    expect(findManyCall[0].where.category).toBe("SCREEN_REPAIR");
+    expect(findManyCall[0].where.category).toBe("HARDWARE");
   });
 
   it("filters by isActive", async () => {
@@ -95,11 +95,11 @@ describe("list", () => {
     );
 
     await list(prisma, {
-      category: null,
-      cursor: null,
+      category: undefined,
+      cursor: undefined,
       isActive: false,
       limit: 10,
-      search: null,
+      search: undefined,
     });
 
     const findManyCall = (
@@ -117,9 +117,9 @@ describe("list", () => {
     );
 
     await list(prisma, {
-      category: null,
-      cursor: null,
-      isActive: null,
+      category: undefined,
+      cursor: undefined,
+      isActive: undefined,
       limit: 10,
       search: "screen",
     });
@@ -145,7 +145,7 @@ describe("getById", () => {
     (
       prisma.repairCatalog.findUnique as ReturnType<typeof vi.fn>
     ).mockResolvedValue({
-      category: "SCREEN_REPAIR",
+      category: "HARDWARE",
       defaultPrice: 100,
       id: "repair-1",
       name: "Screen Fix",
@@ -178,7 +178,7 @@ describe("create", () => {
   it("creates repair with correct data", async () => {
     (prisma.repairCatalog.create as ReturnType<typeof vi.fn>).mockResolvedValue(
       {
-        category: "SCREEN_REPAIR",
+        category: "HARDWARE",
         defaultPrice: 120,
         id: "repair-1",
         name: "Screen Replacement",
@@ -186,7 +186,7 @@ describe("create", () => {
     );
 
     const result = await create(prisma, {
-      category: "SCREEN_REPAIR",
+      category: "HARDWARE",
       defaultPrice: 120,
       name: "Screen Replacement",
     });
@@ -222,7 +222,7 @@ describe("update", () => {
     });
     (prisma.repairCatalog.update as ReturnType<typeof vi.fn>).mockResolvedValue(
       {
-        category: "BATTERY_REPLACEMENT",
+        category: "HARDWARE",
         defaultPrice: 90,
         id: "repair-1",
         name: "Battery Service",
