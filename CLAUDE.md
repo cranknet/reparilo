@@ -122,16 +122,12 @@ reparilo/
 ## General Rules
 
 - Sync `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` on any update — use `cp`
-- ALWAYS: log every error, warning, notes, bug you find during session to docs/session-notes.md
 - The project uses ultracite for code quality and formatting.
 - The project uses pnpm for package management.
 - Add locale keys to en.json and use pnpm run sync-locales to sync and auto-translate other languages files.
-- use ultracite skill when working with code edits.
 - Never suppress lint warnings — always apply best practices
 - Explain tasks, errors, and solutions in plain English with minimal jargon
-- after using SKILL audit or critique, run recommended actions in parallel and finish with polish 
 - Do not launch parallel agents when tasks are targeted to same file.
-- Always read file before edit.
 - When I bring you an issue, your job is not to fix it directly. Instead, open a brief discussion: ask clarifying questions, explore the problem space, and propose industry best-practice solutions. Always lean toward the approach that reflects current standards, and walk me through the reasoning so we decide together.
 ## Database
 
