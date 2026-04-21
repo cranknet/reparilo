@@ -9,6 +9,7 @@ interface UserRow {
   image: string | null;
   isActive: boolean;
   mustChangePassword: boolean;
+  name: string | null;
   role: RoleType;
   username: string;
 }

@@ -4,46 +4,30 @@ interface StatusCounterProps {
   isActive?: boolean;
   label: string;
   onClick?: () => void;
-  primary?: boolean;
   status?: JobStatusType;
   value: number;
 }
 
-const STATUS_DOT_COLOR: Record<JobStatusType, string> = {
-  CANCELLED: "var(--color-outline-variant)",
-  DELIVERED: "var(--color-primary-fixed)",
-  DONE: "var(--color-primary)",
-  IN_REPAIR: "var(--color-primary)",
-  INTAKE: "var(--color-secondary)",
-  ON_HOLD: "var(--color-on-surface-variant)",
-  RETURNED: "var(--color-error)",
-  WAITING_FOR_PARTS: "var(--color-tertiary)",
+const STATUS_COLORS: Record<JobStatusType, string> = {
+  CANCELLED: "bg-outline-variant/30 text-on-surface-variant",
+  DELIVERED: "bg-primary-fixed/20 text-on-primary-fixed",
+  DONE: "bg-primary/15 text-primary",
+  IN_REPAIR: "bg-primary/15 text-primary",
+  INTAKE: "bg-secondary/15 text-on-secondary-container",
+  ON_HOLD: "bg-on-surface-variant/15 text-on-surface-variant",
+  RETURNED: "bg-error/15 text-error",
+  WAITING_FOR_PARTS: "bg-tertiary/15 text-on-tertiary-container",
 };
 
-const bgClass = (
-  isActive: boolean | undefined,
-  primary: boolean | undefined
-) => {
-  if (isActive) {
-    return "bg-primary/10 ring-1 ring-primary/30";
-  }
-  if (primary) {
-    return "bg-surface-container hover:bg-surface-container-high";
-  }
-  return "bg-surface-container-low hover:bg-surface-container";
-};
-
-const labelColorClass = (
-  isActive: boolean | undefined,
-  primary: boolean | undefined
-) => {
-  if (isActive) {
-    return "text-primary";
-  }
-  if (primary) {
-    return "text-on-surface";
-  }
-  return "text-on-surface-variant";
+const STATUS_DOT: Record<JobStatusType, string> = {
+  CANCELLED: "bg-outline-variant",
+  DELIVERED: "bg-primary-fixed",
+  DONE: "bg-primary",
+  IN_REPAIR: "bg-primary",
+  INTAKE: "bg-secondary",
+  ON_HOLD: "bg-on-surface-variant",
+  RETURNED: "bg-error",
+  WAITING_FOR_PARTS: "bg-tertiary",
 };
 
 export default function StatusCounter({
@@ -52,64 +36,58 @@ export default function StatusCounter({
   status,
   onClick,
   isActive,
-  primary,
 }: StatusCounterProps) {
-  const inner = (
-    <>
-      <span
-        className={[
-          "font-extrabold font-headline tabular-nums",
-          primary ? "text-3xl" : "text-2xl",
-          isActive ? "text-primary" : "text-on-surface",
-        ].join(" ")}
-      >
-        {value}
-      </span>
-      <span
-        className={[
-          "font-bold font-label text-xs uppercase tracking-wider",
-          labelColorClass(isActive, primary),
-        ].join(" ")}
-      >
-        {label}
-      </span>
-      {onClick && !isActive && (
-        <span className="material-symbols-outlined ms-auto text-[14px] text-outline-variant transition-colors group-hover:text-primary">
-          filter_list
-        </span>
-      )}
-      {isActive && (
-        <span className="material-symbols-outlined ms-auto text-[14px] text-primary">
-          filter_list
-        </span>
-      )}
-      {status && !onClick && (
-        <span
-          className="ms-auto h-2 w-2 rounded-full"
-          style={{
-            backgroundColor: STATUS_DOT_COLOR[status],
-          }}
-        />
-      )}
-    </>
-  );
+  const colorSet = status ? STATUS_COLORS[status] : "";
+  const dotColor = status ? STATUS_DOT[status] : "";
 
-  const className = [
-    "group flex min-h-[44px] items-center gap-3 rounded-lg px-4 py-2.5 text-start transition-all",
-    bgClass(isActive, primary),
-  ].join(" ");
+  const baseCls =
+    "group inline-flex min-h-[36px] items-center gap-2 rounded-full px-3 py-1.5 font-bold font-label text-xs uppercase tracking-wider transition-all focus-visible:ring-2 focus-visible:ring-primary/30";
 
   if (onClick) {
     return (
-      <button className={className} onClick={onClick} type="button">
-        {inner}
+      <button
+        className={[
+          baseCls,
+          isActive
+            ? "bg-primary text-on-primary ring-2 ring-primary/30"
+            : colorSet
+              ? `${colorSet} hover:brightness-110`
+              : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high",
+        ].join(" ")}
+        onClick={onClick}
+        type="button"
+      >
+        {dotColor && (
+          <span
+            className={`inline-block h-1.5 w-1.5 rounded-full ${dotColor}`}
+          />
+        )}
+        <span>{label}</span>
+        <span
+          className={[
+            "tabular-nums",
+            isActive ? "text-on-primary" : "text-on-surface-variant",
+          ].join(" ")}
+        >
+          {value}
+        </span>
       </button>
     );
   }
 
   return (
-    <div className={className} role="status">
-      {inner}
+    <div
+      className={[
+        baseCls,
+        colorSet || "bg-surface-container-low text-on-surface-variant",
+      ].join(" ")}
+      role="status"
+    >
+      {dotColor && (
+        <span className={`inline-block h-1.5 w-1.5 rounded-full ${dotColor}`} />
+      )}
+      <span>{label}</span>
+      <span className="text-on-surface-variant tabular-nums">{value}</span>
     </div>
   );
 }

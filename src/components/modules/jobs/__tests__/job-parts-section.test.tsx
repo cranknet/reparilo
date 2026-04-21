@@ -50,6 +50,18 @@ vi.mock("../add-part-dialog", () => ({
   __esModule: true,
 }));
 
+const mockToast = {
+  success: vi.fn(),
+  error: vi.fn(),
+  info: vi.fn(),
+  undoToast: vi.fn(),
+};
+
+vi.mock("@/stores/toast", () => ({
+  useToastStore: (sel: (s: Record<string, unknown>) => unknown) =>
+    sel({ toast: mockToast, undoToast: mockToast.undoToast }),
+}));
+
 vi.mock("@/lib/format", () => ({
   formatDzd: (n: number) => n.toLocaleString(),
 }));
@@ -109,12 +121,16 @@ describe("JobPartsSection", () => {
   it("renders parts title and add button for active job", () => {
     render(<JobPartsSection job={makeJob()} />);
     expect(screen.getByText("jobs_parts_title")).toBeInTheDocument();
-    expect(screen.getByText("jobs_parts_add")).toBeInTheDocument();
+    expect(screen.getAllByText("jobs_parts_add").length).toBeGreaterThanOrEqual(
+      1
+    );
   });
 
   it("shows add part button for non-terminal status", () => {
     render(<JobPartsSection job={makeJob({ status: "IN_REPAIR" })} />);
-    expect(screen.getByText("jobs_parts_add")).toBeInTheDocument();
+    expect(screen.getAllByText("jobs_parts_add").length).toBeGreaterThanOrEqual(
+      1
+    );
   });
 
   it("hides add part button for terminal status", () => {
@@ -131,7 +147,7 @@ describe("JobPartsSection", () => {
   it("opens AddPartDialog when add button is clicked", () => {
     render(<JobPartsSection job={makeJob()} />);
     expect(screen.queryByTestId("add-part-dialog")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText("jobs_parts_add"));
+    fireEvent.click(screen.getAllByText("jobs_parts_add")[0]);
     expect(screen.getByTestId("add-part-dialog")).toBeInTheDocument();
     expect(screen.getByTestId("add-part-dialog")).toHaveAttribute(
       "data-job-id",
@@ -141,7 +157,7 @@ describe("JobPartsSection", () => {
 
   it("shows empty state when no parts", () => {
     render(<JobPartsSection job={makeJob({ partsUsed: [] })} />);
-    expect(screen.getByText("jobs_parts_empty")).toBeInTheDocument();
+    expect(screen.getByText("jobs_parts_empty_title")).toBeInTheDocument();
   });
 
   it("shows parts list when parts exist", () => {
@@ -163,14 +179,16 @@ describe("JobPartsSection", () => {
       ] as unknown as Job["partsUsed"],
     });
     render(<JobPartsSection job={job} />);
-    expect(screen.queryByText("jobs_parts_empty")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("jobs_parts_empty_title")
+    ).not.toBeInTheDocument();
     expect(screen.getByText("Screen")).toBeInTheDocument();
   });
 
   it("calls onChanged when AddPartDialog reports onAdded", () => {
     const onChanged = vi.fn();
     render(<JobPartsSection job={makeJob()} onChanged={onChanged} />);
-    fireEvent.click(screen.getByText("jobs_parts_add"));
+    fireEvent.click(screen.getAllByText("jobs_parts_add")[0]);
     expect(screen.getByTestId("add-part-dialog")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Mock Added"));
     expect(onChanged).toHaveBeenCalledTimes(1);

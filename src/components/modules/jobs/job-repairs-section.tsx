@@ -1,10 +1,11 @@
 import { INACTIVE_STATUSES } from "@shared/constants";
-import type { Job, RepairCatalog } from "@shared/types";
+import type { Job, JobRepair, RepairCatalog } from "@shared/types";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import RepairServicePicker from "@/components/modules/jobs/repair-service-picker";
 import { formatDzd } from "@/lib/format";
 import { useJobsStore } from "@/stores/jobs";
+import { useToastStore } from "@/stores/toast";
 
 interface JobRepairsSectionProps {
   job: Job;
@@ -18,6 +19,8 @@ export default function JobRepairsSection({
   const { t } = useTranslation();
   const addRepair = useJobsStore((s) => s.addRepair);
   const removeRepair = useJobsStore((s) => s.removeRepair);
+  const undoToast = useToastStore((s) => s.undoToast);
+  const regularToast = useToastStore((s) => s.toast);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -51,6 +54,7 @@ export default function JobRepairsSection({
       setSelectedRepair(null);
       setPrice("");
       setShowForm(false);
+      regularToast("job_repair_success");
       onChanged?.();
     } catch (err: unknown) {
       setFormError(
@@ -58,21 +62,33 @@ export default function JobRepairsSection({
           ? err.message
           : t("jobs_status_change_error_unknown")
       );
+      regularToast("job_repair_failed", "error");
     } finally {
       setLoading(false);
     }
   };
 
   const handleRemoveRepair = useCallback(
-    async (repairId: string) => {
+    async (repairId: string, repairData: JobRepair) => {
       try {
         await removeRepair(job.id, repairId);
         onChanged?.();
+        undoToast("job_repair_remove_success", "undo", () => {
+          addRepair(job.id, {
+            repairId: repairData.repairId ?? "",
+            repairName: repairData.repairName,
+            category: repairData.category,
+            price: Number(repairData.price),
+          }).then(() => {
+            onChanged?.();
+            regularToast("job_repair_undone");
+          });
+        });
       } catch {
-        // error handled in store
+        regularToast("job_repair_remove_failed", "error");
       }
     },
-    [removeRepair, job.id, onChanged]
+    [removeRepair, addRepair, job.id, onChanged, undoToast, regularToast]
   );
 
   const repairs = job.repairs ?? [];
@@ -173,9 +189,27 @@ export default function JobRepairsSection({
       )}
 
       {repairs.length === 0 ? (
-        <p className="font-body text-on-surface-variant text-sm">
-          {t("jobs_repairs_empty")}
-        </p>
+        <div className="flex flex-col items-center rounded-xl bg-surface-container-low/50 py-8">
+          <span className="material-symbols-outlined mb-2 text-3xl text-on-surface-variant/60">
+            build
+          </span>
+          <p className="font-bold font-headline text-on-surface-variant text-sm">
+            {t("jobs_repairs_empty_title")}
+          </p>
+          <p className="mt-1 font-body text-on-surface-variant/80 text-xs">
+            {t("jobs_repairs_empty_desc")}
+          </p>
+          {!isTerminal && (
+            <button
+              className="mt-3 flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 font-bold font-label text-on-primary text-xs uppercase tracking-wider transition-colors hover:bg-primary-container hover:text-on-primary-container"
+              onClick={() => setShowForm(true)}
+              type="button"
+            >
+              <span className="material-symbols-outlined text-sm">add</span>
+              {t("jobs_repairs_add")}
+            </button>
+          )}
+        </div>
       ) : (
         <div className="space-y-2">
           {repairs.map((repair) => (
@@ -196,16 +230,9 @@ export default function JobRepairsSection({
                   {formatDzd(Number(repair.price))} {t("currency_dzd")}
                 </span>
                 {!isTerminal && (
-                  <button
-                    className="flex h-7 w-7 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
-                    onClick={() => handleRemoveRepair(repair.id)}
-                    title={t("jobs_repairs_remove")}
-                    type="button"
-                  >
-                    <span className="material-symbols-outlined text-sm">
-                      close
-                    </span>
-                  </button>
+                  <RemoveRepairButton
+                    onRemove={() => handleRemoveRepair(repair.id, repair)}
+                  />
                 )}
               </div>
             </div>
@@ -213,5 +240,50 @@ export default function JobRepairsSection({
         </div>
       )}
     </div>
+  );
+}
+
+function RemoveRepairButton({ onRemove }: { onRemove: () => void }) {
+  const { t } = useTranslation();
+  const [confirming, setConfirming] = useState(false);
+
+  if (confirming) {
+    return (
+      <div className="flex items-center gap-1">
+        <span className="font-label text-[10px] text-error">
+          {t("confirm_remove")}
+        </span>
+        <button
+          className="flex h-7 w-7 items-center justify-center rounded-lg bg-error text-on-error transition-colors hover:bg-on-error hover:text-error"
+          onClick={() => {
+            onRemove();
+            setConfirming(false);
+          }}
+          title={t("jobs_repairs_remove")}
+          type="button"
+        >
+          <span className="material-symbols-outlined text-sm">check</span>
+        </button>
+        <button
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high"
+          onClick={() => setConfirming(false)}
+          title={t("jobs_repairs_remove")}
+          type="button"
+        >
+          <span className="material-symbols-outlined text-sm">close</span>
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      className="flex h-7 w-7 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
+      onClick={() => setConfirming(true)}
+      title={t("jobs_repairs_remove")}
+      type="button"
+    >
+      <span className="material-symbols-outlined text-sm">close</span>
+    </button>
   );
 }

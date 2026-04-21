@@ -17,7 +17,7 @@ export function useTechnicians() {
     () =>
       users
         .filter((u) => u.role === Role.TECHNICIAN && u.isActive)
-        .map((u) => ({ id: u.id, name: u.username })),
+        .map((u) => ({ id: u.id, name: u.name || u.username })),
     [users]
   );
 

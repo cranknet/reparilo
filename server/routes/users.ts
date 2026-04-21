@@ -102,6 +102,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
         select: {
           id: true,
           username: true,
+          name: true,
           email: true,
           role: true,
           isActive: true,

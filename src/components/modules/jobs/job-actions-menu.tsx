@@ -10,6 +10,7 @@ import {
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useJobsStore } from "@/stores/jobs";
+import { useToastStore } from "@/stores/toast";
 import JobCancelDialog from "./job-cancel-dialog";
 import JobNoteDialog from "./job-note-dialog";
 import type { JobRow } from "./jobs-shared";
@@ -74,20 +75,24 @@ export default function JobActionsMenu({ job }: JobActionsMenuProps) {
     };
   }, [open, close]);
 
+  const toast = useToastStore((s) => s.toast);
+
   const handleStatusChange = useCallback(
     async (status: JobStatusType) => {
       setLoading(true);
       setError(null);
       try {
         await transitionStatus(job.rawJob?.id ?? job.id, status);
+        toast.success("job_status_success");
         close();
       } catch {
         setError(t("job_actions_status_error"));
+        toast.error("job_status_failed");
       } finally {
         setLoading(false);
       }
     },
-    [job.rawJob?.id, job.id, transitionStatus, close, t]
+    [job.rawJob?.id, job.id, transitionStatus, toast, close, t]
   );
 
   const handleNoteOpen = useCallback(() => {
@@ -133,7 +138,7 @@ export default function JobActionsMenu({ job }: JobActionsMenuProps) {
         menuPos &&
         createPortal(
           <div
-            className="fixed z-50 w-64 rounded-xl border border-outline-variant/20 bg-surface-container-lowest/95 py-2 shadow-2xl backdrop-blur-xl"
+            className="fixed z-50 w-64 rounded-xl border border-outline-variant/20 bg-surface-container-lowest py-2 shadow-2xl"
             ref={menuRef}
             style={{ left: menuPos.x, top: menuPos.y }}
           >
@@ -245,9 +250,9 @@ export default function JobActionsMenu({ job }: JobActionsMenuProps) {
         />
       )}
 
-      {cancelDialogOpen && job.rawJob?.id && (
+      {cancelDialogOpen && job.rawJob && (
         <JobCancelDialog
-          jobId={job.rawJob.id}
+          job={job.rawJob}
           onClose={handleCancelClose}
           open={cancelDialogOpen}
         />

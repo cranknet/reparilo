@@ -7,6 +7,7 @@ import QuickAddCustomer from "@/components/modules/jobs/quick-add-customer";
 import RepairServicePicker from "@/components/modules/jobs/repair-service-picker";
 import type { CustomerSearchResult } from "@/hooks/use-customer-search";
 import { useCustomerSearch } from "@/hooks/use-customer-search";
+import { type CaptureSource, useNativeCamera } from "@/hooks/use-native-camera";
 
 type DeviceCategory = "phone" | "tablet" | "laptop" | "watch";
 
@@ -42,6 +43,7 @@ interface IntakeFormData {
 const MAX_PHOTOS = 5;
 
 interface PhotoUploadZoneProps {
+  onNativeCapture: (source: CaptureSource) => Promise<void>;
   onPhotoRemove: (index: number) => void;
   onPhotoSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   photoCount: number;
@@ -50,6 +52,7 @@ interface PhotoUploadZoneProps {
 }
 
 function PhotoUploadZone({
+  onNativeCapture,
   onPhotoSelect,
   onPhotoRemove,
   photoCount,
@@ -57,6 +60,24 @@ function PhotoUploadZone({
   t,
 }: PhotoUploadZoneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showSourcePicker, setShowSourcePicker] = useState(false);
+  const { isNative, isCapturing } = useNativeCamera();
+
+  const handleAddPhoto = useCallback(() => {
+    if (isNative) {
+      setShowSourcePicker(true);
+    } else {
+      fileInputRef.current?.click();
+    }
+  }, [isNative]);
+
+  const handleSourcePick = useCallback(
+    async (source: CaptureSource) => {
+      setShowSourcePicker(false);
+      await onNativeCapture(source);
+    },
+    [onNativeCapture]
+  );
 
   return (
     <div>
@@ -74,8 +95,9 @@ function PhotoUploadZone({
       />
       {photoPreviews.length === 0 && (
         <button
-          className="group flex min-h-[44px] w-full cursor-pointer items-center gap-4 rounded-xl bg-surface-container-low px-5 py-4 ring-1 ring-outline-variant transition-all hover:ring-primary/50"
-          onClick={() => fileInputRef.current?.click()}
+          className="group flex min-h-[44px] w-full cursor-pointer items-center gap-4 rounded-xl bg-surface-container-low px-5 py-4 ring-1 ring-outline-variant transition-all hover:ring-primary/50 disabled:opacity-50"
+          disabled={isCapturing}
+          onClick={handleAddPhoto}
           type="button"
         >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-container-highest">
@@ -122,8 +144,9 @@ function PhotoUploadZone({
             ))}
             {photoCount < MAX_PHOTOS && (
               <button
-                className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl ring-1 ring-dashed ring-outline-variant transition-all hover:bg-surface-container-highest hover:ring-primary/50"
-                onClick={() => fileInputRef.current?.click()}
+                className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl ring-1 ring-dashed ring-outline-variant transition-all hover:bg-surface-container-highest hover:ring-primary/50 disabled:opacity-50"
+                disabled={isCapturing}
+                onClick={handleAddPhoto}
                 type="button"
               >
                 <span className="material-symbols-outlined text-2xl text-on-surface-variant transition-colors hover:text-primary">
@@ -135,6 +158,57 @@ function PhotoUploadZone({
           <p className="font-label text-on-surface-variant text-xs">
             {t("intake.photo_count", { current: photoCount, max: MAX_PHOTOS })}
           </p>
+        </div>
+      )}
+      {showSourcePicker && (
+        <div
+          aria-label={t("intake.photo_source_title")}
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+          role="dialog"
+        >
+          <button
+            aria-label={t("intake.photo_source_cancel")}
+            className="absolute inset-0 bg-on-surface/40"
+            onClick={() => setShowSourcePicker(false)}
+            type="button"
+          />
+          <div className="relative z-10 w-full max-w-xs space-y-2 rounded-t-2xl bg-surface-container-lowest p-4 shadow-2xl sm:rounded-2xl sm:p-6">
+            <p className="mb-3 text-center font-bold font-headline text-on-surface text-sm">
+              {t("intake.photo_source_title")}
+            </p>
+            <button
+              className="flex w-full items-center gap-3 rounded-xl bg-surface-container-low px-4 py-3 text-start transition-colors hover:bg-surface-container-high"
+              onClick={() => handleSourcePick("camera")}
+              type="button"
+            >
+              <span className="material-symbols-outlined text-primary">
+                photo_camera
+              </span>
+              <span className="font-bold font-headline text-on-surface text-sm">
+                {t("intake.photo_source_camera")}
+              </span>
+            </button>
+            <button
+              className="flex w-full items-center gap-3 rounded-xl bg-surface-container-low px-4 py-3 text-start transition-colors hover:bg-surface-container-high"
+              onClick={() => handleSourcePick("gallery")}
+              type="button"
+            >
+              <span className="material-symbols-outlined text-primary">
+                photo_library
+              </span>
+              <span className="font-bold font-headline text-on-surface text-sm">
+                {t("intake.photo_source_gallery")}
+              </span>
+            </button>
+            <button
+              className="mt-1 w-full rounded-xl px-4 py-2.5 text-center font-bold font-label text-on-surface-variant text-xs transition-colors hover:text-on-surface"
+              onClick={() => setShowSourcePicker(false)}
+              type="button"
+            >
+              {t("intake.photo_source_cancel")}
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -199,8 +273,17 @@ function useClickOutside(ref: React.RefObject<HTMLElement | null>) {
         handlerRef.current?.();
       }
     }
+    function onFocusIn(e: FocusEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        handlerRef.current?.();
+      }
+    }
     document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
+    document.addEventListener("focusin", onFocusIn);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("focusin", onFocusIn);
+    };
   }, [ref]);
 
   return handlerRef;
@@ -459,6 +542,7 @@ export default function IntakeModal({
   const { t } = useTranslation();
   const [form, setForm] = useState<IntakeFormData>(INITIAL_FORM);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [step, setStep] = useState<1 | 2>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<
     Partial<Record<keyof IntakeFormData, string>>
@@ -479,7 +563,7 @@ export default function IntakeModal({
 
   const [photoPreviews, setPhotoPreviews] = useState<PhotoPreview[]>([]);
 
-  const validate = useCallback((): boolean => {
+  const validateStep1 = useCallback((): boolean => {
     const newErrors: Partial<Record<keyof IntakeFormData, string>> = {};
     if (!form.customerName.trim()) {
       newErrors.customerName = t("intake.error_required");
@@ -490,10 +574,18 @@ export default function IntakeModal({
     if (!form.model.trim()) {
       newErrors.model = t("intake.error_required");
     }
+    setErrors(newErrors);
+    setTouched({ customerName: true, customerPhone: true, model: true });
+    return Object.keys(newErrors).length === 0;
+  }, [form, t]);
+
+  const validateStep2 = useCallback((): boolean => {
+    const newErrors: Partial<Record<keyof IntakeFormData, string>> = {};
     if (!form.reportedProblem.trim()) {
       newErrors.reportedProblem = t("intake.error_required");
     }
     setErrors(newErrors);
+    setTouched((prev) => ({ ...prev, reportedProblem: true }));
     return Object.keys(newErrors).length === 0;
   }, [form, t]);
 
@@ -595,6 +687,36 @@ export default function IntakeModal({
     [photoPreviews]
   );
 
+  const { capturePhoto, isNative } = useNativeCamera();
+
+  const handleNativeCapture = useCallback(
+    async (source: CaptureSource) => {
+      if (!isNative) {
+        return;
+      }
+      const remaining = MAX_PHOTOS - form.photos.length;
+      if (remaining <= 0) {
+        return;
+      }
+      try {
+        const result = await capturePhoto(source);
+        if (result) {
+          setPhotoPreviews((prev) => [
+            ...prev,
+            { file: result.file, url: result.previewUrl },
+          ]);
+          setForm((prev) => ({
+            ...prev,
+            photos: [...prev.photos, result.file],
+          }));
+        }
+      } catch {
+        // Permission denied or camera unavailable — silently ignore
+      }
+    },
+    [capturePhoto, form.photos.length, isNative]
+  );
+
   const { handleSelectRepair, handleRemoveRepair, handleRepairPriceChange } =
     useRepairHandlers(setForm);
 
@@ -611,6 +733,7 @@ export default function IntakeModal({
     setTouched({});
     setErrors({});
     setPhotoPreviews([]);
+    setStep(1);
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         onClose();
@@ -630,13 +753,7 @@ export default function IntakeModal({
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-      setTouched({
-        customerName: true,
-        customerPhone: true,
-        model: true,
-        reportedProblem: true,
-      });
-      if (!validate()) {
+      if (!validateStep2()) {
         return;
       }
       setIsSubmitting(true);
@@ -655,8 +772,29 @@ export default function IntakeModal({
       setPhotoPreviews([]);
       onClose();
     },
-    [form, onSubmit, onClose, validate, photoPreviews]
+    [form, onSubmit, onClose, validateStep2, photoPreviews]
   );
+
+  const isFormDirty =
+    form.customerName !== "" ||
+    form.customerPhone !== "" ||
+    form.model !== "" ||
+    form.reportedProblem !== "" ||
+    form.photos.length > 0 ||
+    form.repairs.length > 0;
+
+  const handleBackdropClick = useCallback(() => {
+    if (isFormDirty) {
+      return;
+    }
+    onClose();
+  }, [isFormDirty, onClose]);
+
+  const handleNextStep = useCallback(() => {
+    if (validateStep1()) {
+      setStep(2);
+    }
+  }, [validateStep1]);
 
   if (!open) {
     return null;
@@ -673,7 +811,7 @@ export default function IntakeModal({
       <button
         aria-label={t("close_modal")}
         className="absolute inset-0 bg-on-surface/40"
-        onClick={onClose}
+        onClick={handleBackdropClick}
         type="button"
       />
       <div className="modal-surface relative z-10 flex max-h-full w-full max-w-[960px] flex-col overflow-hidden rounded-xl shadow-2xl">
@@ -692,15 +830,31 @@ export default function IntakeModal({
                 </p>
               </div>
             )}
-          {/* Header */}
+          {/* Header with step indicator */}
           <header className="flex shrink-0 items-center justify-between bg-surface-container-low px-4 py-4 md:px-8 md:py-6">
             <div className="flex items-center gap-4">
-              <h1 className="font-bold font-headline text-lg text-on-surface tracking-tight md:text-2xl">
-                {t("intake.title")}
-              </h1>
-              <span className="rounded-full bg-primary-fixed px-3 py-1 font-bold font-headline text-on-primary-fixed text-xs uppercase tracking-widest">
-                {t("intake.job_code")}
-              </span>
+              {step === 2 && (
+                <button
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high"
+                  onClick={() => setStep(1)}
+                  type="button"
+                >
+                  <span className="material-symbols-outlined">arrow_back</span>
+                </button>
+              )}
+              <div>
+                <h1 className="font-bold font-headline text-lg text-on-surface tracking-tight md:text-2xl">
+                  {step === 1
+                    ? t("intake_wizard_step1_title")
+                    : t("intake_wizard_step2_title")}
+                </h1>
+                <p className="mt-0.5 font-label text-on-surface-variant text-xs">
+                  {t("intake_wizard_step_indicator", {
+                    step,
+                    total: 2,
+                  })}
+                </p>
+              </div>
             </div>
             <button
               className="flex h-11 w-11 items-center justify-center rounded-full text-outline transition-colors hover:bg-surface-container-high"
@@ -711,259 +865,264 @@ export default function IntakeModal({
             </button>
           </header>
 
-          {/* Body: Two Column Asymmetric Layout */}
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto md:flex-row">
-            {/* Left Column (60%) — Customer & Device */}
-            <section className="w-full space-y-6 bg-surface-container-low p-4 md:w-[60%] md:space-y-8 md:p-8">
-              {/* Customer */}
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="flex items-center gap-2 font-bold font-headline text-lg text-on-surface">
-                    <span className="material-symbols-outlined text-primary">
-                      person
-                    </span>
-                    {t("intake.customer_section")}
-                  </h2>
-                  <button
-                    className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 font-bold font-label text-primary text-xs transition-colors hover:bg-primary/20"
-                    onClick={() => setShowQuickAdd(!showQuickAdd)}
-                    type="button"
-                  >
-                    <span className="material-symbols-outlined text-sm">
-                      person_add
-                    </span>
-                    {t("intake.add_customer")}
-                  </button>
-                </div>
+          {/* Step indicator bar */}
+          <div className="flex h-1 bg-surface-container-highest">
+            <div
+              className="bg-primary transition-all duration-300"
+              style={{ width: step === 1 ? "50%" : "100%" }}
+            />
+          </div>
 
-                {showQuickAdd && (
-                  <QuickAddCustomer
-                    onAdd={handleQuickAdd}
-                    onClose={() => setShowQuickAdd(false)}
-                  />
-                )}
-
-                <div className="space-y-4">
-                  <div className="relative" ref={searchRef}>
-                    <label className={labelCls} htmlFor="customer-search">
-                      {t("intake.customer_search")}
-                      <span className={requiredMarkCls}>*</span>
-                    </label>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute end-4 top-1/2 -translate-y-1/2 text-outline">
-                        {form.customerId ? "check_circle" : "search"}
+          {/* Step 1: Customer & Device */}
+          {step === 1 && (
+            <section className="min-h-0 flex-1 overflow-y-auto bg-surface-container-low p-4 md:p-8">
+              <div className="mx-auto max-w-xl space-y-6">
+                {/* Customer */}
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h2 className="flex items-center gap-2 font-bold font-headline text-lg text-on-surface">
+                      <span className="material-symbols-outlined text-primary">
+                        person
                       </span>
-                      <input
-                        aria-invalid={!!errors.customerName}
-                        className={
-                          errors.customerName ? inputErrorCls : inputCls
-                        }
-                        id="customer-search"
-                        onBlur={() => handleBlur("customerName")}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          update("customerId", "");
-                          update("customerName", val);
-                          setQuery(val);
-                        }}
-                        onFocus={() => setSearchFocused(true)}
-                        placeholder={t("intake.customer_search_placeholder")}
-                        required
-                        type="text"
-                        value={form.customerName}
-                      />
-                      {form.customerId && (
-                        <button
-                          aria-label={t("intake.clear_customer")}
-                          className="absolute end-12 top-1/2 -translate-y-1/2 text-outline transition-colors hover:text-on-surface"
-                          onClick={() => {
-                            clearCustomer();
+                      {t("intake.customer_section")}
+                    </h2>
+                    <button
+                      className="flex items-center gap-1.5 rounded-full bg-secondary-container px-3 py-1.5 font-bold font-label text-on-secondary-container text-xs transition-colors hover:bg-surface-container-high"
+                      onClick={() => setShowQuickAdd(!showQuickAdd)}
+                      type="button"
+                    >
+                      <span className="material-symbols-outlined text-sm">
+                        person_add
+                      </span>
+                      {t("intake.add_customer")}
+                    </button>
+                  </div>
+
+                  {showQuickAdd && (
+                    <QuickAddCustomer
+                      onAdd={handleQuickAdd}
+                      onClose={() => setShowQuickAdd(false)}
+                    />
+                  )}
+
+                  <div className="space-y-4">
+                    <div className="relative" ref={searchRef}>
+                      <label className={labelCls} htmlFor="customer-search">
+                        {t("intake.customer_search")}
+                        <span className={requiredMarkCls}>*</span>
+                      </label>
+                      <div className="relative">
+                        <span className="material-symbols-outlined absolute end-4 top-1/2 -translate-y-1/2 text-outline">
+                          {form.customerId ? "check_circle" : "search"}
+                        </span>
+                        <input
+                          aria-invalid={!!errors.customerName}
+                          className={
+                            errors.customerName ? inputErrorCls : inputCls
+                          }
+                          id="customer-search"
+                          onBlur={() => handleBlur("customerName")}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            update("customerId", "");
+                            update("customerName", val);
+                            setQuery(val);
                           }}
-                          type="button"
-                        >
-                          <span className="material-symbols-outlined text-sm">
-                            close
+                          onFocus={() => setSearchFocused(true)}
+                          placeholder={t("intake.customer_search_placeholder")}
+                          required
+                          type="text"
+                          value={form.customerName}
+                        />
+                        {form.customerId && (
+                          <button
+                            aria-label={t("intake.clear_customer")}
+                            className="absolute end-12 top-1/2 -translate-y-1/2 text-outline transition-colors hover:text-on-surface"
+                            onClick={() => {
+                              clearCustomer();
+                            }}
+                            type="button"
+                          >
+                            <span className="material-symbols-outlined text-sm">
+                              close
+                            </span>
+                          </button>
+                        )}
+                      </div>
+
+                      <CustomerSearchDropdown
+                        isSearching={isSearching}
+                        onCreateNew={() => {
+                          setShowQuickAdd(true);
+                          setSearchFocused(false);
+                        }}
+                        onSelect={selectCustomer}
+                        query={query}
+                        results={results}
+                        searchError={searchError}
+                        t={t}
+                        visible={showDropdown}
+                      />
+
+                      {form.customerId && (
+                        <div className="mt-2 flex items-center gap-2 rounded-lg bg-primary-container px-3 py-1.5">
+                          <span className="material-symbols-outlined text-on-primary-container text-sm">
+                            verified
                           </span>
-                        </button>
+                          <span className="font-label font-medium text-on-primary-container text-xs">
+                            {t("intake.customer_linked")}
+                          </span>
+                        </div>
+                      )}
+
+                      {errors.customerName && touched.customerName && (
+                        <p className={errorCls}>{errors.customerName}</p>
                       )}
                     </div>
 
-                    <CustomerSearchDropdown
-                      isSearching={isSearching}
-                      onCreateNew={() => {
-                        setShowQuickAdd(true);
-                        setSearchFocused(false);
-                      }}
-                      onSelect={selectCustomer}
-                      query={query}
-                      results={results}
-                      searchError={searchError}
-                      t={t}
-                      visible={showDropdown}
-                    />
-
-                    {form.customerId && (
-                      <div className="mt-2 flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5">
-                        <span className="material-symbols-outlined text-primary text-sm">
-                          verified
-                        </span>
-                        <span className="font-label font-medium text-primary text-xs">
-                          {t("intake.customer_linked")}
-                        </span>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className={labelCls} htmlFor="customer-phone">
+                          {t("intake.phone")}
+                          <span className={requiredMarkCls}>*</span>
+                        </label>
+                        <input
+                          aria-invalid={!!errors.customerPhone}
+                          className={
+                            errors.customerPhone ? inputErrorCls : inputCls
+                          }
+                          id="customer-phone"
+                          onBlur={() => handleBlur("customerPhone")}
+                          onChange={(e) =>
+                            update("customerPhone", e.target.value)
+                          }
+                          placeholder="+213..."
+                          required
+                          type="tel"
+                          value={form.customerPhone}
+                        />
+                        {errors.customerPhone && touched.customerPhone && (
+                          <p className={errorCls}>{errors.customerPhone}</p>
+                        )}
                       </div>
-                    )}
+                      <div>
+                        <label className={labelCls} htmlFor="customer-email">
+                          {t("intake.email")}
+                        </label>
+                        <input
+                          className={inputCls}
+                          id="customer-email"
+                          onChange={(e) =>
+                            update("customerEmail", e.target.value)
+                          }
+                          placeholder="example@email.com"
+                          type="email"
+                          value={form.customerEmail}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-                    {errors.customerName && touched.customerName && (
-                      <p className={errorCls}>{errors.customerName}</p>
-                    )}
+                {/* Device */}
+                <div className="space-y-6">
+                  <h2 className="flex items-center gap-2 font-bold font-headline text-lg text-on-surface">
+                    <span className="material-symbols-outlined text-primary">
+                      smartphone
+                    </span>
+                    {t("intake.device_section")}
+                  </h2>
+
+                  <div className="flex flex-wrap gap-2">
+                    {DEVICE_CATEGORIES.map((cat) => (
+                      <button
+                        className={`min-h-[44px] rounded-full px-4 py-2 font-bold font-label text-xs transition-all ${
+                          form.deviceCategory === cat.key
+                            ? "bg-primary text-on-primary"
+                            : "bg-surface-container-highest text-on-surface-variant hover:bg-surface-variant"
+                        }`}
+                        key={cat.key}
+                        onClick={() => update("deviceCategory", cat.key)}
+                        type="button"
+                      >
+                        {t(cat.labelKey)}
+                      </button>
+                    ))}
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                      <label className={labelCls} htmlFor="customer-phone">
-                        {t("intake.phone")}
-                        <span className={requiredMarkCls}>*</span>
-                      </label>
-                      <input
-                        aria-invalid={!!errors.customerPhone}
-                        className={
-                          errors.customerPhone ? inputErrorCls : inputCls
-                        }
-                        id="customer-phone"
-                        onBlur={() => handleBlur("customerPhone")}
-                        onChange={(e) =>
-                          update("customerPhone", e.target.value)
-                        }
-                        placeholder="+213..."
-                        required
-                        type="tel"
-                        value={form.customerPhone}
-                      />
-                      {errors.customerPhone && touched.customerPhone && (
-                        <p className={errorCls}>{errors.customerPhone}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className={labelCls} htmlFor="customer-email">
-                        {t("intake.email")}
+                      <label className={labelCls} htmlFor="device-brand">
+                        {t("intake.brand")}
                       </label>
                       <input
                         className={inputCls}
-                        id="customer-email"
-                        onChange={(e) =>
-                          update("customerEmail", e.target.value)
-                        }
-                        placeholder="example@email.com"
-                        type="email"
-                        value={form.customerEmail}
+                        id="device-brand"
+                        list="brand-suggestions"
+                        onChange={(e) => update("brand", e.target.value)}
+                        placeholder={t("intake.brand")}
+                        type="text"
+                        value={form.brand}
+                      />
+                      <datalist id="brand-suggestions">
+                        {BRANDS.map((b) => (
+                          <option key={b} value={b} />
+                        ))}
+                      </datalist>
+                    </div>
+                    <div>
+                      <label className={labelCls} htmlFor="device-model">
+                        {t("intake.model")}
+                        <span className={requiredMarkCls}>*</span>
+                      </label>
+                      <input
+                        aria-invalid={!!errors.model}
+                        className={errors.model ? inputErrorCls : inputCls}
+                        id="device-model"
+                        onBlur={() => handleBlur("model")}
+                        onChange={(e) => update("model", e.target.value)}
+                        placeholder={t("intake.model")}
+                        required
+                        type="text"
+                        value={form.model}
+                      />
+                      {errors.model && touched.model && (
+                        <p className={errorCls}>{errors.model}</p>
+                      )}
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className={labelCls} htmlFor="device-color">
+                        {t("intake.device_color")}
+                      </label>
+                      <input
+                        className={inputCls}
+                        id="device-color"
+                        onChange={(e) => update("color", e.target.value)}
+                        placeholder={t("intake.color_placeholder")}
+                        type="text"
+                        value={form.color}
                       />
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Device */}
-              <div className="space-y-6">
-                <h2 className="flex items-center gap-2 font-bold font-headline text-lg text-on-surface">
-                  <span className="material-symbols-outlined text-primary">
-                    smartphone
-                  </span>
-                  {t("intake.device_section")}
-                </h2>
-
-                <div className="flex flex-wrap gap-2">
-                  {DEVICE_CATEGORIES.map((cat) => (
-                    <button
-                      className={`min-h-[44px] rounded-full px-4 py-2 font-bold font-label text-xs transition-all ${
-                        form.deviceCategory === cat.key
-                          ? "bg-primary text-on-primary"
-                          : "bg-surface-container-highest text-on-surface-variant hover:bg-surface-variant"
-                      }`}
-                      key={cat.key}
-                      onClick={() => update("deviceCategory", cat.key)}
-                      type="button"
-                    >
-                      {t(cat.labelKey)}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className={labelCls} htmlFor="device-brand">
-                      {t("intake.brand")}
-                    </label>
-                    <input
-                      className={inputCls}
-                      id="device-brand"
-                      list="brand-suggestions"
-                      onChange={(e) => update("brand", e.target.value)}
-                      placeholder={t("intake.brand")}
-                      type="text"
-                      value={form.brand}
-                    />
-                    <datalist id="brand-suggestions">
-                      {BRANDS.map((b) => (
-                        <option key={b} value={b} />
-                      ))}
-                    </datalist>
-                  </div>
-                  <div>
-                    <label className={labelCls} htmlFor="device-model">
-                      {t("intake.model")}
-                      <span className={requiredMarkCls}>*</span>
-                    </label>
-                    <input
-                      aria-invalid={!!errors.model}
-                      className={errors.model ? inputErrorCls : inputCls}
-                      id="device-model"
-                      onBlur={() => handleBlur("model")}
-                      onChange={(e) => update("model", e.target.value)}
-                      placeholder={t("intake.model")}
-                      required
-                      type="text"
-                      value={form.model}
-                    />
-                    {errors.model && touched.model && (
-                      <p className={errorCls}>{errors.model}</p>
-                    )}
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className={labelCls} htmlFor="device-color">
-                      {t("intake.device_color")}
-                    </label>
-                    <input
-                      className={inputCls}
-                      id="device-color"
-                      onChange={(e) => update("color", e.target.value)}
-                      placeholder={t("intake.color_placeholder")}
-                      type="text"
-                      value={form.color}
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <PhotoUploadZone
-                      onPhotoRemove={handlePhotoRemove}
-                      onPhotoSelect={handlePhotoSelect}
-                      photoCount={form.photos.length}
-                      photoPreviews={photoPreviews}
-                      t={t}
-                    />
+                    <div className="sm:col-span-2">
+                      <PhotoUploadZone
+                        onNativeCapture={handleNativeCapture}
+                        onPhotoRemove={handlePhotoRemove}
+                        onPhotoSelect={handlePhotoSelect}
+                        photoCount={form.photos.length}
+                        photoPreviews={photoPreviews}
+                        t={t}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
             </section>
+          )}
 
-            {/* Right Column (40%) — Technical Spec Sheet */}
-            <section className="flex w-full flex-1 flex-col space-y-6 bg-surface-container-lowest p-4 md:w-[40%] md:space-y-8 md:p-8">
-              <h2 className="flex items-center gap-2 font-bold font-headline text-lg text-on-surface">
-                <span className="material-symbols-outlined text-primary">
-                  assignment
-                </span>
-                {t("intake.repair_details")}
-              </h2>
-
-              <div className="flex flex-1 flex-col space-y-6">
+          {/* Step 2: Repairs & Pricing */}
+          {step === 2 && (
+            <section className="min-h-0 flex-1 overflow-y-auto bg-surface-container-lowest p-4 md:p-8">
+              <div className="mx-auto max-w-xl space-y-6">
                 <div>
                   <label className={labelCls} htmlFor="reported-problem">
                     {t("intake.reported_problem")}
@@ -1009,7 +1168,7 @@ export default function IntakeModal({
                   t={t}
                 />
 
-                {/* Estimated Cost & Deposit — Small Label / Big Value */}
+                {/* Estimated Cost & Deposit */}
                 <div className="grid grid-cols-2 gap-6 py-4">
                   <div>
                     <label
@@ -1079,7 +1238,7 @@ export default function IntakeModal({
                 </div>
               </div>
             </section>
-          </div>
+          )}
 
           {/* Footer */}
           <footer className="flex shrink-0 items-center justify-end gap-4 border-outline-variant border-t bg-surface-container-high px-4 py-4 md:px-8 md:py-6">
@@ -1090,15 +1249,25 @@ export default function IntakeModal({
             >
               {t("intake.cancel_intake")}
             </button>
-            <button
-              className="rounded-xl bg-primary px-8 py-3 font-bold font-headline text-on-primary text-sm transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={isSubmitting}
-              type="submit"
-            >
-              {isSubmitting
-                ? t("intake.creating_job")
-                : t("intake.start_repair")}
-            </button>
+            {step === 1 ? (
+              <button
+                className="rounded-xl bg-primary px-8 py-3 font-bold font-headline text-on-primary text-sm transition-all active:scale-[0.98]"
+                onClick={handleNextStep}
+                type="button"
+              >
+                {t("intake_wizard_next")}
+              </button>
+            ) : (
+              <button
+                className="rounded-xl bg-primary px-8 py-3 font-bold font-headline text-on-primary text-sm transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isSubmitting}
+                type="submit"
+              >
+                {isSubmitting
+                  ? t("intake.creating_job")
+                  : t("intake.start_repair")}
+              </button>
+            )}
           </footer>
         </form>
       </div>

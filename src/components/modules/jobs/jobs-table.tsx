@@ -8,11 +8,23 @@ import TechnicianSelect from "./technician-select";
 
 interface JobsTableProps {
   jobs: JobRow[];
+  onToggleSelect: (jobId: string) => void;
+  onToggleSelectAll: () => void;
+  selectedIds: Set<string>;
 }
 
-export default function JobsTable({ jobs }: JobsTableProps) {
+export default function JobsTable({
+  jobs,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
+}: JobsTableProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
+  const allSelected =
+    jobs.length > 0 && jobs.every((j) => selectedIds.has(j.rawJob?.id ?? j.id));
+  const someSelected = jobs.some((j) => selectedIds.has(j.rawJob?.id ?? j.id));
 
   return (
     <div className="overflow-hidden rounded-xl bg-surface-container-lowest">
@@ -20,6 +32,20 @@ export default function JobsTable({ jobs }: JobsTableProps) {
         <table className="w-full min-w-[640px] border-collapse text-start">
           <thead>
             <tr className="bg-surface-container-low">
+              <th className="w-12 p-4">
+                <input
+                  aria-label={t("select_all")}
+                  checked={allSelected}
+                  className="h-4 w-4 rounded border-outline-variant accent-primary"
+                  onChange={onToggleSelectAll}
+                  ref={(el) => {
+                    if (el) {
+                      el.indeterminate = someSelected && !allSelected;
+                    }
+                  }}
+                  type="checkbox"
+                />
+              </th>
               <th className="hidden p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-wide md:table-cell">
                 {t("job_id")}
               </th>
@@ -41,97 +67,121 @@ export default function JobsTable({ jobs }: JobsTableProps) {
             </tr>
           </thead>
           <tbody>
-            {jobs.map((job) => (
-              <tr
-                className="cursor-pointer transition-colors hover:bg-surface-container-low"
-                key={job.id}
-                onClick={() => navigate(`/jobs/${job.rawJob?.id ?? job.id}`)}
-              >
-                <td className="hidden p-4 md:table-cell">
-                  <Link
-                    className="font-bold font-headline text-primary text-xs tracking-tight hover:underline lg:text-sm"
-                    onClick={(e) => e.stopPropagation()}
-                    to={`/jobs/${job.rawJob?.id ?? job.id}`}
-                  >
-                    {job.id}
-                  </Link>
-                </td>
-                <td className="p-4">
-                  <Link
-                    className="block"
-                    onClick={(e) => e.stopPropagation()}
-                    to={`/jobs/${job.rawJob?.id ?? job.id}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-container-high">
-                        <span className="material-symbols-outlined text-lg text-secondary lg:text-xl">
-                          {DEVICE_ICONS[job.deviceIcon ?? "other"] ??
-                            "precision_manufacturing"}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="font-bold font-headline text-xs lg:text-sm">
-                          {job.device}
-                        </p>
-                        {job.deviceSpec && (
-                          <p className="font-body text-on-surface-variant text-xs">
-                            {job.deviceSpec}
+            {jobs.map((job) => {
+              const jobId = job.rawJob?.id ?? job.id;
+              const isSelected = selectedIds.has(jobId);
+              return (
+                <tr
+                  className={`cursor-pointer transition-colors hover:bg-surface-container-low focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-inset ${isSelected ? "bg-primary-container/20" : ""}`}
+                  key={job.id}
+                  onClick={() => navigate(`/jobs/${jobId}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      navigate(`/jobs/${jobId}`);
+                    }
+                  }}
+                  tabIndex={0}
+                >
+                  <td className="p-4">
+                    <input
+                      aria-label={`${t("select")} ${job.id}`}
+                      checked={isSelected}
+                      className="h-4 w-4 rounded border-outline-variant accent-primary"
+                      onChange={() => onToggleSelect(jobId)}
+                      onClick={(e) => e.stopPropagation()}
+                      type="checkbox"
+                    />
+                  </td>
+                  <td className="hidden p-4 md:table-cell">
+                    <Link
+                      className="font-bold font-headline text-primary text-xs tracking-tight hover:underline lg:text-sm"
+                      onClick={(e) => e.stopPropagation()}
+                      to={`/jobs/${jobId}`}
+                    >
+                      {job.id}
+                    </Link>
+                  </td>
+                  <td className="p-4">
+                    <Link
+                      className="block"
+                      onClick={(e) => e.stopPropagation()}
+                      to={`/jobs/${jobId}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-container-high">
+                          <span className="material-symbols-outlined text-lg text-secondary lg:text-xl">
+                            {DEVICE_ICONS[job.deviceIcon ?? "other"] ??
+                              "precision_manufacturing"}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-bold font-headline text-xs lg:text-sm">
+                            {job.device}
                           </p>
-                        )}
+                          {job.deviceSpec && (
+                            <p className="font-body text-on-surface-variant text-xs">
+                              {job.deviceSpec}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                </td>
-                <td className="hidden p-4 lg:table-cell">
-                  <p className="font-body font-semibold text-sm">
-                    {job.customer}
-                  </p>
-                  {job.customerTier && (
-                    <p className="text-on-surface-variant text-xs">
-                      {job.customerTier}
+                    </Link>
+                  </td>
+                  <td className="hidden p-4 lg:table-cell">
+                    <p className="font-body font-semibold text-sm">
+                      {job.customer}
                     </p>
-                  )}
-                </td>
-                <td className="p-4">
-                  <div className="flex justify-center">
-                    <StatusBadge status={job.status} />
-                  </div>
-                </td>
-                <td className="p-4">
-                  {/* biome-ignore lint/a11y/useKeyWithClickEvents: stopPropagation only */}
-                  {/* biome-ignore lint/a11y/noStaticElementInteractions: wrapper to prevent row click */}
-                  {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: stopPropagation only */}
-                  <span
-                    className="inline-block"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {job.rawJob ? (
-                      <TechnicianSelect
-                        currentTechnicianId={job.rawJob.technician?.id}
-                        currentTechnicianName={job.rawJob.technician?.name}
-                        jobId={job.rawJob.id}
-                        size="sm"
-                      />
-                    ) : (
-                      <span className="font-body font-medium text-on-surface-variant text-xs italic">
-                        {t("unassigned")}
-                      </span>
+                    {job.customerTier && (
+                      <p className="text-on-surface-variant text-xs">
+                        {job.customerTier}
+                      </p>
                     )}
-                  </span>
-                </td>
-                <td className="p-4 text-end">
-                  {/* biome-ignore lint/a11y/useKeyWithClickEvents: stopPropagation only */}
-                  {/* biome-ignore lint/a11y/noStaticElementInteractions: wrapper to prevent row click */}
-                  {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: stopPropagation only */}
-                  <span
-                    className="inline-block"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <JobActionsMenu job={job} />
-                  </span>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="p-4">
+                    <div className="flex justify-center">
+                      <StatusBadge status={job.status} />
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <button
+                      className="inline-block cursor-default text-start"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.stopPropagation();
+                        }
+                      }}
+                      type="button"
+                    >
+                      {job.rawJob ? (
+                        <TechnicianSelect
+                          currentTechnicianId={job.rawJob.technician?.id}
+                          currentTechnicianName={job.rawJob.technician?.name}
+                          jobId={job.rawJob.id}
+                          size="sm"
+                        />
+                      ) : (
+                        <span className="font-body font-medium text-on-surface-variant text-xs italic">
+                          {t("unassigned")}
+                        </span>
+                      )}
+                    </button>
+                  </td>
+                  <td className="p-4 text-end">
+                    {/* biome-ignore lint/a11y/useKeyWithClickEvents: stopPropagation only */}
+                    {/* biome-ignore lint/a11y/noStaticElementInteractions: wrapper to prevent row click */}
+                    {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: stopPropagation only */}
+                    <span
+                      className="inline-block"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <JobActionsMenu job={job} />
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

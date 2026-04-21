@@ -1,10 +1,11 @@
 import { INACTIVE_STATUSES } from "@shared/constants";
-import type { Job } from "@shared/types";
+import type { Job, JobPart } from "@shared/types";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Can } from "@/components/modules/can";
 import { formatDzd } from "@/lib/format";
 import { useJobsStore } from "@/stores/jobs";
+import { useToastStore } from "@/stores/toast";
 import AddPartDialog from "./add-part-dialog";
 
 interface JobPartsSectionProps {
@@ -22,6 +23,9 @@ export default function JobPartsSection({
 }: JobPartsSectionProps) {
   const { t } = useTranslation();
   const removePart = useJobsStore((s) => s.removePart);
+  const addPart = useJobsStore((s) => s.addPart);
+  const undoToast = useToastStore((s) => s.undoToast);
+  const regularToast = useToastStore((s) => s.toast);
   const [showAddDialog, setShowAddDialog] = useState(false);
 
   const isTerminal = INACTIVE_STATUSES.includes(
@@ -29,15 +33,26 @@ export default function JobPartsSection({
   );
 
   const handleRemovePart = useCallback(
-    async (partId: string) => {
+    async (partId: string, partData: JobPart) => {
       try {
         await removePart(job.id, partId);
         onChanged?.();
+        undoToast("job_part_remove_success", "undo", () => {
+          addPart(job.id, {
+            partName: partData.partName,
+            category: partData.category,
+            quantity: partData.quantity,
+            unitPrice: Number(partData.unitPrice),
+          }).then(() => {
+            onChanged?.();
+            regularToast("job_part_undone");
+          });
+        });
       } catch {
-        // error handled in store
+        regularToast("job_part_remove_failed", "error");
       }
     },
-    [removePart, job.id, onChanged]
+    [removePart, addPart, job.id, onChanged, undoToast, regularToast]
   );
 
   const parts = job.partsUsed ?? [];
@@ -61,9 +76,27 @@ export default function JobPartsSection({
       </div>
 
       {parts.length === 0 ? (
-        <p className="font-body text-on-surface-variant text-sm">
-          {t("jobs_parts_empty")}
-        </p>
+        <div className="flex flex-col items-center rounded-xl bg-surface-container-low/50 py-8">
+          <span className="material-symbols-outlined mb-2 text-3xl text-on-surface-variant/60">
+            inventory_2
+          </span>
+          <p className="font-bold font-headline text-on-surface-variant text-sm">
+            {t("jobs_parts_empty_title")}
+          </p>
+          <p className="mt-1 font-body text-on-surface-variant/80 text-xs">
+            {t("jobs_parts_empty_desc")}
+          </p>
+          {!isTerminal && (
+            <button
+              className="mt-3 flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 font-bold font-label text-on-primary text-xs uppercase tracking-wider transition-colors hover:bg-primary-container hover:text-on-primary-container"
+              onClick={() => setShowAddDialog(true)}
+              type="button"
+            >
+              <span className="material-symbols-outlined text-sm">add</span>
+              {t("jobs_parts_add")}
+            </button>
+          )}
+        </div>
       ) : (
         <div className="space-y-2">
           {parts.map((part) => (
@@ -91,16 +124,9 @@ export default function JobPartsSection({
                   </span>
                 </Can>
                 {!isTerminal && (
-                  <button
-                    className="flex h-7 w-7 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
-                    onClick={() => handleRemovePart(part.id)}
-                    title={t("jobs_parts_remove")}
-                    type="button"
-                  >
-                    <span className="material-symbols-outlined text-sm">
-                      close
-                    </span>
-                  </button>
+                  <RemovePartButton
+                    onRemove={() => handleRemovePart(part.id, part)}
+                  />
                 )}
               </div>
             </div>
@@ -118,5 +144,50 @@ export default function JobPartsSection({
         open={showAddDialog}
       />
     </div>
+  );
+}
+
+function RemovePartButton({ onRemove }: { onRemove: () => void }) {
+  const { t } = useTranslation();
+  const [confirming, setConfirming] = useState(false);
+
+  if (confirming) {
+    return (
+      <div className="flex items-center gap-1">
+        <span className="font-label text-[10px] text-error">
+          {t("confirm_remove")}
+        </span>
+        <button
+          className="flex h-7 w-7 items-center justify-center rounded-lg bg-error text-on-error transition-colors hover:bg-on-error hover:text-error"
+          onClick={() => {
+            onRemove();
+            setConfirming(false);
+          }}
+          title={t("cancel")}
+          type="button"
+        >
+          <span className="material-symbols-outlined text-sm">check</span>
+        </button>
+        <button
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high"
+          onClick={() => setConfirming(false)}
+          title={t("cancel")}
+          type="button"
+        >
+          <span className="material-symbols-outlined text-sm">close</span>
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      className="flex h-7 w-7 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
+      onClick={() => setConfirming(true)}
+      title={t("jobs_parts_remove")}
+      type="button"
+    >
+      <span className="material-symbols-outlined text-sm">close</span>
+    </button>
   );
 }

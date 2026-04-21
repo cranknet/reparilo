@@ -23,7 +23,7 @@ export default function CostSummary({
 }: CostSummaryProps) {
   const { t } = useTranslation();
   return (
-    <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
+    <div className="rounded-2xl bg-surface-container p-6">
       <h2 className="mb-4 font-bold font-headline text-base text-on-surface">
         {t("jobs_detail_cost_summary")}
       </h2>

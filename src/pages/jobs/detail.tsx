@@ -120,7 +120,7 @@ export default function JobDetailPage() {
     | undefined;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-6">
+    <div className="mx-auto max-w-3xl px-4 py-6">
       <Link
         className="inline-flex items-center gap-1 font-bold text-primary text-sm hover:underline"
         to="/jobs"
@@ -129,7 +129,7 @@ export default function JobDetailPage() {
         {t("jobs_detail_back")}
       </Link>
 
-      <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
+      <div className="mt-6 rounded-2xl bg-surface-container-high p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <h1 className="font-extrabold font-headline text-lg text-on-surface tracking-tight sm:truncate sm:text-2xl">
@@ -219,9 +219,9 @@ export default function JobDetailPage() {
           )}
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2 border-outline-variant border-t pt-4">
+        <div className="mt-5 flex flex-wrap items-center gap-2">
           <Link
-            className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 font-bold font-label text-primary text-xs transition-colors hover:bg-primary/20"
+            className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 font-bold font-label text-on-primary text-xs transition-colors hover:bg-primary-container hover:text-on-primary-container"
             to={`/tracking/${job.jobCode}`}
           >
             <span className="material-symbols-outlined text-sm">
@@ -230,7 +230,7 @@ export default function JobDetailPage() {
             {t("jobs_detail_track")}
           </Link>
           <button
-            className="inline-flex items-center gap-1 rounded-full bg-surface-container-high px-3 py-1.5 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container-highest hover:text-on-surface"
+            className="inline-flex items-center gap-1 rounded-full bg-surface-container-low px-3 py-1.5 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-on-surface"
             onClick={handleCopyTrackLink}
             type="button"
           >
@@ -242,7 +242,7 @@ export default function JobDetailPage() {
               : t("jobs_detail_share")}
           </button>
           <button
-            className="inline-flex items-center gap-1 rounded-full bg-surface-container-high px-3 py-1.5 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container-highest hover:text-on-surface"
+            className="inline-flex items-center gap-1 rounded-full bg-surface-container-low px-3 py-1.5 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-on-surface"
             onClick={() =>
               window.open(`/api/receipts/${job.id}/receipt`, "_blank")
             }
@@ -252,7 +252,7 @@ export default function JobDetailPage() {
             {t("jobs_detail_print")}
           </button>
           <button
-            className="inline-flex items-center gap-1 rounded-full bg-surface-container-high px-3 py-1.5 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container-highest hover:text-on-surface"
+            className="inline-flex items-center gap-1 rounded-full bg-surface-container-low px-3 py-1.5 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-on-surface"
             onClick={() =>
               window.open(`/api/receipts/${job.id}/label`, "_blank")
             }
@@ -265,34 +265,34 @@ export default function JobDetailPage() {
       </div>
 
       {job.photos && job.photos.length > 0 && (
-        <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
+        <div className="mt-10">
           <JobPhotosSection job={job} onChanged={() => fetchJob()} />
         </div>
       )}
 
-      <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
-        <JobPartsSection job={job} onChanged={() => fetchJob()} />
-      </div>
-
-      <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
-        <JobRepairsSection job={job} onChanged={() => fetchJob()} />
-      </div>
-
-      <CostSummary
-        deposit={deposit}
-        finalCost={finalCost}
-        margin={jobMargin}
-        partsTotal={partsTotal}
-        repairsTotal={repairsTotal}
-      />
-
-      <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
+      <div className="mt-10">
         <h2 className="mb-4 font-bold font-headline text-base text-on-surface">
           {t("jobs_detail_history")}
         </h2>
-        <div className="max-h-80 overflow-y-auto">
-          <StatusHistoryTimeline jobId={job.id} />
-        </div>
+        <StatusHistoryTimeline jobId={job.id} />
+      </div>
+
+      <div className="mt-8">
+        <JobPartsSection job={job} onChanged={() => fetchJob()} />
+      </div>
+
+      <div className="mt-4">
+        <JobRepairsSection job={job} onChanged={() => fetchJob()} />
+      </div>
+
+      <div className="mt-8">
+        <CostSummary
+          deposit={deposit}
+          finalCost={finalCost}
+          margin={jobMargin}
+          partsTotal={partsTotal}
+          repairsTotal={repairsTotal}
+        />
       </div>
 
       {job.customer && (

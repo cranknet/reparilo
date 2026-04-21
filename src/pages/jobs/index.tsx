@@ -1,7 +1,8 @@
 import type { JobStatusType } from "@shared/constants";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import JobsFilters from "@/components/modules/jobs/filters";
+import BatchActionBar from "@/components/modules/jobs/batch-action-bar";
+import UnifiedJobsFilter from "@/components/modules/jobs/filters";
 import type {
   JobRow,
   StatusGroupKey,
@@ -9,7 +10,6 @@ import type {
 import { jobToRow, STATUS_GROUPS } from "@/components/modules/jobs/jobs-shared";
 import JobsTable from "@/components/modules/jobs/jobs-table";
 import JobMobileCard from "@/components/modules/jobs/mobile-card";
-import StatusCounter from "@/components/modules/jobs/status-counter";
 import { exportJobsPdf } from "@/lib/export-pdf";
 import { useJobsStore } from "@/stores/jobs";
 import { useUiStore } from "@/stores/ui";
@@ -57,49 +57,40 @@ export default function JobsPage() {
     return result;
   }, [jobRows, statusFilter, groupFilter, searchQuery]);
 
-  const counterData = useMemo(() => {
-    if (!metrics) {
-      return [];
-    }
-    return [
-      {
-        label: "on_bench",
-        status: "IN_REPAIR" as JobStatusType,
-        value: metrics.IN_REPAIR ?? 0,
-      },
-      {
-        label: "queue_priority",
-        status: "INTAKE" as JobStatusType,
-        value: metrics.INTAKE ?? 0,
-      },
-      {
-        label: "awaiting_parts",
-        status: "WAITING_FOR_PARTS" as JobStatusType,
-        value: metrics.WAITING_FOR_PARTS ?? 0,
-      },
-      {
-        label: "quality_check",
-        status: "DONE" as JobStatusType,
-        value: metrics.DONE ?? 0,
-      },
-    ];
-  }, [metrics]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const handleCounterClick = (status: JobStatusType | undefined) => {
-    if (!status) {
-      return;
-    }
-    if (statusFilter === status) {
-      setStatusFilter("ALL");
-      setGroupFilter("ALL");
-    } else {
-      const parentGroup = STATUS_GROUPS.find((g) =>
-        g.statuses.includes(status)
-      );
-      setStatusFilter(status);
-      setGroupFilter(parentGroup?.key ?? "ALL");
-    }
-  };
+  const toggleSelect = useCallback((jobId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(jobId)) {
+        next.delete(jobId);
+      } else {
+        next.add(jobId);
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds((prev) => {
+      if (filteredJobs.every((j) => prev.has(j.rawJob?.id ?? j.id))) {
+        return new Set();
+      }
+      return new Set(filteredJobs.map((j) => j.rawJob?.id ?? j.id));
+    });
+  }, [filteredJobs]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const selectedJobs = useMemo(
+    () =>
+      filteredJobs
+        .filter((j) => selectedIds.has(j.rawJob?.id ?? j.id))
+        .map((j) => ({ id: j.rawJob?.id ?? j.id, status: j.status })),
+    [filteredJobs, selectedIds]
+  );
 
   const handleGroupChange = (group: StatusGroupKey | "ALL") => {
     setGroupFilter(group);
@@ -167,24 +158,11 @@ export default function JobsPage() {
         </div>
       </div>
 
-      <section className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-4 md:gap-3">
-        {counterData.map((m, i) => (
-          <StatusCounter
-            isActive={statusFilter === m.status}
-            key={m.label}
-            label={t(m.label)}
-            onClick={m.status ? () => handleCounterClick(m.status) : undefined}
-            primary={i === 0}
-            status={m.status}
-            value={m.value}
-          />
-        ))}
-      </section>
-
       <section className="flex flex-col gap-4">
-        <JobsFilters
+        <UnifiedJobsFilter
           activeGroup={groupFilter}
           activeStatus={statusFilter}
+          metrics={metrics}
           onGroupChange={handleGroupChange}
           onSearchChange={setSearchQuery}
           onStatusChange={setStatusFilter}
@@ -192,7 +170,12 @@ export default function JobsPage() {
         />
 
         <div className="hidden sm:block">
-          <JobsTable jobs={filteredJobs} />
+          <JobsTable
+            jobs={filteredJobs}
+            onToggleSelect={toggleSelect}
+            onToggleSelectAll={toggleSelectAll}
+            selectedIds={selectedIds}
+          />
         </div>
 
         <div className="space-y-3 sm:hidden">
@@ -213,7 +196,7 @@ export default function JobsPage() {
         {filteredJobs.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16">
             <span className="material-symbols-outlined mb-4 text-5xl text-on-surface-variant">
-              build
+              search_off
             </span>
             <p className="font-bold font-headline text-on-surface-variant text-sm">
               {t("no_jobs_found")}
@@ -224,6 +207,12 @@ export default function JobsPage() {
           </div>
         )}
       </section>
+
+      <BatchActionBar
+        onClear={clearSelection}
+        selectedIds={selectedIds}
+        selectedJobs={selectedJobs}
+      />
     </>
   );
 }

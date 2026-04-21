@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useJobsStore } from "@/stores/jobs";
+import { useToastStore } from "@/stores/toast";
 
 interface JobNoteDialogProps {
   jobId: string;
@@ -15,6 +16,7 @@ export default function JobNoteDialog({
 }: JobNoteDialogProps) {
   const { t } = useTranslation();
   const addNote = useJobsStore((s) => s.addNote);
+  const toast = useToastStore((s) => s.toast);
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,14 +51,23 @@ export default function JobNoteDialog({
 
   const canSubmit = note.trim().length > 0;
 
+  const handleBackdropClick = () => {
+    if (note.trim().length > 0) {
+      return;
+    }
+    onClose();
+  };
+
   async function handleSubmit() {
     setSubmitting(true);
     setError(null);
     try {
       await addNote(jobId, note.trim());
+      toast.success("job_note_success");
       onClose();
     } catch {
       setError(t("job_actions_note_error"));
+      toast.error("job_note_failed");
     } finally {
       setSubmitting(false);
     }
@@ -71,7 +82,7 @@ export default function JobNoteDialog({
       <button
         aria-label={t("close_modal")}
         className="absolute inset-0 bg-on-surface/40"
-        onClick={onClose}
+        onClick={handleBackdropClick}
         type="button"
       />
       <div className="modal-surface relative z-10 w-full max-w-md rounded-xl bg-surface-container-lowest p-6 shadow-2xl">

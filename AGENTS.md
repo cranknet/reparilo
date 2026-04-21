@@ -127,7 +127,6 @@ reparilo/
 - Add locale keys to en.json and use pnpm run sync-locales to sync and auto-translate other languages files.
 - Never suppress lint warnings — always apply best practices
 - Explain tasks, errors, and solutions in plain English with minimal jargon
-- Do not launch parallel agents when tasks are targeted to same file.
 - When I bring you an issue, your job is not to fix it directly. Instead, open a brief discussion: ask clarifying questions, explore the problem space, and propose industry best-practice solutions. Always lean toward the approach that reflects current standards, and walk me through the reasoning so we decide together.
 ## Database
 

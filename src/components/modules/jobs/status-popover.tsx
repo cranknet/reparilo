@@ -4,6 +4,7 @@ import type { Job } from "@shared/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useJobsStore } from "@/stores/jobs";
+import { useToastStore } from "@/stores/toast";
 import StatusBadge from "./status-badge";
 
 const REQUIRES_REASON: JobStatusType[] = ["ON_HOLD", "CANCELLED"];
@@ -16,12 +17,16 @@ interface StatusPopoverProps {
 export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
   const { t } = useTranslation();
   const transitionStatus = useJobsStore((s) => s.transitionStatus);
+  const undoToast = useToastStore((s) => s.undoToast);
+  const regularToast = useToastStore((s) => s.toast);
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState<JobStatusType | null>(null);
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const [focusedIndex, setFocusedIndex] = useState(0);
 
   const availableStatuses = JOB_STATUS_FLOW[job.status] ?? [];
 
@@ -70,10 +75,19 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
       }
       setLoading(true);
       setError(null);
+      const previousStatus = job.status;
       transitionStatus(job.id, status)
         .then(() => {
           setOpen(false);
           onChanged?.();
+          undoToast("job_status_success", "undo", () => {
+            transitionStatus(job.id, previousStatus)
+              .then(() => {
+                onChanged?.();
+                regularToast("job_status_undone");
+              })
+              .catch(() => {});
+          });
         })
         .catch((err: unknown) => {
           setError(
@@ -81,10 +95,19 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
               ? err.message
               : t("jobs_status_change_error_unknown")
           );
+          regularToast("job_status_failed", "error");
         })
         .finally(() => setLoading(false));
     },
-    [job.id, transitionStatus, onChanged, t]
+    [
+      job.id,
+      job.status,
+      transitionStatus,
+      onChanged,
+      t,
+      undoToast,
+      regularToast,
+    ]
   );
 
   const handleConfirmReason = useCallback(async () => {
@@ -93,28 +116,54 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
     }
     setLoading(true);
     setError(null);
+    const previousStatus = job.status;
     try {
       await transitionStatus(job.id, pending, reason.trim() || undefined);
       setOpen(false);
       setPending(null);
       setReason("");
       onChanged?.();
+      undoToast("job_status_success", "undo", () => {
+        transitionStatus(job.id, previousStatus)
+          .then(() => {
+            onChanged?.();
+            regularToast("job_status_undone");
+          })
+          .catch(() => {});
+      });
     } catch (err: unknown) {
       setError(
         err instanceof Error
           ? err.message
           : t("jobs_status_change_error_unknown")
       );
+      regularToast("job_status_failed", "error");
     } finally {
       setLoading(false);
     }
-  }, [pending, reason, job.id, transitionStatus, onChanged, t]);
+  }, [
+    pending,
+    reason,
+    job.id,
+    job.status,
+    transitionStatus,
+    onChanged,
+    t,
+    undoToast,
+    regularToast,
+  ]);
 
   const handleCancelReason = useCallback(() => {
     setPending(null);
     setReason("");
     setError(null);
   }, []);
+
+  useEffect(() => {
+    if (open && !pending) {
+      listRef.current?.focus();
+    }
+  }, [open, pending]);
 
   if (availableStatuses.length === 0) {
     return <StatusBadge status={job.status} />;
@@ -126,7 +175,10 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
         aria-expanded={open}
         aria-haspopup="listbox"
         className="flex items-center gap-1.5 rounded-full transition-colors hover:brightness-95"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => {
+          setOpen((prev) => !prev);
+          setFocusedIndex(0);
+        }}
         type="button"
       >
         <StatusBadge status={job.status} />
@@ -137,18 +189,43 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
 
       {open && (
         <div
+          aria-activedescendant={
+            open && !pending ? `status-option-${focusedIndex}` : undefined
+          }
           aria-label={t("jobs_status_change_select_status")}
           className="absolute end-0 top-full z-30 mt-2 w-56 overflow-hidden rounded-xl bg-surface-container-lowest shadow-lg ring-1 ring-outline-variant"
           role="listbox"
+          tabIndex="0"
         >
           {!pending && (
-            <ul className="py-1">
-              {availableStatuses.map((status) => (
+            <ul
+              className="py-1"
+              onKeyDown={(e) => {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setFocusedIndex((prev) =>
+                    Math.min(prev + 1, availableStatuses.length - 1)
+                  );
+                } else if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setFocusedIndex((prev) => Math.max(prev - 1, 0));
+                } else if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  const status = availableStatuses[focusedIndex];
+                  if (status) {
+                    handleSelect(status);
+                  }
+                }
+              }}
+              ref={listRef}
+            >
+              {availableStatuses.map((status, index) => (
                 <li key={status}>
                   <button
                     aria-selected={status === job.status}
-                    className="flex w-full items-center gap-2 px-4 py-2.5 text-start transition-colors hover:bg-surface-container-high"
+                    className={`flex w-full items-center gap-2 px-4 py-2.5 text-start transition-colors hover:bg-surface-container-high ${focusedIndex === index ? "bg-surface-container-high ring-2 ring-primary/30 ring-inset" : ""}`}
                     disabled={loading}
+                    id={`status-option-${index}`}
                     onClick={() => handleSelect(status)}
                     role="option"
                     type="button"

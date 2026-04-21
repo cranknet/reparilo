@@ -141,7 +141,7 @@ function formatTimeAgo(
 
 export default function ProfilePage() {
   const { t, i18n } = useTranslation();
-  const user = useAuthStore((s) => s.user);
+  const _user = useAuthStore((s) => s.user);
   const role = useAuthStore((s) => s.role);
   const navigate = useNavigate();
   const {
@@ -171,14 +171,27 @@ export default function ProfilePage() {
     return "en";
   }
 
-  const [personalForm, setPersonalForm] = useState({
-    name: user?.name || user?.username || "",
-    email: user?.email || "",
-    language: detectLanguage(),
-    username: user?.username || "",
-  });
+  const prevUserIdRef = useRef<string>("");
 
-  const [personalInitial, setPersonalInitial] = useState(personalForm);
+  const personalFormDefault = {
+    name: displayUser.name || displayUser.username || "",
+    email: displayUser.email || "",
+    language: detectLanguage(),
+    username: displayUser.username || "",
+  };
+
+  const [personalForm, setPersonalForm] = useState(personalFormDefault);
+  const [personalInitial, setPersonalInitial] = useState(personalFormDefault);
+
+  useEffect(() => {
+    if (displayUser.id && displayUser.id !== prevUserIdRef.current) {
+      prevUserIdRef.current = displayUser.id;
+    }
+    if (displayUser.id && !personalDirty) {
+      setPersonalForm(personalFormDefault);
+      setPersonalInitial(personalFormDefault);
+    }
+  }, [displayUser.id, personalFormDefault, personalDirty]);
 
   const [securityForm, setSecurityForm] = useState({
     currentPassword: "",
