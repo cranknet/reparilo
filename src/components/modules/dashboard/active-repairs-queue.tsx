@@ -94,7 +94,7 @@ export default function ActiveRepairsQueue({ jobs }: ActiveRepairsQueueProps) {
                       {job.completedAt ?? job.estimatedCompletion}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-end">
                     <p className="font-bold text-on-surface-variant text-xs uppercase">
                       {t("technician")}
                     </p>

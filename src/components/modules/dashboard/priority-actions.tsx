@@ -38,7 +38,7 @@ export default function PriorityActions({ actions }: PriorityActionsProps) {
       <div className="space-y-3">
         {actions.map((action) => (
           <button
-            className={`flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors hover:bg-surface-container-high ${VARIANT_STYLES[action.variant]}`}
+            className={`flex w-full items-center gap-3 rounded-xl p-3 text-start transition-colors hover:bg-surface-container-high ${VARIANT_STYLES[action.variant]}`}
             key={action.labelKey}
             type="button"
           >

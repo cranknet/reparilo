@@ -17,7 +17,7 @@ export default function JobsTable({ jobs }: JobsTableProps) {
   return (
     <div className="overflow-hidden rounded-xl bg-surface-container-lowest">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] border-collapse text-left">
+        <table className="w-full min-w-[640px] border-collapse text-start">
           <thead>
             <tr className="bg-surface-container-low">
               <th className="hidden p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-wide md:table-cell">
@@ -35,7 +35,7 @@ export default function JobsTable({ jobs }: JobsTableProps) {
               <th className="p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-wide">
                 {t("technician")}
               </th>
-              <th className="p-4 text-right font-body font-bold text-on-surface-variant text-xs uppercase tracking-wide">
+              <th className="p-4 text-end font-body font-bold text-on-surface-variant text-xs uppercase tracking-wide">
                 <span className="sr-only">{t("actions")}</span>
               </th>
             </tr>
@@ -119,7 +119,7 @@ export default function JobsTable({ jobs }: JobsTableProps) {
                     )}
                   </span>
                 </td>
-                <td className="p-4 text-right">
+                <td className="p-4 text-end">
                   {/* biome-ignore lint/a11y/useKeyWithClickEvents: stopPropagation only */}
                   {/* biome-ignore lint/a11y/noStaticElementInteractions: wrapper to prevent row click */}
                   {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: stopPropagation only */}

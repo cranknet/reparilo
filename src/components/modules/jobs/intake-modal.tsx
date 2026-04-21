@@ -83,7 +83,7 @@ function PhotoUploadZone({
               add_a_photo
             </span>
           </div>
-          <div className="text-left">
+          <div className="text-start">
             <p className="font-bold font-headline text-on-surface text-sm">
               {t("intake.photo_upload_title")}
             </p>

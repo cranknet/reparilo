@@ -9,7 +9,7 @@ export default function QuickIntakeForm() {
     <div className="overflow-hidden rounded-xl border-primary border-t-4 bg-surface-container-lowest shadow-premium">
       <button
         aria-expanded={expanded}
-        className="flex w-full items-center justify-between p-6 text-left"
+        className="flex w-full items-center justify-between p-6 text-start"
         onClick={() => setExpanded(!expanded)}
         type="button"
       >

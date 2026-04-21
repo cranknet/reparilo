@@ -31,7 +31,7 @@ export default function RepairTable({ repairs }: RepairTableProps) {
   return (
     <div className="overflow-hidden rounded-2xl bg-surface-container-low">
       <div className="hidden overflow-x-auto md:block">
-        <table className="w-full min-w-[640px] border-collapse text-left">
+        <table className="w-full min-w-[640px] border-collapse text-start">
           <thead>
             <tr className="bg-surface-container-high/30">
               <th
@@ -105,7 +105,7 @@ export default function RepairTable({ repairs }: RepairTableProps) {
                     {repair.duration}
                   </span>
                 </td>
-                <td className="p-4 text-right">
+                <td className="p-4 text-end">
                   <button
                     aria-label={t("edit_repair", { name: repair.name })}
                     className="flex h-11 w-11 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"

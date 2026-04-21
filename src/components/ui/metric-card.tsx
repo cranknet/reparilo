@@ -43,7 +43,7 @@ export function MetricCard({
 
   const sharedClass = `relative overflow-hidden rounded-xl bg-surface-container-low p-5 transition-all ${
     onClick
-      ? "cursor-pointer hover:bg-surface-container-high active:scale-[0.98] w-full text-left"
+      ? "cursor-pointer hover:bg-surface-container-high active:scale-[0.98] w-full text-start"
       : ""
   }`;
 

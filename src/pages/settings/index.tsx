@@ -1070,7 +1070,7 @@ export default function SettingsPage() {
             <button
               aria-controls={panelId(key)}
               aria-selected={activeTab === key}
-              className={`flex flex-col items-center gap-0.5 rounded-xl px-1 py-2.5 text-center transition-all lg:flex-row lg:gap-2.5 lg:px-4 lg:py-3 lg:text-left ${
+              className={`flex flex-col items-center gap-0.5 rounded-xl px-1 py-2.5 text-center transition-all lg:flex-row lg:gap-2.5 lg:px-4 lg:py-3 lg:text-start ${
                 activeTab === key
                   ? "bg-primary/10 font-bold text-primary"
                   : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"

@@ -60,7 +60,7 @@ export default function JobPipeline({
       <div className="space-y-3">
         {PIPELINE_ITEMS.map(({ status, color, descriptionKey }) => (
           <button
-            className={`flex w-full cursor-pointer items-center justify-between rounded-lg p-3 text-left transition-all hover:bg-surface-container-low ${
+            className={`flex w-full cursor-pointer items-center justify-between rounded-lg p-3 text-start transition-all hover:bg-surface-container-low ${
               status === JobStatus.IN_REPAIR
                 ? "bg-surface-container-highest ring-1 ring-surface-container-low"
                 : ""
@@ -71,7 +71,7 @@ export default function JobPipeline({
           >
             <div className="flex items-center gap-3">
               <div className={`h-2.5 w-2.5 rounded-full ${color}`} />
-              <div className="text-left">
+              <div className="text-start">
                 <p className="font-bold text-on-surface text-sm">
                   {t(`status.${status}`)}
                 </p>

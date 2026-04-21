@@ -164,7 +164,7 @@ function LookupForm({
                   verified
                 </span>
               </div>
-              <div className="text-left">
+              <div className="text-start">
                 <p className="font-label text-on-surface-variant text-xs uppercase tracking-widest">
                   {t("tracking_certified_parts")}
                 </p>
@@ -179,7 +179,7 @@ function LookupForm({
                   shutter_speed
                 </span>
               </div>
-              <div className="text-left">
+              <div className="text-start">
                 <p className="font-label text-on-surface-variant text-xs uppercase tracking-widest">
                   {t("tracking_fast_turnaround")}
                 </p>
@@ -256,7 +256,7 @@ function StatusView({
                     {t("tracking_tracker_active")}
                   </span>
                 </div>
-                <div className="text-right">
+                <div className="text-end">
                   <p className="font-label text-on-surface-variant text-xs uppercase tracking-wider">
                     {t("tracking_time_in_shop")}
                   </p>
