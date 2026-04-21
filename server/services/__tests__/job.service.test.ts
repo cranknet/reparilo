@@ -21,7 +21,7 @@ vi.mock("../audit.service.js", () => ({
 function mockPrisma(
   overrides: Partial<Record<keyof PrismaClient, unknown>> = {}
 ) {
-  return {
+  const mock = {
     job: {
       findUnique: vi.fn(),
       findFirst: vi.fn(),
@@ -45,9 +45,12 @@ function mockPrisma(
       upsert: vi.fn(),
       ...((overrides as Record<string, unknown>).device || {}),
     },
-    $transaction: vi.fn((callback) => callback(mockPrisma(overrides))),
+    $transaction: vi.fn((callback: (client: typeof mock) => Promise<unknown>) =>
+      callback(mock)
+    ),
     ...overrides,
-  } as unknown as PrismaClient;
+  };
+  return mock as unknown as PrismaClient;
 }
 
 describe("computeFinalCost", () => {

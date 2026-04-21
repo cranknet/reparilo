@@ -203,6 +203,8 @@ describe("remove", () => {
     const result = await remove(prisma, "job-1", "repair-1", "user-1");
 
     expect(result).toBe(true);
-    // delete is called inside $transaction, so we just verify the result
+    expect(prisma.jobRepair.delete).toHaveBeenCalledWith({
+      where: { id: "repair-1" },
+    });
   });
 });
