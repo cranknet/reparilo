@@ -47,6 +47,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 }))
               : undefined,
         });
+        window.open(`/api/receipts/${job.id}/label`, "_blank");
         if (data.photos.length > 0) {
           await Promise.allSettled(
             data.photos.map((file) => {
