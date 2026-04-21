@@ -104,7 +104,7 @@ export default function JobRepairsSection({
         </h2>
         {!isTerminal && (
           <button
-            className="flex items-center gap-1 rounded-lg px-3 py-1.5 font-bold font-label text-primary text-xs uppercase tracking-wider transition-colors hover:bg-surface-container-high"
+            className="flex min-h-[44px] items-center gap-1 rounded-lg px-3 font-bold font-label text-primary text-xs uppercase tracking-wider transition-colors hover:bg-surface-container-high"
             onClick={() => setShowForm(!showForm)}
             type="button"
           >
@@ -122,7 +122,7 @@ export default function JobRepairsSection({
             selectedIds={selectedIds}
           />
           {selectedRepair && (
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
               <div className="min-w-0 flex-1">
                 <p className="font-bold font-headline text-on-surface text-sm">
                   {selectedRepair.name}
@@ -133,7 +133,7 @@ export default function JobRepairsSection({
               </div>
               <div className="flex items-center gap-1">
                 <input
-                  className="w-24 rounded-xl border-none bg-surface-container-lowest px-3 py-2 font-body text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-28 rounded-xl border-none bg-surface-container-lowest px-3 py-2 font-body text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/20"
                   min="0"
                   onChange={(e) => setPrice(e.target.value)}
                   step="0.01"
@@ -145,7 +145,7 @@ export default function JobRepairsSection({
                 </span>
               </div>
               <button
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
+                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
                 onClick={() => {
                   setSelectedRepair(null);
                   setPrice("");
@@ -161,7 +161,7 @@ export default function JobRepairsSection({
           )}
           <div className="flex justify-end gap-2">
             <button
-              className="rounded-xl px-3 py-2 font-bold font-headline text-on-surface-variant text-xs transition-colors hover:bg-surface-container-high"
+              className="min-h-[44px] rounded-xl px-3 py-2 font-bold font-headline text-on-surface-variant text-xs transition-colors hover:bg-surface-container-high"
               onClick={() => {
                 setShowForm(false);
                 setSelectedRepair(null);
@@ -172,7 +172,7 @@ export default function JobRepairsSection({
               {t("cancel")}
             </button>
             <button
-              className="flex items-center gap-1 rounded-xl bg-primary px-4 py-2 font-bold font-headline text-on-primary text-xs transition-colors disabled:opacity-60"
+              className="flex min-h-[44px] items-center gap-1 rounded-xl bg-primary px-4 py-2 font-bold font-headline text-on-primary text-xs transition-colors disabled:opacity-60"
               disabled={loading || !selectedRepair || !price}
               onClick={handleAddRepair}
               type="button"
@@ -201,7 +201,7 @@ export default function JobRepairsSection({
           </p>
           {!isTerminal && (
             <button
-              className="mt-3 flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 font-bold font-label text-on-primary text-xs uppercase tracking-wider transition-colors hover:bg-primary-container hover:text-on-primary-container"
+              className="mt-3 flex min-h-[44px] items-center gap-1 rounded-lg bg-primary px-3 font-bold font-label text-on-primary text-xs uppercase tracking-wider transition-colors hover:bg-primary-container hover:text-on-primary-container"
               onClick={() => setShowForm(true)}
               type="button"
             >
@@ -249,25 +249,25 @@ function RemoveRepairButton({ onRemove }: { onRemove: () => void }) {
 
   if (confirming) {
     return (
-      <div className="flex items-center gap-1">
+      <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-1">
         <span className="font-label text-[10px] text-error">
           {t("confirm_remove")}
         </span>
         <button
-          className="flex h-7 w-7 items-center justify-center rounded-lg bg-error text-on-error transition-colors hover:bg-on-error hover:text-error"
+          className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg bg-error text-on-error transition-colors hover:bg-on-error hover:text-error"
           onClick={() => {
             onRemove();
             setConfirming(false);
           }}
-          title={t("jobs_repairs_remove")}
+          title={t("cancel")}
           type="button"
         >
           <span className="material-symbols-outlined text-sm">check</span>
         </button>
         <button
-          className="flex h-7 w-7 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high"
+          className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high"
           onClick={() => setConfirming(false)}
-          title={t("jobs_repairs_remove")}
+          title={t("cancel")}
           type="button"
         >
           <span className="material-symbols-outlined text-sm">close</span>
@@ -278,7 +278,7 @@ function RemoveRepairButton({ onRemove }: { onRemove: () => void }) {
 
   return (
     <button
-      className="flex h-7 w-7 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
+      className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
       onClick={() => setConfirming(true)}
       title={t("jobs_repairs_remove")}
       type="button"

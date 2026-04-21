@@ -58,9 +58,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             data.photos.map((file) => {
               const formData = new FormData();
               formData.append("file", file);
-              return api.post(`/jobs/${job.id}/photos`, formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-              });
+              return api.post(`/jobs/${job.id}/photos`, formData);
             })
           );
         }

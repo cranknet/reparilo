@@ -65,7 +65,7 @@ export default function JobPartsSection({
         </h2>
         {!isTerminal && (
           <button
-            className="flex items-center gap-1 rounded-lg px-3 py-1.5 font-bold font-label text-primary text-xs uppercase tracking-wider transition-colors hover:bg-surface-container-high"
+            className="flex min-h-[44px] items-center gap-1 rounded-lg px-3 font-bold font-label text-primary text-xs uppercase tracking-wider transition-colors hover:bg-surface-container-high"
             onClick={() => setShowAddDialog(true)}
             type="button"
           >
@@ -88,7 +88,7 @@ export default function JobPartsSection({
           </p>
           {!isTerminal && (
             <button
-              className="mt-3 flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 font-bold font-label text-on-primary text-xs uppercase tracking-wider transition-colors hover:bg-primary-container hover:text-on-primary-container"
+              className="mt-3 flex min-h-[44px] items-center gap-1 rounded-lg bg-primary px-3 font-bold font-label text-on-primary text-xs uppercase tracking-wider transition-colors hover:bg-primary-container hover:text-on-primary-container"
               onClick={() => setShowAddDialog(true)}
               type="button"
             >
@@ -153,12 +153,12 @@ function RemovePartButton({ onRemove }: { onRemove: () => void }) {
 
   if (confirming) {
     return (
-      <div className="flex items-center gap-1">
+      <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-1">
         <span className="font-label text-[10px] text-error">
           {t("confirm_remove")}
         </span>
         <button
-          className="flex h-7 w-7 items-center justify-center rounded-lg bg-error text-on-error transition-colors hover:bg-on-error hover:text-error"
+          className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg bg-error text-on-error transition-colors hover:bg-on-error hover:text-error"
           onClick={() => {
             onRemove();
             setConfirming(false);
@@ -169,7 +169,7 @@ function RemovePartButton({ onRemove }: { onRemove: () => void }) {
           <span className="material-symbols-outlined text-sm">check</span>
         </button>
         <button
-          className="flex h-7 w-7 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high"
+          className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high"
           onClick={() => setConfirming(false)}
           title={t("cancel")}
           type="button"
@@ -182,7 +182,7 @@ function RemovePartButton({ onRemove }: { onRemove: () => void }) {
 
   return (
     <button
-      className="flex h-7 w-7 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
+      className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
       onClick={() => setConfirming(true)}
       title={t("jobs_parts_remove")}
       type="button"

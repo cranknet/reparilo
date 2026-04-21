@@ -157,6 +157,16 @@ h3,
   }
 }
 
+button:focus-visible,
+a:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+input:focus-visible,
+[role="option"]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 @supports not (min-height: 100dvh) {
   .min-h-dvh {
     min-height: 100vh;

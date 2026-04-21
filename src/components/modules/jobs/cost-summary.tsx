@@ -56,7 +56,7 @@ export default function CostSummary({
             </span>
           </div>
         )}
-        <div className="border-outline-variant border-t pt-3">
+        <div className="mt-5 pt-3">
           <div className="flex items-baseline justify-between">
             <span className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
               {t("jobs_detail_final_cost")}
@@ -67,7 +67,7 @@ export default function CostSummary({
           </div>
         </div>
         {margin !== undefined && (
-          <div className="border-outline-variant border-t pt-3">
+          <div className="mt-5 pt-3">
             <div className="flex items-baseline justify-between">
               <span className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
                 {t("jobs_detail_margin")}

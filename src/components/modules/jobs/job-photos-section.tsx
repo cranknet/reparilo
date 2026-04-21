@@ -97,7 +97,7 @@ export default function JobPhotosSection({
           </p>
           {!isTerminal && (
             <button
-              className="mt-3 flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 font-bold font-label text-on-primary text-xs uppercase tracking-wider transition-colors hover:bg-primary-container hover:text-on-primary-container disabled:opacity-60"
+              className="mt-3 flex min-h-[44px] items-center gap-1 rounded-lg bg-primary px-3 font-bold font-label text-on-primary text-xs uppercase tracking-wider transition-colors hover:bg-primary-container hover:text-on-primary-container disabled:opacity-60"
               disabled={uploading}
               onClick={() => fileInputRef.current?.click()}
               type="button"
@@ -134,7 +134,7 @@ export default function JobPhotosSection({
           {t("intake.device_photos")}
         </h2>
         <button
-          className="flex items-center gap-1 rounded-lg px-2 py-1 font-bold font-label text-xs uppercase tracking-wider transition-colors hover:bg-surface-container-high"
+          className="flex min-h-[44px] items-center gap-1 rounded-lg px-3 py-1 font-bold font-label text-xs uppercase tracking-wider transition-colors hover:bg-surface-container-high"
           onClick={() => {
             setEditMode(!editMode);
             if (editMode) {
@@ -204,36 +204,108 @@ export default function JobPhotosSection({
       </div>
 
       {lightboxUrl && (
-        <>
-          <button
-            aria-label={t("close_modal")}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/60"
-            onClick={() => setLightboxUrl(null)}
-            type="button"
-          >
-            {/* biome-ignore lint/correctness/useImageSize: lightbox image uses CSS sizing */}
-            <img
-              alt={t("intake.device_photos")}
-              className="max-h-[85vh] max-w-[90vw] rounded-xl shadow-2xl"
-              src={lightboxUrl}
-            />
-          </button>
-          <LightboxEscape onClose={() => setLightboxUrl(null)} />
-        </>
+        <LightboxOverlay
+          onClose={() => setLightboxUrl(null)}
+          src={lightboxUrl}
+        />
       )}
     </>
   );
 }
 
-function LightboxEscape({ onClose }: { onClose: () => void }) {
+function LightboxOverlay({
+  onClose,
+  src,
+}: {
+  onClose: () => void;
+  src: string;
+}) {
+  const { t } = useTranslation();
+  const overlayRef = useRef<HTMLButtonElement>(null);
+  const swipeStart = useRef<{ y: number; time: number } | null>(null);
+
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    overlayRef.current?.focus();
+
+    function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         onClose();
+        return;
       }
+      if (e.key === "Tab" && overlayRef.current) {
+        e.preventDefault();
+        overlayRef.current.focus();
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+      previouslyFocused?.focus();
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
-  return null;
+
+  function handleTouchStart(e: React.TouchEvent) {
+    swipeStart.current = {
+      y: e.touches[0].clientY,
+      time: Date.now(),
+    };
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (!swipeStart.current) {
+      return;
+    }
+    const deltaY = e.changedTouches[0].clientY - swipeStart.current.y;
+    const elapsed = Date.now() - swipeStart.current.time;
+    swipeStart.current = null;
+    if (elapsed < 500 && Math.abs(deltaY) > 80) {
+      onClose();
+    }
+  }
+
+  function handleOverlayClick(e: React.MouseEvent) {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  }
+
+  function handleOverlayTouchEnd(e: React.TouchEvent) {
+    if (e.target === e.currentTarget) {
+      handleTouchEnd(e);
+      return;
+    }
+  }
+
+  function handleOverlayTouchStart(e: React.TouchEvent) {
+    if (e.target === e.currentTarget) {
+      handleTouchStart(e);
+    }
+  }
+
+  return (
+    <button
+      aria-label={t("close_modal")}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/60"
+      onClick={handleOverlayClick}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          onClose();
+        }
+      }}
+      onTouchEnd={handleOverlayTouchEnd}
+      onTouchStart={handleOverlayTouchStart}
+      ref={overlayRef}
+      type="button"
+    >
+      {/* biome-ignore lint/correctness/useImageSize: lightbox image uses CSS sizing */}
+      <img
+        alt={t("intake.device_photos")}
+        className="max-h-[85vh] max-w-[90vw] rounded-xl shadow-2xl"
+        src={src}
+      />
+    </button>
+  );
 }

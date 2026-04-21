@@ -81,9 +81,7 @@ export function useProfileMultiUser(role: string) {
     setLocalImage(blobUrl);
     setAvatarUploading(true);
     try {
-      const res = await api.post(`/users/${userId}/avatar`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const res = await api.post(`/users/${userId}/avatar`, formData);
       if (blobUrlRef.current) {
         URL.revokeObjectURL(blobUrlRef.current);
         blobUrlRef.current = null;

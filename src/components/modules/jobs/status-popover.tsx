@@ -180,7 +180,7 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
             open && !pending ? `status-option-${focusedIndex}` : undefined
           }
           aria-label={t("jobs_status_change_select_status")}
-          className="absolute end-0 top-full z-30 mt-2 w-56 overflow-hidden rounded-xl bg-surface-container-lowest shadow-lg ring-1 ring-outline-variant"
+          className="absolute end-0 top-full z-30 mt-2 w-56 overflow-hidden rounded-xl bg-surface-container-lowest shadow-lg ring-1 ring-outline-variant max-sm:start-4 max-sm:end-4 max-sm:w-auto"
           onKeyDown={(e) => {
             if (pending) {
               return;
@@ -258,7 +258,7 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
               )}
               <div className="flex justify-end gap-2">
                 <button
-                  className="rounded-xl px-4 py-2 font-bold font-headline text-on-surface-variant text-xs transition-colors hover:bg-surface-container-high"
+                  className="min-h-[44px] rounded-xl px-4 py-2 font-bold font-headline text-on-surface-variant text-xs transition-colors hover:bg-surface-container-high"
                   disabled={loading}
                   onClick={handleCancelReason}
                   type="button"
@@ -266,7 +266,7 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
                   {t("cancel")}
                 </button>
                 <button
-                  className="flex items-center gap-1 rounded-xl bg-primary px-4 py-2 font-bold font-headline text-on-primary text-xs transition-colors hover:bg-primary-container disabled:opacity-60"
+                  className="flex min-h-[44px] items-center gap-1 rounded-xl bg-primary px-4 py-2 font-bold font-headline text-on-primary text-xs transition-colors hover:bg-primary-container disabled:opacity-60"
                   disabled={loading}
                   onClick={handleConfirmReason}
                   type="button"

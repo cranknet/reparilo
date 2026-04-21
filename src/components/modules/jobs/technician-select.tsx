@@ -63,7 +63,9 @@ export default function TechnicianSelect({
   if (isLoading) {
     return (
       <span
+        aria-busy="true"
         className={`font-body text-on-surface-variant ${size === "sm" ? "text-xs" : "text-sm"}`}
+        role="status"
       >
         {t("loading")}
       </span>

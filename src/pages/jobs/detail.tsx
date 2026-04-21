@@ -13,6 +13,7 @@ import StatusPopover from "@/components/modules/jobs/status-popover";
 import TechnicianSelect from "@/components/modules/jobs/technician-select";
 import { formatDzd } from "@/lib/format";
 import { useJobsStore } from "@/stores/jobs";
+import { useToastStore } from "@/stores/toast";
 
 function fmt(n: number): string {
   return `${formatDzd(n)} DZD`;
@@ -24,7 +25,6 @@ export default function JobDetailPage() {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [trackCopied, setTrackCopied] = useState(false);
   const [showEditCustomer, setShowEditCustomer] = useState(false);
 
   const fetchJob = useCallback(async () => {
@@ -47,21 +47,18 @@ export default function JobDetailPage() {
     fetchJob();
   }, [fetchJob]);
 
+  const toast = useToastStore((s) => s.toast);
+
   const handleCopyTrackLink = useCallback(() => {
     if (!job?.jobCode) {
       return;
     }
     const url = `${window.location.origin}/tracking/${job.jobCode}`;
     navigator.clipboard.writeText(url).then(
-      () => {
-        setTrackCopied(true);
-        setTimeout(() => setTrackCopied(false), 2000);
-      },
-      (err) => {
-        console.error("Failed to copy tracking link:", err);
-      }
+      () => toast("jobs_detail_track_link_copied"),
+      (err) => console.error("Failed to copy tracking link:", err)
     );
-  }, [job?.jobCode]);
+  }, [job?.jobCode, toast]);
 
   const handleCustomerSaved = useCallback(
     (updated: Customer) => {
@@ -132,7 +129,7 @@ export default function JobDetailPage() {
     | undefined;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:max-w-4xl">
       <Link
         className="inline-flex min-h-[44px] items-center gap-1 font-bold text-primary text-sm hover:underline"
         to="/jobs"
@@ -159,24 +156,13 @@ export default function JobDetailPage() {
               </p>
             )}
           </div>
-          <div className="flex shrink-0 items-center gap-2 pt-1">
-            <span className="font-label text-on-surface-variant text-xs uppercase sm:hidden">
-              {t("status_label")}
-            </span>
+          <div className="flex shrink-0 items-center pt-1">
             <StatusPopover job={job} onChanged={() => fetchJob()} />
           </div>
         </div>
 
-        {/* Big spec-sheet numbers */}
+        {/* Spec-sheet: estimated cost & delivery */}
         <div className="mt-6 grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-3">
-          <div>
-            <p className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
-              {t("jobs_detail_final_cost")}
-            </p>
-            <p className="mt-0.5 font-extrabold font-headline text-2xl text-primary tracking-tight">
-              {fmt(finalCost)}
-            </p>
-          </div>
           <div>
             <p className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
               {t("intake.estimated_cost")}
@@ -201,10 +187,10 @@ export default function JobDetailPage() {
           )}
         </div>
 
-        {/* Primary actions */}
-        <div className="mt-6 flex flex-wrap gap-2">
+        {/* Actions */}
+        <div className="mt-6 flex flex-wrap items-center gap-3">
           <button
-            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-primary px-4 font-bold font-headline text-on-primary text-sm transition-colors hover:bg-primary-container hover:text-on-primary-container"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-primary px-5 font-bold font-headline text-on-primary text-sm transition-colors hover:bg-primary-container hover:text-on-primary-container"
             onClick={() =>
               window.open(`/api/receipts/${job.id}/receipt`, "_blank")
             }
@@ -214,7 +200,7 @@ export default function JobDetailPage() {
             {t("jobs_detail_print")}
           </button>
           <Link
-            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-surface-container-low px-4 font-bold font-headline text-on-surface text-sm transition-colors hover:bg-surface-container hover:text-on-surface"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-surface-container-low px-5 font-bold font-headline text-on-surface text-sm transition-colors hover:bg-surface-container hover:text-on-surface"
             to={`/tracking/${job.jobCode}`}
           >
             <span className="material-symbols-outlined text-[18px]">
@@ -222,30 +208,28 @@ export default function JobDetailPage() {
             </span>
             {t("jobs_detail_track")}
           </Link>
-        </div>
 
-        {/* Secondary actions */}
-        <div className="mt-3 flex flex-wrap gap-2">
+          <span
+            aria-hidden="true"
+            className="hidden h-6 w-px bg-outline-variant/40 sm:block"
+          />
+
           <button
-            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-surface-container-low px-3 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-on-surface"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl px-2 text-on-surface-variant text-sm transition-colors hover:bg-surface-container-high hover:text-on-surface"
             onClick={handleCopyTrackLink}
             type="button"
           >
-            <span className="material-symbols-outlined text-sm">
-              {trackCopied ? "check" : "share"}
-            </span>
-            {trackCopied
-              ? t("jobs_detail_track_link_copied")
-              : t("jobs_detail_share")}
+            <span className="material-symbols-outlined text-[18px]">share</span>
+            {t("jobs_detail_share")}
           </button>
           <button
-            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-surface-container-low px-3 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-on-surface"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl px-2 text-on-surface-variant text-sm transition-colors hover:bg-surface-container-high hover:text-on-surface"
             onClick={() =>
               window.open(`/api/receipts/${job.id}/label`, "_blank")
             }
             type="button"
           >
-            <span className="material-symbols-outlined text-sm">label</span>
+            <span className="material-symbols-outlined text-[18px]">label</span>
             {t("jobs_detail_print_label")}
           </button>
         </div>
@@ -299,23 +283,23 @@ export default function JobDetailPage() {
         </div>
       </div>
 
-      <div className="mt-8">
+      {/* ── Visual record: photos + history ── */}
+      <div className="mt-8 rounded-2xl bg-surface-container p-6">
         <JobPhotosSection job={job} onChanged={() => fetchJob()} />
+        <div className="mt-8">
+          <h2 className="mb-4 font-bold font-headline text-base text-on-surface">
+            {t("jobs_detail_history")}
+          </h2>
+          <StatusHistoryTimeline jobId={job.id} />
+        </div>
       </div>
 
-      <div className="mt-8">
-        <h2 className="mb-4 font-bold font-headline text-base text-on-surface">
-          {t("jobs_detail_history")}
-        </h2>
-        <StatusHistoryTimeline jobId={job.id} />
-      </div>
-
-      <div className="mt-8">
+      {/* ── Work breakdown: parts + repairs ── */}
+      <div className="mt-8 rounded-2xl bg-surface-container p-6">
         <JobPartsSection job={job} onChanged={() => fetchJob()} />
-      </div>
-
-      <div className="mt-3">
-        <JobRepairsSection job={job} onChanged={() => fetchJob()} />
+        <div className="mt-3">
+          <JobRepairsSection job={job} onChanged={() => fetchJob()} />
+        </div>
       </div>
 
       <div className="mt-8">
