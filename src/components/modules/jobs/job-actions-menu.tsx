@@ -184,13 +184,32 @@ export default function JobActionsMenu({ job }: JobActionsMenuProps) {
             </a>
 
             <button
-              className="flex w-full cursor-not-allowed items-center gap-3 px-4 py-2 font-medium text-on-surface text-sm opacity-30"
-              disabled
-              title="TODO: implement print receipt"
+              className="flex w-full items-center gap-3 px-4 py-2 font-medium text-on-surface text-sm transition-colors hover:bg-surface-container-low"
+              onClick={() => {
+                window.open(
+                  `/api/receipts/${job.rawJob?.id ?? job.id}/receipt`,
+                  "_blank"
+                );
+                close();
+              }}
               type="button"
             >
               <span className="material-symbols-outlined text-lg">print</span>
               <span>{t("job_actions_print_receipt")}</span>
+            </button>
+            <button
+              className="flex w-full items-center gap-3 px-4 py-2 font-medium text-on-surface text-sm transition-colors hover:bg-surface-container-low"
+              onClick={() => {
+                window.open(
+                  `/api/receipts/${job.rawJob?.id ?? job.id}/label`,
+                  "_blank"
+                );
+                close();
+              }}
+              type="button"
+            >
+              <span className="material-symbols-outlined text-lg">label</span>
+              <span>{t("job_actions_print_label")}</span>
             </button>
 
             {canCancel && (
