@@ -568,7 +568,15 @@
     "create_new": "إنشاء جديد",
     "customer_linked": "العميل الحالي مرتبط",
     "error_create_customer": "فشل في إنشاء العميل",
-    "clear_customer": "مسح العميل"
+    "clear_customer": "مسح العميل",
+    "error_search_customer": "البحث غير متاح – حاول مرة أخرى",
+    "error_photo_capture": "تعذر التقاط الصورة — تحقق من الأذونات",
+    "success_title": "تم إنشاء الإصلاح",
+    "success_message": "لقد تم حفظ وظيفتك الجديدة.",
+    "discard_title": "هل تريد تجاهل الإدخال؟",
+    "discard_message": "سيتم فقدان جميع المعلومات المدخلة.",
+    "discard_cancel": "استمر في التحرير",
+    "discard_confirm": "ينبذ"
   },
   "profile_title": "ملفي الشخصي",
   "profile_subtitle": "إدارة حسابك وتفضيلاتك",

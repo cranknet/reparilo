@@ -568,7 +568,15 @@
     "create_new": "Créer nouveau",
     "customer_linked": "Client existant lié",
     "error_create_customer": "Échec de la création du client",
-    "clear_customer": "Client clair"
+    "clear_customer": "Client clair",
+    "error_search_customer": "Recherche indisponible — réessayez",
+    "error_photo_capture": "Impossible de prendre une photo : vérifiez les autorisations",
+    "success_title": "Réparation créée",
+    "success_message": "Votre nouvel emploi a été enregistré.",
+    "discard_title": "Supprimer l'entrée ?",
+    "discard_message": "Toutes les informations saisies seront perdues.",
+    "discard_cancel": "Continuer à modifier",
+    "discard_confirm": "Jeter"
   },
   "profile_title": "Mon profil",
   "profile_subtitle": "Gérez votre compte et vos préférences",

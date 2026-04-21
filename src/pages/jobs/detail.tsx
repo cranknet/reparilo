@@ -91,12 +91,24 @@ export default function JobDetailPage() {
         <p className="mt-2 font-body text-error text-sm">
           {error ?? "Job not found"}
         </p>
-        <Link
-          className="mt-4 inline-block font-bold text-primary text-sm hover:underline"
-          to="/jobs"
-        >
-          {t("jobs_detail_back")}
-        </Link>
+        <div className="mt-4 flex items-center justify-center gap-3">
+          <Link
+            className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-primary px-5 font-bold font-headline text-on-primary text-sm transition-colors hover:bg-primary-container hover:text-on-primary-container"
+            to="/jobs"
+          >
+            {t("jobs_detail_back")}
+          </Link>
+          <button
+            className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-surface-container-high px-5 font-bold font-headline text-on-surface text-sm transition-colors hover:bg-surface-container-highest"
+            onClick={fetchJob}
+            type="button"
+          >
+            <span className="material-symbols-outlined text-[18px]">
+              refresh
+            </span>
+            {t("retry", { defaultValue: "Try again" })}
+          </button>
+        </div>
       </div>
     );
   }
@@ -120,30 +132,34 @@ export default function JobDetailPage() {
     | undefined;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6">
+    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
       <Link
-        className="inline-flex items-center gap-1 font-bold text-primary text-sm hover:underline"
+        className="inline-flex min-h-[44px] items-center gap-1 font-bold text-primary text-sm hover:underline"
         to="/jobs"
       >
         <span className="material-symbols-outlined text-sm">arrow_back</span>
         {t("jobs_detail_back")}
       </Link>
 
-      <div className="mt-6 rounded-2xl bg-surface-container-high p-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <h1 className="font-extrabold font-headline text-lg text-on-surface tracking-tight sm:truncate sm:text-2xl">
+      {/* ── Hero: device, problem, status, cost ── */}
+      <div className="mt-6 rounded-2xl bg-surface-container-high p-6 sm:p-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
+            <p className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
+              {t("intake.device_section")}
+            </p>
+            <h1 className="mt-0.5 font-extrabold font-headline text-2xl text-on-surface tracking-tight sm:text-3xl">
               {[job.device?.brand, job.device?.model]
                 .filter(Boolean)
-                .join(" ") || t("intake.device_section")}
+                .join(" ") || "—"}
             </h1>
             {job.reportedProblem && (
-              <p className="mt-1 line-clamp-2 font-body text-on-surface-variant text-sm">
+              <p className="mt-1.5 line-clamp-2 font-body text-on-surface-variant text-sm leading-relaxed">
                 {job.reportedProblem}
               </p>
             )}
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2 pt-1">
             <span className="font-label text-on-surface-variant text-xs uppercase sm:hidden">
               {t("status_label")}
             </span>
@@ -151,55 +167,21 @@ export default function JobDetailPage() {
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+        {/* Big spec-sheet numbers */}
+        <div className="mt-6 grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-3">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-label text-on-surface-variant text-xs uppercase">
-                {t("customers")}
-              </span>
-              <Can perm={{ customers: ["edit"] }}>
-                <button
-                  className="inline-flex items-center gap-0.5 text-primary text-xs hover:underline"
-                  onClick={() => setShowEditCustomer(true)}
-                  type="button"
-                >
-                  <span className="material-symbols-outlined text-sm">
-                    edit
-                  </span>
-                </button>
-              </Can>
-            </div>
-            <p className="font-body font-medium text-on-surface text-sm">
-              {job.customer?.name}
+            <p className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
+              {t("jobs_detail_final_cost")}
             </p>
-            <p className="font-label text-on-surface-variant text-xs">
-              {job.customer?.phone}
+            <p className="mt-0.5 font-extrabold font-headline text-2xl text-primary tracking-tight">
+              {fmt(finalCost)}
             </p>
-            {job.customer?.email && (
-              <p className="font-label text-on-surface-variant text-xs">
-                {job.customer.email}
-              </p>
-            )}
           </div>
           <div>
-            <span className="font-label text-on-surface-variant text-xs uppercase">
-              {t("technician")}
-            </span>
-            <div className="mt-1">
-              <TechnicianSelect
-                currentTechnicianId={job.technician?.id}
-                currentTechnicianName={job.technician?.name}
-                jobId={job.id}
-                onChanged={() => fetchJob()}
-                size="sm"
-              />
-            </div>
-          </div>
-          <div>
-            <span className="font-label text-on-surface-variant text-xs uppercase">
+            <p className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
               {t("intake.estimated_cost")}
-            </span>
-            <p className="font-bold font-headline text-on-surface text-sm">
+            </p>
+            <p className="mt-0.5 font-bold font-headline text-lg text-on-surface">
               {fmt(
                 typeof job.estimatedCost === "number"
                   ? job.estimatedCost
@@ -209,28 +191,43 @@ export default function JobDetailPage() {
           </div>
           {job.estimatedDate && (
             <div>
-              <span className="font-label text-on-surface-variant text-xs uppercase">
+              <p className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
                 {t("intake.delivery_date")}
-              </span>
-              <p className="font-body font-medium text-on-surface text-sm">
+              </p>
+              <p className="mt-0.5 font-bold font-headline text-lg text-on-surface">
                 {new Date(job.estimatedDate).toLocaleDateString()}
               </p>
             </div>
           )}
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center gap-2">
+        {/* Primary actions */}
+        <div className="mt-6 flex flex-wrap gap-2">
+          <button
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-primary px-4 font-bold font-headline text-on-primary text-sm transition-colors hover:bg-primary-container hover:text-on-primary-container"
+            onClick={() =>
+              window.open(`/api/receipts/${job.id}/receipt`, "_blank")
+            }
+            type="button"
+          >
+            <span className="material-symbols-outlined text-[18px]">print</span>
+            {t("jobs_detail_print")}
+          </button>
           <Link
-            className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 font-bold font-label text-on-primary text-xs transition-colors hover:bg-primary-container hover:text-on-primary-container"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-surface-container-low px-4 font-bold font-headline text-on-surface text-sm transition-colors hover:bg-surface-container hover:text-on-surface"
             to={`/tracking/${job.jobCode}`}
           >
-            <span className="material-symbols-outlined text-sm">
+            <span className="material-symbols-outlined text-[18px]">
               open_in_new
             </span>
             {t("jobs_detail_track")}
           </Link>
+        </div>
+
+        {/* Secondary actions */}
+        <div className="mt-3 flex flex-wrap gap-2">
           <button
-            className="inline-flex items-center gap-1 rounded-full bg-surface-container-low px-3 py-1.5 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-on-surface"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-surface-container-low px-3 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-on-surface"
             onClick={handleCopyTrackLink}
             type="button"
           >
@@ -242,17 +239,7 @@ export default function JobDetailPage() {
               : t("jobs_detail_share")}
           </button>
           <button
-            className="inline-flex items-center gap-1 rounded-full bg-surface-container-low px-3 py-1.5 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-on-surface"
-            onClick={() =>
-              window.open(`/api/receipts/${job.id}/receipt`, "_blank")
-            }
-            type="button"
-          >
-            <span className="material-symbols-outlined text-sm">print</span>
-            {t("jobs_detail_print")}
-          </button>
-          <button
-            className="inline-flex items-center gap-1 rounded-full bg-surface-container-low px-3 py-1.5 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-on-surface"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-surface-container-low px-3 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-on-surface"
             onClick={() =>
               window.open(`/api/receipts/${job.id}/label`, "_blank")
             }
@@ -264,11 +251,59 @@ export default function JobDetailPage() {
         </div>
       </div>
 
-      <div className="mt-10">
+      {/* ── Details strip: customer, technician ── */}
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-2xl bg-surface-container p-5">
+          <div className="flex items-center justify-between">
+            <p className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
+              {t("customers")}
+            </p>
+            <Can perm={{ customers: ["edit"] }}>
+              <button
+                className="inline-flex min-h-[44px] items-center gap-1 rounded-lg px-2 text-primary transition-colors hover:bg-primary/10"
+                onClick={() => setShowEditCustomer(true)}
+                type="button"
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  edit
+                </span>
+                <span className="font-label text-xs">{t("edit")}</span>
+              </button>
+            </Can>
+          </div>
+          <p className="mt-1 font-body font-semibold text-base text-on-surface">
+            {job.customer?.name}
+          </p>
+          <p className="font-label text-on-surface-variant text-sm">
+            {job.customer?.phone}
+          </p>
+          {job.customer?.email && (
+            <p className="font-label text-on-surface-variant text-sm">
+              {job.customer.email}
+            </p>
+          )}
+        </div>
+        <div className="rounded-2xl bg-surface-container p-5">
+          <p className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
+            {t("technician")}
+          </p>
+          <div className="mt-2">
+            <TechnicianSelect
+              currentTechnicianId={job.technician?.id}
+              currentTechnicianName={job.technician?.name}
+              jobId={job.id}
+              onChanged={() => fetchJob()}
+              size="md"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8">
         <JobPhotosSection job={job} onChanged={() => fetchJob()} />
       </div>
 
-      <div className="mt-10">
+      <div className="mt-8">
         <h2 className="mb-4 font-bold font-headline text-base text-on-surface">
           {t("jobs_detail_history")}
         </h2>
@@ -279,7 +314,7 @@ export default function JobDetailPage() {
         <JobPartsSection job={job} onChanged={() => fetchJob()} />
       </div>
 
-      <div className="mt-4">
+      <div className="mt-3">
         <JobRepairsSection job={job} onChanged={() => fetchJob()} />
       </div>
 

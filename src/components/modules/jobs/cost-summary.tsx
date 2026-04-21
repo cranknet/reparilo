@@ -24,13 +24,13 @@ export default function CostSummary({
   const { t } = useTranslation();
   return (
     <div className="rounded-2xl bg-surface-container p-6">
-      <h2 className="mb-4 font-bold font-headline text-base text-on-surface">
+      <h2 className="mb-5 font-bold font-headline text-base text-on-surface">
         {t("jobs_detail_cost_summary")}
       </h2>
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Can perm={{ parts: ["viewCost"] }}>
-          <div className="flex justify-between">
-            <span className="font-body text-on-surface-variant text-sm">
+          <div className="flex items-baseline justify-between">
+            <span className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
               {t("jobs_detail_parts_subtotal")}
             </span>
             <span className="font-body font-medium text-on-surface text-sm">
@@ -38,8 +38,8 @@ export default function CostSummary({
             </span>
           </div>
         </Can>
-        <div className="flex justify-between">
-          <span className="font-body text-on-surface-variant text-sm">
+        <div className="flex items-baseline justify-between">
+          <span className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
             {t("jobs_detail_repairs_subtotal")}
           </span>
           <span className="font-body font-medium text-on-surface text-sm">
@@ -47,8 +47,8 @@ export default function CostSummary({
           </span>
         </div>
         {deposit > 0 && (
-          <div className="flex justify-between">
-            <span className="font-body text-on-surface-variant text-sm">
+          <div className="flex items-baseline justify-between">
+            <span className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
               {t("jobs_detail_deposit")}
             </span>
             <span className="font-body font-medium text-on-surface text-sm">
@@ -56,24 +56,24 @@ export default function CostSummary({
             </span>
           </div>
         )}
-        <div className="border-outline-variant border-t pt-2">
-          <div className="flex justify-between">
-            <span className="font-bold font-headline text-on-surface text-sm">
+        <div className="border-outline-variant border-t pt-3">
+          <div className="flex items-baseline justify-between">
+            <span className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
               {t("jobs_detail_final_cost")}
             </span>
-            <span className="font-extrabold font-headline text-lg text-primary">
+            <span className="font-extrabold font-headline text-2xl text-primary tracking-tight">
               {fmt(finalCost)}
             </span>
           </div>
         </div>
         {margin !== undefined && (
-          <div className="border-outline-variant border-t pt-2">
-            <div className="flex justify-between">
-              <span className="font-bold font-headline text-on-surface text-sm">
+          <div className="border-outline-variant border-t pt-3">
+            <div className="flex items-baseline justify-between">
+              <span className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
                 {t("jobs_detail_margin")}
               </span>
               <span
-                className={`font-extrabold font-headline text-lg ${margin >= 0 ? "text-primary" : "text-error"}`}
+                className={`font-extrabold font-headline text-lg tracking-tight ${margin >= 0 ? "text-primary" : "text-error"}`}
               >
                 {margin >= 0 ? "+" : ""}
                 {fmt(margin)}

@@ -202,7 +202,7 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
             }
           }}
           role="listbox"
-          tabIndex="0"
+          tabIndex={0}
         >
           {!pending && (
             <ul className="py-1" ref={listRef}>

@@ -568,7 +568,15 @@
     "create_new": "Create New",
     "customer_linked": "Existing customer linked",
     "error_create_customer": "Failed to create customer",
-    "clear_customer": "Clear customer"
+    "clear_customer": "Clear customer",
+    "error_search_customer": "Search unavailable — try again",
+    "error_photo_capture": "Could not capture photo — check permissions",
+    "success_title": "Repair Created",
+    "success_message": "Your new job has been saved.",
+    "discard_title": "Discard Entry?",
+    "discard_message": "All information entered will be lost.",
+    "discard_cancel": "Keep Editing",
+    "discard_confirm": "Discard"
   },
   "profile_title": "My Profile",
   "profile_subtitle": "Manage your account and preferences",

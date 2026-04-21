@@ -161,7 +161,7 @@ export default function ProfilePage() {
   const [personalDirty, setPersonalDirty] = useState(false);
   const [securityDirty, setSecurityDirty] = useState(false);
 
-  function detectLanguage(): string {
+  const detectLanguage = useCallback((): string => {
     if (i18n.language.startsWith("ar")) {
       return "ar";
     }
@@ -169,7 +169,7 @@ export default function ProfilePage() {
       return "fr";
     }
     return "en";
-  }
+  }, [i18n.language]);
 
   const prevUserIdRef = useRef<string>("");
 
@@ -180,7 +180,7 @@ export default function ProfilePage() {
       language: detectLanguage(),
       username: displayUser.username || "",
     }),
-    [displayUser.name, displayUser.username, displayUser.email, i18n.language]
+    [displayUser.name, displayUser.username, displayUser.email, detectLanguage]
   );
 
   const [personalForm, setPersonalForm] = useState(personalFormDefault);
