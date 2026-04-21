@@ -56,10 +56,11 @@ vi.mock("@/stores/parts-catalog", () => ({
   }),
 }));
 
-const mockToast = { success: vi.fn(), error: vi.fn(), info: vi.fn() };
+const mockToast = vi.fn();
+const mockUndoToast = vi.fn();
 vi.mock("@/stores/toast", () => ({
   useToastStore: (sel: (s: Record<string, unknown>) => unknown) =>
-    sel({ toast: mockToast, undoToast: vi.fn() }),
+    sel({ toast: mockToast, undoToast: mockUndoToast }),
 }));
 
 import AddPartDialog from "../add-part-dialog";

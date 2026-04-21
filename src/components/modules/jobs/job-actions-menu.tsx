@@ -83,11 +83,11 @@ export default function JobActionsMenu({ job }: JobActionsMenuProps) {
       setError(null);
       try {
         await transitionStatus(job.rawJob?.id ?? job.id, status);
-        toast.success("job_status_success");
+        toast("job_status_success");
         close();
       } catch {
         setError(t("job_actions_status_error"));
-        toast.error("job_status_failed");
+        toast("job_status_failed", "error");
       } finally {
         setLoading(false);
       }

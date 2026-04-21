@@ -1,7 +1,8 @@
 import type { JobStatusType } from "@shared/constants";
 import { JOB_STATUS_FLOW } from "@shared/constants";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useClickOutside } from "@/hooks/use-click-outside";
 import { useTechnicians } from "@/hooks/use-technicians";
 import { useJobsStore } from "@/stores/jobs";
 import { useToastStore } from "@/stores/toast";
@@ -25,6 +26,23 @@ export default function BatchActionBar({
   const [loading, setLoading] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [techOpen, setTechOpen] = useState(false);
+
+  const statusMenuRef = useClickOutside(() => setStatusOpen(false));
+  const techMenuRef = useClickOutside(() => setTechOpen(false));
+
+  useEffect(() => {
+    if (!(statusOpen || techOpen)) {
+      return;
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setStatusOpen(false);
+        setTechOpen(false);
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [statusOpen, techOpen]);
 
   const commonTransitions = useMemo(() => {
     if (selectedJobs.length === 0) {
@@ -143,7 +161,7 @@ export default function BatchActionBar({
         <div className="h-6 w-px bg-outline-variant" />
 
         {commonTransitions.length > 0 && (
-          <div className="relative">
+          <div className="relative" ref={statusMenuRef}>
             <button
               className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-bold font-label text-on-surface text-xs uppercase tracking-wider transition-colors hover:bg-surface-container-low"
               disabled={loading}
@@ -173,7 +191,7 @@ export default function BatchActionBar({
           </div>
         )}
 
-        <div className="relative">
+        <div className="relative" ref={techMenuRef}>
           <button
             className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-bold font-label text-on-surface text-xs uppercase tracking-wider transition-colors hover:bg-surface-container-low"
             disabled={loading}

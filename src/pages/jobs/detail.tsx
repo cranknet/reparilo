@@ -264,11 +264,9 @@ export default function JobDetailPage() {
         </div>
       </div>
 
-      {job.photos && job.photos.length > 0 && (
-        <div className="mt-10">
-          <JobPhotosSection job={job} onChanged={() => fetchJob()} />
-        </div>
-      )}
+      <div className="mt-10">
+        <JobPhotosSection job={job} onChanged={() => fetchJob()} />
+      </div>
 
       <div className="mt-10">
         <h2 className="mb-4 font-bold font-headline text-base text-on-surface">

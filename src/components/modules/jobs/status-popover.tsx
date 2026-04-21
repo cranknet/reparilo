@@ -3,6 +3,7 @@ import { JOB_STATUS_FLOW } from "@shared/constants";
 import type { Job } from "@shared/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useClickOutside } from "@/hooks/use-click-outside";
 import { useJobsStore } from "@/stores/jobs";
 import { useToastStore } from "@/stores/toast";
 import StatusBadge from "./status-badge";
@@ -24,30 +25,16 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useClickOutside(() => {
+    setOpen(false);
+    setPending(null);
+    setReason("");
+    setError(null);
+  });
   const listRef = useRef<HTMLUListElement>(null);
   const [focusedIndex, setFocusedIndex] = useState(0);
 
   const availableStatuses = JOB_STATUS_FLOW[job.status] ?? [];
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    function onDown(e: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-        setPending(null);
-        setReason("");
-        setError(null);
-      }
-    }
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [open]);
 
   useEffect(() => {
     if (!open) {

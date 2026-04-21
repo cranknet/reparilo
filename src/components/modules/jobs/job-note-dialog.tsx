@@ -63,11 +63,11 @@ export default function JobNoteDialog({
     setError(null);
     try {
       await addNote(jobId, note.trim());
-      toast.success("job_note_success");
+      toast("job_note_success");
       onClose();
     } catch {
       setError(t("job_actions_note_error"));
-      toast.error("job_note_failed");
+      toast("job_note_failed", "error");
     } finally {
       setSubmitting(false);
     }

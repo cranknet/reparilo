@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import type { CreatedCustomerData } from "@/components/modules/jobs/quick-add-customer";
 import QuickAddCustomer from "@/components/modules/jobs/quick-add-customer";
 import RepairServicePicker from "@/components/modules/jobs/repair-service-picker";
+import { useClickOutside } from "@/hooks/use-click-outside";
 import type { CustomerSearchResult } from "@/hooks/use-customer-search";
 import { useCustomerSearch } from "@/hooks/use-customer-search";
 import { type CaptureSource, useNativeCamera } from "@/hooks/use-native-camera";
@@ -263,31 +264,6 @@ const BRANDS = [
 ];
 
 export type { IntakeFormData };
-
-function useClickOutside(ref: React.RefObject<HTMLElement | null>) {
-  const handlerRef = useRef<() => void>(null);
-
-  useEffect(() => {
-    function onDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        handlerRef.current?.();
-      }
-    }
-    function onFocusIn(e: FocusEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        handlerRef.current?.();
-      }
-    }
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("focusin", onFocusIn);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("focusin", onFocusIn);
-    };
-  }, [ref]);
-
-  return handlerRef;
-}
 
 const labelCls =
   "mb-1.5 ms-1 block font-label text-xs font-bold uppercase tracking-wide text-on-surface-variant";
@@ -551,7 +527,6 @@ export default function IntakeModal({
     Partial<Record<keyof IntakeFormData, boolean>>
   >({});
   const [searchFocused, setSearchFocused] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
   const {
     isSearching,
     query,
@@ -747,8 +722,7 @@ export default function IntakeModal({
     };
   }, [open, onClose]);
 
-  const outsideRef = useClickOutside(searchRef);
-  outsideRef.current = () => setSearchFocused(false);
+  const searchOutsideRef = useClickOutside(() => setSearchFocused(false));
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -906,7 +880,7 @@ export default function IntakeModal({
                   )}
 
                   <div className="space-y-4">
-                    <div className="relative" ref={searchRef}>
+                    <div className="relative" ref={searchOutsideRef}>
                       <label className={labelCls} htmlFor="customer-search">
                         {t("intake.customer_search")}
                         <span className={requiredMarkCls}>*</span>

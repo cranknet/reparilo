@@ -134,13 +134,13 @@ export default function AddPartDialog({
         quantity,
         ...(form.supplier.trim() ? { supplier: form.supplier.trim() } : {}),
       });
-      toast.success("job_part_success");
+      toast("job_part_success");
       onAdded();
       onClose();
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: string } } };
       const code = axiosErr.response?.data?.error;
-      toast.error("job_part_failed");
+      toast("job_part_failed", "error");
       if (code === "JOB_IN_TERMINAL_STATUS") {
         setSubmitError(t("jobs_parts_terminal_status_error"));
       } else {
@@ -149,7 +149,7 @@ export default function AddPartDialog({
     } finally {
       setSubmitting(false);
     }
-  }, [form, jobId, onAdded, onClose, t, toast.success, toast.error]);
+  }, [form, jobId, onAdded, onClose, t, toast]);
 
   if (!open) {
     return null;

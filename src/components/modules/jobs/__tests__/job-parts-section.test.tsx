@@ -50,16 +50,12 @@ vi.mock("../add-part-dialog", () => ({
   __esModule: true,
 }));
 
-const mockToast = {
-  success: vi.fn(),
-  error: vi.fn(),
-  info: vi.fn(),
-  undoToast: vi.fn(),
-};
+const mockToast = vi.fn();
+const mockUndoToast = vi.fn();
 
 vi.mock("@/stores/toast", () => ({
   useToastStore: (sel: (s: Record<string, unknown>) => unknown) =>
-    sel({ toast: mockToast, undoToast: mockToast.undoToast }),
+    sel({ toast: mockToast, undoToast: mockUndoToast }),
 }));
 
 vi.mock("@/lib/format", () => ({
