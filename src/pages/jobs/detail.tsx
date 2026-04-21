@@ -251,6 +251,16 @@ export default function JobDetailPage() {
             <span className="material-symbols-outlined text-sm">print</span>
             {t("jobs_detail_print")}
           </button>
+          <button
+            className="inline-flex items-center gap-1 rounded-full bg-surface-container-high px-3 py-1.5 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container-highest hover:text-on-surface"
+            onClick={() =>
+              window.open(`/api/receipts/${job.id}/label`, "_blank")
+            }
+            type="button"
+          >
+            <span className="material-symbols-outlined text-sm">label</span>
+            {t("jobs_detail_print_label")}
+          </button>
         </div>
       </div>
 
