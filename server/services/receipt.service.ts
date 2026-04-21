@@ -141,3 +141,99 @@ ${
 <p class="track">${esc(baseUrl)}/tracking/${esc(job.jobCode)}</p>
 </body></html>`;
 }
+
+export async function renderLabelHtml(
+  prisma: PrismaClient,
+  job: {
+    jobCode: string;
+    customer: { name: string; phone: string };
+    device: { brand: string; model: string };
+    reportedProblem: string;
+    estimatedCost: number | { toNumber: () => number };
+    createdAt: Date;
+    partsUsed: Array<{
+      partName: string;
+      quantity: number;
+      totalCost: number | { toNumber: () => number };
+    }>;
+    repairs: Array<{
+      repairName: string;
+      price: number | { toNumber: () => number };
+    }>;
+  },
+  baseUrl: string,
+  options?: { hideCosts?: boolean }
+): Promise<string> {
+  const settings = await prisma.shopSettings.findUnique({
+    where: { id: "default" },
+  });
+  const shopName = esc(settings?.shopName || "Reparilo");
+
+  const qrBuf = await generateTrackingQr(job.jobCode, baseUrl);
+  const qrB64 = qrBuf.toString("base64");
+
+  const fmt = (v: number | { toNumber: () => number }) =>
+    typeof v === "number" ? v.toLocaleString() : v.toNumber().toLocaleString();
+
+  const hideCosts = options?.hideCosts ?? false;
+  const device = `${esc(job.device.brand)} ${esc(job.device.model)}`.trim();
+  const problem = esc(job.reportedProblem);
+  const price = hideCosts ? "" : `${fmt(job.estimatedCost)} DZD`;
+  const jobCode = esc(job.jobCode);
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Label ${jobCode}</title>
+<style>
+  @page { size: 40mm 20mm; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    width: 40mm; height: 20mm;
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    font-size: 7pt; line-height: 1.15;
+    color: #000; background: #fff;
+    display: flex; align-items: stretch;
+    padding: 1mm;
+  }
+  .qr {
+    width: 18mm; height: 18mm;
+    display: flex; flex-direction: column; align-items: center;
+    flex: 0 0 auto;
+  }
+  .qr img { width: 15mm; height: 15mm; display: block; }
+  .qr .code {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 6pt; font-weight: 700;
+    margin-top: 0.5mm; letter-spacing: -0.2pt;
+  }
+  .info {
+    flex: 1 1 auto; min-width: 0;
+    padding-left: 1mm;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .info .shop { font-weight: 700; font-size: 7pt; }
+  .info .dev, .info .pb {
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 6.5pt;
+  }
+  .info .pb { color: #333; }
+  .info .price { font-weight: 700; font-size: 8pt; }
+  @media screen { body { border: 1px dashed #999; } }
+</style>
+</head>
+<body onload="window.print(); setTimeout(function(){ window.close(); }, 300);">
+  <div class="qr">
+    <img src="data:image/png;base64,${qrB64}" alt="QR" />
+    <div class="code">${jobCode}</div>
+  </div>
+  <div class="info">
+    <div class="shop">${shopName}</div>
+    <div class="dev">${device}</div>
+    <div class="pb">${problem}</div>
+    ${price ? `<div class="price">${price}</div>` : ""}
+  </div>
+</body></html>`;
+}
