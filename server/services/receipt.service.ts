@@ -168,24 +168,31 @@ export async function renderLabelHtml(
     where: { id: "default" },
   });
   const shopName = esc(settings?.shopName || "Reparilo");
+  const logoHtml = settings?.logoPath
+    ? `<img src="${esc(settings.logoPath)}" alt="${shopName}" style="max-height:4mm;max-width:100%;" />`
+    : shopName;
 
   const qrBuf = await generateTrackingQr(job.jobCode, baseUrl);
   const qrB64 = qrBuf.toString("base64");
 
-  const fmt = (v: number | { toNumber: () => number }) =>
-    typeof v === "number" ? v.toLocaleString() : v.toNumber().toLocaleString();
+  const toNum = (v: number | { toNumber: () => number }) =>
+    typeof v === "number" ? v : v.toNumber();
 
   const hideCosts = options?.hideCosts ?? false;
   const device = `${esc(job.device.brand)} ${esc(job.device.model)}`.trim();
   const problem = esc(job.reportedProblem);
-  const price = hideCosts ? "" : `${fmt(job.estimatedCost)} DZD`;
-  const jobCode = esc(job.jobCode);
+
+  const partsTotal = job.partsUsed.reduce((s, p) => s + toNum(p.totalCost), 0);
+  const repairsTotal = job.repairs.reduce((s, r) => s + toNum(r.price), 0);
+  const finalCost = partsTotal + repairsTotal;
+  const displayCost = finalCost > 0 ? finalCost : toNum(job.estimatedCost);
+  const price = hideCosts ? "" : `${displayCost.toLocaleString()} DZD`;
 
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Label ${jobCode}</title>
+<title>Label</title>
 <style>
   @page { size: 40mm 20mm; margin: 0; }
   * { box-sizing: border-box; }
@@ -195,45 +202,50 @@ export async function renderLabelHtml(
     font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
     font-size: 7pt; line-height: 1.15;
     color: #000; background: #fff;
+    display: flex; flex-direction: column;
+    padding: 0.8mm 1mm;
+  }
+  .logo-top {
+    text-align: center;
+    font-weight: 700; font-size: 7pt;
+    padding-bottom: 0.5mm;
+    border-bottom: 0.5pt solid #ddd;
+    margin-bottom: 0.5mm;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .content {
     display: flex; align-items: stretch;
-    padding: 1mm;
+    flex: 1 1 auto;
   }
   .qr {
-    width: 18mm; height: 18mm;
-    display: flex; flex-direction: column; align-items: center;
+    width: 13mm;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
     flex: 0 0 auto;
   }
-  .qr img { width: 15mm; height: 15mm; display: block; }
-  .qr .code {
-    font-family: "SF Mono", Menlo, Consolas, monospace;
-    font-size: 6pt; font-weight: 700;
-    margin-top: 0.5mm; letter-spacing: -0.2pt;
-  }
+  .qr img { width: 12mm; height: 12mm; display: block; }
   .info {
     flex: 1 1 auto; min-width: 0;
     padding-left: 1mm;
     display: flex; flex-direction: column; justify-content: space-between;
   }
-  .info .shop { font-weight: 700; font-size: 7pt; }
-  .info .dev, .info .pb {
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    font-size: 6.5pt;
-  }
-  .info .pb { color: #333; }
-  .info .price { font-weight: 700; font-size: 8pt; }
+  .info .dev { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 6pt; }
+  .info .pb { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 6pt; color: #333; }
+  .info .price { font-weight: 700; font-size: 7.5pt; }
   @media screen { body { border: 1px dashed #999; } }
 </style>
 </head>
 <body onload="window.print(); setTimeout(function(){ window.close(); }, 300);">
-  <div class="qr">
-    <img src="data:image/png;base64,${qrB64}" alt="QR" />
-    <div class="code">${jobCode}</div>
-  </div>
-  <div class="info">
-    <div class="shop">${shopName}</div>
-    <div class="dev">${device}</div>
-    <div class="pb">${problem}</div>
-    ${price ? `<div class="price">${price}</div>` : ""}
+  <div class="logo-top">${logoHtml}</div>
+  <div class="content">
+    <div class="qr">
+      <img src="data:image/png;base64,${qrB64}" alt="QR" />
+    </div>
+    <div class="info">
+      <div class="dev">${device}</div>
+      <div class="pb">${problem}</div>
+      ${price ? `<div class="price">${price}</div>` : ""}
+    </div>
   </div>
 </body></html>`;
 }

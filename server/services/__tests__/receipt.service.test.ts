@@ -24,7 +24,7 @@ const baseJob = {
 };
 
 describe("renderLabelHtml", () => {
-  it("includes shop name, device, problem, price and job code", async () => {
+  it("includes shop name, device, problem and price", async () => {
     const html = await renderLabelHtml(
       makePrisma("Acme Repairs"),
       baseJob,
@@ -35,10 +35,14 @@ describe("renderLabelHtml", () => {
     expect(html).toContain("13 Pro");
     expect(html).toContain("Cracked screen");
     expect(html).toContain("8,500");
-    expect(html).toContain("JOB-0042");
   });
 
-  it("embeds a base64 QR code pointing to the tracking URL", async () => {
+  it("does not show job code in the label body", async () => {
+    const html = await renderLabelHtml(makePrisma(), baseJob, "https://x.y");
+    expect(html).not.toContain("JOB-0042");
+  });
+
+  it("embeds a base64 QR code in left column", async () => {
     const html = await renderLabelHtml(
       makePrisma(),
       baseJob,
@@ -61,6 +65,21 @@ describe("renderLabelHtml", () => {
     expect(html).not.toContain("DZD");
   });
 
+  it("shows finalCost (parts+repairs) over estimatedCost when parts/repairs exist", async () => {
+    const jobWithParts = {
+      ...baseJob,
+      estimatedCost: 0,
+      partsUsed: [{ partName: "Screen", quantity: 1, totalCost: 3000 }],
+      repairs: [{ repairName: "Replace", price: 2000 }],
+    };
+    const html = await renderLabelHtml(
+      makePrisma(),
+      jobWithParts,
+      "https://x.y"
+    );
+    expect(html).toContain("5,000");
+  });
+
   it("escapes HTML in user-supplied fields", async () => {
     const malicious = {
       ...baseJob,
@@ -81,5 +100,34 @@ describe("renderLabelHtml", () => {
     } as unknown as PrismaClient;
     const html = await renderLabelHtml(prisma, baseJob, "https://x.y");
     expect(html).toContain("Reparilo");
+  });
+
+  it("renders logo image when logoPath is set", async () => {
+    const prisma = {
+      shopSettings: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "default",
+          shopName: "Acme",
+          logoPath: "data:image/png;base64,abc123",
+        }),
+      },
+    } as unknown as PrismaClient;
+    const html = await renderLabelHtml(prisma, baseJob, "https://x.y");
+    expect(html).toContain('src="data:image/png;base64,abc123"');
+    expect(html).not.toContain(">Acme<");
+  });
+
+  it("renders shop name text when logoPath is null", async () => {
+    const prisma = {
+      shopSettings: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "default",
+          shopName: "Acme",
+          logoPath: null,
+        }),
+      },
+    } as unknown as PrismaClient;
+    const html = await renderLabelHtml(prisma, baseJob, "https://x.y");
+    expect(html).toContain(">Acme</div>");
   });
 });
