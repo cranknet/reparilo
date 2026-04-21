@@ -510,6 +510,55 @@ function RepairServicesSection({
   );
 }
 
+function ModalFooter({
+  isSubmitting,
+  onClose,
+  onNextStep,
+  onStep1,
+  step,
+  submitLabel,
+  cancelLabel,
+  nextLabel,
+}: {
+  isSubmitting: boolean;
+  onClose: () => void;
+  onNextStep: () => void;
+  onStep1: boolean;
+  step: 1 | 2;
+  submitLabel: string;
+  cancelLabel: string;
+  nextLabel: string;
+}) {
+  return (
+    <footer className="flex shrink-0 items-center justify-end gap-4 border-outline-variant border-t bg-surface-container-high px-4 py-4 md:px-8 md:py-6">
+      <button
+        className="px-6 py-3 font-bold font-headline text-on-surface-variant text-sm transition-colors hover:text-on-surface"
+        onClick={onClose}
+        type="button"
+      >
+        {cancelLabel}
+      </button>
+      {step === 1 ? (
+        <button
+          className="rounded-xl bg-primary px-8 py-3 font-bold font-headline text-on-primary text-sm transition-all active:scale-[0.98]"
+          onClick={onNextStep}
+          type="button"
+        >
+          {nextLabel}
+        </button>
+      ) : (
+        <button
+          className="rounded-xl bg-primary px-8 py-3 font-bold font-headline text-on-primary text-sm transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={isSubmitting}
+          type="submit"
+        >
+          {submitLabel}
+        </button>
+      )}
+    </footer>
+  );
+}
+
 export default function IntakeModal({
   onClose,
   onSubmit,
@@ -1214,35 +1263,16 @@ export default function IntakeModal({
             </section>
           )}
 
-          {/* Footer */}
-          <footer className="flex shrink-0 items-center justify-end gap-4 border-outline-variant border-t bg-surface-container-high px-4 py-4 md:px-8 md:py-6">
-            <button
-              className="px-6 py-3 font-bold font-headline text-on-surface-variant text-sm transition-colors hover:text-on-surface"
-              onClick={onClose}
-              type="button"
-            >
-              {t("intake.cancel_intake")}
-            </button>
-            {step === 1 ? (
-              <button
-                className="rounded-xl bg-primary px-8 py-3 font-bold font-headline text-on-primary text-sm transition-all active:scale-[0.98]"
-                onClick={handleNextStep}
-                type="button"
-              >
-                {t("intake_wizard_next")}
-              </button>
-            ) : (
-              <button
-                className="rounded-xl bg-primary px-8 py-3 font-bold font-headline text-on-primary text-sm transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={isSubmitting}
-                type="submit"
-              >
-                {isSubmitting
-                  ? t("intake.creating_job")
-                  : t("intake.start_repair")}
-              </button>
-            )}
-          </footer>
+          <ModalFooter
+            cancelLabel={t("intake.cancel_intake")}
+            isSubmitting={isSubmitting}
+            nextLabel={t("intake_wizard_next")}
+            onClose={onClose}
+            onNextStep={handleNextStep}
+            onStep1={step === 1}
+            step={step}
+            submitLabel={isSubmitting ? t("intake.creating_job") : t("intake.start_repair")}
+          />
         </form>
       </div>
     </div>

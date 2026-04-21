@@ -37,12 +37,12 @@ function ToastItem({
     error: "error",
     info: "info",
   };
-  const iconColor =
-    type === "success"
-      ? "text-success"
-      : type === "error"
-        ? "text-error"
-        : "text-primary";
+  const colorMap: Record<string, string> = {
+    success: "text-success",
+    error: "text-error",
+    info: "text-primary",
+  };
+  const iconColor = colorMap[type] ?? "text-primary";
 
   const handleUndo = () => {
     undoAction?.();

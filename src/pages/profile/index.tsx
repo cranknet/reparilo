@@ -1,5 +1,5 @@
 import type { FormEvent, ReactNode } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import SessionsModal from "@/components/modules/profile/sessions-modal";
@@ -173,12 +173,15 @@ export default function ProfilePage() {
 
   const prevUserIdRef = useRef<string>("");
 
-  const personalFormDefault = {
-    name: displayUser.name || displayUser.username || "",
-    email: displayUser.email || "",
-    language: detectLanguage(),
-    username: displayUser.username || "",
-  };
+  const personalFormDefault = useMemo(
+    () => ({
+      name: displayUser.name || displayUser.username || "",
+      email: displayUser.email || "",
+      language: detectLanguage(),
+      username: displayUser.username || "",
+    }),
+    [displayUser.name, displayUser.username, displayUser.email, i18n.language]
+  );
 
   const [personalForm, setPersonalForm] = useState(personalFormDefault);
   const [personalInitial, setPersonalInitial] = useState(personalFormDefault);

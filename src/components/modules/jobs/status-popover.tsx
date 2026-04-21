@@ -73,7 +73,7 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
                 onChanged?.();
                 regularToast("job_status_undone");
               })
-              .catch(() => {});
+              .catch(/* undo failed — already notified */);
           });
         })
         .catch((err: unknown) => {
@@ -116,7 +116,7 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
             onChanged?.();
             regularToast("job_status_undone");
           })
-          .catch(() => {});
+          .catch(/* undo failed — already notified */);
       });
     } catch (err: unknown) {
       setError(
@@ -181,31 +181,31 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
           }
           aria-label={t("jobs_status_change_select_status")}
           className="absolute end-0 top-full z-30 mt-2 w-56 overflow-hidden rounded-xl bg-surface-container-lowest shadow-lg ring-1 ring-outline-variant"
+          onKeyDown={(e) => {
+            if (pending) {
+              return;
+            }
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              setFocusedIndex((prev) =>
+                Math.min(prev + 1, availableStatuses.length - 1)
+              );
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              setFocusedIndex((prev) => Math.max(prev - 1, 0));
+            } else if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              const status = availableStatuses[focusedIndex];
+              if (status) {
+                handleSelect(status);
+              }
+            }
+          }}
           role="listbox"
           tabIndex="0"
         >
           {!pending && (
-            <ul
-              className="py-1"
-              onKeyDown={(e) => {
-                if (e.key === "ArrowDown") {
-                  e.preventDefault();
-                  setFocusedIndex((prev) =>
-                    Math.min(prev + 1, availableStatuses.length - 1)
-                  );
-                } else if (e.key === "ArrowUp") {
-                  e.preventDefault();
-                  setFocusedIndex((prev) => Math.max(prev - 1, 0));
-                } else if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  const status = availableStatuses[focusedIndex];
-                  if (status) {
-                    handleSelect(status);
-                  }
-                }
-              }}
-              ref={listRef}
-            >
+            <ul className="py-1" ref={listRef}>
               {availableStatuses.map((status, index) => (
                 <li key={status}>
                   <button

@@ -68,7 +68,7 @@ export default function JobCancelDialog({
           .then(() => {
             regularToast("job_cancel_undone");
           })
-          .catch(() => {});
+          .catch(/* undo failed — already notified */);
       });
     } catch {
       setError(t("job_actions_status_error"));
