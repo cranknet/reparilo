@@ -1,11 +1,6 @@
 import { Icon } from "@/components/ui/icon";
 
-type ButtonVariant =
-  | "primary"
-  | "secondary"
-  | "ghost"
-  | "destructive"
-  | "gradient";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive";
 type ButtonSize = "sm" | "md" | "lg";
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
@@ -16,8 +11,6 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   ghost:
     "bg-transparent text-on-surface-variant hover:bg-surface-container-low active:scale-[0.98]",
   destructive: "bg-error text-on-error hover:opacity-90 active:scale-[0.98]",
-  gradient:
-    "bg-gradient-to-br from-primary to-surface-tint text-on-primary shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98]",
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {

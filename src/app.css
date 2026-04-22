@@ -16,6 +16,7 @@
   --color-primary-fixed-dim: #b2c5ff;
   --color-secondary-container: #bed9ff;
   --color-primary: #0040a1;
+  --color-primary-tint: oklch(from var(--color-primary) l c h / 0.1);
   --color-on-tertiary-container: #ffcebd;
   --color-surface-tint: #0056d2;
   --color-on-background: #181c20;
@@ -52,8 +53,8 @@
   --color-secondary: #456080;
 
   --font-family-headline: "Manrope", sans-serif;
-  --font-family-body: "Inter", sans-serif;
-  --font-family-label: "Inter", sans-serif;
+  --font-family-body: "Karla", sans-serif;
+  --font-family-label: "Karla", sans-serif;
   --font-family-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 
   --radius-xs: 0.125rem;
