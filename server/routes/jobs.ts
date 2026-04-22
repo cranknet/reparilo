@@ -18,6 +18,7 @@ import {
   getMetrics,
   list as listJobs,
   lookupByCode,
+  lookupByCodeAuth,
   transitionStatus,
   update as updateJob,
 } from "../services/job.service.js";
@@ -187,6 +188,19 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       return reply.send(result.job);
     },
   });
+
+  app.get(
+    "/by-code/:jobCode",
+    { preHandler: [requirePermission({ jobs: ["view"] })] },
+    async (req, reply) => {
+      const { jobCode } = req.params as { jobCode: string };
+      const job = await lookupByCodeAuth(app.prisma, jobCode);
+      if (!job) {
+        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+      }
+      return reply.send(job);
+    }
+  );
 
   app.get("/metrics", async (_req, reply) => {
     const metrics = await getMetrics(app.prisma);

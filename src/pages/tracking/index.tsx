@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 import api from "@/lib/api";
+import { useAuthStore } from "@/stores/auth";
 
 function LanguageSwitcher() {
   const { i18n, t } = useTranslation();
@@ -51,12 +52,14 @@ interface TrackingData {
 }
 
 function LookupForm({
+  initialCode,
   onSearch,
 }: {
+  initialCode?: string;
   onSearch: (code: string, phone4: string) => void;
 }) {
   const { t } = useTranslation();
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(initialCode ?? "");
   const [phone4, setPhone4] = useState("");
 
   return (
@@ -455,9 +458,71 @@ function StatusView({
   );
 }
 
+function mapJobToTrackingData(
+  data: Record<string, unknown>,
+  t: (key: string, options?: Record<string, unknown>) => string
+): TrackingData {
+  const createdDate = new Date(data.createdAt as string);
+  const daysInShop = Math.max(
+    1,
+    Math.ceil((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24))
+  );
+  const resolvedStatus = STATUS_FLOW.indexOf(
+    data.status as (typeof STATUS_FLOW)[number]
+  );
+  const activeIdx = resolvedStatus === -1 ? 0 : resolvedStatus;
+  const timeline = STATUS_FLOW.map((status, idx) => {
+    const isCompleted = idx < activeIdx;
+    const isCurrent = idx === activeIdx;
+    const completedNote = t("tracking_step_completed", {
+      status: t(`status.${status}`),
+    });
+    const inProgressNote = t("tracking_step_in_progress");
+    const pendingNote = t("tracking_step_pending");
+    let note: string;
+    if (isCompleted) {
+      note = completedNote;
+    } else if (isCurrent) {
+      note = inProgressNote;
+    } else {
+      note = pendingNote;
+    }
+    const date =
+      isCompleted || isCurrent
+        ? createdDate.toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+          })
+        : "";
+    return { status, note, date };
+  });
+
+  const estimatedCompletion = data.estimatedDate
+    ? new Date(data.estimatedDate as string).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : t("tracking_tbd");
+
+  return {
+    jobCode: data.jobCode as string,
+    status: data.status as string,
+    device: data.device as string,
+    issue: data.reportedProblem as string,
+    estimatedCompletion,
+    daysInShop,
+    shopName: "Reparilo",
+    shopPhone: "",
+    shopAddress: "",
+    timeline,
+  };
+}
+
 export default function TrackingPage() {
   const { jobCode } = useParams<{ jobCode?: string }>();
   const { t } = useTranslation();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [trackedJob, setTrackedJob] = useState<TrackingData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -470,64 +535,7 @@ export default function TrackingPage() {
         const res = await api.get(
           `/jobs/lookup?code=${encodeURIComponent(code)}&phone4=${encodeURIComponent(phone4)}`
         );
-        const data = res.data;
-        const createdDate = new Date(data.createdAt);
-        const daysInShop = Math.max(
-          1,
-          Math.ceil(
-            (Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24)
-          )
-        );
-        const resolvedStatus = STATUS_FLOW.indexOf(
-          data.status as (typeof STATUS_FLOW)[number]
-        );
-        const activeIdx = resolvedStatus === -1 ? 0 : resolvedStatus;
-        const timeline = STATUS_FLOW.map((status, idx) => {
-          const isCompleted = idx < activeIdx;
-          const isCurrent = idx === activeIdx;
-          const completedNote = t("tracking_step_completed", {
-            status: t(`status.${status}`),
-          });
-          const inProgressNote = t("tracking_step_in_progress");
-          const pendingNote = t("tracking_step_pending");
-          let note: string;
-          if (isCompleted) {
-            note = completedNote;
-          } else if (isCurrent) {
-            note = inProgressNote;
-          } else {
-            note = pendingNote;
-          }
-          const date =
-            isCompleted || isCurrent
-              ? createdDate.toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                })
-              : "";
-          return { status, note, date };
-        });
-
-        const estimatedCompletion = data.estimatedDate
-          ? new Date(data.estimatedDate).toLocaleDateString(undefined, {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })
-          : t("tracking_tbd");
-
-        setTrackedJob({
-          jobCode: data.jobCode,
-          status: data.status,
-          device: data.device,
-          issue: data.reportedProblem,
-          estimatedCompletion,
-          daysInShop,
-          shopName: "Reparilo",
-          shopPhone: "",
-          shopAddress: "",
-          timeline,
-        });
+        setTrackedJob(mapJobToTrackingData(res.data, t));
       } catch (err: unknown) {
         const status =
           err &&
@@ -551,16 +559,36 @@ export default function TrackingPage() {
     [t]
   );
 
+  const fetchJobByCodeAuth = useCallback(
+    async (code: string) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const res = await api.get(`/jobs/by-code/${encodeURIComponent(code)}`);
+        setTrackedJob(mapJobToTrackingData(res.data, t));
+      } catch {
+        setError(t("tracking_job_not_found"));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [t]
+  );
+
   useEffect(() => {
-    if (jobCode) {
-      // URL-based lookup requires phone4 in query param
+    if (!jobCode) {
+      return;
+    }
+    if (isAuthenticated) {
+      fetchJobByCodeAuth(jobCode);
+    } else {
       const params = new URLSearchParams(window.location.search);
       const phone4 = params.get("phone4");
       if (phone4) {
         fetchJob(jobCode, phone4);
       }
     }
-  }, [jobCode, fetchJob]);
+  }, [jobCode, isAuthenticated, fetchJob, fetchJobByCodeAuth]);
 
   if (error) {
     return (
@@ -633,6 +661,7 @@ export default function TrackingPage() {
 
   return (
     <LookupForm
+      initialCode={jobCode}
       onSearch={(code, phone4) => {
         fetchJob(code, phone4);
       }}

@@ -439,7 +439,7 @@ export async function lookupByCode(
       // phone is fetched for comparison only — never included in the response
       customer: { select: { name: true, phone: true } },
       device: { select: { brand: true, model: true } },
-      repairs: { select: { name: true, price: true } },
+      repairs: { select: { repairName: true, price: true } },
       partsUsed: { select: { partName: true, totalCost: true } },
       notes: {
         where: { isCustomerVisible: true },
@@ -452,7 +452,6 @@ export async function lookupByCode(
     return { job: null, jobExists: false };
   }
 
-  // Normalize: strip non-digits from stored phone, compare last 4
   const storedPhone = job.customer.phone;
   if (!storedPhone) {
     return { job: null, jobExists: true };
@@ -477,9 +476,50 @@ export async function lookupByCode(
         createdAt: n.createdAt,
       })),
       repairs: job.repairs.map((r) => ({
-        name: r.name,
+        name: r.repairName,
         price: r.price.toNumber(),
       })),
     },
+  };
+}
+
+export async function lookupByCodeAuth(
+  prisma: PrismaClient,
+  jobCode: string
+): Promise<Record<string, unknown> | null> {
+  const job = await prisma.job.findFirst({
+    where: { jobCode },
+    include: {
+      customer: { select: { name: true } },
+      device: { select: { brand: true, model: true } },
+      repairs: { select: { repairName: true, price: true } },
+      partsUsed: { select: { partName: true, totalCost: true } },
+      notes: {
+        where: { isCustomerVisible: true },
+        select: { content: true, createdAt: true },
+        orderBy: { createdAt: "desc" as const },
+      },
+    },
+  });
+  if (!job) {
+    return null;
+  }
+
+  return {
+    jobCode: job.jobCode,
+    status: job.status,
+    device: `${job.device.brand} ${job.device.model}`,
+    reportedProblem: job.reportedProblem,
+    estimatedDate: job.estimatedDate,
+    createdAt: job.createdAt,
+    customer: { name: job.customer.name },
+    notes: job.notes.map((n) => ({
+      content: n.content,
+      createdAt: n.createdAt,
+    })),
+    repairs: job.repairs.map((r) => ({
+      name: r.repairName,
+      price: r.price.toNumber(),
+    })),
   };
 }
