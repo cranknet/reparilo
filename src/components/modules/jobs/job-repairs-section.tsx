@@ -79,10 +79,14 @@ export default function JobRepairsSection({
             repairName: repairData.repairName,
             category: repairData.category,
             price: Number(repairData.price),
-          }).then(() => {
-            onChanged?.();
-            regularToast("job_repair_undone");
-          });
+          })
+            .then(() => {
+              onChanged?.();
+              regularToast("job_repair_undone");
+            })
+            .catch(() => {
+              regularToast("job_repair_failed", "error");
+            });
         });
       } catch {
         regularToast("job_repair_remove_failed", "error");
@@ -259,7 +263,7 @@ function RemoveRepairButton({ onRemove }: { onRemove: () => void }) {
             onRemove();
             setConfirming(false);
           }}
-          title={t("cancel")}
+          title={t("confirm")}
           type="button"
         >
           <span className="material-symbols-outlined text-sm">check</span>

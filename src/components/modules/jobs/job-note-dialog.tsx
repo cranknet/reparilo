@@ -38,12 +38,15 @@ export default function JobNoteDialog({
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
+        if (note.trim().length > 0) {
+          return;
+        }
         onClose();
       }
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, note]);
 
   if (!open) {
     return null;

@@ -100,11 +100,11 @@ export default function JobsPage() {
   const handleExport = useCallback(() => {
     exportJobsPdf({
       columns: [
-        t("job_id"),
-        t("customer"),
-        t("device"),
-        t("status_label"),
-        t("technician"),
+        { key: "id", label: t("job_id") },
+        { key: "customer", label: t("customer") },
+        { key: "device", label: t("device") },
+        { key: "status", label: t("status_label") },
+        { key: "technician", label: t("technician") },
       ],
       rows: filteredJobs,
       title: t("open_repairs"),

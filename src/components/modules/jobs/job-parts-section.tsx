@@ -43,10 +43,14 @@ export default function JobPartsSection({
             category: partData.category,
             quantity: partData.quantity,
             unitPrice: Number(partData.unitPrice),
-          }).then(() => {
-            onChanged?.();
-            regularToast("job_part_undone");
-          });
+          })
+            .then(() => {
+              onChanged?.();
+              regularToast("job_part_undone");
+            })
+            .catch(() => {
+              regularToast("job_part_undo_failed", "error");
+            });
         });
       } catch {
         regularToast("job_part_remove_failed", "error");
@@ -163,7 +167,7 @@ function RemovePartButton({ onRemove }: { onRemove: () => void }) {
             onRemove();
             setConfirming(false);
           }}
-          title={t("cancel")}
+          title={t("confirm")}
           type="button"
         >
           <span className="material-symbols-outlined text-sm">check</span>

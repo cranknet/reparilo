@@ -31,7 +31,7 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
     setReason("");
     setError(null);
   });
-  const listRef = useRef<HTMLUListElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const [focusedIndex, setFocusedIndex] = useState(0);
 
   const availableStatuses = JOB_STATUS_FLOW[job.status] ?? [];
@@ -73,7 +73,9 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
                 onChanged?.();
                 regularToast("job_status_undone");
               })
-              .catch(/* undo failed — already notified */);
+              .catch(() => {
+                regularToast("job_status_undo_failed", "error");
+              });
           });
         })
         .catch((err: unknown) => {
@@ -116,7 +118,9 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
             onChanged?.();
             regularToast("job_status_undone");
           })
-          .catch(/* undo failed — already notified */);
+          .catch(() => {
+            regularToast("job_status_undo_failed", "error");
+          });
       });
     } catch (err: unknown) {
       setError(
@@ -201,11 +205,12 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
               }
             }
           }}
+          ref={listRef}
           role="listbox"
           tabIndex={0}
         >
           {!pending && (
-            <ul className="py-1" ref={listRef}>
+            <ul className="py-1">
               {availableStatuses.map((status, index) => (
                 <li key={status}>
                   <button

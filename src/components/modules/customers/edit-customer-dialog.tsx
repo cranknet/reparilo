@@ -32,6 +32,7 @@ export default function EditCustomerDialog({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const updateCustomer = useCustomersStore((s) => s.updateCustomer);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) {
@@ -88,6 +89,12 @@ export default function EditCustomerDialog({
     }
     document.addEventListener("keydown", trapFocus, true);
     return () => document.removeEventListener("keydown", trapFocus, true);
+  }, [open]);
+
+  useEffect(() => {
+    if (open) {
+      nameInputRef.current?.focus();
+    }
   }, [open]);
 
   const handleSubmit = useCallback(async () => {
@@ -178,11 +185,7 @@ export default function EditCustomerDialog({
                 onChange={(e) =>
                   setForm((p) => ({ ...p, name: e.target.value }))
                 }
-                ref={(el) => {
-                  if (el && open) {
-                    el.focus();
-                  }
-                }}
+                ref={nameInputRef}
                 type="text"
                 value={form.name}
               />

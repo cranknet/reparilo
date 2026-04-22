@@ -24,10 +24,10 @@ async function processOverdueJobs(app: FastifyInstance): Promise<void> {
 
   if (alerted.size > MAX_ALERTED) {
     const iter = alerted.values();
-    for (let i = 0; i < alerted.size - MAX_ALERTED; i++) {
-      iter.next();
-      const value = iter.next().value;
-      if (value) {
+    const toRemove = alerted.size - MAX_ALERTED;
+    for (let i = 0; i < toRemove; i++) {
+      const { value, done } = iter.next();
+      if (!done && value !== undefined) {
         alerted.delete(value);
       }
     }

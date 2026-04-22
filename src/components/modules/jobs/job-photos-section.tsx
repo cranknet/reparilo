@@ -26,6 +26,7 @@ export default function JobPhotosSection({
     job.status as (typeof INACTIVE_STATUSES)[number]
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const addPhotoRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = useCallback(
     async (files: FileList) => {
@@ -119,6 +120,7 @@ export default function JobPhotosSection({
             if (files?.length) {
               handleUpload(files);
             }
+            e.target.value = "";
           }}
           ref={fileInputRef}
           type="file"
@@ -133,21 +135,35 @@ export default function JobPhotosSection({
         <h2 className="font-bold font-headline text-base text-on-surface">
           {t("intake.device_photos")}
         </h2>
-        <button
-          className="flex min-h-[44px] items-center gap-1 rounded-lg px-3 py-1 font-bold font-label text-xs uppercase tracking-wider transition-colors hover:bg-surface-container-high"
-          onClick={() => {
-            setEditMode(!editMode);
-            if (editMode) {
-              setConfirmDelete(null);
-            }
-          }}
-          type="button"
-        >
-          <span className="material-symbols-outlined text-sm">
-            {editMode ? "check" : "edit"}
-          </span>
-          {editMode ? t("done") : t("edit")}
-        </button>
+        <div className="flex items-center gap-2">
+          {!isTerminal && (
+            <button
+              className="flex min-h-[44px] items-center gap-1 rounded-lg px-3 py-1 font-bold font-label text-primary text-xs uppercase tracking-wider transition-colors hover:bg-surface-container-high"
+              onClick={() => addPhotoRef.current?.click()}
+              type="button"
+            >
+              <span className="material-symbols-outlined text-sm">
+                add_a_photo
+              </span>
+              {uploading ? t("loading") : t("jobs_photos_add")}
+            </button>
+          )}
+          <button
+            className="flex min-h-[44px] items-center gap-1 rounded-lg px-3 py-1 font-bold font-label text-on-surface-variant text-xs uppercase tracking-wider transition-colors hover:bg-surface-container-high"
+            onClick={() => {
+              setEditMode(!editMode);
+              if (editMode) {
+                setConfirmDelete(null);
+              }
+            }}
+            type="button"
+          >
+            <span className="material-symbols-outlined text-sm">
+              {editMode ? "check" : "edit"}
+            </span>
+            {editMode ? t("done") : t("edit")}
+          </button>
+        </div>
       </div>
       <div className="flex flex-wrap gap-3">
         {photos.map((photo) => (
@@ -209,6 +225,21 @@ export default function JobPhotosSection({
           src={lightboxUrl}
         />
       )}
+      <input
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        multiple
+        onChange={(e) => {
+          const files = e.target.files;
+          if (files?.length) {
+            handleUpload(files);
+          }
+          e.target.value = "";
+        }}
+        ref={addPhotoRef}
+        type="file"
+      />
     </>
   );
 }

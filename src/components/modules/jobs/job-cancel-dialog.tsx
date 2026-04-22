@@ -43,12 +43,15 @@ export default function JobCancelDialog({
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
+        if (reason.trim().length > 0) {
+          return;
+        }
         onClose();
       }
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, reason]);
 
   if (!open) {
     return null;
@@ -68,7 +71,9 @@ export default function JobCancelDialog({
           .then(() => {
             regularToast("job_cancel_undone");
           })
-          .catch(/* undo failed — already notified */);
+          .catch(() => {
+            regularToast("job_cancel_undo_failed", "error");
+          });
       });
     } catch {
       setError(t("job_actions_status_error"));

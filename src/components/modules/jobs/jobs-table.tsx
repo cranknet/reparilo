@@ -90,6 +90,7 @@ export default function JobsTable({
                       className="h-4 w-4 rounded border-outline-variant accent-primary"
                       onChange={() => onToggleSelect(jobId)}
                       onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
                       type="checkbox"
                     />
                   </td>
@@ -169,15 +170,18 @@ export default function JobsTable({
                     </button>
                   </td>
                   <td className="p-4 text-end">
-                    {/* biome-ignore lint/a11y/useKeyWithClickEvents: stopPropagation only */}
-                    {/* biome-ignore lint/a11y/noStaticElementInteractions: wrapper to prevent row click */}
-                    {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: stopPropagation only */}
-                    <span
+                    <button
                       className="inline-block"
                       onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.stopPropagation();
+                        }
+                      }}
+                      type="button"
                     >
                       <JobActionsMenu job={job} />
-                    </span>
+                    </button>
                   </td>
                 </tr>
               );

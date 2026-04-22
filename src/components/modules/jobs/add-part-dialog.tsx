@@ -162,7 +162,9 @@ export default function AddPartDialog({
     form.partName !== "" ||
     form.unitPrice !== "" ||
     form.quantity !== "1" ||
-    form.supplier !== "";
+    form.supplier !== "" ||
+    form.category !== "OTHER" ||
+    form.partId !== undefined;
 
   return (
     <div

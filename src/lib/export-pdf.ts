@@ -2,8 +2,15 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { JobRow } from "@/components/modules/jobs/jobs-shared";
 
+type JobRowKey = keyof JobRow;
+
+interface ColumnDef {
+  key: JobRowKey;
+  label: string;
+}
+
 interface ExportPdfOptions {
-  columns: string[];
+  columns: ColumnDef[];
   filename: string;
   rows: JobRow[];
   title: string;
@@ -20,16 +27,12 @@ export function exportJobsPdf({
   doc.setFontSize(16);
   doc.text(title, 14, 20);
 
-  const body = rows.map((row) => [
-    row.id,
-    row.customer,
-    row.device,
-    row.status,
-    row.technician ?? "",
-  ]);
+  const body = rows.map((row) =>
+    columns.map((col) => row[col.key]?.toString() ?? "")
+  );
 
   autoTable(doc, {
-    head: [columns],
+    head: [columns.map((col) => col.label)],
     body,
     startY: 28,
     styles: { fontSize: 9 },
