@@ -45,6 +45,14 @@ function mockPrisma(
       upsert: vi.fn(),
       ...((overrides as Record<string, unknown>).device || {}),
     },
+    auditLog: {
+      findMany: vi.fn().mockResolvedValue([]),
+      ...((overrides as Record<string, unknown>).auditLog || {}),
+    },
+    shopSettings: {
+      findUnique: vi.fn().mockResolvedValue(null),
+      ...((overrides as Record<string, unknown>).shopSettings || {}),
+    },
     $transaction: vi.fn((callback: (client: typeof mock) => Promise<unknown>) =>
       callback(mock)
     ),

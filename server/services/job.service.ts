@@ -461,6 +461,20 @@ export async function lookupByCode(
     return { job: null, jobExists: true };
   }
 
+  const shopSettings = await prisma.shopSettings.findUnique({
+    where: { id: "default" },
+    select: { shopName: true, phone: true, address: true },
+  });
+
+  const statusTransitions = await prisma.auditLog.findMany({
+    where: {
+      jobId: job.id,
+      action: "STATUS_CHANGED",
+    },
+    select: { fromValue: true, toValue: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+  });
+
   return {
     jobExists: true,
     job: {
@@ -479,6 +493,18 @@ export async function lookupByCode(
         name: r.repairName,
         price: r.price.toNumber(),
       })),
+      statusTransitions: statusTransitions.map((t) => ({
+        from: t.fromValue,
+        to: t.toValue,
+        date: t.createdAt,
+      })),
+      shop: shopSettings
+        ? {
+            name: shopSettings.shopName,
+            phone: shopSettings.phone,
+            address: shopSettings.address,
+          }
+        : null,
     },
   };
 }
@@ -505,6 +531,15 @@ export async function lookupByCodeAuth(
     return null;
   }
 
+  const statusTransitions = await prisma.auditLog.findMany({
+    where: {
+      jobId: job.id,
+      action: "STATUS_CHANGED",
+    },
+    select: { fromValue: true, toValue: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+  });
+
   return {
     jobCode: job.jobCode,
     status: job.status,
@@ -520,6 +555,11 @@ export async function lookupByCodeAuth(
     repairs: job.repairs.map((r) => ({
       name: r.repairName,
       price: r.price.toNumber(),
+    })),
+    statusTransitions: statusTransitions.map((t) => ({
+      from: t.fromValue,
+      to: t.toValue,
+      date: t.createdAt,
     })),
   };
 }
