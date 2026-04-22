@@ -123,6 +123,7 @@ reparilo/
 
 - Sync `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` on any update — use `cp`
 - The project uses ultracite for code quality and formatting. use pnpm check or pnpm fix to fix any lint warnings.
+- For Impeccable detector use npx impeccable --json "File".
 - The project uses pnpm for package management.
 - Add locale keys to en.json and use pnpm run sync-locales to sync and auto-translate other languages files.
 - Never suppress lint warnings — always apply best practices

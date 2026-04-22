@@ -1,11 +1,18 @@
 import { Icon } from "@/components/ui/icon";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive";
+type ButtonVariant =
+  | "primary"
+  | "primary-gradient"
+  | "secondary"
+  | "ghost"
+  | "destructive";
 type ButtonSize = "sm" | "md" | "lg";
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
     "bg-primary text-on-primary shadow-md hover:bg-primary-container active:scale-[0.98]",
+  "primary-gradient":
+    "atelier-gradient text-on-primary shadow-md hover:opacity-90 active:scale-[0.98]",
   secondary:
     "bg-surface-container-highest text-on-secondary-fixed-variant hover:bg-surface-container active:scale-[0.98]",
   ghost:
