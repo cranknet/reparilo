@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { formatDzd } from "@/lib/format";
 
-export type RepairCategory = "HARDWARE" | "SOFTWARE" | "DIAGNOSTIC";
+export type RepairCategory = "HARDWARE" | "SOFTWARE" | "DIAGNOSTIC" | "OTHER";
 
 export interface RepairItem {
   basePrice: number;
@@ -16,10 +16,11 @@ export interface RepairItem {
   name: string;
 }
 
-const CATEGORY_COLORS: Record<RepairCategory, string> = {
+export const CATEGORY_COLORS: Record<RepairCategory, string> = {
   HARDWARE: "bg-secondary-container text-on-secondary-container",
   SOFTWARE: "bg-tertiary-fixed text-on-tertiary-fixed",
   DIAGNOSTIC: "bg-primary-fixed text-on-primary-fixed",
+  OTHER: "bg-surface-container-high text-on-surface-variant",
 };
 
 interface RepairTableProps {
@@ -73,15 +74,15 @@ export default function RepairTable({
                 className="p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-widest"
                 scope="col"
               >
-                {t("duration")}
+                {t("status_label")}
               </th>
-              <th className="p-4" scope="col" />
+              <th aria-label={t("actions")} className="p-4" scope="col" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-outline-variant/10">
+          <tbody>
             {repairs.map((repair) => (
               <tr
-                className="transition-colors hover:bg-surface-container-lowest"
+                className="transition-colors even:bg-surface-container-lowest/50 hover:bg-surface-container-lowest"
                 key={repair.id}
               >
                 <td className="p-4">
@@ -115,11 +116,6 @@ export default function RepairTable({
                 <td className="p-4">
                   <span className="font-mono font-semibold text-sm">
                     {formatDzd(repair.basePrice)} DZD
-                  </span>
-                </td>
-                <td className="p-4">
-                  <span className="text-on-surface-variant text-sm">
-                    {repair.duration}
                   </span>
                 </td>
                 <td className="p-4">

@@ -850,7 +850,7 @@ export default function PartsCatalogPage() {
         name: data.name,
         category: data.category,
         defaultPrice: data.defaultPrice,
-        supplier: data.supplier || null,
+        supplier: data.supplier || undefined,
         isActive: data.isActive,
       });
       setEditingPart(null);

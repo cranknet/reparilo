@@ -268,6 +268,7 @@
   "use_recommended_price": "Utiliser le prix recommandé",
   "service_breakdown": "Répartition des services",
   "download_service_report": "Télécharger le rapport de service",
+  "coming_soon": "À venir",
   "repair_category": {
     "HARDWARE": "Matériel",
     "SOFTWARE": "Logiciel",
@@ -981,5 +982,9 @@
   "jobs_photos_empty_title": "Aucune photo jointe",
   "jobs_photos_empty_desc": "Capturer l'état de l'appareil avant et après réparation",
   "jobs_photos_add": "Ajouter une photo",
-  "job_photo_upload_success": "Photo téléchargée"
+  "job_photo_upload_success": "Photo téléchargée",
+  "actions": "Actes",
+  "repairs_tab_services": "Services",
+  "repairs_tab_analytics": "Analytique",
+  "repairs_tab_pricing": "Tarifs"
 }

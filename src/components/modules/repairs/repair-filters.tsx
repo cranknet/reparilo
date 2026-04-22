@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { RepairCategory } from "./repair-table";
 
@@ -21,6 +22,7 @@ const CATEGORIES: (RepairCategory | "ALL")[] = [
   "HARDWARE",
   "SOFTWARE",
   "DIAGNOSTIC",
+  "OTHER",
 ];
 
 const SORT_OPTIONS: { key: SortOption; labelKey: string }[] = [
@@ -39,6 +41,18 @@ export default function RepairFilters({
   searchQuery,
 }: RepairFiltersProps) {
   const { t } = useTranslation();
+  const [localQuery, setLocalQuery] = useState(searchQuery);
+
+  useEffect(() => {
+    setLocalQuery(searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onSearchChange(localQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [localQuery, onSearchChange]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -48,10 +62,10 @@ export default function RepairFilters({
         </span>
         <input
           className="w-full rounded-xl bg-surface-container-high py-2.5 ps-10 pe-4 font-body text-on-surface text-sm outline-none placeholder:text-on-surface-variant/60 focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary/20"
-          onChange={(e) => onSearchChange(e.target.value)}
+          onChange={(e) => setLocalQuery(e.target.value)}
           placeholder={t("search_repairs")}
           type="text"
-          value={searchQuery}
+          value={localQuery}
         />
       </div>
 

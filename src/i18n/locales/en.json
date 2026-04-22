@@ -268,6 +268,7 @@
   "use_recommended_price": "Use Recommended Price",
   "service_breakdown": "Service Breakdown",
   "download_service_report": "Download Service Report",
+  "coming_soon": "Coming soon",
   "repair_category": {
     "HARDWARE": "Hardware",
     "SOFTWARE": "Software",
@@ -981,5 +982,9 @@
   "jobs_photos_empty_title": "No photos attached",
   "jobs_photos_empty_desc": "Capture device condition before and after repair",
   "jobs_photos_add": "Add photo",
-  "job_photo_upload_success": "Photo uploaded"
+  "job_photo_upload_success": "Photo uploaded",
+  "actions": "Actions",
+  "repairs_tab_services": "Services",
+  "repairs_tab_analytics": "Analytics",
+  "repairs_tab_pricing": "Pricing"
 }

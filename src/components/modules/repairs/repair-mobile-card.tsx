@@ -1,12 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { formatDzd } from "@/lib/format";
-import type { RepairCategory, RepairItem } from "./repair-table";
-
-const CATEGORY_COLORS: Record<RepairCategory, string> = {
-  HARDWARE: "bg-secondary-container text-on-secondary-container",
-  SOFTWARE: "bg-tertiary-fixed text-on-tertiary-fixed",
-  DIAGNOSTIC: "bg-primary-fixed text-on-primary-fixed",
-};
+import type { RepairItem } from "./repair-table";
+import { CATEGORY_COLORS } from "./repair-table";
 
 interface RepairMobileCardProps {
   deletingId: string | null;
@@ -64,15 +59,7 @@ export default function RepairMobileCard({
           </span>
         </div>
       </div>
-      <div className="flex items-end justify-between border-outline-variant/10 border-t pt-3">
-        <div className="flex flex-col">
-          <span className="font-bold text-on-surface-variant text-xs uppercase tracking-wide">
-            {t("duration")}
-          </span>
-          <span className="font-bold text-on-surface text-sm">
-            {repair.duration}
-          </span>
-        </div>
+      <div className="flex items-end justify-between pt-3">
         <div className="flex items-center gap-2">
           <span className="font-bold font-mono text-primary text-sm">
             {formatDzd(repair.basePrice)} DZD
