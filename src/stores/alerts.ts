@@ -12,6 +12,8 @@ interface Alert {
 interface AlertsState {
   addAlert: (alert: Omit<Alert, "id" | "timestamp" | "read">) => void;
   alerts: Alert[];
+  dismissAlert: (id: string) => void;
+  markAllRead: () => void;
   markRead: (id: string) => void;
 }
 
@@ -27,6 +29,18 @@ export const useAlertsStore = create<AlertsState>((set) => ({
         { ...alert, id: String(nextId++), read: false, timestamp: Date.now() },
         ...state.alerts,
       ],
+    }));
+  },
+
+  dismissAlert: (id) => {
+    set((state) => ({
+      alerts: state.alerts.filter((a) => a.id !== id),
+    }));
+  },
+
+  markAllRead: () => {
+    set((state) => ({
+      alerts: state.alerts.map((a) => ({ ...a, read: true })),
     }));
   },
 

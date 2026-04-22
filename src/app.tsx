@@ -15,6 +15,7 @@ import FrontDeskPage from "@/pages/dashboard/front-desk";
 import TechnicianDashboardPage from "@/pages/dashboard/technician";
 import JobsPage from "@/pages/jobs";
 import JobDetailPage from "@/pages/jobs/detail";
+import NotificationsPage from "@/pages/notifications";
 import PartsCatalogPage from "@/pages/parts";
 import ProfilePage from "@/pages/profile";
 import RepairsPage from "@/pages/repairs";
@@ -71,6 +72,18 @@ export default function App() {
           }
           path="/jobs/:id"
         />
+        <Route
+          element={<RequirePermission perm={{ notifications: ["read"] }} />}
+        >
+          <Route
+            element={
+              <DashboardLayout>
+                <NotificationsPage />
+              </DashboardLayout>
+            }
+            path="/notifications"
+          />
+        </Route>
         <Route
           element={<RequirePermission perm={{ parts: ["viewCatalog"] }} />}
         >
