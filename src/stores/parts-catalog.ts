@@ -20,6 +20,12 @@ interface PartsCatalogState {
     isActive?: boolean;
   }) => Promise<void>;
   isLoading: boolean;
+  isLoadingMore: boolean;
+  loadMoreParts: (params?: {
+    search?: string;
+    category?: string;
+    isActive?: boolean;
+  }) => Promise<void>;
   nextCursor: string | null;
   parts: PartsCatalog[];
   togglePartActive: (id: string, isActive: boolean) => Promise<void>;
@@ -35,6 +41,7 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
   totalCount: 0,
   nextCursor: null,
   isLoading: false,
+  isLoadingMore: false,
   error: null,
 
   fetchParts: async (params) => {
@@ -51,6 +58,28 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
       const message =
         err instanceof Error ? err.message : i18n.t("errors.fetch_parts");
       set({ isLoading: false, error: message });
+    }
+  },
+
+  loadMoreParts: async (params) => {
+    const state = usePartsCatalogStore.getState();
+    if (!state.nextCursor || state.isLoadingMore) {
+      return;
+    }
+    set({ isLoadingMore: true });
+    try {
+      const res = await api.get("/parts", {
+        params: { ...params, cursor: state.nextCursor },
+      });
+      set({
+        parts: [...state.parts, ...(res.data.parts ?? [])],
+        nextCursor: res.data.nextCursor ?? null,
+        isLoadingMore: false,
+      });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : i18n.t("errors.fetch_parts");
+      set({ isLoadingMore: false, error: message });
     }
   },
 
