@@ -5,6 +5,10 @@ import { useNavigate, useSearchParams } from "react-router";
 import { ProfileSidebar } from "@/components/modules/profile/profile-sidebar";
 import { ProfileTabContent } from "@/components/modules/profile/profile-tab-content";
 import SessionsModal from "@/components/modules/profile/sessions-modal";
+import type {
+  ActivityItem,
+  SessionItem,
+} from "@/components/modules/profile/shared";
 import ResetPasswordModal from "@/components/modules/settings/reset-password-modal";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -29,27 +33,8 @@ const TAB_ICONS: Record<ProfileTab, string> = {
   activity: "history",
 };
 
-interface ActivityItem {
-  action: string;
-  createdAt: string;
-  fromValue: string | null;
-  id: string;
-  metadata?: { jobId?: string } | null;
-  toValue: string | null;
-}
-
-interface SessionItem {
-  createdAt: string;
-  expiresAt: string;
-  id: string;
-  ipAddress: string | null;
-  isCurrent: boolean;
-  userAgent: string | null;
-}
-
 export default function ProfilePage() {
   const { t, i18n } = useTranslation();
-  const _user = useAuthStore((s) => s.user);
   const role = useAuthStore((s) => s.role);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();

@@ -1,13 +1,8 @@
 import { useTranslation } from "react-i18next";
-
-const LABEL_CLS =
-  "block font-bold text-xs text-on-surface-variant uppercase tracking-wider mb-2";
-
-const LANGUAGE_OPTIONS = [
-  { value: "en", label: "English" },
-  { value: "fr", label: "Français" },
-  { value: "ar", label: "العربية" },
-];
+import {
+  LABEL_CLS,
+  LANGUAGE_OPTIONS,
+} from "@/components/modules/profile/shared";
 
 interface PersonalSpecSheetProps {
   error?: string;

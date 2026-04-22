@@ -67,11 +67,13 @@ export function ProfileSidebar({
             />
           </div>
         )}
-        <span
-          aria-label={t("profile_online")}
-          className="absolute end-0 bottom-1 inline-flex h-4 w-4 rounded-full border-[3px] border-surface-container-lowest bg-success"
-          role="status"
-        />
+        {isSelf && (
+          <span
+            aria-label={t("profile_online")}
+            className="absolute end-0 bottom-1 inline-flex h-4 w-4 rounded-full border-[3px] border-surface-container-lowest bg-success"
+            role="status"
+          />
+        )}
         <input
           accept="image/jpeg,image/png,image/webp"
           className="hidden"

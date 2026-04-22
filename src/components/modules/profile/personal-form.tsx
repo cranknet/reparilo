@@ -1,19 +1,12 @@
 import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  INPUT_CLS,
+  LABEL_CLS,
+  LANGUAGE_OPTIONS,
+} from "@/components/modules/profile/shared";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
-
-const INPUT_CLS =
-  "w-full rounded-lg border-none bg-surface-container-lowest px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20";
-
-const LABEL_CLS =
-  "block font-bold text-xs text-on-surface-variant uppercase tracking-wider mb-2";
-
-const LANGUAGE_OPTIONS = [
-  { value: "en", label: "English" },
-  { value: "fr", label: "Français" },
-  { value: "ar", label: "العربية" },
-];
 
 interface PersonalFormProps {
   error?: string;

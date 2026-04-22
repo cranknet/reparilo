@@ -1,14 +1,9 @@
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { INPUT_CLS, LABEL_CLS } from "@/components/modules/profile/shared";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
-
-const INPUT_CLS =
-  "w-full rounded-lg border-none bg-surface-container-lowest px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20";
-
-const LABEL_CLS =
-  "block font-bold text-xs text-on-surface-variant uppercase tracking-wider mb-2";
 
 const RE_UPPERCASE = /[A-Z]/;
 const RE_DIGIT = /[0-9]/;
@@ -84,6 +79,16 @@ export function PasswordForm({
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [confirmMismatch, setConfirmMismatch] = useState(false);
+  const prevNewPassword = useRef(form.newPassword);
+
+  useEffect(() => {
+    if (prevNewPassword.current && !form.newPassword) {
+      setConfirmMismatch(false);
+      setShowCurrentPassword(false);
+      setShowNewPassword(false);
+    }
+    prevNewPassword.current = form.newPassword;
+  }, [form.newPassword]);
 
   const strength = passwordStrength(form.newPassword);
 

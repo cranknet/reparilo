@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
+import type { ActivityItem } from "@/components/modules/profile/shared";
 import { Icon } from "@/components/ui/icon";
 
 const ACTION_ICONS: Record<string, string> = {
@@ -24,15 +25,6 @@ const ACTION_ICONS: Record<string, string> = {
   API_MUTATION: "api",
 };
 
-interface ActivityItem {
-  action: string;
-  createdAt: string;
-  fromValue: string | null;
-  id: string;
-  metadata?: { jobId?: string } | null;
-  toValue: string | null;
-}
-
 function formatAction(action: string): string {
   return `profile_activity_${action.toLowerCase()}`;
 }
@@ -43,7 +35,7 @@ function formatTimeAgo(
 ): string {
   const date = new Date(dateStr);
   const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
+  const diffMs = Math.max(0, now.getTime() - date.getTime());
   const diffMins = Math.floor(diffMs / 60_000);
   const diffHours = Math.floor(diffMs / 3_600_000);
   const diffDays = Math.floor(diffMs / 86_400_000);
@@ -102,4 +94,5 @@ export const ActivityItemRow = memo(function ActivityItemRow({
   );
 });
 
-export { ACTION_ICONS, type ActivityItem, formatAction, formatTimeAgo };
+export type { ActivityItem } from "@/components/modules/profile/shared";
+export { ACTION_ICONS, formatAction, formatTimeAgo };

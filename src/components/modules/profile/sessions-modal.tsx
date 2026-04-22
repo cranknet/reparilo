@@ -1,17 +1,9 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { SessionItem } from "@/components/modules/profile/shared";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { useModalEffects } from "@/hooks/use-modal-effects";
-
-interface SessionItem {
-  createdAt: string;
-  expiresAt: string;
-  id: string;
-  ipAddress: string | null;
-  isCurrent: boolean;
-  userAgent: string | null;
-}
 
 interface SessionsModalProps {
   loading: boolean;

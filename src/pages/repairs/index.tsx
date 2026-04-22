@@ -214,7 +214,7 @@ export default function RepairsPage() {
           onClick={() => setShowAddModal(true)}
           size="md"
           type="button"
-          variant="gradient"
+          variant="primary"
         >
           {t("add_service")}
         </Button>

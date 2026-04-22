@@ -4,17 +4,9 @@ import { PasswordForm } from "@/components/modules/profile/password-form";
 import { PersonalForm } from "@/components/modules/profile/personal-form";
 import { PersonalSpecSheet } from "@/components/modules/profile/personal-spec-sheet";
 import { SessionButton } from "@/components/modules/profile/session-button";
+import type { ActivityItem } from "@/components/modules/profile/shared";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
-
-interface ActivityItem {
-  action: string;
-  createdAt: string;
-  fromValue: string | null;
-  id: string;
-  metadata?: { jobId?: string } | null;
-  toValue: string | null;
-}
 
 function ActivitySkeleton() {
   return (

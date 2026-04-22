@@ -29,7 +29,7 @@ export default function AiPricingCallout() {
               <Button
                 onClick={() => setConfirming(false)}
                 size="sm"
-                variant="gradient"
+                variant="primary"
               >
                 {t("confirm")}
               </Button>
