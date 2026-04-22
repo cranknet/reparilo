@@ -1,23 +1,21 @@
 import type { RepairCatalog } from "@shared/types";
 import { useCallback } from "react";
-import type { IntakeFormData } from "./types";
+import type { IntakeFormData, SelectedRepair } from "./types";
 
 export function useRepairHandlers(
   setForm: React.Dispatch<React.SetStateAction<IntakeFormData>>
 ) {
   const handleSelectRepair = useCallback(
     (repair: RepairCatalog) => {
+      const entry: SelectedRepair = {
+        repairId: repair.id,
+        repairName: repair.name,
+        category: repair.category,
+        price: Number(repair.defaultPrice),
+      };
       setForm((prev) => ({
         ...prev,
-        repairs: [
-          ...prev.repairs,
-          {
-            repairId: repair.id,
-            repairName: repair.name,
-            category: repair.category,
-            price: Number(repair.defaultPrice),
-          },
-        ],
+        repairs: [...prev.repairs, entry],
       }));
     },
     [setForm]

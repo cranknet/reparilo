@@ -13,6 +13,8 @@ import {
   REQUIRED_FIELDS,
 } from "./types";
 
+let overflowLockCount = 0;
+
 export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
   const { t } = useTranslation();
   const [form, setForm] = useState<IntakeFormData>(INITIAL_FORM);
@@ -173,7 +175,7 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
     [photoPreviews]
   );
 
-  const { capturePhoto, isNative } = useNativeCamera();
+  const { capturePhoto, isCapturing, isNative } = useNativeCamera();
 
   const handleNativeCapture = useCallback(
     async (source: CaptureSource) => {
@@ -223,10 +225,14 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
       }
     }
     document.addEventListener("keydown", onKey);
+    overflowLockCount++;
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      overflowLockCount = Math.max(0, overflowLockCount - 1);
+      if (overflowLockCount === 0) {
+        document.body.style.overflow = "";
+      }
     };
   }, [open, onClose]);
 
@@ -314,8 +320,10 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
     handlePhotoSelect,
     handleQuickAdd,
     handleSubmit,
+    isCapturing,
     isSearching,
     isSubmitting,
+    isNative,
     photoError,
     photoPreviews,
     query,

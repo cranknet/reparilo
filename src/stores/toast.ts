@@ -22,8 +22,9 @@ interface ToastState {
   ) => void;
 }
 
-let idCounter = 0;
-const nextId = () => `toast_${Date.now()}_${++idCounter}`;
+const timers = new Map<string, ReturnType<typeof setTimeout>>();
+
+const nextId = () => crypto.randomUUID();
 
 const UNDO_DURATION = 5000;
 
@@ -35,9 +36,13 @@ export const useToastStore = create<ToastState>((set, get) => ({
     set((state) => ({
       toasts: [...state.toasts, { id, message, type, undoable: false }],
     }));
-    setTimeout(() => {
-      get().dismiss(id);
-    }, 4000);
+    timers.set(
+      id,
+      setTimeout(() => {
+        timers.delete(id);
+        get().dismiss(id);
+      }, 4000)
+    );
   },
 
   undoToast: (message, undoLabel, undoAction) => {
@@ -48,12 +53,21 @@ export const useToastStore = create<ToastState>((set, get) => ({
         { id, message, type: "info", undoLabel, undoAction, undoable: true },
       ],
     }));
-    setTimeout(() => {
-      get().dismiss(id);
-    }, UNDO_DURATION);
+    timers.set(
+      id,
+      setTimeout(() => {
+        timers.delete(id);
+        get().dismiss(id);
+      }, UNDO_DURATION)
+    );
   },
 
   dismiss: (id) => {
+    const timer = timers.get(id);
+    if (timer) {
+      clearTimeout(timer);
+      timers.delete(id);
+    }
     set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }));
   },
 }));

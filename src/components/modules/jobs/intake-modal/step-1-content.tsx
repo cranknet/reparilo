@@ -26,6 +26,8 @@ interface Step1Props {
   handlePhotoRemove: (index: number) => void;
   handlePhotoSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleQuickAdd: (data: CreatedCustomerData) => void;
+  isCapturing: boolean;
+  isNative: boolean;
   isSearching: boolean;
   photoError: string | null;
   photoPreviews: { file: File; url: string }[];
@@ -171,6 +173,8 @@ export default function Step1Content(props: Step1Props) {
     handlePhotoRemove,
     handlePhotoSelect,
     handleQuickAdd,
+    isCapturing,
+    isNative,
     isSearching,
     photoError,
     photoPreviews,
@@ -377,6 +381,8 @@ export default function Step1Content(props: Step1Props) {
             </div>
             <div className="sm:col-span-2">
               <PhotoUploadZone
+                isCapturing={isCapturing}
+                isNative={isNative}
                 onNativeCapture={handleNativeCapture}
                 onPhotoRemove={handlePhotoRemove}
                 onPhotoSelect={handlePhotoSelect}

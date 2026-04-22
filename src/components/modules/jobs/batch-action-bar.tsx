@@ -86,11 +86,27 @@ export default function BatchActionBar({
           t("batch_status_success", { count: succeeded }),
           t("undo"),
           async () => {
+            let undoOk = 0;
+            let undoFail = 0;
             for (const job of selectedJobs) {
               const prev = previousStatuses.get(job.id);
               if (prev) {
-                await transitionStatus(job.id, prev);
+                try {
+                  await transitionStatus(job.id, prev);
+                  undoOk++;
+                } catch {
+                  undoFail++;
+                }
               }
+            }
+            if (undoFail > 0) {
+              toast(
+                t("batch_undo_partial", {
+                  ok: undoOk,
+                  fail: undoFail,
+                }),
+                "error"
+              );
             }
           }
         );

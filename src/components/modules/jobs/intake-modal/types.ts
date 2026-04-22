@@ -5,6 +5,13 @@ export interface PhotoPreview {
   url: string;
 }
 
+export interface SelectedRepair {
+  category: string;
+  price: number;
+  repairId: string;
+  repairName: string;
+}
+
 export interface IntakeFormData {
   brand: string;
   color: string;
@@ -20,6 +27,7 @@ export interface IntakeFormData {
   isWarrantyReturn: boolean;
   model: string;
   photos: File[];
+  repairs: SelectedRepair[];
   reportedProblem: string;
 }
 
@@ -40,6 +48,7 @@ export const INITIAL_FORM: IntakeFormData = {
   isWarrantyReturn: false,
   model: "",
   photos: [],
+  repairs: [],
   reportedProblem: "",
 };
 

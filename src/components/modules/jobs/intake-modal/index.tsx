@@ -123,6 +123,8 @@ export default function IntakeModal({
               handlePhotoRemove={m.handlePhotoRemove}
               handlePhotoSelect={m.handlePhotoSelect}
               handleQuickAdd={m.handleQuickAdd}
+              isCapturing={m.isCapturing}
+              isNative={m.isNative}
               isSearching={m.isSearching}
               photoError={m.photoError}
               photoPreviews={m.photoPreviews}

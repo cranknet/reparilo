@@ -1,9 +1,10 @@
 import { useCallback, useRef, useState } from "react";
 import type { CaptureSource } from "@/hooks/use-native-camera";
-import { useNativeCamera } from "@/hooks/use-native-camera";
 import { labelCls, MAX_PHOTOS, type PhotoPreview } from "./types";
 
 interface PhotoUploadZoneProps {
+  isCapturing: boolean;
+  isNative: boolean;
   onNativeCapture: (source: CaptureSource) => Promise<void>;
   onPhotoRemove: (index: number) => void;
   onPhotoSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -14,6 +15,8 @@ interface PhotoUploadZoneProps {
 }
 
 export default function PhotoUploadZone({
+  isCapturing,
+  isNative,
   onNativeCapture,
   onPhotoSelect,
   onPhotoRemove,
@@ -24,7 +27,6 @@ export default function PhotoUploadZone({
 }: PhotoUploadZoneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showSourcePicker, setShowSourcePicker] = useState(false);
-  const { isNative, isCapturing } = useNativeCamera();
 
   const handleAddPhoto = useCallback(() => {
     if (isNative) {

@@ -895,6 +895,7 @@
   "batch_assign_success": "{{count}} jobs assigned",
   "batch_assign_partial": "{{count}} of {{total}} jobs assigned",
   "batch_assign_failed": "Failed to assign technician",
+  "batch_undo_partial": "Undo partially failed ({{ok}} reverted, {{fail}} failed)",
   "jobs_parts_empty_title": "No parts added yet",
   "jobs_parts_empty_desc": "Add parts used in this repair to track costs",
   "jobs_repairs_empty_title": "No repairs listed",

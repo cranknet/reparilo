@@ -9,20 +9,16 @@ export function useClickOutside(
 
   useEffect(() => {
     function onDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        callbackRef.current?.();
+      if (!ref.current) {
+        return;
       }
-    }
-    function onFocusIn(e: FocusEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (!ref.current.contains(e.target as Node)) {
         callbackRef.current?.();
       }
     }
     document.addEventListener("mousedown", onDown);
-    document.addEventListener("focusin", onFocusIn);
     return () => {
       document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("focusin", onFocusIn);
     };
   }, []);
 

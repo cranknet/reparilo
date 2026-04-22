@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import { describe, expect, it, vi } from "vitest";
-import { renderLabelHtml } from "../receipt.service.js";
+import { renderLabelHtml, renderReceiptHtml } from "../receipt.service.js";
 
 const QR_BASE64_RE = /<img[^>]+src="data:image\/png;base64,[A-Za-z0-9+/=]+"/;
 
@@ -49,6 +49,12 @@ describe("renderLabelHtml", () => {
       "https://example.com"
     );
     expect(html).toMatch(QR_BASE64_RE);
+  });
+
+  it("shows QR unavailable when baseUrl is empty", async () => {
+    const html = await renderLabelHtml(makePrisma(), baseJob, "");
+    expect(html).toContain("QR unavailable");
+    expect(html).not.toMatch(QR_BASE64_RE);
   });
 
   it("sets @page size to 40mm 20mm and triggers print on load", async () => {
@@ -129,5 +135,89 @@ describe("renderLabelHtml", () => {
     } as unknown as PrismaClient;
     const html = await renderLabelHtml(prisma, baseJob, "https://x.y");
     expect(html).toContain(">Acme</div>");
+  });
+});
+
+describe("renderReceiptHtml", () => {
+  it("includes shop name, job code, customer info, and device", async () => {
+    const html = await renderReceiptHtml(
+      makePrisma("Test Shop"),
+      baseJob,
+      "https://example.com"
+    );
+    expect(html).toContain("Test Shop");
+    expect(html).toContain("JOB-0042");
+    expect(html).toContain("John Doe");
+    expect(html).toContain("+213555000000");
+    expect(html).toContain("iPhone");
+    expect(html).toContain("13 Pro");
+    expect(html).toContain("Cracked screen");
+  });
+
+  it("embeds a base64 QR code", async () => {
+    const html = await renderReceiptHtml(
+      makePrisma(),
+      baseJob,
+      "https://example.com"
+    );
+    expect(html).toMatch(QR_BASE64_RE);
+  });
+
+  it("shows QR unavailable when baseUrl is empty", async () => {
+    const html = await renderReceiptHtml(makePrisma(), baseJob, "");
+    expect(html).toContain("QR unavailable");
+    expect(html).not.toMatch(QR_BASE64_RE);
+  });
+
+  it("renders itemized parts rows", async () => {
+    const job = {
+      ...baseJob,
+      partsUsed: [
+        { partName: "Screen", quantity: 1, totalCost: 3000 },
+        { partName: "Battery", quantity: 2, totalCost: 4000 },
+      ],
+    };
+    const html = await renderReceiptHtml(makePrisma(), job, "https://x.y");
+    expect(html).toContain("Screen");
+    expect(html).toContain("Battery");
+    expect(html).toContain("3,000");
+    expect(html).toContain("4,000");
+    expect(html).toContain("Parts Total");
+  });
+
+  it("renders itemized repair rows", async () => {
+    const job = {
+      ...baseJob,
+      repairs: [{ repairName: "Screen Replace", price: 5000 }],
+    };
+    const html = await renderReceiptHtml(makePrisma(), job, "https://x.y");
+    expect(html).toContain("Screen Replace");
+    expect(html).toContain("5,000");
+    expect(html).toContain("Repairs Total");
+  });
+
+  it("hides all costs when hideCosts is true", async () => {
+    const job = {
+      ...baseJob,
+      partsUsed: [{ partName: "Screen", quantity: 1, totalCost: 3000 }],
+    };
+    const html = await renderReceiptHtml(makePrisma(), job, "https://x.y", {
+      hideCosts: true,
+    });
+    expect(html).not.toContain("DZD");
+    expect(html).not.toContain("Parts Total");
+    expect(html).not.toContain("Total");
+  });
+
+  it("shows final total line when costs are visible", async () => {
+    const job = {
+      ...baseJob,
+      estimatedCost: 8500,
+      partsUsed: [],
+      repairs: [],
+    };
+    const html = await renderReceiptHtml(makePrisma(), job, "https://x.y");
+    expect(html).toContain("8,500");
+    expect(html).toContain("Total");
   });
 });

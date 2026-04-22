@@ -4,7 +4,10 @@ import QRCode from "qrcode";
 export async function generateTrackingQr(
   jobCode: string,
   baseUrl: string
-): Promise<Buffer> {
+): Promise<Buffer | null> {
+  if (!baseUrl) {
+    return null;
+  }
   return await QRCode.toBuffer(`${baseUrl}/tracking/${jobCode}`, {
     type: "png",
     width: 200,
@@ -18,6 +21,14 @@ function esc(s: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
+
+function fmtDzd(v: number | { toNumber: () => number }): string {
+  const n = typeof v === "number" ? v : v.toNumber();
+  return `${n.toLocaleString("en-DZ")} DZD`;
+}
+
+const toNum = (v: number | { toNumber: () => number }) =>
+  typeof v === "number" ? v : v.toNumber();
 
 export async function renderReceiptHtml(
   prisma: PrismaClient,
@@ -46,29 +57,39 @@ export async function renderReceiptHtml(
   });
   const shopName = esc(settings?.shopName ?? "Reparilo");
   const qrBuf = await generateTrackingQr(job.jobCode, baseUrl);
-  const qrB64 = qrBuf.toString("base64");
-
-  const toNum = (v: number | { toNumber: () => number }) =>
-    typeof v === "number" ? v : v.toNumber();
+  const qrImg = qrBuf
+    ? `<div class="qr"><img src="data:image/png;base64,${qrBuf.toString("base64")}" alt="QR Code" /></div>`
+    : `<div class="qr" style="color:#999;font-size:10px">QR unavailable — configure SHOP_PUBLIC_URL</div>`;
 
   const date = new Date(job.createdAt).toLocaleDateString();
   const hideCosts = options?.hideCosts ?? false;
 
-  const partsTotal = (job.partsUsed ?? []).reduce(
-    (s, p) => s + toNum(p.totalCost),
-    0
-  );
-  const repairsTotal = (job.repairs ?? []).reduce(
-    (s, r) => s + toNum(r.price),
-    0
-  );
+  const partsUsed = job.partsUsed ?? [];
+  const repairs = job.repairs ?? [];
+
+  const partsRows = partsUsed
+    .map(
+      (p) =>
+        `<tr><td style="padding:4px 0">${esc(p.partName)}</td><td style="text-align:center">${p.quantity}</td>${hideCosts ? "" : `<td style="text-align:right">${fmtDzd(p.totalCost)}</td>`}</tr>`
+    )
+    .join("");
+
+  const repairRows = repairs
+    .map(
+      (r) =>
+        `<tr><td style="padding:4px 0">${esc(r.repairName)}</td>${hideCosts ? "" : `<td style="text-align:right">${fmtDzd(r.price)}</td>`}</tr>`
+    )
+    .join("");
+
+  const partsTotal = partsUsed.reduce((s, p) => s + toNum(p.totalCost), 0);
+  const repairsTotal = repairs.reduce((s, r) => s + toNum(r.price), 0);
   const finalCost = partsTotal + repairsTotal;
   const displayCost = finalCost > 0 ? finalCost : toNum(job.estimatedCost);
 
-  const costLine = hideCosts
+  const costColumns = hideCosts ? "" : "<th style='text-align:right'>Cost</th>";
+  const repairCostCol = hideCosts
     ? ""
-    : `<div class="sep"></div>
-<table><tr><td><strong>Total</strong></td><td style="text-align:right">${displayCost.toLocaleString()} DZD</td></tr></table>`;
+    : "<th style='text-align:right'>Price</th>";
 
   return `<!doctype html>
 <html lang="en">
@@ -98,10 +119,29 @@ export async function renderReceiptHtml(
 <tr><td>Device</td><td style="text-align:right">${esc(job.device.brand)} ${esc(job.device.model)}</td></tr></table>
 <div class="sep"></div>
 <p style="text-align:left"><strong>Problem:</strong> ${esc(job.reportedProblem)}</p>
-${costLine}
 <div class="sep"></div>
-<div class="qr"><img src="data:image/png;base64,${qrB64}" alt="QR Code" /></div>
+${
+  partsRows
+    ? `<table><tr><th style="text-align:left">Part</th><th>Qty</th>${costColumns}</tr>${partsRows}
+${hideCosts ? "" : `<tr class="total"><td colspan="2">Parts Total</td><td style="text-align:right">${fmtDzd(partsTotal)}</td></tr>`}</table>`
+    : ""
+}
+${
+  repairRows
+    ? `<table><tr><th style="text-align:left">Repair</th>${repairCostCol}</tr>${repairRows}
+${hideCosts ? "" : `<tr class="total"><td>Repairs Total</td><td style="text-align:right">${fmtDzd(repairsTotal)}</td></tr>`}</table>`
+    : ""
+}
+${
+  hideCosts
+    ? ""
+    : `<div class="sep"></div>
+<table><tr><td><strong>Total</strong></td><td style="text-align:right">${fmtDzd(displayCost)}</td></tr></table>`
+}
+<div class="sep"></div>
+${qrImg}
 <p class="track">Scan to track your repair</p>
+<p class="track">${esc(baseUrl)}/tracking/${esc(job.jobCode)}</p>
 </body></html>`;
 }
 
@@ -136,10 +176,9 @@ export async function renderLabelHtml(
     : shopName;
 
   const qrBuf = await generateTrackingQr(job.jobCode, baseUrl);
-  const qrB64 = qrBuf.toString("base64");
-
-  const toNum = (v: number | { toNumber: () => number }) =>
-    typeof v === "number" ? v : v.toNumber();
+  const qrImg = qrBuf
+    ? `<img src="data:image/png;base64,${qrBuf.toString("base64")}" alt="QR" />`
+    : `<span style="font-size:5pt;color:#999">QR unavailable</span>`;
 
   const hideCosts = options?.hideCosts ?? false;
   const device = `${esc(job.device.brand)} ${esc(job.device.model)}`.trim();
@@ -155,7 +194,7 @@ export async function renderLabelHtml(
   );
   const finalCost = partsTotal + repairsTotal;
   const displayCost = finalCost > 0 ? finalCost : toNum(job.estimatedCost);
-  const price = hideCosts ? "" : `${displayCost.toLocaleString()} DZD`;
+  const price = hideCosts ? "" : fmtDzd(displayCost);
 
   return `<!doctype html>
 <html lang="en">
@@ -204,11 +243,11 @@ export async function renderLabelHtml(
   @media screen { body { border: 1px dashed #999; } }
 </style>
 </head>
-<body onload="window.print(); setTimeout(function(){ window.close(); }, 300);">
+<body onload="window.print(); setTimeout(function(){ window.close(); }, 500);">
   <div class="logo-top">${logoHtml}</div>
   <div class="content">
     <div class="qr">
-      <img src="data:image/png;base64,${qrB64}" alt="QR" />
+      ${qrImg}
     </div>
     <div class="info">
       <div class="dev">${device}</div>

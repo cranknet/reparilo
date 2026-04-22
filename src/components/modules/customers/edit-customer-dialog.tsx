@@ -77,12 +77,13 @@ export default function EditCustomerDialog({
       if (focusable.length === 0) {
         return;
       }
-      const first = focusable[0];
-      const last = focusable.at(-1);
-      if (e.shiftKey && document.activeElement === first) {
+      const focusableArr = Array.from(focusable);
+      const first = focusableArr[0];
+      const last = focusableArr.at(-1);
+      if (e.shiftKey && document.activeElement === first && last) {
         e.preventDefault();
         last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
+      } else if (!e.shiftKey && document.activeElement === last && first) {
         e.preventDefault();
         first.focus();
       }

@@ -27,12 +27,11 @@ export const receiptRoutes: FastifyPluginAsync = async (app) => {
         return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
       }
 
-      let baseUrl = process.env.SHOP_PUBLIC_URL;
+      const baseUrl = process.env.SHOP_PUBLIC_URL ?? "";
       if (!baseUrl) {
         app.log.warn(
           "SHOP_PUBLIC_URL is not set — receipt QR and tracking link will not work in production"
         );
-        baseUrl = `http://localhost:${process.env.PORT ?? 4000}`;
       }
 
       const costPerm = await req.server.auth.api.userHasPermission({
@@ -61,12 +60,11 @@ export const receiptRoutes: FastifyPluginAsync = async (app) => {
         return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
       }
 
-      let baseUrl = process.env.SHOP_PUBLIC_URL;
+      const baseUrl = process.env.SHOP_PUBLIC_URL ?? "";
       if (!baseUrl) {
         app.log.warn(
           "SHOP_PUBLIC_URL is not set — label QR and tracking link will not work in production"
         );
-        baseUrl = `http://localhost:${process.env.PORT ?? 4000}`;
       }
 
       const costPerm = await req.server.auth.api.userHasPermission({

@@ -895,6 +895,7 @@
   "batch_assign_success": "{{count}} tâches attribuées",
   "batch_assign_partial": "{{count}} tâches sur {{total}} attribuées",
   "batch_assign_failed": "Échec de l'affectation du technicien",
+  "batch_undo_partial": "Annulation partielle ({{ok}} annulés, {{fail}} échoués)",
   "jobs_parts_empty_title": "Aucune pièce ajoutée pour l'instant",
   "jobs_parts_empty_desc": "Ajoutez les pièces utilisées dans cette réparation pour suivre les coûts",
   "jobs_repairs_empty_title": "Aucune réparation répertoriée",

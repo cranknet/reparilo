@@ -1,12 +1,12 @@
 import type { RepairCatalog } from "@shared/types";
 import RepairServicePicker from "@/components/modules/jobs/repair-service-picker";
-import type { IntakeFormData } from "./types";
+import type { SelectedRepair } from "./types";
 
 interface RepairServicesSectionProps {
   onPriceChange: (index: number, price: number) => void;
   onRemove: (index: number) => void;
   onSelect: (repair: RepairCatalog) => void;
-  repairs: IntakeFormData["repairs"];
+  repairs: SelectedRepair[];
   t: (key: string, opts?: Record<string, unknown>) => string;
 }
 
