@@ -2,6 +2,9 @@ import ModalFooter from "./modal-footer";
 import Step1Content from "./step-1-content";
 import Step2Content from "./step-2-content";
 import type { IntakeModalProps } from "./types";
+
+export type { IntakeFormData } from "./types";
+
 import { useIntakeModal } from "./use-intake-modal";
 
 export default function IntakeModal({
@@ -138,13 +141,9 @@ export default function IntakeModal({
 
           {m.step === 2 && (
             <Step2Content
-              computedEstCost={m.computedEstCost}
               errors={m.errors}
               form={m.form}
               handleBlur={m.handleBlur}
-              handleRemoveRepair={m.handleRemoveRepair}
-              handleRepairPriceChange={m.handleRepairPriceChange}
-              handleSelectRepair={m.handleSelectRepair}
               t={m.t}
               touched={m.touched}
               update={m.update}

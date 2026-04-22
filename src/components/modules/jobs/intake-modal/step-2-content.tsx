@@ -1,5 +1,3 @@
-import type { RepairCatalog } from "@shared/types";
-import RepairServicesSection from "./repair-services-section";
 import {
   errorCls,
   type IntakeFormData,
@@ -10,13 +8,9 @@ import {
 } from "./types";
 
 interface Step2Props {
-  computedEstCost: number;
   errors: Partial<Record<keyof IntakeFormData, string>>;
   form: IntakeFormData;
   handleBlur: (field: keyof IntakeFormData) => void;
-  handleRemoveRepair: (index: number) => void;
-  handleRepairPriceChange: (index: number, price: number) => void;
-  handleSelectRepair: (repair: RepairCatalog) => void;
   t: (key: string, opts?: Record<string, unknown>) => string;
   touched: Partial<Record<keyof IntakeFormData, boolean>>;
   update: <K extends keyof IntakeFormData>(
@@ -26,13 +20,9 @@ interface Step2Props {
 }
 
 export default function Step2Content({
-  computedEstCost,
   errors,
   form,
   handleBlur,
-  handleRemoveRepair,
-  handleRepairPriceChange,
-  handleSelectRepair,
   t,
   touched,
   update,
@@ -82,14 +72,6 @@ export default function Step2Content({
           />
         </div>
 
-        <RepairServicesSection
-          onPriceChange={handleRepairPriceChange}
-          onRemove={handleRemoveRepair}
-          onSelect={handleSelectRepair}
-          repairs={form.repairs}
-          t={t}
-        />
-
         <div className="grid grid-cols-2 gap-6 py-4">
           <div>
             <label className={labelCls} htmlFor="estimated-cost">
@@ -102,7 +84,7 @@ export default function Step2Content({
                 inputMode="decimal"
                 min="0"
                 onChange={(e) => update("estimatedCost", e.target.value)}
-                placeholder={String(computedEstCost)}
+                placeholder="0"
                 step="0.01"
                 type="number"
                 value={form.estimatedCost}

@@ -48,45 +48,27 @@ export async function renderReceiptHtml(
   const qrBuf = await generateTrackingQr(job.jobCode, baseUrl);
   const qrB64 = qrBuf.toString("base64");
 
-  const fmt = (v: number | { toNumber: () => number }) =>
-    typeof v === "number" ? v.toLocaleString() : v.toNumber().toLocaleString();
+  const toNum = (v: number | { toNumber: () => number }) =>
+    typeof v === "number" ? v : v.toNumber();
 
-  const estimatedCost = fmt(job.estimatedCost);
   const date = new Date(job.createdAt).toLocaleDateString();
   const hideCosts = options?.hideCosts ?? false;
 
-  const partsUsed = job.partsUsed ?? [];
-  const repairs = job.repairs ?? [];
-
-  const partsRows = partsUsed
-    .map(
-      (p) =>
-        `<tr><td style="padding:4px 0">${esc(p.partName)}</td><td style="text-align:center">${p.quantity}</td>${hideCosts ? "" : `<td style="text-align:right">${fmt(p.totalCost)} DZD</td>`}</tr>`
-    )
-    .join("");
-
-  const repairRows = repairs
-    .map(
-      (r) =>
-        `<tr><td style="padding:4px 0">${esc(r.repairName)}</td>${hideCosts ? "" : `<td style="text-align:right">${fmt(r.price)} DZD</td>`}</tr>`
-    )
-    .join("");
-
-  const partsTotal = partsUsed.reduce(
-    (s, p) =>
-      s +
-      (typeof p.totalCost === "number" ? p.totalCost : p.totalCost.toNumber()),
+  const partsTotal = (job.partsUsed ?? []).reduce(
+    (s, p) => s + toNum(p.totalCost),
     0
   );
-  const repairsTotal = repairs.reduce(
-    (s, r) => s + (typeof r.price === "number" ? r.price : r.price.toNumber()),
+  const repairsTotal = (job.repairs ?? []).reduce(
+    (s, r) => s + toNum(r.price),
     0
   );
+  const finalCost = partsTotal + repairsTotal;
+  const displayCost = finalCost > 0 ? finalCost : toNum(job.estimatedCost);
 
-  const costColumns = hideCosts ? "" : "<th style='text-align:right'>Cost</th>";
-  const repairCostCol = hideCosts
+  const costLine = hideCosts
     ? ""
-    : "<th style='text-align:right'>Price</th>";
+    : `<div class="sep"></div>
+<table><tr><td><strong>Total</strong></td><td style="text-align:right">${displayCost.toLocaleString()} DZD</td></tr></table>`;
 
   return `<!doctype html>
 <html lang="en">
@@ -116,29 +98,10 @@ export async function renderReceiptHtml(
 <tr><td>Device</td><td style="text-align:right">${esc(job.device.brand)} ${esc(job.device.model)}</td></tr></table>
 <div class="sep"></div>
 <p style="text-align:left"><strong>Problem:</strong> ${esc(job.reportedProblem)}</p>
-<div class="sep"></div>
-${
-  partsRows
-    ? `<table><tr><th style="text-align:left">Part</th><th>Qty</th>${costColumns}</tr>${partsRows}
-${hideCosts ? "" : `<tr class="total"><td colspan="2">Parts Total</td><td style="text-align:right">${partsTotal.toLocaleString()} DZD</td></tr>`}</table>`
-    : ""
-}
-${
-  repairRows
-    ? `<table><tr><th style="text-align:left">Repair</th>${repairCostCol}</tr>${repairRows}
-${hideCosts ? "" : `<tr class="total"><td>Repairs Total</td><td style="text-align:right">${repairsTotal.toLocaleString()} DZD</td></tr>`}</table>`
-    : ""
-}
-${
-  hideCosts
-    ? ""
-    : `<div class="sep"></div>
-<table><tr><td><strong>Estimated Cost</strong></td><td style="text-align:right">${estimatedCost} DZD</td></tr></table>`
-}
+${costLine}
 <div class="sep"></div>
 <div class="qr"><img src="data:image/png;base64,${qrB64}" alt="QR Code" /></div>
 <p class="track">Scan to track your repair</p>
-<p class="track">${esc(baseUrl)}/tracking/${esc(job.jobCode)}</p>
 </body></html>`;
 }
 
@@ -182,8 +145,14 @@ export async function renderLabelHtml(
   const device = `${esc(job.device.brand)} ${esc(job.device.model)}`.trim();
   const problem = esc(job.reportedProblem);
 
-  const partsTotal = job.partsUsed.reduce((s, p) => s + toNum(p.totalCost), 0);
-  const repairsTotal = job.repairs.reduce((s, r) => s + toNum(r.price), 0);
+  const partsTotal = (job.partsUsed ?? []).reduce(
+    (s, p) => s + toNum(p.totalCost),
+    0
+  );
+  const repairsTotal = (job.repairs ?? []).reduce(
+    (s, r) => s + toNum(r.price),
+    0
+  );
   const finalCost = partsTotal + repairsTotal;
   const displayCost = finalCost > 0 ? finalCost : toNum(job.estimatedCost);
   const price = hideCosts ? "" : `${displayCost.toLocaleString()} DZD`;

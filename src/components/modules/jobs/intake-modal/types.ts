@@ -1,5 +1,3 @@
-import type { RepairCategoryType } from "@shared/constants";
-
 export type DeviceCategory = "phone" | "tablet" | "laptop" | "watch";
 
 export interface PhotoPreview {
@@ -22,12 +20,6 @@ export interface IntakeFormData {
   isWarrantyReturn: boolean;
   model: string;
   photos: File[];
-  repairs: Array<{
-    repairId: string;
-    repairName: string;
-    category: RepairCategoryType;
-    price: number;
-  }>;
   reportedProblem: string;
 }
 
@@ -48,7 +40,6 @@ export const INITIAL_FORM: IntakeFormData = {
   isWarrantyReturn: false,
   model: "",
   photos: [],
-  repairs: [],
   reportedProblem: "",
 };
 

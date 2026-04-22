@@ -4,19 +4,14 @@ import type { CreatedCustomerData } from "@/components/modules/jobs/quick-add-cu
 import type { CustomerSearchResult } from "@/hooks/use-customer-search";
 import { useCustomerSearch } from "@/hooks/use-customer-search";
 import { type CaptureSource, useNativeCamera } from "@/hooks/use-native-camera";
-import { useRepairHandlers } from "./hooks";
 import {
   INITIAL_FORM,
   type IntakeFormData,
   type IntakeModalProps,
   MAX_PHOTOS,
+  type PhotoPreview,
   REQUIRED_FIELDS,
 } from "./types";
-
-export interface PhotoPreviewItem {
-  file: File;
-  url: string;
-}
 
 export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
   const { t } = useTranslation();
@@ -42,7 +37,7 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
     clear: clearSearch,
   } = useCustomerSearch();
 
-  const [photoPreviews, setPhotoPreviews] = useState<PhotoPreviewItem[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<PhotoPreview[]>([]);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const submissionTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
 
@@ -155,7 +150,7 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
       if (toAdd.length === 0) {
         return;
       }
-      const newPreviews: PhotoPreviewItem[] = toAdd.map((f) => ({
+      const newPreviews: PhotoPreview[] = toAdd.map((f) => ({
         file: f,
         url: URL.createObjectURL(f),
       }));
@@ -208,12 +203,6 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
     },
     [capturePhoto, form.photos.length, isNative, t]
   );
-
-  /* ───── Repairs ───── */
-  const { handleSelectRepair, handleRemoveRepair, handleRepairPriceChange } =
-    useRepairHandlers(setForm);
-
-  const computedEstCost = form.repairs.reduce((s, r) => s + r.price, 0);
 
   /* ───── Side effects ───── */
   useEffect(() => {
@@ -289,8 +278,7 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
     form.customerPhone !== "" ||
     form.model !== "" ||
     form.reportedProblem !== "" ||
-    form.photos.length > 0 ||
-    form.repairs.length > 0;
+    form.photos.length > 0;
 
   const handleBackdropClick = useCallback(() => {
     if (isFormDirty) {
@@ -315,7 +303,6 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
 
   return {
     clearCustomer,
-    computedEstCost,
     errors,
     form,
     handleBackdropClick,
@@ -326,9 +313,6 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
     handlePhotoRemove,
     handlePhotoSelect,
     handleQuickAdd,
-    handleRemoveRepair,
-    handleRepairPriceChange,
-    handleSelectRepair,
     handleSubmit,
     isSearching,
     isSubmitting,
