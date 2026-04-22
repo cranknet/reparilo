@@ -88,3 +88,12 @@ export async function toggleActive(
     where: { id },
   });
 }
+
+export async function remove(prisma: PrismaClient, id: string) {
+  const part = await prisma.partsCatalog.findUnique({ where: { id } });
+  if (!part) {
+    return null;
+  }
+
+  return prisma.partsCatalog.delete({ where: { id } });
+}

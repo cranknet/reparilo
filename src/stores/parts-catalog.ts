@@ -11,6 +11,7 @@ interface PartsCatalogState {
     defaultPrice: number;
     supplier?: string;
   }) => Promise<PartsCatalog>;
+  deletePart: (id: string) => Promise<void>;
   error: string | null;
   fetchParts: (params?: {
     cursor?: string;
@@ -131,6 +132,22 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
         err instanceof Error
           ? err.message
           : i18n.t("errors.toggle_part_status");
+      set({ error: message });
+      throw new Error(message);
+    }
+  },
+
+  deletePart: async (id) => {
+    set({ error: null });
+    try {
+      await api.delete(`/parts/${id}`);
+      set((state) => ({
+        parts: state.parts.filter((p) => p.id !== id),
+        totalCount: state.totalCount - 1,
+      }));
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : i18n.t("errors.delete_part");
       set({ error: message });
       throw new Error(message);
     }

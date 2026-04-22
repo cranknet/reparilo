@@ -13,6 +13,13 @@ import { usePartsCatalogStore } from "@/stores/parts-catalog";
 
 type SortField = "name" | "category" | "defaultPrice" | "supplier";
 
+interface AddPartForm {
+  category: PartCategoryType | "";
+  isActive: boolean;
+  name: string;
+  supplier: string;
+}
+
 const CATEGORY_COLORS: Record<string, string> = {
   BATTERY: "bg-tertiary-fixed text-on-tertiary-fixed-variant",
   BUTTON: "bg-secondary-container text-on-secondary-container",
@@ -117,11 +124,16 @@ function SkeletonRow({ showCost }: { showCost: boolean }) {
 
 function DesktopPartRow({
   confirmingId,
+  deletingId,
   isActive,
   nameCls,
+  onDelete,
   onToggle,
   onCancelConfirm,
+  onCancelDelete,
   onShowConfirm,
+  onShowDelete,
+  onEdit,
   part,
   showCost,
   statusBadgeCls,
@@ -130,11 +142,16 @@ function DesktopPartRow({
   toggleBtnCls,
 }: {
   confirmingId: string | null;
+  deletingId: string | null;
   isActive: boolean;
   nameCls: string;
+  onDelete: (part: PartsCatalog) => void;
   onToggle: (part: PartsCatalog) => void;
   onCancelConfirm: () => void;
+  onCancelDelete: () => void;
   onShowConfirm: (id: string) => void;
+  onShowDelete: (id: string) => void;
+  onEdit: (part: PartsCatalog) => void;
   part: PartsCatalog;
   showCost: boolean;
   statusBadgeCls: string;
@@ -185,23 +202,68 @@ function DesktopPartRow({
         </span>
       </td>
       <td className="px-5 py-4">
-        {isConfirming ? (
+        {isConfirming && (
           <ConfirmToggle
             isActive={isActive}
             onCancel={onCancelConfirm}
             onConfirm={() => onToggle(part)}
             t={t}
           />
-        ) : (
-          <button
-            aria-label={isActive ? t("deactivate_part") : t("activate_part")}
-            className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${toggleBtnCls}`}
-            disabled={togglingId === part.id}
-            onClick={() => onShowConfirm(part.id)}
-            type="button"
-          >
-            <Icon name={isActive ? "toggle_on" : "toggle_off"} size="sm" />
-          </button>
+        )}
+        {!isConfirming && deletingId === part.id && (
+          <div className="flex flex-col gap-2 p-2" role="alert">
+            <p className="font-bold text-on-surface text-sm">
+              {t("delete_part_confirm_title")}
+            </p>
+            <p className="text-on-surface-variant text-xs">
+              {t("delete_part_confirm_desc")}
+            </p>
+            <div className="flex gap-2">
+              <button
+                className="min-h-[44px] flex-1 rounded-lg bg-surface-container-high px-3 py-2 font-bold text-on-surface-variant text-xs transition-colors hover:bg-surface-container-highest"
+                onClick={onCancelDelete}
+                type="button"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                className="min-h-[44px] flex-1 rounded-lg bg-error-container px-3 py-2 font-bold text-on-error-container text-xs transition-colors hover:opacity-90"
+                onClick={() => onDelete(part)}
+                type="button"
+              >
+                {t("delete")}
+              </button>
+            </div>
+          </div>
+        )}
+        {!isConfirming && deletingId !== part.id && (
+          <div className="flex items-center gap-1">
+            <button
+              aria-label={t("edit_part")}
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
+              onClick={() => onEdit(part)}
+              type="button"
+            >
+              <Icon name="edit" size="sm" />
+            </button>
+            <button
+              aria-label={isActive ? t("deactivate_part") : t("activate_part")}
+              className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${toggleBtnCls}`}
+              disabled={togglingId === part.id}
+              onClick={() => onShowConfirm(part.id)}
+              type="button"
+            >
+              <Icon name={isActive ? "toggle_on" : "toggle_off"} size="sm" />
+            </button>
+            <button
+              aria-label={t("delete_part")}
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
+              onClick={() => onShowDelete(part.id)}
+              type="button"
+            >
+              <Icon name="delete" size="sm" />
+            </button>
+          </div>
         )}
       </td>
     </tr>
@@ -210,18 +272,28 @@ function DesktopPartRow({
 
 function MobilePartCard({
   confirmingId,
+  deletingId,
   onToggle,
+  onDelete,
   onCancelConfirm,
+  onCancelDelete,
   onShowConfirm,
+  onShowDelete,
+  onEdit,
   part,
   showCost,
   t,
   togglingId,
 }: {
   confirmingId: string | null;
+  deletingId: string | null;
   onToggle: (part: PartsCatalog) => void;
+  onDelete: (part: PartsCatalog) => void;
   onCancelConfirm: () => void;
+  onCancelDelete: () => void;
   onShowConfirm: (id: string) => void;
+  onShowDelete: (id: string) => void;
+  onEdit: (part: PartsCatalog) => void;
   part: PartsCatalog;
   showCost: boolean;
   t: (key: string) => string;
@@ -271,28 +343,76 @@ function MobilePartCard({
             {part.supplier}
           </span>
         )}
-        {isConfirming ? (
+        {deletingId === part.id && (
+          <div className="flex flex-1 flex-col gap-2 p-2" role="alert">
+            <p className="font-bold text-on-surface text-sm">
+              {t("delete_part_confirm_title")}
+            </p>
+            <p className="text-on-surface-variant text-xs">
+              {t("delete_part_confirm_desc")}
+            </p>
+            <div className="flex gap-2">
+              <button
+                className="min-h-[44px] flex-1 rounded-lg bg-surface-container-high px-3 py-2 font-bold text-on-surface-variant text-xs transition-colors hover:bg-surface-container-highest"
+                onClick={onCancelDelete}
+                type="button"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                className="min-h-[44px] flex-1 rounded-lg bg-error-container px-3 py-2 font-bold text-on-error-container text-xs transition-colors hover:opacity-90"
+                onClick={() => onDelete(part)}
+                type="button"
+              >
+                {t("delete")}
+              </button>
+            </div>
+          </div>
+        )}
+        {deletingId !== part.id && isConfirming && (
           <ConfirmToggle
             isActive={isActive}
             onCancel={onCancelConfirm}
             onConfirm={() => onToggle(part)}
             t={t}
           />
-        ) : (
-          <button
-            aria-label={isActive ? t("deactivate_part") : t("activate_part")}
-            className={`flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl font-bold text-xs transition-all ${
-              isActive
-                ? "text-on-surface-variant hover:bg-surface-container-high hover:text-primary"
-                : "text-primary hover:bg-primary-container"
-            }`}
-            disabled={togglingId === part.id}
-            onClick={() => onShowConfirm(part.id)}
-            type="button"
-          >
-            <Icon name={isActive ? "toggle_on" : "toggle_off"} size="sm" />
-            <span>{isActive ? t("deactivate_part") : t("activate_part")}</span>
-          </button>
+        )}
+        {deletingId !== part.id && !isConfirming && (
+          <>
+            <button
+              aria-label={t("edit_part")}
+              className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl font-bold text-on-surface-variant text-xs transition-all hover:bg-surface-container-high hover:text-primary"
+              onClick={() => onEdit(part)}
+              type="button"
+            >
+              <Icon name="edit" size="sm" />
+              <span>{t("edit")}</span>
+            </button>
+            <button
+              aria-label={isActive ? t("deactivate_part") : t("activate_part")}
+              className={`flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl font-bold text-xs transition-all ${
+                isActive
+                  ? "text-on-surface-variant hover:bg-surface-container-high hover:text-primary"
+                  : "text-primary hover:bg-primary-container"
+              }`}
+              disabled={togglingId === part.id}
+              onClick={() => onShowConfirm(part.id)}
+              type="button"
+            >
+              <Icon name={isActive ? "toggle_on" : "toggle_off"} size="sm" />
+              <span>
+                {isActive ? t("deactivate_part") : t("activate_part")}
+              </span>
+            </button>
+            <button
+              aria-label={t("delete_part")}
+              className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl font-bold text-on-surface-variant text-xs transition-all hover:bg-error-container hover:text-on-error-container"
+              onClick={() => onShowDelete(part.id)}
+              type="button"
+            >
+              <Icon name="delete" size="sm" />
+            </button>
+          </>
         )}
       </div>
     </div>
@@ -364,11 +484,16 @@ function CategoryFilterPills({
 
 function PartsDesktopTable({
   confirmingId,
+  deletingId,
   isLoading,
   onCancelConfirm,
+  onCancelDelete,
   onShowConfirm,
+  onShowDelete,
+  onDelete,
   onSort,
   onToggle,
+  onEdit,
   parts,
   showCost,
   sortBy,
@@ -377,11 +502,16 @@ function PartsDesktopTable({
   togglingId,
 }: {
   confirmingId: string | null;
+  deletingId: string | null;
   isLoading: boolean;
   onCancelConfirm: () => void;
+  onCancelDelete: () => void;
   onShowConfirm: (id: string) => void;
+  onShowDelete: (id: string) => void;
+  onDelete: (part: PartsCatalog) => void;
   onSort: (field: SortField) => void;
   onToggle: (part: PartsCatalog) => void;
+  onEdit: (part: PartsCatalog) => void;
   parts: PartsCatalog[];
   showCost: boolean;
   sortBy: SortField;
@@ -472,6 +602,7 @@ function PartsDesktopTable({
               return (
                 <DesktopPartRow
                   confirmingId={confirmingId}
+                  deletingId={deletingId}
                   isActive={isActive}
                   key={part.id}
                   nameCls={
@@ -480,7 +611,11 @@ function PartsDesktopTable({
                       : "font-bold text-on-surface-variant text-sm"
                   }
                   onCancelConfirm={onCancelConfirm}
+                  onCancelDelete={onCancelDelete}
+                  onDelete={onDelete}
+                  onEdit={onEdit}
                   onShowConfirm={onShowConfirm}
+                  onShowDelete={onShowDelete}
                   onToggle={onToggle}
                   part={part}
                   showCost={showCost}
@@ -534,6 +669,27 @@ function EmptyCatalogState({
   );
 }
 
+function ToastNotification({
+  isError,
+  message,
+}: {
+  isError: boolean;
+  message: string;
+}) {
+  return (
+    <div
+      aria-live="polite"
+      className={`fixed end-6 bottom-6 z-50 flex animate-[fadeSlideUp_0.3s_ease-out] items-center gap-2 rounded-2xl px-5 py-3 font-bold text-sm shadow-2xl ${
+        isError ? "bg-error text-on-error" : "bg-primary text-on-primary"
+      }`}
+      role="status"
+    >
+      <Icon name={isError ? "error" : "check_circle"} size="sm" />
+      {message}
+    </div>
+  );
+}
+
 export default function PartsCatalogPage() {
   const { t } = useTranslation();
   const canViewCost = useCan({ parts: ["viewCost"] });
@@ -548,6 +704,8 @@ export default function PartsCatalogPage() {
     nextCursor,
     isLoadingMore,
     togglePartActive,
+    deletePart,
+    updatePart,
     clearError,
   } = usePartsCatalogStore();
 
@@ -558,8 +716,10 @@ export default function PartsCatalogPage() {
     "ALL"
   );
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingPart, setEditingPart] = useState<PartsCatalog | null>(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [confirmingPartId, setConfirmingPartId] = useState<string | null>(null);
+  const [deletingPartId, setDeletingPartId] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     isError: boolean;
     message: string;
@@ -632,13 +792,6 @@ export default function PartsCatalogPage() {
     };
   }, [parts]);
 
-  interface AddPartForm {
-    category: PartCategoryType | "";
-    isActive: boolean;
-    name: string;
-    supplier: string;
-  }
-
   const handleAddPart = async (
     data: Omit<AddPartForm, "defaultPrice"> & { defaultPrice: number }
   ) => {
@@ -671,6 +824,49 @@ export default function PartsCatalogPage() {
       showToast(t("failed_to_update_status"), true);
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const handleEditPart = (part: PartsCatalog) => {
+    setEditingPart(part);
+  };
+
+  const handleEditSubmit = async (data: {
+    category: PartCategoryType | "";
+    defaultPrice: number;
+    isActive: boolean;
+    name: string;
+    supplier: string;
+  }) => {
+    if (!editingPart) {
+      return;
+    }
+    if (!data.category) {
+      showToast(t("failed_to_create_part"), true);
+      return;
+    }
+    try {
+      await updatePart(editingPart.id, {
+        name: data.name,
+        category: data.category,
+        defaultPrice: data.defaultPrice,
+        supplier: data.supplier || null,
+        isActive: data.isActive,
+      });
+      setEditingPart(null);
+      showToast(t("part_updated_successfully"));
+    } catch {
+      showToast(t("errors.update_part"), true);
+    }
+  };
+
+  const handleDeletePart = async (part: PartsCatalog) => {
+    setDeletingPartId(null);
+    try {
+      await deletePart(part.id);
+      showToast(t("part_deleted_successfully"));
+    } catch {
+      showToast(t("failed_to_delete_part"), true);
     }
   };
 
@@ -821,9 +1017,14 @@ export default function PartsCatalogPage() {
           <div className="hidden overflow-x-auto md:block">
             <PartsDesktopTable
               confirmingId={confirmingPartId}
+              deletingId={deletingPartId}
               isLoading={isLoading}
               onCancelConfirm={() => setConfirmingPartId(null)}
+              onCancelDelete={() => setDeletingPartId(null)}
+              onDelete={handleDeletePart}
+              onEdit={handleEditPart}
               onShowConfirm={setConfirmingPartId}
+              onShowDelete={setDeletingPartId}
               onSort={toggleSort}
               onToggle={handleToggleActive}
               parts={sorted}
@@ -853,9 +1054,14 @@ export default function PartsCatalogPage() {
               sorted.map((part) => (
                 <MobilePartCard
                   confirmingId={confirmingPartId}
+                  deletingId={deletingPartId}
                   key={part.id}
                   onCancelConfirm={() => setConfirmingPartId(null)}
+                  onCancelDelete={() => setDeletingPartId(null)}
+                  onDelete={handleDeletePart}
+                  onEdit={handleEditPart}
                   onShowConfirm={setConfirmingPartId}
+                  onShowDelete={setDeletingPartId}
                   onToggle={handleToggleActive}
                   part={part}
                   showCost={canViewCost}
@@ -895,19 +1101,16 @@ export default function PartsCatalogPage() {
         />
       )}
 
+      {editingPart && (
+        <AddPartModal
+          editingPart={editingPart}
+          onClose={() => setEditingPart(null)}
+          onSubmit={handleEditSubmit}
+        />
+      )}
+
       {toast && (
-        <div
-          aria-live="polite"
-          className={`fixed end-6 bottom-6 z-50 flex animate-[fadeSlideUp_0.3s_ease-out] items-center gap-2 rounded-2xl px-5 py-3 font-bold text-sm shadow-2xl ${
-            toast.isError
-              ? "bg-error text-on-error"
-              : "bg-primary text-on-primary"
-          }`}
-          role="status"
-        >
-          <Icon name={toast.isError ? "error" : "check_circle"} size="sm" />
-          {toast.message}
-        </div>
+        <ToastNotification isError={toast.isError} message={toast.message} />
       )}
     </>
   );

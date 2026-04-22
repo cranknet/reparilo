@@ -1,5 +1,5 @@
 import type { RepairCatalog } from "@shared/types";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { RepairFormData } from "@/components/modules/repairs/add-repair-modal";
 import AddRepairModal from "@/components/modules/repairs/add-repair-modal";
@@ -67,6 +67,7 @@ function toRepairItem(r: RepairCatalog): RepairItem {
     icon: display.icon,
     iconBg: display.iconBg,
     iconColor: display.iconColor,
+    isActive: r.isActive,
   };
 }
 
@@ -95,15 +96,52 @@ function RepairListEmpty({ onClearFilters }: { onClearFilters: () => void }) {
   );
 }
 
-function RepairListContent({ sorted }: { sorted: RepairItem[] }) {
+function RepairListContent({
+  deletingId,
+  onCancelDelete,
+  onConfirmDelete,
+  onEdit,
+  onShowDelete,
+  onToggleActive,
+  sorted,
+  togglingId,
+}: {
+  deletingId: string | null;
+  onCancelDelete: () => void;
+  onConfirmDelete: (item: RepairItem) => void;
+  onEdit: (item: RepairItem) => void;
+  onShowDelete: (id: string) => void;
+  onToggleActive: (item: RepairItem) => void;
+  sorted: RepairItem[];
+  togglingId: string | null;
+}) {
   return (
     <>
       <div className="hidden md:block">
-        <RepairTable repairs={sorted} />
+        <RepairTable
+          deletingId={deletingId}
+          onCancelDelete={onCancelDelete}
+          onConfirmDelete={onConfirmDelete}
+          onEdit={onEdit}
+          onShowDelete={onShowDelete}
+          onToggleActive={onToggleActive}
+          repairs={sorted}
+          togglingId={togglingId}
+        />
       </div>
       <div className="flex flex-col gap-3 md:hidden">
         {sorted.map((repair) => (
-          <RepairMobileCard key={repair.id} repair={repair} />
+          <RepairMobileCard
+            deletingId={deletingId}
+            key={repair.id}
+            onCancelDelete={onCancelDelete}
+            onConfirmDelete={onConfirmDelete}
+            onEdit={onEdit}
+            onShowDelete={onShowDelete}
+            onToggleActive={onToggleActive}
+            repair={repair}
+            togglingId={togglingId}
+          />
         ))}
       </div>
     </>
@@ -125,14 +163,32 @@ function RepairListLoading() {
 
 export default function RepairsPage() {
   const { t } = useTranslation();
-  const { repairs, isLoading, error, fetchRepairs, createRepair, clearError } =
-    useRepairCatalogStore();
+  const {
+    repairs,
+    isLoading,
+    error,
+    fetchRepairs,
+    createRepair,
+    updateRepair,
+    deleteRepair,
+    toggleRepairActive,
+    clearError,
+  } = useRepairCatalogStore();
   const [activeCategory, setActiveCategory] = useState<RepairCategory | "ALL">(
     "ALL"
   );
   const [activeSort, setActiveSort] = useState<SortOption>("recently_added");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingRepair, setEditingRepair] = useState<RepairCatalog | null>(
+    null
+  );
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    isError: boolean;
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchRepairs();
@@ -147,6 +203,57 @@ export default function RepairsPage() {
       defaultPrice: Number(data.basePrice),
     });
   };
+
+  const handleEditRepair = (item: RepairItem) => {
+    const repair = repairs.find((r) => r.id === item.id);
+    if (repair) {
+      setEditingRepair(repair);
+    }
+  };
+
+  const handleEditSubmit = async (data: RepairFormData) => {
+    if (!editingRepair) {
+      return;
+    }
+    try {
+      await updateRepair(editingRepair.id, {
+        name: data.name,
+        category: data.category,
+        defaultPrice: Number(data.basePrice),
+      });
+      setEditingRepair(null);
+      showToast(t("repair_updated_successfully"));
+    } catch {
+      showToast(t("errors.update_repair"), true);
+    }
+  };
+
+  const handleDeleteRepair = async (item: RepairItem) => {
+    setDeletingId(null);
+    try {
+      await deleteRepair(item.id);
+      showToast(t("repair_deleted_successfully"));
+    } catch {
+      showToast(t("failed_to_delete_repair"), true);
+    }
+  };
+
+  const handleToggleActive = async (item: RepairItem) => {
+    setTogglingId(item.id);
+    try {
+      await toggleRepairActive(item.id, !item.isActive);
+      showToast(t("repair_status_changed"));
+    } catch {
+      showToast(t("errors.toggle_repair_status"), true);
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const showToast = useCallback((message: string, isError = false) => {
+    setToast({ isError, message });
+    setTimeout(() => setToast(null), 4000);
+  }, []);
 
   const { avgPrice, topCategory } = useMemo(() => {
     if (repairItems.length === 0) {
@@ -258,7 +365,16 @@ export default function RepairsPage() {
           <RepairListEmpty onClearFilters={() => setActiveCategory("ALL")} />
         )}
         {!isLoading && sorted.length > 0 && (
-          <RepairListContent sorted={sorted} />
+          <RepairListContent
+            deletingId={deletingId}
+            onCancelDelete={() => setDeletingId(null)}
+            onConfirmDelete={handleDeleteRepair}
+            onEdit={handleEditRepair}
+            onShowDelete={setDeletingId}
+            onToggleActive={handleToggleActive}
+            sorted={sorted}
+            togglingId={togglingId}
+          />
         )}
       </div>
 
@@ -274,6 +390,32 @@ export default function RepairsPage() {
         onSubmit={handleAddRepair}
         open={showAddModal}
       />
+
+      {editingRepair && (
+        <AddRepairModal
+          editingRepair={editingRepair}
+          onClose={() => setEditingRepair(null)}
+          onSubmit={handleEditSubmit}
+          open
+        />
+      )}
+
+      {toast && (
+        <div
+          aria-live="polite"
+          className={`fixed end-6 bottom-6 z-50 flex animate-[fadeSlideUp_0.3s_ease-out] items-center gap-2 rounded-2xl px-5 py-3 font-bold text-sm shadow-2xl ${
+            toast.isError
+              ? "bg-error text-on-error"
+              : "bg-primary text-on-primary"
+          }`}
+          role="status"
+        >
+          <span className="material-symbols-outlined text-[18px]">
+            {toast.isError ? "error" : "check_circle"}
+          </span>
+          {toast.message}
+        </div>
+      )}
     </>
   );
 }

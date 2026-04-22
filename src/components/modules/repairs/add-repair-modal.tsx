@@ -1,3 +1,4 @@
+import type { RepairCatalog } from "@shared/types";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { RepairCategory } from "./repair-table";
@@ -19,6 +20,7 @@ const INITIAL_FORM: RepairFormData = {
 };
 
 interface AddRepairModalProps {
+  editingRepair?: RepairCatalog | null;
   onClose: () => void;
   onSubmit: (data: RepairFormData) => Promise<void>;
   open: boolean;
@@ -58,12 +60,25 @@ const errorCls = "ms-1 mt-1 font-label text-xs font-medium text-error";
 const requiredMarkCls = "ms-0.5 text-error";
 
 export default function AddRepairModal({
+  editingRepair,
   onClose,
   onSubmit,
   open,
 }: AddRepairModalProps) {
   const { t } = useTranslation();
-  const [form, setForm] = useState<RepairFormData>(INITIAL_FORM);
+  const isEditing = !!editingRepair;
+  const [form, setForm] = useState<RepairFormData>(() => {
+    if (editingRepair) {
+      return {
+        name: editingRepair.name,
+        category: editingRepair.category as RepairCategory,
+        basePrice: String(editingRepair.defaultPrice),
+        description: "",
+        duration: "",
+      };
+    }
+    return INITIAL_FORM;
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<
     Partial<Record<keyof RepairFormData, string>>
@@ -116,6 +131,22 @@ export default function AddRepairModal({
     },
     [form, t]
   );
+
+  useEffect(() => {
+    if (editingRepair) {
+      setForm({
+        name: editingRepair.name,
+        category: editingRepair.category as RepairCategory,
+        basePrice: String(editingRepair.defaultPrice),
+        description: "",
+        duration: "",
+      });
+    } else {
+      setForm(INITIAL_FORM);
+    }
+    setErrors({});
+    setTouched({});
+  }, [editingRepair]);
 
   useEffect(() => {
     if (!open) {
@@ -190,7 +221,7 @@ export default function AddRepairModal({
           <header className="flex shrink-0 items-center justify-between bg-surface-container-low px-4 py-4 md:px-8 md:py-6">
             <div className="flex items-center gap-4">
               <h1 className="font-bold font-headline text-lg text-on-surface tracking-tight md:text-2xl">
-                {t("repair_modal.title")}
+                {isEditing ? t("edit") : t("repair_modal.title")}
               </h1>
             </div>
             <button
@@ -360,9 +391,10 @@ export default function AddRepairModal({
               disabled={isSubmitting}
               type="submit"
             >
-              {isSubmitting
-                ? t("repair_modal.creating")
-                : t("repair_modal.create_service")}
+              {isSubmitting && isEditing && t("repair_modal.saving")}
+              {isSubmitting && !isEditing && t("repair_modal.creating")}
+              {!isSubmitting && isEditing && t("save")}
+              {!(isSubmitting || isEditing) && t("repair_modal.create_service")}
             </button>
           </footer>
         </form>

@@ -1,5 +1,6 @@
 import type { PartCategoryType } from "@shared/constants";
 import { PartCategory } from "@shared/constants";
+import type { PartsCatalog } from "@shared/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ interface AddPartFormData {
 }
 
 interface AddPartModalProps {
+  editingPart?: PartsCatalog | null;
   onClose: () => void;
   onSubmit: (
     data: Omit<AddPartFormData, "defaultPrice"> & { defaultPrice: number }
@@ -36,7 +38,19 @@ const INITIAL_FORM: AddPartFormData = {
   isActive: true,
 };
 
-function isDirty(form: AddPartFormData): boolean {
+function isDirty(
+  form: AddPartFormData,
+  editingPart: PartsCatalog | null | undefined
+): boolean {
+  if (editingPart) {
+    return (
+      form.name !== editingPart.name ||
+      form.category !== editingPart.category ||
+      Number.parseFloat(form.defaultPrice) !== editingPart.defaultPrice ||
+      form.supplier !== (editingPart.supplier ?? "") ||
+      form.isActive !== editingPart.isActive
+    );
+  }
   return (
     form.name !== INITIAL_FORM.name ||
     form.category !== INITIAL_FORM.category ||
@@ -73,13 +87,30 @@ function focusFirstIn(container: HTMLElement) {
   container.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)?.focus();
 }
 
-export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
+export default function AddPartModal({
+  editingPart,
+  onClose,
+  onSubmit,
+}: AddPartModalProps) {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
   const confirmDialogRef = useRef<HTMLDivElement>(null);
   useModalEffects(true, onClose, dialogRef);
 
-  const [form, setForm] = useState<AddPartFormData>({ ...INITIAL_FORM });
+  const isEditing = !!editingPart;
+
+  const [form, setForm] = useState<AddPartFormData>(() => {
+    if (editingPart) {
+      return {
+        name: editingPart.name,
+        category: editingPart.category as PartCategoryType,
+        defaultPrice: String(editingPart.defaultPrice),
+        supplier: editingPart.supplier ?? "",
+        isActive: editingPart.isActive,
+      };
+    }
+    return { ...INITIAL_FORM };
+  });
   const [errors, setErrors] = useState<
     Partial<Record<"name" | "category" | "defaultPrice", string>>
   >({});
@@ -128,12 +159,12 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
   );
 
   const handleRequestClose = useCallback(() => {
-    if (isDirty(form)) {
+    if (isDirty(form, editingPart ?? null)) {
       setShowConfirmClose(true);
     } else {
       onClose();
     }
-  }, [form, onClose]);
+  }, [form, editingPart, onClose]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -225,7 +256,7 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
                   className="font-bold font-headline text-on-surface text-xl tracking-tight"
                   id="add-part-modal-title"
                 >
-                  {t("add_part_modal.title")}
+                  {isEditing ? t("edit_part") : t("add_part_modal.title")}
                 </h2>
                 <p className="mt-0.5 text-on-surface-variant text-sm">
                   {t("add_part_modal.subtitle")}
@@ -397,8 +428,8 @@ export default function AddPartModal({ onClose, onSubmit }: AddPartModalProps) {
             >
               {t("add_part_modal.cancel")}
             </Button>
-            <Button icon="add" type="submit">
-              {t("add_part_modal.add_part")}
+            <Button icon={isEditing ? "check" : "add"} type="submit">
+              {isEditing ? t("save") : t("add_part_modal.add_part")}
             </Button>
           </div>
         </form>
