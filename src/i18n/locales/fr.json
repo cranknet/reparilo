@@ -237,6 +237,7 @@
   "delete_repair": "Supprimer la réparation",
   "delete_repair_confirm_title": "Supprimer cette réparation ?",
   "delete_repair_confirm_desc": "Cela supprimera définitivement la réparation de votre catalogue. ",
+  "delete_repair_confirm_desc_named": "Cela supprimera définitivement \"{{name}}\" de votre catalogue. ",
   "repair_deleted_successfully": "Réparation supprimée avec succès",
   "failed_to_delete_repair": "Échec de la suppression de la réparation",
   "repair_status_changed": "Statut de réparation mis à jour",
@@ -983,8 +984,5 @@
   "jobs_photos_empty_desc": "Capturer l'état de l'appareil avant et après réparation",
   "jobs_photos_add": "Ajouter une photo",
   "job_photo_upload_success": "Photo téléchargée",
-  "actions": "Actes",
-  "repairs_tab_services": "Services",
-  "repairs_tab_analytics": "Analytique",
-  "repairs_tab_pricing": "Tarifs"
+  "actions": "Actes"
 }

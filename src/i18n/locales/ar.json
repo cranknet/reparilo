@@ -237,6 +237,7 @@
   "delete_repair": "حذف الإصلاح",
   "delete_repair_confirm_title": "هل تريد حذف هذا الإصلاح؟",
   "delete_repair_confirm_desc": "سيؤدي هذا إلى إزالة الإصلاح نهائيًا من الكتالوج الخاص بك. ",
+  "delete_repair_confirm_desc_named": "سيؤدي هذا إلى إزالة \"{{name}}\" نهائيًا من الكتالوج الخاص بك. ",
   "repair_deleted_successfully": "تم حذف الإصلاح بنجاح",
   "failed_to_delete_repair": "فشل في حذف الإصلاح",
   "repair_status_changed": "تم تحديث حالة الإصلاح",
@@ -983,8 +984,5 @@
   "jobs_photos_empty_desc": "التقاط حالة الجهاز قبل وبعد الإصلاح",
   "jobs_photos_add": "أضف صورة",
   "job_photo_upload_success": "تم تحميل الصورة",
-  "actions": "الإجراءات",
-  "repairs_tab_services": "خدمات",
-  "repairs_tab_analytics": "التحليلات",
-  "repairs_tab_pricing": "التسعير"
+  "actions": "الإجراءات"
 }

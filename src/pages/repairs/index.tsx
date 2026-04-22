@@ -1,18 +1,10 @@
 import type { RepairCatalog } from "@shared/types";
-import type { KeyboardEvent } from "react";
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { RepairFormData } from "@/components/modules/repairs/add-repair-modal";
 import AddRepairModal from "@/components/modules/repairs/add-repair-modal";
-import AiPricingCallout from "@/components/modules/repairs/ai-pricing-callout";
 import CategoryHealth from "@/components/modules/repairs/category-health";
+import DeleteRepairDialog from "@/components/modules/repairs/delete-repair-dialog";
 import type { SortOption } from "@/components/modules/repairs/repair-filters";
 import RepairFilters from "@/components/modules/repairs/repair-filters";
 import RepairMobileCard from "@/components/modules/repairs/repair-mobile-card";
@@ -24,16 +16,6 @@ import RepairTable from "@/components/modules/repairs/repair-table";
 import { Button } from "@/components/ui/button";
 import { formatDzd } from "@/lib/format";
 import { useRepairCatalogStore } from "@/stores/repair-catalog";
-
-type RepairsTab = "services" | "analytics" | "pricing";
-
-const TAB_KEYS: RepairsTab[] = ["services", "analytics", "pricing"];
-
-const TAB_ICONS: Record<RepairsTab, string> = {
-  services: "build_circle",
-  analytics: "stacked_bar_chart",
-  pricing: "trending_up",
-};
 
 const CATEGORY_ICONS: Record<
   string,
@@ -54,24 +36,18 @@ const CATEGORY_ICONS: Record<
     iconBg: "bg-tertiary-fixed",
     iconColor: "text-tertiary",
   },
-  OTHER: {
-    icon: "miscellaneous_services",
-    iconBg: "bg-surface-container-high",
-    iconColor: "text-on-surface-variant",
-  },
 };
 
 const CATEGORY_PREFIXES: Record<string, string> = {
   HARDWARE: "HW",
   SOFTWARE: "SW",
   DIAGNOSTIC: "DG",
-  OTHER: "OT",
 };
 
 function toRepairItem(r: RepairCatalog): RepairItem {
   const cat = r.category as string;
-  const display = CATEGORY_ICONS[cat] ?? CATEGORY_ICONS.OTHER;
-  const prefix = CATEGORY_PREFIXES[cat] ?? "OT";
+  const display = CATEGORY_ICONS[cat] ?? CATEGORY_ICONS.HARDWARE;
+  const prefix = CATEGORY_PREFIXES[cat] ?? "HW";
   return {
     id: r.id,
     code: `REP-${prefix}-${r.id.slice(-3).toUpperCase()}`,
@@ -96,7 +72,7 @@ function RepairListEmpty({ onClearFilters }: { onClearFilters: () => void }) {
       <span className="material-symbols-outlined mb-4 text-[48px] text-on-surface-variant">
         search_off
       </span>
-      <p className="font-bold font-headline text-lg text-on-surface">
+      <p className="font-headline font-semibold text-lg text-on-surface">
         {t("no_repairs_found")}
       </p>
       <p className="mt-1 max-w-sm text-on-surface-variant text-sm">
@@ -114,18 +90,12 @@ function RepairListEmpty({ onClearFilters }: { onClearFilters: () => void }) {
 }
 
 function RepairListContent({
-  deletingId,
-  onCancelDelete,
-  onConfirmDelete,
   onEdit,
   onShowDelete,
   onToggleActive,
   sorted,
   togglingId,
 }: {
-  deletingId: string | null;
-  onCancelDelete: () => void;
-  onConfirmDelete: (item: RepairItem) => void;
   onEdit: (item: RepairItem) => void;
   onShowDelete: (id: string) => void;
   onToggleActive: (item: RepairItem) => void;
@@ -136,9 +106,6 @@ function RepairListContent({
     <>
       <div className="hidden md:block">
         <RepairTable
-          deletingId={deletingId}
-          onCancelDelete={onCancelDelete}
-          onConfirmDelete={onConfirmDelete}
           onEdit={onEdit}
           onShowDelete={onShowDelete}
           onToggleActive={onToggleActive}
@@ -149,10 +116,7 @@ function RepairListContent({
       <div className="flex flex-col gap-3 md:hidden">
         {sorted.map((repair) => (
           <RepairMobileCard
-            deletingId={deletingId}
             key={repair.id}
-            onCancelDelete={onCancelDelete}
-            onConfirmDelete={onConfirmDelete}
             onEdit={onEdit}
             onShowDelete={onShowDelete}
             onToggleActive={onToggleActive}
@@ -180,12 +144,6 @@ function RepairListLoading() {
 
 export default function RepairsPage() {
   const { t } = useTranslation();
-  const baseId = useId();
-  const tabRefs = useRef<Record<RepairsTab, HTMLButtonElement | null>>({
-    services: null,
-    analytics: null,
-    pricing: null,
-  });
   const {
     repairs,
     isLoading,
@@ -197,7 +155,6 @@ export default function RepairsPage() {
     toggleRepairActive,
     clearError,
   } = useRepairCatalogStore();
-  const [activeTab, setActiveTab] = useState<RepairsTab>("services");
   const [activeCategory, setActiveCategory] = useState<RepairCategory | "ALL">(
     "ALL"
   );
@@ -219,6 +176,11 @@ export default function RepairsPage() {
   }, [fetchRepairs]);
 
   const repairItems = useMemo(() => repairs.map(toRepairItem), [repairs]);
+
+  const deletingRepair = useMemo(
+    () => repairItems.find((r) => r.id === deletingId) ?? null,
+    [repairItems, deletingId]
+  );
 
   const handleAddRepair = async (data: RepairFormData) => {
     await createRepair({
@@ -252,10 +214,14 @@ export default function RepairsPage() {
     }
   };
 
-  const handleDeleteRepair = async (item: RepairItem) => {
+  const handleDeleteRepair = async () => {
+    if (!deletingId) {
+      return;
+    }
+    const id = deletingId;
     setDeletingId(null);
     try {
-      await deleteRepair(item.id);
+      await deleteRepair(id);
       showToast(t("repair_deleted_successfully"));
     } catch {
       showToast(t("failed_to_delete_repair"), true);
@@ -322,217 +288,106 @@ export default function RepairsPage() {
     }
   });
 
-  const tabId = (key: RepairsTab) => `${baseId}-tab-${key}`;
-  const panelId = (key: RepairsTab) => `${baseId}-panel-${key}`;
-
-  const tabs: { key: RepairsTab; label: string }[] = [
-    { key: "services", label: t("repairs_tab_services") },
-    { key: "analytics", label: t("repairs_tab_analytics") },
-    { key: "pricing", label: t("repairs_tab_pricing") },
-  ];
-
-  function handleTabKeyDown(e: KeyboardEvent<HTMLButtonElement>) {
-    const currentIndex = TAB_KEYS.indexOf(activeTab);
-    let nextIndex: number | undefined;
-    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-      nextIndex = (currentIndex + 1) % TAB_KEYS.length;
-    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-      nextIndex = (currentIndex - 1 + TAB_KEYS.length) % TAB_KEYS.length;
-    } else if (e.key === "Home") {
-      nextIndex = 0;
-    } else if (e.key === "End") {
-      nextIndex = TAB_KEYS.length - 1;
-    }
-    if (nextIndex !== undefined) {
-      e.preventDefault();
-      const nextTab = TAB_KEYS[nextIndex];
-      setActiveTab(nextTab);
-      tabRefs.current[nextTab]?.focus();
-    }
-  }
-
   return (
     <>
-      <div
-        className="mb-6 flex items-center gap-2 overflow-x-auto"
-        role="tablist"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-      >
-        {tabs.map(({ key, label }) => (
-          <button
-            aria-controls={panelId(key)}
-            aria-selected={activeTab === key}
-            className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 font-bold font-headline text-sm transition-all ${
-              activeTab === key
-                ? "bg-primary/10 text-primary"
-                : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
-            }`}
-            id={tabId(key)}
-            key={key}
-            onClick={() => setActiveTab(key)}
-            onKeyDown={handleTabKeyDown}
-            ref={(el) => {
-              tabRefs.current[key] = el;
-            }}
-            role="tab"
-            tabIndex={activeTab === key ? 0 : -1}
-            type="button"
-          >
-            <span className="material-symbols-outlined text-[18px]">
-              {TAB_ICONS[key]}
-            </span>
-            {label}
-          </button>
-        ))}
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <h2 className="font-extrabold font-headline text-2xl text-on-surface tracking-tight md:text-3xl">
+            {t("repair_services")}
+          </h2>
+          <p className="mt-1 font-medium text-on-surface-variant text-sm md:text-base">
+            {t("repair_services_subtitle")}
+          </p>
+          <div className="mt-3 flex gap-6">
+            <div>
+              <span className="block font-medium text-on-surface-variant text-xs uppercase tracking-wide">
+                {t("total_services")}
+              </span>
+              <span className="block font-extrabold font-headline text-on-surface text-xl tracking-tight">
+                {repairItems.length}
+              </span>
+            </div>
+            <div>
+              <span className="block font-medium text-on-surface-variant text-xs uppercase tracking-wide">
+                {t("most_popular")}
+              </span>
+              <span className="block font-extrabold font-headline text-on-surface text-xl tracking-tight">
+                {t(`repair_category.${topCategory}`)}
+              </span>
+            </div>
+            <div>
+              <span className="block font-medium text-on-surface-variant text-xs uppercase tracking-wide">
+                {t("avg_price")}
+              </span>
+              <span className="block font-extrabold font-mono text-primary text-xl tracking-tight">
+                {formatDzd(avgPrice)}{" "}
+                <span className="font-medium text-on-surface-variant text-sm">
+                  DZD
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <Button
+          icon="add"
+          onClick={() => setShowAddModal(true)}
+          size="md"
+          type="button"
+          variant="primary-gradient"
+        >
+          {t("add_service")}
+        </Button>
       </div>
 
-      {activeTab === "services" && (
+      {error && (
         <div
-          aria-labelledby={tabId("services")}
-          id={panelId("services")}
-          role="tabpanel"
+          className="mb-6 flex items-center gap-3 rounded-xl bg-error-container px-4 py-3"
+          role="alert"
         >
-          <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
-            <div>
-              <h2 className="font-extrabold font-headline text-2xl text-on-surface tracking-tight md:text-3xl">
-                {t("repair_services")}
-              </h2>
-              <p className="mt-1 font-medium text-on-surface-variant text-sm md:text-base">
-                {t("repair_services_subtitle")}
-              </p>
-              <div className="mt-4 flex gap-8">
-                <div>
-                  <span className="block font-bold font-label text-on-surface-variant text-xs uppercase tracking-wide">
-                    {t("total_services")}
-                  </span>
-                  <span className="block font-extrabold font-headline text-2xl text-on-surface tracking-tight">
-                    {repairItems.length}
-                  </span>
-                </div>
-                <div>
-                  <span className="block font-bold font-label text-on-surface-variant text-xs uppercase tracking-wide">
-                    {t("most_popular")}
-                  </span>
-                  <span className="block font-extrabold font-headline text-2xl text-on-surface tracking-tight">
-                    {t(`repair_category.${topCategory}`)}
-                  </span>
-                </div>
-                <div>
-                  <span className="block font-bold font-label text-on-surface-variant text-xs uppercase tracking-wide">
-                    {t("avg_price")}
-                  </span>
-                  <span className="block font-extrabold font-mono text-2xl text-primary tracking-tight">
-                    {formatDzd(avgPrice)}{" "}
-                    <span className="font-bold text-on-surface-variant text-sm">
-                      DZD
-                    </span>
-                  </span>
-                </div>
-              </div>
-            </div>
-            <Button
-              icon="add"
-              onClick={() => setShowAddModal(true)}
-              size="md"
-              type="button"
-              variant="primary-gradient"
-            >
-              {t("add_service")}
-            </Button>
-          </div>
-
-          {error && (
-            <div
-              className="mb-6 flex items-center gap-3 rounded-xl bg-error-container px-4 py-3"
-              role="alert"
-            >
-              <span className="material-symbols-outlined text-on-error-container">
-                error
-              </span>
-              <p className="flex-1 font-bold text-on-error-container text-sm">
-                {error}
-              </p>
-              <button
-                className="flex h-8 w-8 items-center justify-center rounded-full text-on-error-container transition-colors hover:bg-on-error-container/10"
-                onClick={clearError}
-                type="button"
-              >
-                <span className="material-symbols-outlined text-[18px]">
-                  close
-                </span>
-              </button>
-            </div>
-          )}
-
-          <div className="mb-6">
-            <RepairFilters
-              activeCategory={activeCategory}
-              activeSort={activeSort}
-              onCategoryChange={setActiveCategory}
-              onSearchChange={setSearchQuery}
-              onSortChange={setActiveSort}
-              searchQuery={searchQuery}
-            />
-          </div>
-
-          <div className="mb-8">
-            {isLoading && <RepairListLoading />}
-            {!isLoading && sorted.length === 0 && (
-              <RepairListEmpty
-                onClearFilters={() => setActiveCategory("ALL")}
-              />
-            )}
-            {!isLoading && sorted.length > 0 && (
-              <RepairListContent
-                deletingId={deletingId}
-                onCancelDelete={() => setDeletingId(null)}
-                onConfirmDelete={handleDeleteRepair}
-                onEdit={handleEditRepair}
-                onShowDelete={setDeletingId}
-                onToggleActive={handleToggleActive}
-                sorted={sorted}
-                togglingId={togglingId}
-              />
-            )}
-          </div>
+          <span className="material-symbols-outlined text-on-error-container">
+            error
+          </span>
+          <p className="flex-1 font-bold text-on-error-container text-sm">
+            {error}
+          </p>
+          <button
+            className="flex h-8 w-8 items-center justify-center rounded-full text-on-error-container transition-colors hover:bg-on-error-container/10"
+            onClick={clearError}
+            type="button"
+          >
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
         </div>
       )}
 
-      {activeTab === "analytics" && (
-        <div
-          aria-labelledby={tabId("analytics")}
-          id={panelId("analytics")}
-          role="tabpanel"
-        >
-          <div className="mb-6">
-            <h2 className="font-extrabold font-headline text-2xl text-on-surface tracking-tight md:text-3xl">
-              {t("repairs_tab_analytics")}
-            </h2>
-            <p className="mt-1 font-medium text-on-surface-variant text-sm md:text-base">
-              {t("service_breakdown")}
-            </p>
-          </div>
-          <CategoryHealth repairs={repairItems} />
-        </div>
-      )}
+      <div className="mb-6">
+        <RepairFilters
+          activeCategory={activeCategory}
+          activeSort={activeSort}
+          onCategoryChange={setActiveCategory}
+          onSearchChange={setSearchQuery}
+          onSortChange={setActiveSort}
+          searchQuery={searchQuery}
+        />
+      </div>
 
-      {activeTab === "pricing" && (
-        <div
-          aria-labelledby={tabId("pricing")}
-          id={panelId("pricing")}
-          role="tabpanel"
-        >
-          <div className="mb-6">
-            <h2 className="font-extrabold font-headline text-2xl text-on-surface tracking-tight md:text-3xl">
-              {t("repairs_tab_pricing")}
-            </h2>
-            <p className="mt-1 font-medium text-on-surface-variant text-sm md:text-base">
-              {t("improve_pricing")}
-            </p>
-          </div>
-          <AiPricingCallout />
-        </div>
-      )}
+      <div className="mb-6">
+        {isLoading && <RepairListLoading />}
+        {!isLoading && sorted.length === 0 && (
+          <RepairListEmpty onClearFilters={() => setActiveCategory("ALL")} />
+        )}
+        {!isLoading && sorted.length > 0 && (
+          <RepairListContent
+            onEdit={handleEditRepair}
+            onShowDelete={setDeletingId}
+            onToggleActive={handleToggleActive}
+            sorted={sorted}
+            togglingId={togglingId}
+          />
+        )}
+      </div>
+
+      <CategoryHealth repairs={repairItems} />
 
       <AddRepairModal
         onClose={() => setShowAddModal(false)}
@@ -548,6 +403,13 @@ export default function RepairsPage() {
           open
         />
       )}
+
+      <DeleteRepairDialog
+        onClose={() => setDeletingId(null)}
+        onConfirm={handleDeleteRepair}
+        open={deletingId !== null}
+        repairName={deletingRepair?.name ?? ""}
+      />
 
       {toast && (
         <div

@@ -237,6 +237,7 @@
   "delete_repair": "Delete repair",
   "delete_repair_confirm_title": "Delete this repair?",
   "delete_repair_confirm_desc": "This will permanently remove the repair from your catalog. This action cannot be undone.",
+  "delete_repair_confirm_desc_named": "This will permanently remove \"{{name}}\" from your catalog. This action cannot be undone.",
   "repair_deleted_successfully": "Repair deleted successfully",
   "failed_to_delete_repair": "Failed to delete repair",
   "repair_status_changed": "Repair status updated",
@@ -983,8 +984,5 @@
   "jobs_photos_empty_desc": "Capture device condition before and after repair",
   "jobs_photos_add": "Add photo",
   "job_photo_upload_success": "Photo uploaded",
-  "actions": "Actions",
-  "repairs_tab_services": "Services",
-  "repairs_tab_analytics": "Analytics",
-  "repairs_tab_pricing": "Pricing"
+  "actions": "Actions"
 }
