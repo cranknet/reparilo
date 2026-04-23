@@ -501,6 +501,7 @@ model ShopSettings {
   address       String?
   phone         String?
   currency      String   @default("DZD")
+  timezone      String?  // IANA name, e.g. "Africa/Algiers". Null -> env TZ fallback.
   receiptFooter String?  @db.Text
   createdAt     DateTime @default(now()) @db.Timestamptz
   updatedAt     DateTime @updatedAt      @db.Timestamptz
