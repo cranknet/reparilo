@@ -217,10 +217,12 @@ export async function overdueJobs(
 
 export async function warrantyReturnsOpen(
   prisma: PrismaClient,
+  scope: Scope,
   limit: number
 ): Promise<WarrantyReturnDTO[]> {
   const jobs = await prisma.job.findMany({
     where: {
+      ...scopeWhere(scope),
       isWarrantyReturn: true,
       status: { notIn: ["DELIVERED", "CANCELLED"] },
     },
@@ -375,11 +377,13 @@ export async function priorityActionsForTech(
 
 export async function activeRepairsQueue(
   prisma: PrismaClient,
+  scope: Scope,
   today: DateRange,
   limit: number
 ): Promise<ActiveRepairDTO[]> {
   const rows = await prisma.job.findMany({
     where: {
+      ...scopeWhere(scope),
       OR: [
         { status: { in: [...ACTIVE_STATUSES] } },
         {
@@ -412,6 +416,7 @@ export async function activeRepairsQueue(
 
 export async function todayOverview(
   prisma: PrismaClient,
+  scope: Scope,
   today: DateRange
 ): Promise<{
   completedToday: number;
@@ -420,16 +425,21 @@ export async function todayOverview(
 }> {
   const [totalToday, completedToday, intakes] = await Promise.all([
     prisma.job.count({
-      where: { createdAt: { gte: today.start, lt: today.end } },
+      where: {
+        ...scopeWhere(scope),
+        createdAt: { gte: today.start, lt: today.end },
+      },
     }),
     prisma.job.count({
       where: {
+        ...scopeWhere(scope),
         status: "DELIVERED",
         updatedAt: { gte: today.start, lt: today.end },
       },
     }),
     prisma.job.findMany({
       where: {
+        ...scopeWhere(scope),
         createdAt: { gte: today.start, lt: today.end },
         status: "INTAKE",
       },
@@ -452,10 +462,11 @@ export async function todayOverview(
 
 export async function pickupReady(
   prisma: PrismaClient,
+  scope: Scope,
   limit: number
 ): Promise<PickupReadyDTO[]> {
   const rows = await prisma.job.findMany({
-    where: { status: "DONE" },
+    where: { ...scopeWhere(scope), status: "DONE" },
     include: {
       customer: { select: { name: true, phone: true } },
       device: { select: { brand: true, model: true } },
@@ -475,11 +486,13 @@ export async function pickupReady(
 
 export async function priorityAlerts(
   prisma: PrismaClient,
+  scope: Scope,
   limit: number
 ): Promise<PriorityAlertDTO[]> {
   const [overdue, warranty, ready] = await Promise.all([
     prisma.job.findMany({
       where: {
+        ...scopeWhere(scope),
         estimatedDate: { lt: new Date() },
         status: { in: [...ACTIVE_STATUSES] },
       },
@@ -489,6 +502,7 @@ export async function priorityAlerts(
     }),
     prisma.job.findMany({
       where: {
+        ...scopeWhere(scope),
         isWarrantyReturn: true,
         status: { notIn: ["DELIVERED", "CANCELLED"] },
       },
@@ -502,7 +516,7 @@ export async function priorityAlerts(
       take: limit,
     }),
     prisma.job.findMany({
-      where: { status: "DONE" },
+      where: { ...scopeWhere(scope), status: "DONE" },
       select: {
         customer: { select: { name: true } },
         id: true,

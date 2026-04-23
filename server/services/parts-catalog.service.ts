@@ -90,17 +90,19 @@ export async function toggleActive(
 }
 
 export async function remove(prisma: PrismaClient, id: string) {
-  const part = await prisma.partsCatalog.findUnique({ where: { id } });
-  if (!part) {
-    return null;
-  }
+  return await prisma.$transaction(async (tx) => {
+    const part = await tx.partsCatalog.findUnique({ where: { id } });
+    if (!part) {
+      return null;
+    }
 
-  const refCount = await prisma.jobPart.count({ where: { partId: id } });
-  if (refCount > 0) {
-    throw new Error(
-      `Cannot delete part "${part.name}" — referenced by ${refCount} job(s). Deactivate it instead.`
-    );
-  }
+    const refCount = await tx.jobPart.count({ where: { partId: id } });
+    if (refCount > 0) {
+      throw new Error(
+        `Cannot delete part "${part.name}" — referenced by ${refCount} job(s). Deactivate it instead.`
+      );
+    }
 
-  return prisma.partsCatalog.delete({ where: { id } });
+    return tx.partsCatalog.delete({ where: { id } });
+  });
 }

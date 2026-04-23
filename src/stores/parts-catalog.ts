@@ -72,11 +72,11 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
       const res = await api.get("/parts", {
         params: { ...params, cursor: state.nextCursor },
       });
-      set({
+      set((state) => ({
         parts: [...state.parts, ...(res.data.parts ?? [])],
         nextCursor: res.data.nextCursor ?? null,
         isLoadingMore: false,
-      });
+      }));
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : i18n.t("errors.fetch_parts");

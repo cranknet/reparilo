@@ -49,7 +49,7 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
         avgProfitMargin(app.prisma, scope, month),
         financialTrend(app.prisma, scope, 7),
         overdueJobs(app.prisma, scope, 10),
-        warrantyReturnsOpen(app.prisma, 5),
+        warrantyReturnsOpen(app.prisma, scope, 5),
       ]);
       return {
         pipeline,
@@ -119,10 +119,10 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
       const now = new Date();
       const today = todayRange(scope.shopTz, now);
       const [activeRepairs, overview, alerts, ready] = await Promise.all([
-        activeRepairsQueue(app.prisma, today, 20),
-        todayOverview(app.prisma, today),
-        priorityAlerts(app.prisma, 5),
-        pickupReady(app.prisma, 10),
+        activeRepairsQueue(app.prisma, scope, today, 20),
+        todayOverview(app.prisma, scope, today),
+        priorityAlerts(app.prisma, scope, 5),
+        pickupReady(app.prisma, scope, 10),
       ]);
       return {
         activeRepairs,
