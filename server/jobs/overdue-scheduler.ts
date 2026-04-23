@@ -1,5 +1,6 @@
 import { INACTIVE_STATUSES } from "@shared/constants";
 import type { FastifyInstance } from "fastify";
+import { emitDashboardChanged } from "../lib/dashboard-events.js";
 
 const alerted = new Set<string>();
 const MAX_ALERTED = 10_000;
@@ -42,6 +43,7 @@ async function processOverdueJobs(app: FastifyInstance): Promise<void> {
       type: "JOB_OVERDUE",
       job: { id: job.id, jobCode: job.jobCode },
     });
+    emitDashboardChanged(app, ["OWNER", "FRONT_DESK"]);
   }
 }
 

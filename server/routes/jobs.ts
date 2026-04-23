@@ -10,6 +10,8 @@ import {
   updateJobSchema,
 } from "@shared/schemas";
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
+import type { DashboardTarget } from "../lib/dashboard-events.js";
+import { emitDashboardChanged } from "../lib/dashboard-events.js";
 import { requirePermission } from "../middlewares/rbac.js";
 import {
   computeMargin,
@@ -112,6 +114,16 @@ function getUserId(req: FastifyRequest): string {
     throw new Error("Unauthorized");
   }
   return user.id;
+}
+
+function jobDashboardTargets(result: {
+  technicianId?: string | null;
+}): DashboardTarget[] {
+  const targets: DashboardTarget[] = ["OWNER", "FRONT_DESK"];
+  if (result.technicianId) {
+    targets.push({ technicianId: result.technicianId });
+  }
+  return targets;
 }
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
@@ -318,6 +330,8 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         });
       }
 
+      emitDashboardChanged(app, jobDashboardTargets(result));
+
       return reply.status(201).send(result);
     }
   );
@@ -360,6 +374,18 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
           "Assigned user is not a valid technician"
         );
       }
+      const prev = await app.prisma.job.findUnique({
+        where: { id },
+        select: { technicianId: true },
+      });
+      const targets: DashboardTarget[] = ["OWNER", "FRONT_DESK"];
+      if (prev?.technicianId) {
+        targets.push({ technicianId: prev.technicianId });
+      }
+      if (result.technicianId && result.technicianId !== prev?.technicianId) {
+        targets.push({ technicianId: result.technicianId });
+      }
+      emitDashboardChanged(app, targets);
       return reply.send(result);
     }
   );
@@ -434,6 +460,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         "Only the job creator can cancel"
       );
     }
+    emitDashboardChanged(app, jobDashboardTargets(result));
     return reply.send(result);
   });
 
