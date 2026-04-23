@@ -460,7 +460,9 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         "Only the job creator can cancel"
       );
     }
-    emitDashboardChanged(app, jobDashboardTargets(result));
+    if (!("error" in result)) {
+      emitDashboardChanged(app, jobDashboardTargets(result));
+    }
     return reply.send(result);
   });
 

@@ -39,9 +39,15 @@ export function emitDashboardChanged(
   }
 
   for (const role of roles) {
-    broadcast((c) => c.role === role, PAYLOAD);
+    broadcast(
+      (c) => c.role === role,
+      PAYLOAD as unknown as Record<string, unknown>
+    );
   }
   for (const id of techIds) {
-    broadcast((c) => c.role === "TECHNICIAN" && c.userId === id, PAYLOAD);
+    broadcast(
+      (c) => c.role === "TECHNICIAN" && c.userId === id,
+      PAYLOAD as unknown as Record<string, unknown>
+    );
   }
 }
