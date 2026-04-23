@@ -44,13 +44,14 @@ export default function ConfirmDiscardDialog({
       return;
     }
     const handleKeyDown = (e: KeyboardEvent) => {
-      e.stopPropagation();
       if (e.key === "Escape") {
         e.preventDefault();
+        e.stopPropagation();
         onKeepEditing();
         return;
       }
       if (e.key === "Tab" && ref.current) {
+        e.stopPropagation();
         trapTabInContainer(e, ref.current);
       }
     };

@@ -132,8 +132,16 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
         }
         return reply.status(204).send();
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Delete failed";
-        return sendError(reply, 409, "PART_IN_USE", msg);
+        if (err instanceof Error && err.message.includes("referenced by")) {
+          return sendError(
+            reply,
+            409,
+            "PART_IN_USE",
+            "Part is referenced by existing jobs. Deactivate it instead."
+          );
+        }
+        req.log.error(err);
+        return sendError(reply, 500, "INTERNAL_ERROR", "Internal server error");
       }
     }
   );

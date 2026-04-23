@@ -57,8 +57,10 @@ function utcFromZonedYmd(tz: string, y: number, m: number, d: number): Date {
 export function todayRange(tz: string, now: Date = new Date()): DateRange {
   const { year, month, day } = zonedParts(tz, now);
   const start = utcFromZonedYmd(tz, year, month, day);
-  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
-  return { start, end };
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const t = zonedParts(tz, tomorrow);
+  const end = utcFromZonedYmd(tz, t.year, t.month, t.day);
+  return { end, start };
 }
 
 export function monthRange(tz: string, now: Date = new Date()): DateRange {

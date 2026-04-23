@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { type JobStatus, PrismaClient, Role } from "@prisma/client";
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { monthRange, todayRange } from "../../utils/time-range.js";
 import {
   activeJobsCount,
@@ -76,6 +76,9 @@ beforeAll(async () => {
 });
 beforeEach(async () => {
   await truncate();
+});
+afterAll(async () => {
+  await prisma.$disconnect();
 });
 
 describe("pipelineCounts", () => {

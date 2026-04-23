@@ -39,10 +39,11 @@ describe("dashboardScope middleware", () => {
   });
 
   it("falls back to env TZ when ShopSettings has no timezone", async () => {
-    process.env.TZ = "UTC";
+    vi.stubEnv("TZ", "UTC");
     const app = buildApp({ id: "u2", role: "TECHNICIAN" }, { timezone: null });
     const res = await app.inject({ method: "GET", url: "/probe" });
     expect(JSON.parse(res.body).scope.shopTz).toBe("UTC");
+    vi.unstubAllEnvs();
   });
 
   it("returns 401 without session user", async () => {

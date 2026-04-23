@@ -147,8 +147,8 @@ export async function financialTrend(
   days: number
 ): Promise<FinancialTrendPoint[]> {
   const techClause =
-    scope.role === "TECHNICIAN" ? `AND j."technicianId" = $2` : "";
-  const params: unknown[] = [scope.shopTz];
+    scope.role === "TECHNICIAN" ? `AND j."technicianId" = $3` : "";
+  const params: unknown[] = [scope.shopTz, days - 1];
   if (scope.role === "TECHNICIAN") {
     params.push(scope.userId);
   }
@@ -174,8 +174,7 @@ export async function financialTrend(
      LEFT JOIN "job_parts"   jp ON jp."jobId" = j."id"
      GROUP BY s.day
      ORDER BY s.day ASC`,
-    ...params,
-    days - 1
+    ...params
   );
   return rows.map((r) => ({
     cost: toMoney(Number(r.cost)),

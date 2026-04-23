@@ -130,8 +130,16 @@ export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
         }
         return reply.status(204).send();
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Delete failed";
-        return sendError(reply, 409, "REPAIR_IN_USE", msg);
+        if (err instanceof Error && err.message.includes("referenced by")) {
+          return sendError(
+            reply,
+            409,
+            "REPAIR_IN_USE",
+            "Repair is referenced by existing jobs. Deactivate it instead."
+          );
+        }
+        req.log.error(err);
+        return sendError(reply, 500, "INTERNAL_ERROR", "Internal server error");
       }
     }
   );
