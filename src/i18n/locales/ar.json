@@ -708,23 +708,17 @@
   "balanced": "متوازن",
   "repair_modal": {
     "title": "إضافة خدمة جديدة",
-    "close": "إغلاق مشروط",
+    "subtitle": "أضف خدمة إصلاح إلى الكتالوج الخاص بك",
+    "subtitle_edit": "تحديث تفاصيل الخدمة",
     "category_section": "فئة الخدمة",
     "service_name": "اسم الخدمة",
     "service_name_placeholder": "على سبيل المثال ",
-    "description": "وصف",
-    "description_placeholder": "ما هو مدرج، شروط الضمان، ملاحظات خاصة...",
-    "pricing_section": "التسعير والمدة",
     "base_price": "السعر الأساسي",
-    "estimated_duration": "المدة المقدرة",
-    "duration_placeholder": "على سبيل المثال ",
     "pricing_note": "يمكن تعديل السعر الأساسي لكل وظيفة. ",
     "cancel": "يلغي",
     "create_service": "إنشاء الخدمة",
-    "creating": "جارٍ الإنشاء...",
-    "saving": "توفير...",
-    "error_required": "هذه الخانة مطلوبه",
-    "error_summary": "يرجى ملء جميع الحقول المطلوبة"
+    "error_name_required": "اسم الخدمة مطلوب",
+    "error_price_invalid": "أدخل سعرًا صالحًا أكبر من الصفر"
   },
   "jobs_status_change_menu_label": "تغيير الحالة",
   "jobs_status_change_select_status": "اختر الحالة",
@@ -984,5 +978,9 @@
   "jobs_photos_empty_desc": "التقاط حالة الجهاز قبل وبعد الإصلاح",
   "jobs_photos_add": "أضف صورة",
   "job_photo_upload_success": "تم تحميل الصورة",
-  "actions": "الإجراءات"
+  "actions": "الإجراءات",
+  "navigation": "ملاحة",
+  "more": "أكثر",
+  "more_navigation": "المزيد من الملاحة",
+  "close": "يغلق"
 }

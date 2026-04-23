@@ -708,23 +708,17 @@
   "balanced": "Balanced",
   "repair_modal": {
     "title": "Add New Service",
-    "close": "Close modal",
+    "subtitle": "Add a repair service to your catalog",
+    "subtitle_edit": "Update service details",
     "category_section": "Service Category",
     "service_name": "Service Name",
     "service_name_placeholder": "e.g. Screen Replacement Gen 5",
-    "description": "Description",
-    "description_placeholder": "What's included, warranty terms, special notes...",
-    "pricing_section": "Pricing & Duration",
     "base_price": "Base Price",
-    "estimated_duration": "Estimated Duration",
-    "duration_placeholder": "e.g. 2 - 3 Hours",
     "pricing_note": "Base price can be adjusted per job. AI pricing suggestions will use this as a reference.",
     "cancel": "Cancel",
     "create_service": "Create Service",
-    "creating": "Creating...",
-    "saving": "Saving...",
-    "error_required": "This field is required",
-    "error_summary": "Some required information is missing — check the highlighted fields."
+    "error_name_required": "Service name is required",
+    "error_price_invalid": "Enter a valid price greater than zero"
   },
   "jobs_status_change_menu_label": "Change status",
   "jobs_status_change_select_status": "Select status",
@@ -984,5 +978,9 @@
   "jobs_photos_empty_desc": "Capture device condition before and after repair",
   "jobs_photos_add": "Add photo",
   "job_photo_upload_success": "Photo uploaded",
-  "actions": "Actions"
+  "actions": "Actions",
+  "navigation": "Navigation",
+  "more": "More",
+  "more_navigation": "More navigation",
+  "close": "Close"
 }

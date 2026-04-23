@@ -708,23 +708,17 @@
   "balanced": "Équilibré",
   "repair_modal": {
     "title": "Ajouter un nouveau service",
-    "close": "Fermer modale",
+    "subtitle": "Ajoutez un service de réparation à votre catalogue",
+    "subtitle_edit": "Mettre à jour les détails du service",
     "category_section": "Catégorie de services",
     "service_name": "Nom du service",
     "service_name_placeholder": "par ex. ",
-    "description": "Description",
-    "description_placeholder": "Ce qui est inclus, conditions de garantie, notes spéciales...",
-    "pricing_section": "Prix et durée",
     "base_price": "Prix de base",
-    "estimated_duration": "Durée estimée",
-    "duration_placeholder": "par ex. ",
     "pricing_note": "Le prix de base peut être ajusté par travail. ",
     "cancel": "Annuler",
     "create_service": "Créer un service",
-    "creating": "Création...",
-    "saving": "Enregistrement...",
-    "error_required": "Ce champ est obligatoire",
-    "error_summary": "Veuillez remplir tous les champs obligatoires"
+    "error_name_required": "Le nom du service est requis",
+    "error_price_invalid": "Saisissez un prix valide supérieur à zéro"
   },
   "jobs_status_change_menu_label": "Changer de statut",
   "jobs_status_change_select_status": "Sélectionnez le statut",
@@ -984,5 +978,9 @@
   "jobs_photos_empty_desc": "Capturer l'état de l'appareil avant et après réparation",
   "jobs_photos_add": "Ajouter une photo",
   "job_photo_upload_success": "Photo téléchargée",
-  "actions": "Actes"
+  "actions": "Actes",
+  "navigation": "Navigation",
+  "more": "Plus",
+  "more_navigation": "Plus de navigation",
+  "close": "Fermer"
 }
