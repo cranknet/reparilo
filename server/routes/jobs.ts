@@ -354,6 +354,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         );
       }
       const userId = getUserId(req);
+      const prev = await app.prisma.job.findUnique({
+        where: { id },
+        select: { technicianId: true },
+      });
       const result = await updateJob(app.prisma, id, parsed.data, userId);
       if (!result) {
         return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
@@ -374,10 +378,6 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
           "Assigned user is not a valid technician"
         );
       }
-      const prev = await app.prisma.job.findUnique({
-        where: { id },
-        select: { technicianId: true },
-      });
       const targets: DashboardTarget[] = ["OWNER", "FRONT_DESK"];
       if (prev?.technicianId) {
         targets.push({ technicianId: prev.technicianId });
