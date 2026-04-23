@@ -22,8 +22,9 @@ import {
   warrantyReturnsOpen,
 } from "../dashboard.service.js";
 
+const dbUrl = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL;
 const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: dbUrl,
 });
 const prisma = new PrismaClient({ adapter });
 const TZ = "UTC";
@@ -78,6 +79,7 @@ beforeEach(async () => {
   await truncate();
 });
 afterAll(async () => {
+  await truncate();
   await prisma.$disconnect();
 });
 
