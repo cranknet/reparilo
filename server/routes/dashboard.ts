@@ -1,0 +1,135 @@
+import type { FastifyPluginAsync } from "fastify";
+import { dashboardScope } from "../middlewares/dashboard-scope.js";
+import { requireRoles } from "../middlewares/require-roles.js";
+import {
+  activeJobsCount,
+  activeRepairsQueue,
+  avgProfitMargin,
+  avgRepairTimeHours,
+  completedTodayCount,
+  financialTrend,
+  overdueJobs,
+  pickupReady,
+  pipelineCounts,
+  priorityActionsForTech,
+  priorityAlerts,
+  recentActivityForTech,
+  revenueThisMonth,
+  todayOverview,
+  todayScheduleForTech,
+  warrantyReturnsOpen,
+} from "../services/dashboard.service.js";
+import { monthRange, todayRange } from "../utils/time-range.js";
+
+// biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
+export const dashboardRoutes: FastifyPluginAsync = async (app) => {
+  app.get(
+    "/owner",
+    { preHandler: [requireRoles("OWNER"), dashboardScope] },
+    async (req) => {
+      // biome-ignore lint/style/noNonNullAssertion: set by dashboardScope preHandler
+      const scope = req.dashboardScope!;
+      const now = new Date();
+      const today = todayRange(scope.shopTz, now);
+      const month = monthRange(scope.shopTz, now);
+      const [
+        pipeline,
+        activeJobs,
+        completedToday,
+        revenue,
+        margin,
+        trend,
+        overdue,
+        warranty,
+      ] = await Promise.all([
+        pipelineCounts(app.prisma, scope),
+        activeJobsCount(app.prisma, scope),
+        completedTodayCount(app.prisma, scope, today),
+        revenueThisMonth(app.prisma, scope, month),
+        avgProfitMargin(app.prisma, scope, month),
+        financialTrend(app.prisma, scope, 7),
+        overdueJobs(app.prisma, scope, 10),
+        warrantyReturnsOpen(app.prisma, 5),
+      ]);
+      return {
+        pipeline,
+        activeJobs,
+        completedToday,
+        revenueThisMonth: revenue,
+        avgProfitMargin: margin,
+        financialTrend: trend,
+        overdueJobs: overdue,
+        warrantyReturns: warranty,
+      };
+    }
+  );
+
+  app.get(
+    "/technician",
+    { preHandler: [requireRoles("OWNER", "TECHNICIAN"), dashboardScope] },
+    async (req) => {
+      // biome-ignore lint/style/noNonNullAssertion: set by dashboardScope preHandler
+      const scope = req.dashboardScope!;
+      const techScope = { ...scope, role: "TECHNICIAN" as const };
+      const now = new Date();
+      const today = todayRange(scope.shopTz, now);
+      const [
+        pipeline,
+        waitingForParts,
+        completedToday,
+        todaySchedule,
+        recentActivity,
+        repairTime,
+        priorityActions,
+      ] = await Promise.all([
+        pipelineCounts(app.prisma, techScope),
+        app.prisma.job.count({
+          where: { technicianId: scope.userId, status: "WAITING_FOR_PARTS" },
+        }),
+        completedTodayCount(app.prisma, techScope, today),
+        todayScheduleForTech(app.prisma, scope.userId, today),
+        recentActivityForTech(app.prisma, scope.userId, 20),
+        avgRepairTimeHours(app.prisma, scope.userId, 30),
+        priorityActionsForTech(app.prisma, scope.userId),
+      ]);
+      const myActiveJobs =
+        pipeline.INTAKE +
+        pipeline.IN_REPAIR +
+        pipeline.ON_HOLD +
+        pipeline.WAITING_FOR_PARTS;
+      return {
+        pipeline,
+        myActiveJobs,
+        completedToday,
+        waitingForParts,
+        avgRepairTimeHours: repairTime,
+        todaySchedule,
+        recentActivity,
+        priorityActions,
+      };
+    }
+  );
+
+  app.get(
+    "/front-desk",
+    { preHandler: [requireRoles("OWNER", "FRONT_DESK"), dashboardScope] },
+    async (req) => {
+      // biome-ignore lint/style/noNonNullAssertion: set by dashboardScope preHandler
+      const scope = req.dashboardScope!;
+      const now = new Date();
+      const today = todayRange(scope.shopTz, now);
+      const [activeRepairs, overview, alerts, ready] = await Promise.all([
+        activeRepairsQueue(app.prisma, today, 20),
+        todayOverview(app.prisma, today),
+        priorityAlerts(app.prisma, 5),
+        pickupReady(app.prisma, 10),
+      ]);
+      return {
+        activeRepairs,
+        todayOverview: overview,
+        priorityAlerts: alerts,
+        pickupReady: ready,
+      };
+    }
+  );
+};

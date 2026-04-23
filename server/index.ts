@@ -12,6 +12,7 @@ import { websocketPlugin, wsBroadcast } from "./plugins/websocket.js";
 import { aiRoutes } from "./routes/ai.js";
 import { authRoutes } from "./routes/auth.js";
 import { customersRoutes } from "./routes/customers.js";
+import { dashboardRoutes } from "./routes/dashboard.js";
 import { healthRoutes } from "./routes/health.js";
 import { jobRoutes } from "./routes/jobs.js";
 import { notificationsRoutes } from "./routes/notifications.js";
@@ -51,6 +52,7 @@ app.register(usersRoutes, { prefix: "/api/users" });
 app.register(notificationsRoutes, { prefix: "/api/notifications" });
 app.register(settingsRoutes, { prefix: "/api/settings" });
 app.register(aiRoutes, { prefix: "/api/ai" });
+app.register(dashboardRoutes, { prefix: "/api/dashboard" });
 
 if (process.env.NODE_ENV === "production") {
   await app.register(staticPlugin, {
