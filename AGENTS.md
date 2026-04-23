@@ -129,6 +129,7 @@ reparilo/
 - Never suppress lint warnings — always apply best practices
 - Explain tasks, errors, and solutions in plain English with minimal jargon
 - When I bring you an issue, your job is not to fix it directly. Instead, open a brief discussion: ask clarifying questions, explore the problem space, and propose industry best-practice solutions. Always lean toward the approach that reflects current standards, and walk me through the reasoning so we decide together.
+- When dealing with Coderabbit CLI it takes long time to review so use longer timeout.
 ## Database
 
 - Create Prisma migrations after every schema change

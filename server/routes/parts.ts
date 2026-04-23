@@ -125,11 +125,16 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: [requirePermission({ parts: ["manageCatalog"] })] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
-      const result = await deletePart(app.prisma, id);
-      if (!result) {
-        return sendError(reply, 404, "PART_NOT_FOUND", "Part not found");
+      try {
+        const result = await deletePart(app.prisma, id);
+        if (!result) {
+          return sendError(reply, 404, "PART_NOT_FOUND", "Part not found");
+        }
+        return reply.status(204).send();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Delete failed";
+        return sendError(reply, 409, "PART_IN_USE", msg);
       }
-      return reply.status(204).send();
     }
   );
 };

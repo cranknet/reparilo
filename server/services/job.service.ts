@@ -540,6 +540,11 @@ export async function lookupByCodeAuth(
     orderBy: { createdAt: "asc" },
   });
 
+  const shopSettings = await prisma.shopSettings.findUnique({
+    where: { id: "default" },
+    select: { shopName: true, phone: true, address: true },
+  });
+
   return {
     jobCode: job.jobCode,
     status: job.status,
@@ -561,5 +566,12 @@ export async function lookupByCodeAuth(
       to: t.toValue,
       date: t.createdAt,
     })),
+    shop: shopSettings
+      ? {
+          name: shopSettings.shopName,
+          phone: shopSettings.phone,
+          address: shopSettings.address,
+        }
+      : null,
   };
 }

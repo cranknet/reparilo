@@ -95,5 +95,12 @@ export async function remove(prisma: PrismaClient, id: string) {
     return null;
   }
 
+  const refCount = await prisma.jobPart.count({ where: { partId: id } });
+  if (refCount > 0) {
+    throw new Error(
+      `Cannot delete part "${part.name}" — referenced by ${refCount} job(s). Deactivate it instead.`
+    );
+  }
+
   return prisma.partsCatalog.delete({ where: { id } });
 }

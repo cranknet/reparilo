@@ -88,17 +88,19 @@ export default function BatchActionBar({
           async () => {
             let undoOk = 0;
             let undoFail = 0;
-            for (const job of selectedJobs) {
-              const prev = previousStatuses.get(job.id);
-              if (prev) {
-                try {
-                  await transitionStatus(job.id, prev);
-                  undoOk++;
-                } catch {
-                  undoFail++;
+            await Promise.allSettled(
+              selectedJobs.map(async (job) => {
+                const prev = previousStatuses.get(job.id);
+                if (prev) {
+                  try {
+                    await transitionStatus(job.id, prev);
+                    undoOk++;
+                  } catch {
+                    undoFail++;
+                  }
                 }
-              }
-            }
+              })
+            );
             if (undoFail > 0) {
               toast(
                 t("batch_undo_partial", {

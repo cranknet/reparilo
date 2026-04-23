@@ -123,11 +123,16 @@ export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: [requirePermission({ repairs: ["manageCatalog"] })] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
-      const result = await deleteRepair(app.prisma, id);
-      if (!result) {
-        return sendError(reply, 404, "REPAIR_NOT_FOUND", "Repair not found");
+      try {
+        const result = await deleteRepair(app.prisma, id);
+        if (!result) {
+          return sendError(reply, 404, "REPAIR_NOT_FOUND", "Repair not found");
+        }
+        return reply.status(204).send();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Delete failed";
+        return sendError(reply, 409, "REPAIR_IN_USE", msg);
       }
-      return reply.status(204).send();
     }
   );
 };
