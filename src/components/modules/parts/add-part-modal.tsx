@@ -1,9 +1,10 @@
 import type { PartCategoryType } from "@shared/constants";
 import { PartCategory } from "@shared/constants";
 import type { PartsCatalog } from "@shared/types";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import ConfirmDiscardDialog from "@/components/ui/confirm-discard-dialog";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,7 +47,8 @@ function isDirty(
     return (
       form.name !== editingPart.name ||
       form.category !== editingPart.category ||
-      Number.parseFloat(form.defaultPrice) !== editingPart.defaultPrice ||
+      Number.parseFloat(form.defaultPrice) !==
+        Number(editingPart.defaultPrice) ||
       form.supplier !== (editingPart.supplier ?? "") ||
       form.isActive !== editingPart.isActive
     );
@@ -60,33 +62,6 @@ function isDirty(
   );
 }
 
-const FOCUSABLE_SELECTOR =
-  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-
-function trapTabInContainer(e: KeyboardEvent, container: HTMLElement) {
-  const focusable = Array.from(
-    container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
-  );
-  if (focusable.length === 0) {
-    return;
-  }
-  const first = focusable[0];
-  const last = focusable.at(-1) ?? focusable[0];
-  if (e.shiftKey) {
-    if (document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    }
-  } else if (document.activeElement === last) {
-    e.preventDefault();
-    first.focus();
-  }
-}
-
-function focusFirstIn(container: HTMLElement) {
-  container.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)?.focus();
-}
-
 export default function AddPartModal({
   editingPart,
   onClose,
@@ -94,7 +69,6 @@ export default function AddPartModal({
 }: AddPartModalProps) {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
-  const confirmDialogRef = useRef<HTMLDivElement>(null);
   useModalEffects(true, onClose, dialogRef);
 
   const isEditing = !!editingPart;
@@ -115,28 +89,6 @@ export default function AddPartModal({
     Partial<Record<"name" | "category" | "defaultPrice", string>>
   >({});
   const [showConfirmClose, setShowConfirmClose] = useState(false);
-
-  useEffect(() => {
-    if (!(showConfirmClose && confirmDialogRef.current)) {
-      return;
-    }
-    const handleConfirmKeyDown = (e: KeyboardEvent) => {
-      e.stopPropagation();
-      if (e.key === "Escape") {
-        e.preventDefault();
-        setShowConfirmClose(false);
-        return;
-      }
-      if (e.key === "Tab" && confirmDialogRef.current) {
-        trapTabInContainer(e, confirmDialogRef.current);
-      }
-    };
-    document.addEventListener("keydown", handleConfirmKeyDown, true);
-    focusFirstIn(confirmDialogRef.current);
-    return () => {
-      document.removeEventListener("keydown", handleConfirmKeyDown, true);
-    };
-  }, [showConfirmClose]);
 
   const update = useCallback(
     <K extends keyof AddPartFormData>(key: K, value: AddPartFormData[K]) => {
@@ -203,43 +155,11 @@ export default function AddPartModal({
         tabIndex={-1}
         type="button"
       />
-      {showConfirmClose && (
-        <div
-          aria-describedby="confirm-close-desc"
-          aria-labelledby="confirm-close-title"
-          aria-modal="true"
-          className="relative z-[60] mx-4 w-full max-w-[360px] overflow-y-auto rounded-2xl bg-surface-container-lowest shadow-2xl"
-          ref={confirmDialogRef}
-          role="alertdialog"
-        >
-          <div className="px-6 py-6">
-            <h3
-              className="font-bold font-headline text-lg text-on-surface"
-              id="confirm-close-title"
-            >
-              {t("add_part_modal.discard_title")}
-            </h3>
-            <p
-              className="mt-2 text-on-surface-variant text-sm"
-              id="confirm-close-desc"
-            >
-              {t("add_part_modal.discard_desc")}
-            </p>
-          </div>
-          <div className="flex items-center justify-end gap-3 px-6 py-4">
-            <Button
-              onClick={() => setShowConfirmClose(false)}
-              type="button"
-              variant="ghost"
-            >
-              {t("add_part_modal.keep_editing")}
-            </Button>
-            <Button onClick={onClose} type="button" variant="destructive">
-              {t("add_part_modal.discard")}
-            </Button>
-          </div>
-        </div>
-      )}
+      <ConfirmDiscardDialog
+        onDiscard={onClose}
+        onKeepEditing={() => setShowConfirmClose(false)}
+        open={showConfirmClose}
+      />
       <div
         aria-labelledby="add-part-modal-title"
         aria-modal="true"

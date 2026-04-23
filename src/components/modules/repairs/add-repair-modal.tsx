@@ -2,6 +2,7 @@ import type { RepairCatalog } from "@shared/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import ConfirmDiscardDialog from "@/components/ui/confirm-discard-dialog";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -78,7 +79,6 @@ export default function AddRepairModal({
 }: AddRepairModalProps) {
   const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
-  const confirmDialogRef = useRef<HTMLDivElement>(null);
 
   const isEditing = !!editingRepair;
   const [form, setForm] = useState<RepairFormData>(() => {
@@ -109,28 +109,6 @@ export default function AddRepairModal({
     }
     setErrors({});
   }, [editingRepair]);
-
-  useEffect(() => {
-    if (!(showConfirmClose && confirmDialogRef.current)) {
-      return;
-    }
-    const handleConfirmKeyDown = (e: KeyboardEvent) => {
-      e.stopPropagation();
-      if (e.key === "Escape") {
-        e.preventDefault();
-        setShowConfirmClose(false);
-      }
-    };
-    document.addEventListener("keydown", handleConfirmKeyDown, true);
-    confirmDialogRef.current
-      .querySelector<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      )
-      ?.focus();
-    return () => {
-      document.removeEventListener("keydown", handleConfirmKeyDown, true);
-    };
-  }, [showConfirmClose]);
 
   const update = useCallback(
     <K extends keyof RepairFormData>(key: K, value: RepairFormData[K]) => {
@@ -202,43 +180,11 @@ export default function AddRepairModal({
         tabIndex={-1}
         type="button"
       />
-      {showConfirmClose && (
-        <div
-          aria-describedby="confirm-close-desc"
-          aria-labelledby="confirm-close-title"
-          aria-modal="true"
-          className="relative z-[60] mx-4 w-full max-w-[360px] overflow-y-auto rounded-2xl bg-surface-container-lowest shadow-2xl"
-          ref={confirmDialogRef}
-          role="alertdialog"
-        >
-          <div className="px-6 py-6">
-            <h3
-              className="font-bold font-headline text-lg text-on-surface"
-              id="confirm-close-title"
-            >
-              {t("add_part_modal.discard_title")}
-            </h3>
-            <p
-              className="mt-2 text-on-surface-variant text-sm"
-              id="confirm-close-desc"
-            >
-              {t("add_part_modal.discard_desc")}
-            </p>
-          </div>
-          <div className="flex items-center justify-end gap-3 px-6 py-4">
-            <Button
-              onClick={() => setShowConfirmClose(false)}
-              type="button"
-              variant="ghost"
-            >
-              {t("add_part_modal.keep_editing")}
-            </Button>
-            <Button onClick={onClose} type="button" variant="destructive">
-              {t("add_part_modal.discard")}
-            </Button>
-          </div>
-        </div>
-      )}
+      <ConfirmDiscardDialog
+        onDiscard={onClose}
+        onKeepEditing={() => setShowConfirmClose(false)}
+        open={showConfirmClose}
+      />
       <div
         aria-labelledby="add-repair-modal-title"
         aria-modal="true"
