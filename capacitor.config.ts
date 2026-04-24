@@ -14,6 +14,9 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchAutoHide: false,
     },
+    Camera: {
+      presentationStyle: "fullscreen",
+    },
   },
 };
 
