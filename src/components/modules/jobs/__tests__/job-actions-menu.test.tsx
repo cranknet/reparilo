@@ -89,14 +89,19 @@ describe("JobActionsMenu", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("disables print receipt button", () => {
+  it("has enabled print receipt and print label buttons", () => {
     render(<JobActionsMenu job={makeJob()} />);
     fireEvent.click(screen.getByRole("button", { name: "job_actions" }));
-    const printBtn = screen
+    const printReceiptBtn = screen
       .getByText("job_actions_print_receipt")
       .closest("button");
-    expect(printBtn).not.toBeNull();
-    expect(printBtn).toBeDisabled();
+    const printLabelBtn = screen
+      .getByText("job_actions_print_label")
+      .closest("button");
+    expect(printReceiptBtn).not.toBeNull();
+    expect(printLabelBtn).not.toBeNull();
+    expect(printReceiptBtn).not.toBeDisabled();
+    expect(printLabelBtn).not.toBeDisabled();
   });
 
   it("renders nothing for terminal status without customer phone", () => {

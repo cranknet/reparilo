@@ -1,20 +1,27 @@
+import type { JobStatusType } from "@shared/constants";
+import type { Job } from "@shared/types";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useJobsStore } from "@/stores/jobs";
+import { useToastStore } from "@/stores/toast";
 
 interface JobCancelDialogProps {
-  jobId: string;
+  job: Job;
   onClose: () => void;
   open: boolean;
 }
 
 export default function JobCancelDialog({
   open,
-  jobId,
+  job,
   onClose,
 }: JobCancelDialogProps) {
   const { t } = useTranslation();
   const transitionStatus = useJobsStore((s) => s.transitionStatus);
+  const undoToast = useToastStore((s) => s.undoToast);
+  const regularToast = useToastStore((s) => s.toast);
+  const jobId = job.id;
+  const previousStatus = job.status as JobStatusType;
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,18 +43,22 @@ export default function JobCancelDialog({
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
+        if (reason.trim().length > 0) {
+          return;
+        }
         onClose();
       }
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, reason]);
 
   if (!open) {
     return null;
   }
 
   const canSubmit = reason.trim().length > 0;
+  const isFormDirty = reason.trim().length > 0;
 
   async function handleSubmit() {
     setSubmitting(true);
@@ -55,8 +66,18 @@ export default function JobCancelDialog({
     try {
       await transitionStatus(jobId, "CANCELLED", reason.trim());
       onClose();
+      undoToast("job_cancel_success", "undo", () => {
+        transitionStatus(jobId, previousStatus)
+          .then(() => {
+            regularToast("job_cancel_undone");
+          })
+          .catch(() => {
+            regularToast("job_cancel_undo_failed", "error");
+          });
+      });
     } catch {
       setError(t("job_actions_status_error"));
+      regularToast("job_cancel_failed", "error");
     } finally {
       setSubmitting(false);
     }
@@ -71,7 +92,7 @@ export default function JobCancelDialog({
       <button
         aria-label={t("close_modal")}
         className="absolute inset-0 bg-on-surface/40"
-        onClick={onClose}
+        onClick={isFormDirty ? undefined : onClose}
         type="button"
       />
       <div className="modal-surface relative z-10 w-full max-w-md rounded-xl bg-surface-container-lowest p-6 shadow-2xl">
