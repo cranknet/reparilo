@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@generated/client";
 
 export type User = Prisma.UserGetPayload<Record<string, never>>;
 export type Customer = Prisma.CustomerGetPayload<Record<string, never>>;
