@@ -10,6 +10,7 @@ interface RepairCatalogState {
     category: string;
     defaultPrice: number;
   }) => Promise<RepairCatalog>;
+  deleteRepair: (id: string) => Promise<void>;
   error: string | null;
   fetchRepairs: (params?: {
     cursor?: string;
@@ -102,6 +103,22 @@ export const useRepairCatalogStore = create<RepairCatalogState>((set) => ({
           ? err.message
           : i18n.t("errors.toggle_repair_status");
       set({ error: message });
+    }
+  },
+
+  deleteRepair: async (id) => {
+    set({ error: null });
+    try {
+      await api.delete(`/repairs/${id}`);
+      set((state) => ({
+        repairs: state.repairs.filter((r) => r.id !== id),
+        totalCount: state.totalCount - 1,
+      }));
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : i18n.t("errors.delete_repair");
+      set({ error: message });
+      throw new Error(message);
     }
   },
 
