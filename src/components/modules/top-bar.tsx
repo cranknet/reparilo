@@ -57,10 +57,10 @@ export default function TopBar() {
   }, [showAlerts]);
 
   return (
-    <header className="fixed start-0 top-0 z-40 flex h-16 w-full items-center justify-between border-outline-variant border-b bg-surface/95 px-4 shadow-sm backdrop-blur-sm md:px-8 lg:w-[calc(100%-16rem)]">
+    <header className="fixed start-0 top-0 z-40 flex h-16 w-full items-center justify-between border-outline-variant border-b bg-surface/95 px-4 shadow-sm backdrop-blur-sm md:px-8 lg:start-64 lg:w-[calc(100%-16rem)]">
       <div className="flex flex-1 items-center gap-4">
         <div className="flex items-center gap-2 lg:hidden">
-          <span className="material-symbols-outlined font-black font-headline text-primary text-sm uppercase tracking-tighter">
+          <span className="material-symbols-outlined text-primary text-xl">
             build_circle
           </span>
           <span className="font-black font-headline text-on-surface text-sm uppercase tracking-tighter">

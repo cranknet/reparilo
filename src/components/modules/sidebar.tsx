@@ -36,12 +36,6 @@ const NAV_ITEMS: NavItem[] = [
     perm: { repairs: ["viewCatalog"] },
   },
   {
-    icon: "psychology",
-    labelKey: "ai_assistant",
-    to: "/ai-analyst",
-    perm: { ai: ["access"] },
-  },
-  {
     icon: "notifications",
     labelKey: "notifications",
     to: "/notifications",
