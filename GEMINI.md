@@ -108,27 +108,27 @@ reparilo/
 ├── prisma/
 │   ├── schema.prisma             #   Prisma 7 schema (PostgreSQL)
 │   └── migrations/
+├── generated/                      #   Prisma generated client (output)
 ├── public/                       # Static assets
 │   ├── receipt-templates/
 │   └── images/
-├── docs/                         # PRD, schema docs
-├── docker-compose.yml            # PostgreSQL 17
-├── prisma.config.ts              # Prisma 7 datasource config
+├── prisma.config.ts              # Prisma 7 datasource config (single DATABASE_URL)
 ├── vite.config.ts                # Vite + Tailwind + proxy /api → :4000
-├── tsconfig.json                 # Path aliases: @/, @shared/
+├── tsconfig.json                 # Path aliases: @/, @shared/, @generated
 └── package.json                  # Single package.json
 ```
 
 ## General Rules
 
 - Sync `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` on any update — use `cp`
-- The project uses ultracite for code quality and formatting.
+- The project uses ultracite for code quality and formatting. use pnpm check or pnpm fix to fix any lint warnings.
+- For Impeccable detector use npx impeccable --json "File".
 - The project uses pnpm for package management.
 - Add locale keys to en.json and use pnpm run sync-locales to sync and auto-translate other languages files.
 - Never suppress lint warnings — always apply best practices
 - Explain tasks, errors, and solutions in plain English with minimal jargon
-- Do not launch parallel agents when tasks are targeted to same file.
 - When I bring you an issue, your job is not to fix it directly. Instead, open a brief discussion: ask clarifying questions, explore the problem space, and propose industry best-practice solutions. Always lean toward the approach that reflects current standards, and walk me through the reasoning so we decide together.
+- When dealing with Coderabbit CLI it takes long time to review so use longer timeout.
 ## Database
 
 - Create Prisma migrations after every schema change

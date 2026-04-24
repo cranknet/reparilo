@@ -6,7 +6,6 @@ import DashboardLayout from "@/components/modules/dashboard-layout";
 import ProtectedRoute, {
   RequirePermission,
 } from "@/components/modules/protected-route";
-import AiAnalystPage from "@/pages/ai-analyst";
 import ChangePasswordPage from "@/pages/auth/change-password";
 import LoginPage from "@/pages/auth/login";
 import ResetPasswordPage from "@/pages/auth/reset-password";
@@ -15,6 +14,7 @@ import FrontDeskPage from "@/pages/dashboard/front-desk";
 import TechnicianDashboardPage from "@/pages/dashboard/technician";
 import JobsPage from "@/pages/jobs";
 import JobDetailPage from "@/pages/jobs/detail";
+import NotificationsPage from "@/pages/notifications";
 import PartsCatalogPage from "@/pages/parts";
 import ProfilePage from "@/pages/profile";
 import RepairsPage from "@/pages/repairs";
@@ -72,6 +72,18 @@ export default function App() {
           path="/jobs/:id"
         />
         <Route
+          element={<RequirePermission perm={{ notifications: ["read"] }} />}
+        >
+          <Route
+            element={
+              <DashboardLayout>
+                <NotificationsPage />
+              </DashboardLayout>
+            }
+            path="/notifications"
+          />
+        </Route>
+        <Route
           element={<RequirePermission perm={{ parts: ["viewCatalog"] }} />}
         >
           <Route
@@ -102,14 +114,6 @@ export default function App() {
             </DashboardLayout>
           }
           path="/settings"
-        />
-        <Route
-          element={
-            <DashboardLayout>
-              <AiAnalystPage />
-            </DashboardLayout>
-          }
-          path="/ai-analyst"
         />
         <Route
           element={

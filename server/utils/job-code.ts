@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@generated/client";
 
 const MAX_SEQ = 999_999;
 

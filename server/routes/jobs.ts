@@ -10,6 +10,8 @@ import {
   updateJobSchema,
 } from "@shared/schemas";
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
+import type { DashboardTarget } from "../lib/dashboard-events.js";
+import { emitDashboardChanged } from "../lib/dashboard-events.js";
 import { requirePermission } from "../middlewares/rbac.js";
 import {
   computeMargin,
@@ -18,6 +20,7 @@ import {
   getMetrics,
   list as listJobs,
   lookupByCode,
+  lookupByCodeAuth,
   transitionStatus,
   update as updateJob,
 } from "../services/job.service.js";
@@ -113,6 +116,16 @@ function getUserId(req: FastifyRequest): string {
   return user.id;
 }
 
+function jobDashboardTargets(result: {
+  technicianId?: string | null;
+}): DashboardTarget[] {
+  const targets: DashboardTarget[] = ["OWNER", "FRONT_DESK"];
+  if (result.technicianId) {
+    targets.push({ technicianId: result.technicianId });
+  }
+  return targets;
+}
+
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const jobRoutes: FastifyPluginAsync = async (app) => {
   app.addHook("preHandler", requirePermission({ jobs: ["view"] }));
@@ -160,27 +173,46 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         return validation(reply);
       }
 
-      const lockout = codeLockouts.get(code);
+      // After validation, code and phone4 are guaranteed to exist
+      // biome-ignore lint/style/noNonNullAssertion: validated by validateLookupParams above
+      const codeStr = code!;
+      // biome-ignore lint/style/noNonNullAssertion: validated by validateLookupParams above
+      const phone4Str = phone4!;
+
+      const lockout = codeLockouts.get(codeStr);
       if (lockout && lockout.lockedUntil > Date.now()) {
         return sendNotFound(reply);
       }
       if (lockout?.lockedUntil && lockout.lockedUntil <= Date.now()) {
-        codeLockouts.delete(code);
+        codeLockouts.delete(codeStr);
       }
 
-      const result = await lookupByCode(app.prisma, code, phone4);
+      const result = await lookupByCode(app.prisma, codeStr, phone4Str);
       if (!result.jobExists) {
         return sendNotFound(reply);
       }
       if (!result.job) {
-        trackFailedAttempt(codeLockouts, code);
+        trackFailedAttempt(codeLockouts, codeStr);
         return sendNotFound(reply);
       }
 
-      codeLockouts.delete(code);
+      codeLockouts.delete(codeStr);
       return reply.send(result.job);
     },
   });
+
+  app.get(
+    "/by-code/:jobCode",
+    { preHandler: [requirePermission({ jobs: ["view"] })] },
+    async (req, reply) => {
+      const { jobCode } = req.params as { jobCode: string };
+      const job = await lookupByCodeAuth(app.prisma, jobCode);
+      if (!job) {
+        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+      }
+      return reply.send(job);
+    }
+  );
 
   app.get("/metrics", async (_req, reply) => {
     const metrics = await getMetrics(app.prisma);
@@ -298,6 +330,8 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         });
       }
 
+      emitDashboardChanged(app, jobDashboardTargets(result));
+
       return reply.status(201).send(result);
     }
   );
@@ -320,6 +354,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         );
       }
       const userId = getUserId(req);
+      const prev = await app.prisma.job.findUnique({
+        where: { id },
+        select: { technicianId: true },
+      });
       const result = await updateJob(app.prisma, id, parsed.data, userId);
       if (!result) {
         return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
@@ -340,6 +378,14 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
           "Assigned user is not a valid technician"
         );
       }
+      const targets: DashboardTarget[] = ["OWNER", "FRONT_DESK"];
+      if (prev?.technicianId) {
+        targets.push({ technicianId: prev.technicianId });
+      }
+      if (result.technicianId && result.technicianId !== prev?.technicianId) {
+        targets.push({ technicianId: result.technicianId });
+      }
+      emitDashboardChanged(app, targets);
       return reply.send(result);
     }
   );
@@ -413,6 +459,9 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         "CANCEL_NOT_CREATOR",
         "Only the job creator can cancel"
       );
+    }
+    if (!("error" in result)) {
+      emitDashboardChanged(app, jobDashboardTargets(result));
     }
     return reply.send(result);
   });

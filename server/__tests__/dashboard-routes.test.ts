@@ -1,0 +1,160 @@
+import Fastify from "fastify";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { __resetTzCache } from "../middlewares/dashboard-scope.js";
+import { dashboardRoutes } from "../routes/dashboard.js";
+
+const svc = vi.hoisted(() => ({
+  activeRepairsQueue: vi.fn().mockResolvedValue([]),
+  activeJobsCount: vi.fn().mockResolvedValue(1),
+  avgProfitMargin: vi.fn().mockResolvedValue(0),
+  avgRepairTimeHours: vi.fn().mockResolvedValue(0),
+  completedTodayCount: vi.fn().mockResolvedValue(0),
+  financialTrend: vi.fn().mockResolvedValue([]),
+  overdueJobs: vi.fn().mockResolvedValue([]),
+  pipelineCounts: vi.fn().mockResolvedValue({
+    CANCELLED: 0,
+    DELIVERED: 0,
+    DONE: 0,
+    IN_REPAIR: 0,
+    INTAKE: 1,
+    ON_HOLD: 0,
+    RETURNED: 0,
+    WAITING_FOR_PARTS: 0,
+  }),
+  pickupReady: vi.fn().mockResolvedValue([]),
+  priorityActionsForTech: vi.fn().mockResolvedValue({
+    jobsNeedingStatusUpdate: 0,
+    overdueCount: 0,
+    partsWaitingCount: 0,
+  }),
+  priorityAlerts: vi.fn().mockResolvedValue([]),
+  recentActivityForTech: vi.fn().mockResolvedValue([]),
+  revenueThisMonth: vi.fn().mockResolvedValue(0),
+  todayOverview: vi.fn().mockResolvedValue({
+    completedToday: 0,
+    recentIntakes: [],
+    totalToday: 0,
+  }),
+  todayScheduleForTech: vi.fn().mockResolvedValue([]),
+  warrantyReturnsOpen: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("../services/dashboard.service.js", () => svc);
+
+function buildApp(user: { id: string; role: string } | null) {
+  const app = Fastify();
+  app.decorate("prisma", {
+    job: { count: vi.fn().mockResolvedValue(0) },
+    shopSettings: { findFirst: vi.fn().mockResolvedValue({ timezone: "UTC" }) },
+  } as never);
+  app.addHook("onRequest", (req, _r, done) => {
+    (req as { user: unknown }).user = user;
+    done();
+  });
+  app.register(dashboardRoutes, { prefix: "/api/dashboard" });
+  return app;
+}
+
+beforeEach(() => {
+  __resetTzCache();
+  vi.clearAllMocks();
+});
+
+describe("GET /api/dashboard/owner", () => {
+  it("401 when no session", async () => {
+    const res = await buildApp(null).inject({
+      method: "GET",
+      url: "/api/dashboard/owner",
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("403 when role is TECHNICIAN", async () => {
+    const res = await buildApp({ id: "u", role: "TECHNICIAN" }).inject({
+      method: "GET",
+      url: "/api/dashboard/owner",
+    });
+    expect(res.statusCode).toBe(403);
+  });
+
+  it("200 with full payload when role is OWNER", async () => {
+    const res = await buildApp({ id: "u", role: "OWNER" }).inject({
+      method: "GET",
+      url: "/api/dashboard/owner",
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body).toHaveProperty("pipeline");
+    expect(body).toHaveProperty("activeJobs");
+    expect(body).toHaveProperty("completedToday");
+    expect(body).toHaveProperty("revenueThisMonth");
+    expect(body).toHaveProperty("avgProfitMargin");
+    expect(body).toHaveProperty("financialTrend");
+    expect(body).toHaveProperty("overdueJobs");
+    expect(body).toHaveProperty("warrantyReturns");
+  });
+});
+
+describe("GET /api/dashboard/technician", () => {
+  it("403 for FRONT_DESK", async () => {
+    const res = await buildApp({ id: "u", role: "FRONT_DESK" }).inject({
+      method: "GET",
+      url: "/api/dashboard/technician",
+    });
+    expect(res.statusCode).toBe(403);
+  });
+
+  it("200 for TECHNICIAN", async () => {
+    const res = await buildApp({ id: "t", role: "TECHNICIAN" }).inject({
+      method: "GET",
+      url: "/api/dashboard/technician",
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body).toHaveProperty("pipeline");
+    expect(body).toHaveProperty("myActiveJobs");
+    expect(body).toHaveProperty("waitingForParts");
+    expect(body).toHaveProperty("todaySchedule");
+    expect(body).toHaveProperty("recentActivity");
+    expect(body).toHaveProperty("priorityActions");
+  });
+
+  it("200 for OWNER (self-preview)", async () => {
+    const res = await buildApp({ id: "o", role: "OWNER" }).inject({
+      method: "GET",
+      url: "/api/dashboard/technician",
+    });
+    expect(res.statusCode).toBe(200);
+  });
+});
+
+describe("GET /api/dashboard/front-desk", () => {
+  it("403 for TECHNICIAN", async () => {
+    const res = await buildApp({ id: "t", role: "TECHNICIAN" }).inject({
+      method: "GET",
+      url: "/api/dashboard/front-desk",
+    });
+    expect(res.statusCode).toBe(403);
+  });
+
+  it("200 for FRONT_DESK", async () => {
+    const res = await buildApp({ id: "f", role: "FRONT_DESK" }).inject({
+      method: "GET",
+      url: "/api/dashboard/front-desk",
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body).toHaveProperty("activeRepairs");
+    expect(body).toHaveProperty("todayOverview");
+    expect(body).toHaveProperty("priorityAlerts");
+    expect(body).toHaveProperty("pickupReady");
+  });
+
+  it("200 for OWNER (self-preview)", async () => {
+    const res = await buildApp({ id: "o", role: "OWNER" }).inject({
+      method: "GET",
+      url: "/api/dashboard/front-desk",
+    });
+    expect(res.statusCode).toBe(200);
+  });
+});

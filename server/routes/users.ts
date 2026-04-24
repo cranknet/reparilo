@@ -1,5 +1,5 @@
-import type { PrismaClient } from "@prisma/client";
-import { Prisma } from "@prisma/client";
+import type { PrismaClient } from "@generated/client";
+import { Prisma } from "@generated/client";
 import type { RoleType } from "@shared/constants/roles";
 import {
   createUserSchema,
@@ -102,6 +102,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
         select: {
           id: true,
           username: true,
+          name: true,
           email: true,
           role: true,
           isActive: true,

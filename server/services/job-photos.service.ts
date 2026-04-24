@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { PrismaClient } from "@prisma/client";
-import { AuditAction } from "@prisma/client";
+import type { PrismaClient } from "@generated/client";
+import { AuditAction } from "@generated/client";
 import { INACTIVE_STATUSES } from "@shared/constants";
 import { createAuditLog } from "./audit.service.js";
 

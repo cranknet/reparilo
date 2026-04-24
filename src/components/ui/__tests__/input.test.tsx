@@ -25,7 +25,7 @@ describe("Input", () => {
   it("applies base input styles", () => {
     render(<Input placeholder="Test" />);
     const el = screen.getByPlaceholderText("Test");
-    expect(el).toHaveClass("bg-surface-container-lowest");
+    expect(el).toHaveClass("bg-surface-container-highest");
     expect(el).toHaveClass("rounded-xl");
   });
 });

@@ -1,9 +1,10 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@generated/client";
 import { ac, roles } from "@shared/permissions";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { fromNodeHeaders } from "better-auth/node";
 import { admin, username } from "better-auth/plugins";
+import { loadEnv, resolveUrls } from "../config/env.js";
 import { sendPasswordResetEmail } from "./email.js";
 
 /**
@@ -11,15 +12,14 @@ import { sendPasswordResetEmail } from "./email.js";
  * Must be called after Prisma is initialized.
  */
 export function createAuth(prisma: PrismaClient) {
+  const env = loadEnv();
+  const { apiUrl, trustedOrigins } = resolveUrls(env);
+
   return betterAuth({
-    baseURL: process.env.BETTER_AUTH_URL || "http://localhost:4000",
+    baseURL: apiUrl,
     basePath: "/api/auth",
-    trustedOrigins: (
-      process.env.TRUSTED_ORIGINS ||
-      "http://localhost:5173,http://localhost:4000"
-    )
-      .split(",")
-      .map((origin) => origin.trim()),
+    secret: env.BETTER_AUTH_SECRET,
+    trustedOrigins,
     database: prismaAdapter(prisma, {
       provider: "postgresql",
     }),

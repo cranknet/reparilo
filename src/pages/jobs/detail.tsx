@@ -13,6 +13,7 @@ import StatusPopover from "@/components/modules/jobs/status-popover";
 import TechnicianSelect from "@/components/modules/jobs/technician-select";
 import { formatDzd } from "@/lib/format";
 import { useJobsStore } from "@/stores/jobs";
+import { useToastStore } from "@/stores/toast";
 
 function fmt(n: number): string {
   return `${formatDzd(n)} DZD`;
@@ -24,7 +25,6 @@ export default function JobDetailPage() {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [trackCopied, setTrackCopied] = useState(false);
   const [showEditCustomer, setShowEditCustomer] = useState(false);
 
   const fetchJob = useCallback(async () => {
@@ -47,21 +47,18 @@ export default function JobDetailPage() {
     fetchJob();
   }, [fetchJob]);
 
+  const toast = useToastStore((s) => s.toast);
+
   const handleCopyTrackLink = useCallback(() => {
     if (!job?.jobCode) {
       return;
     }
     const url = `${window.location.origin}/tracking/${job.jobCode}`;
     navigator.clipboard.writeText(url).then(
-      () => {
-        setTrackCopied(true);
-        setTimeout(() => setTrackCopied(false), 2000);
-      },
-      (err) => {
-        console.error("Failed to copy tracking link:", err);
-      }
+      () => toast("jobs_detail_track_link_copied"),
+      (err) => console.error("Failed to copy tracking link:", err)
     );
-  }, [job?.jobCode]);
+  }, [job?.jobCode, toast]);
 
   const handleCustomerSaved = useCallback(
     (updated: Customer) => {
@@ -91,12 +88,24 @@ export default function JobDetailPage() {
         <p className="mt-2 font-body text-error text-sm">
           {error ?? "Job not found"}
         </p>
-        <Link
-          className="mt-4 inline-block font-bold text-primary text-sm hover:underline"
-          to="/jobs"
-        >
-          {t("jobs_detail_back")}
-        </Link>
+        <div className="mt-4 flex items-center justify-center gap-3">
+          <Link
+            className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-primary px-5 font-bold font-headline text-on-primary text-sm transition-colors hover:bg-primary-container hover:text-on-primary-container"
+            to="/jobs"
+          >
+            {t("jobs_detail_back")}
+          </Link>
+          <button
+            className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-surface-container-high px-5 font-bold font-headline text-on-surface text-sm transition-colors hover:bg-surface-container-highest"
+            onClick={fetchJob}
+            type="button"
+          >
+            <span className="material-symbols-outlined text-[18px]">
+              refresh
+            </span>
+            {t("retry", { defaultValue: "Try again" })}
+          </button>
+        </div>
       </div>
     );
   }
@@ -120,86 +129,45 @@ export default function JobDetailPage() {
     | undefined;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-6">
+    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:max-w-4xl">
       <Link
-        className="inline-flex items-center gap-1 font-bold text-primary text-sm hover:underline"
+        className="inline-flex min-h-[44px] items-center gap-1 font-bold text-primary text-sm hover:underline"
         to="/jobs"
       >
         <span className="material-symbols-outlined text-sm">arrow_back</span>
         {t("jobs_detail_back")}
       </Link>
 
-      <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <h1 className="font-extrabold font-headline text-lg text-on-surface tracking-tight sm:truncate sm:text-2xl">
+      {/* ── Hero: device, problem, status, cost ── */}
+      <div className="mt-6 rounded-2xl bg-surface-container-high p-6 sm:p-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
+            <p className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
+              {t("intake.device_section")}
+            </p>
+            <h1 className="mt-0.5 font-extrabold font-headline text-2xl text-on-surface tracking-tight sm:text-3xl">
               {[job.device?.brand, job.device?.model]
                 .filter(Boolean)
-                .join(" ") || t("intake.device_section")}
+                .join(" ") || "—"}
             </h1>
             {job.reportedProblem && (
-              <p className="mt-1 line-clamp-2 font-body text-on-surface-variant text-sm">
+              <p className="mt-1.5 line-clamp-2 font-body text-on-surface-variant text-sm leading-relaxed">
                 {job.reportedProblem}
               </p>
             )}
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="font-label text-on-surface-variant text-xs uppercase sm:hidden">
-              {t("status_label")}
-            </span>
+          <div className="flex shrink-0 items-center pt-1">
             <StatusPopover job={job} onChanged={() => fetchJob()} />
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+        {/* Spec-sheet: estimated cost & delivery */}
+        <div className="mt-6 grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-3">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-label text-on-surface-variant text-xs uppercase">
-                {t("customers")}
-              </span>
-              <Can perm={{ customers: ["edit"] }}>
-                <button
-                  className="inline-flex items-center gap-0.5 text-primary text-xs hover:underline"
-                  onClick={() => setShowEditCustomer(true)}
-                  type="button"
-                >
-                  <span className="material-symbols-outlined text-sm">
-                    edit
-                  </span>
-                </button>
-              </Can>
-            </div>
-            <p className="font-body font-medium text-on-surface text-sm">
-              {job.customer?.name}
-            </p>
-            <p className="font-label text-on-surface-variant text-xs">
-              {job.customer?.phone}
-            </p>
-            {job.customer?.email && (
-              <p className="font-label text-on-surface-variant text-xs">
-                {job.customer.email}
-              </p>
-            )}
-          </div>
-          <div>
-            <span className="font-label text-on-surface-variant text-xs uppercase">
-              {t("technician")}
-            </span>
-            <div className="mt-1">
-              <TechnicianSelect
-                currentTechnicianId={job.technician?.id}
-                currentTechnicianName={job.technician?.name}
-                jobId={job.id}
-                onChanged={() => fetchJob()}
-                size="sm"
-              />
-            </div>
-          </div>
-          <div>
-            <span className="font-label text-on-surface-variant text-xs uppercase">
+            <p className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
               {t("intake.estimated_cost")}
-            </span>
-            <p className="font-bold font-headline text-on-surface text-sm">
+            </p>
+            <p className="mt-0.5 font-bold font-headline text-lg text-on-surface">
               {fmt(
                 typeof job.estimatedCost === "number"
                   ? job.estimatedCost
@@ -209,80 +177,139 @@ export default function JobDetailPage() {
           </div>
           {job.estimatedDate && (
             <div>
-              <span className="font-label text-on-surface-variant text-xs uppercase">
+              <p className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
                 {t("intake.delivery_date")}
-              </span>
-              <p className="font-body font-medium text-on-surface text-sm">
+              </p>
+              <p className="mt-0.5 font-bold font-headline text-lg text-on-surface">
                 {new Date(job.estimatedDate).toLocaleDateString()}
               </p>
             </div>
           )}
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2 border-outline-variant border-t pt-4">
-          <Link
-            className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 font-bold font-label text-primary text-xs transition-colors hover:bg-primary/20"
-            to={`/tracking/${job.jobCode}`}
-          >
-            <span className="material-symbols-outlined text-sm">
-              open_in_new
-            </span>
-            {t("jobs_detail_track")}
-          </Link>
+        {/* Actions */}
+        <div className="mt-6 flex flex-wrap items-center gap-3">
           <button
-            className="inline-flex items-center gap-1 rounded-full bg-surface-container-high px-3 py-1.5 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container-highest hover:text-on-surface"
-            onClick={handleCopyTrackLink}
-            type="button"
-          >
-            <span className="material-symbols-outlined text-sm">
-              {trackCopied ? "check" : "share"}
-            </span>
-            {trackCopied
-              ? t("jobs_detail_track_link_copied")
-              : t("jobs_detail_share")}
-          </button>
-          <button
-            className="inline-flex items-center gap-1 rounded-full bg-surface-container-high px-3 py-1.5 font-label text-on-surface-variant text-xs transition-colors hover:bg-surface-container-highest hover:text-on-surface"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-primary px-5 font-bold font-headline text-on-primary text-sm transition-colors hover:bg-primary-container hover:text-on-primary-container"
             onClick={() =>
               window.open(`/api/receipts/${job.id}/receipt`, "_blank")
             }
             type="button"
           >
-            <span className="material-symbols-outlined text-sm">print</span>
+            <span className="material-symbols-outlined text-[18px]">print</span>
             {t("jobs_detail_print")}
+          </button>
+          <Link
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-surface-container-low px-5 font-bold font-headline text-on-surface text-sm transition-colors hover:bg-surface-container hover:text-on-surface"
+            to={`/tracking/${job.jobCode}`}
+          >
+            <span className="material-symbols-outlined text-[18px]">
+              open_in_new
+            </span>
+            {t("jobs_detail_track")}
+          </Link>
+
+          <span
+            aria-hidden="true"
+            className="hidden h-6 w-px bg-outline-variant/40 sm:block"
+          />
+
+          <button
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl px-2 text-on-surface-variant text-sm transition-colors hover:bg-surface-container-high hover:text-on-surface"
+            onClick={handleCopyTrackLink}
+            type="button"
+          >
+            <span className="material-symbols-outlined text-[18px]">share</span>
+            {t("jobs_detail_share")}
+          </button>
+          <button
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl px-2 text-on-surface-variant text-sm transition-colors hover:bg-surface-container-high hover:text-on-surface"
+            onClick={() =>
+              window.open(`/api/receipts/${job.id}/label`, "_blank")
+            }
+            type="button"
+          >
+            <span className="material-symbols-outlined text-[18px]">label</span>
+            {t("jobs_detail_print_label")}
           </button>
         </div>
       </div>
 
-      {job.photos && job.photos.length > 0 && (
-        <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
-          <JobPhotosSection job={job} onChanged={() => fetchJob()} />
+      {/* ── Details strip: customer, technician ── */}
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-2xl bg-surface-container p-5">
+          <div className="flex items-center justify-between">
+            <p className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
+              {t("customers")}
+            </p>
+            <Can perm={{ customers: ["edit"] }}>
+              <button
+                className="inline-flex min-h-[44px] items-center gap-1 rounded-lg px-2 text-primary transition-colors hover:bg-primary/10"
+                onClick={() => setShowEditCustomer(true)}
+                type="button"
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  edit
+                </span>
+                <span className="font-label text-xs">{t("edit")}</span>
+              </button>
+            </Can>
+          </div>
+          <p className="mt-1 font-body font-semibold text-base text-on-surface">
+            {job.customer?.name}
+          </p>
+          <p className="font-label text-on-surface-variant text-sm">
+            {job.customer?.phone}
+          </p>
+          {job.customer?.email && (
+            <p className="font-label text-on-surface-variant text-sm">
+              {job.customer.email}
+            </p>
+          )}
         </div>
-      )}
-
-      <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
-        <JobPartsSection job={job} onChanged={() => fetchJob()} />
+        <div className="rounded-2xl bg-surface-container p-5">
+          <p className="font-label text-[11px] text-on-surface-variant uppercase tracking-widest">
+            {t("technician")}
+          </p>
+          <div className="mt-2">
+            <TechnicianSelect
+              currentTechnicianId={job.technician?.id}
+              currentTechnicianName={job.technician?.name}
+              jobId={job.id}
+              onChanged={() => fetchJob()}
+              size="md"
+            />
+          </div>
+        </div>
       </div>
 
-      <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
-        <JobRepairsSection job={job} onChanged={() => fetchJob()} />
-      </div>
-
-      <CostSummary
-        deposit={deposit}
-        finalCost={finalCost}
-        margin={jobMargin}
-        partsTotal={partsTotal}
-        repairsTotal={repairsTotal}
-      />
-
-      <div className="rounded-xl bg-surface-container-lowest p-6 ring-1 ring-outline-variant">
-        <h2 className="mb-4 font-bold font-headline text-base text-on-surface">
-          {t("jobs_detail_history")}
-        </h2>
-        <div className="max-h-80 overflow-y-auto">
+      {/* ── Visual record: photos + history ── */}
+      <div className="mt-8 rounded-2xl bg-surface-container p-6">
+        <JobPhotosSection job={job} onChanged={() => fetchJob()} />
+        <div className="mt-8">
+          <h2 className="mb-4 font-bold font-headline text-base text-on-surface">
+            {t("jobs_detail_history")}
+          </h2>
           <StatusHistoryTimeline jobId={job.id} />
         </div>
+      </div>
+
+      {/* ── Work breakdown: parts + repairs ── */}
+      <div className="mt-8 rounded-2xl bg-surface-container p-6">
+        <JobPartsSection job={job} onChanged={() => fetchJob()} />
+        <div className="mt-3">
+          <JobRepairsSection job={job} onChanged={() => fetchJob()} />
+        </div>
+      </div>
+
+      <div className="mt-8">
+        <CostSummary
+          deposit={deposit}
+          finalCost={finalCost}
+          margin={jobMargin}
+          partsTotal={partsTotal}
+          repairsTotal={repairsTotal}
+        />
       </div>
 
       {job.customer && (

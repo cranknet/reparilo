@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@generated/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { add, remove } from "../job-repairs.service";
 
@@ -37,7 +37,7 @@ describe("add", () => {
       {
         category: "SCREEN_REPAIR",
         price: 100,
-        repairId: null,
+        repairId: undefined,
         repairName: "Screen Replacement",
       },
       "user-1"
@@ -58,7 +58,7 @@ describe("add", () => {
       {
         category: "SCREEN_REPAIR",
         price: 100,
-        repairId: null,
+        repairId: undefined,
         repairName: "Screen Replacement",
       },
       "user-1"
@@ -109,7 +109,7 @@ describe("add", () => {
       {
         category: "SCREEN_REPAIR",
         price: 100,
-        repairId: null,
+        repairId: undefined,
         repairName: "Screen Fix",
       },
       "user-1"
@@ -203,6 +203,8 @@ describe("remove", () => {
     const result = await remove(prisma, "job-1", "repair-1", "user-1");
 
     expect(result).toBe(true);
-    // delete is called inside $transaction, so we just verify the result
+    expect(prisma.jobRepair.delete).toHaveBeenCalledWith({
+      where: { id: "repair-1" },
+    });
   });
 });

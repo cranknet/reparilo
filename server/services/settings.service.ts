@@ -1,12 +1,24 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@generated/client";
 import type {
   UpdateAiSettingsInput,
   UpdateNotificationTemplateInput,
   UpdateShopSettingsInput,
 } from "@shared/schemas";
+import { decryptSecret, encryptSecret, isEncrypted } from "../lib/crypto.js";
+
+function publicAiSettings<
+  T extends { apiKeyEncrypted: string } | null | undefined,
+>(row: T) {
+  if (!row) {
+    return row;
+  }
+  const { apiKeyEncrypted, ...rest } = row;
+  return { ...rest, hasApiKey: Boolean(apiKeyEncrypted) };
+}
 
 export async function getAiSettings(prisma: PrismaClient) {
-  return await prisma.aiSettings.findUnique({ where: { id: "default" } });
+  const row = await prisma.aiSettings.findUnique({ where: { id: "default" } });
+  return publicAiSettings(row);
 }
 
 export async function upsertAiSettings(
@@ -16,8 +28,11 @@ export async function upsertAiSettings(
   const data: Record<string, unknown> = {
     endpointUrl: input.endpointUrl,
   };
-  if (input.apiKey !== undefined) {
-    data.apiKeyEncrypted = input.apiKey;
+  // Treat empty apiKey as "no change" to avoid wiping the stored key when the
+  // form is saved without the user re-entering it. To clear the key, the
+  // caller must send a dedicated signal (not supported by the current UI).
+  if (input.apiKey !== undefined && input.apiKey !== "") {
+    data.apiKeyEncrypted = encryptSecret(input.apiKey);
   }
   if (input.model !== undefined) {
     data.model = input.model;
@@ -26,7 +41,7 @@ export async function upsertAiSettings(
     data.temperature = input.temperature;
   }
 
-  return await prisma.aiSettings.upsert({
+  const row = await prisma.aiSettings.upsert({
     create: {
       id: "default",
       apiKeyEncrypted: (data.apiKeyEncrypted as string) ?? "",
@@ -37,6 +52,7 @@ export async function upsertAiSettings(
     update: data,
     where: { id: "default" },
   });
+  return publicAiSettings(row);
 }
 
 export async function getShopSettings(prisma: PrismaClient) {
@@ -112,7 +128,16 @@ export async function testAiConnection(prisma: PrismaClient) {
       "Content-Type": "application/json",
     };
     if (settings.apiKeyEncrypted) {
-      headers.Authorization = `Bearer ${settings.apiKeyEncrypted}`;
+      const apiKey = isEncrypted(settings.apiKeyEncrypted)
+        ? decryptSecret(settings.apiKeyEncrypted)
+        : settings.apiKeyEncrypted; // legacy plaintext — re-encrypted on next write
+      if (!apiKey) {
+        return {
+          message: "Stored API key could not be decrypted",
+          success: false,
+        };
+      }
+      headers.Authorization = `Bearer ${apiKey}`;
     }
 
     const response = await fetch(settings.endpointUrl, {

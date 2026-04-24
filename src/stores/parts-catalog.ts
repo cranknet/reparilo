@@ -11,6 +11,7 @@ interface PartsCatalogState {
     defaultPrice: number;
     supplier?: string;
   }) => Promise<PartsCatalog>;
+  deletePart: (id: string) => Promise<void>;
   error: string | null;
   fetchParts: (params?: {
     cursor?: string;
@@ -20,6 +21,12 @@ interface PartsCatalogState {
     isActive?: boolean;
   }) => Promise<void>;
   isLoading: boolean;
+  isLoadingMore: boolean;
+  loadMoreParts: (params?: {
+    search?: string;
+    category?: string;
+    isActive?: boolean;
+  }) => Promise<void>;
   nextCursor: string | null;
   parts: PartsCatalog[];
   togglePartActive: (id: string, isActive: boolean) => Promise<void>;
@@ -35,6 +42,7 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
   totalCount: 0,
   nextCursor: null,
   isLoading: false,
+  isLoadingMore: false,
   error: null,
 
   fetchParts: async (params) => {
@@ -51,6 +59,28 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
       const message =
         err instanceof Error ? err.message : i18n.t("errors.fetch_parts");
       set({ isLoading: false, error: message });
+    }
+  },
+
+  loadMoreParts: async (params) => {
+    const state = usePartsCatalogStore.getState();
+    if (!state.nextCursor || state.isLoadingMore) {
+      return;
+    }
+    set({ isLoadingMore: true });
+    try {
+      const res = await api.get("/parts", {
+        params: { ...params, cursor: state.nextCursor },
+      });
+      set((state) => ({
+        parts: [...state.parts, ...(res.data.parts ?? [])],
+        nextCursor: res.data.nextCursor ?? null,
+        isLoadingMore: false,
+      }));
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : i18n.t("errors.fetch_parts");
+      set({ isLoadingMore: false, error: message });
     }
   },
 
@@ -102,6 +132,22 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
         err instanceof Error
           ? err.message
           : i18n.t("errors.toggle_part_status");
+      set({ error: message });
+      throw new Error(message);
+    }
+  },
+
+  deletePart: async (id) => {
+    set({ error: null });
+    try {
+      await api.delete(`/parts/${id}`);
+      set((state) => ({
+        parts: state.parts.filter((p) => p.id !== id),
+        totalCount: state.totalCount - 1,
+      }));
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : i18n.t("errors.delete_part");
       set({ error: message });
       throw new Error(message);
     }

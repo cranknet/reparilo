@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@generated/client";
 import { Role } from "@shared/constants";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -21,7 +21,7 @@ vi.mock("../audit.service.js", () => ({
 function mockPrisma(
   overrides: Partial<Record<keyof PrismaClient, unknown>> = {}
 ) {
-  return {
+  const mock = {
     job: {
       findUnique: vi.fn(),
       findFirst: vi.fn(),
@@ -45,9 +45,20 @@ function mockPrisma(
       upsert: vi.fn(),
       ...((overrides as Record<string, unknown>).device || {}),
     },
-    $transaction: vi.fn((callback) => callback(mockPrisma(overrides))),
+    auditLog: {
+      findMany: vi.fn().mockResolvedValue([]),
+      ...((overrides as Record<string, unknown>).auditLog || {}),
+    },
+    shopSettings: {
+      findUnique: vi.fn().mockResolvedValue(null),
+      ...((overrides as Record<string, unknown>).shopSettings || {}),
+    },
+    $transaction: vi.fn((callback: (client: typeof mock) => Promise<unknown>) =>
+      callback(mock)
+    ),
     ...overrides,
-  } as unknown as PrismaClient;
+  };
+  return mock as unknown as PrismaClient;
 }
 
 describe("computeFinalCost", () => {
@@ -257,11 +268,11 @@ describe("list", () => {
     (prisma.job.count as ReturnType<typeof vi.fn>).mockResolvedValue(2);
 
     const result = await list(prisma, {
-      cursor: null,
+      cursor: undefined,
       limit: 10,
-      search: null,
-      status: null,
-      technicianId: null,
+      search: undefined,
+      status: undefined,
+      technicianId: undefined,
     });
 
     expect(result.jobs).toHaveLength(2);
@@ -274,11 +285,11 @@ describe("list", () => {
     (prisma.job.count as ReturnType<typeof vi.fn>).mockResolvedValue(0);
 
     await list(prisma, {
-      cursor: null,
+      cursor: undefined,
       limit: 10,
-      search: null,
+      search: undefined,
       status: "IN_REPAIR",
-      technicianId: null,
+      technicianId: undefined,
     });
 
     const findManyCall = (prisma.job.findMany as ReturnType<typeof vi.fn>).mock
@@ -291,10 +302,10 @@ describe("list", () => {
     (prisma.job.count as ReturnType<typeof vi.fn>).mockResolvedValue(0);
 
     await list(prisma, {
-      cursor: null,
+      cursor: undefined,
       limit: 10,
-      search: null,
-      status: null,
+      search: undefined,
+      status: undefined,
       technicianId: "tech-1",
     });
 
@@ -308,11 +319,11 @@ describe("list", () => {
     (prisma.job.count as ReturnType<typeof vi.fn>).mockResolvedValue(0);
 
     await list(prisma, {
-      cursor: null,
+      cursor: undefined,
       limit: 10,
       search: "iPhone",
-      status: null,
-      technicianId: null,
+      status: undefined,
+      technicianId: undefined,
     });
 
     const findManyCall = (prisma.job.findMany as ReturnType<typeof vi.fn>).mock
@@ -334,11 +345,11 @@ describe("list", () => {
     (prisma.job.count as ReturnType<typeof vi.fn>).mockResolvedValue(11);
 
     const result = await list(prisma, {
-      cursor: null,
+      cursor: undefined,
       limit: 10,
-      search: null,
-      status: null,
-      technicianId: null,
+      search: undefined,
+      status: undefined,
+      technicianId: undefined,
     });
 
     expect(result.jobs).toHaveLength(10);
@@ -349,11 +360,11 @@ describe("list", () => {
     (prisma.job.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
     const result = await list(prisma, {
-      cursor: "100",
+      cursor: "some-cursor",
       limit: 10,
-      search: null,
-      status: null,
-      technicianId: null,
+      search: undefined,
+      status: undefined,
+      technicianId: undefined,
     });
 
     expect(result.totalCount).toBeNull();
@@ -627,20 +638,20 @@ describe("create", () => {
     const result = await create(
       prisma,
       {
-        color: null,
-        conditionNotes: null,
-        customerEmail: null,
-        customerId: null,
+        color: undefined,
+        conditionNotes: undefined,
+        customerEmail: undefined,
+        customerId: undefined,
         customerName: "Test",
         customerPhone: "+1234567890",
-        depositAmount: null,
+        depositAmount: undefined,
         deviceBrand: "Apple",
         deviceModel: "iPhone 14",
         estimatedCost: 100,
-        estimatedDate: null,
+        estimatedDate: undefined,
         isWarrantyReturn: false,
         reportedProblem: "Screen broken",
-        technicianId: null,
+        technicianId: undefined,
         warrantyForJobId: "invalid-job",
       },
       "user-1"
@@ -658,20 +669,20 @@ describe("create", () => {
     const result = await create(
       prisma,
       {
-        color: null,
-        conditionNotes: null,
-        customerEmail: null,
-        customerId: null,
+        color: undefined,
+        conditionNotes: undefined,
+        customerEmail: undefined,
+        customerId: undefined,
         customerName: "Test",
         customerPhone: "+1234567890",
-        depositAmount: null,
+        depositAmount: undefined,
         deviceBrand: "Apple",
         deviceModel: "iPhone 14",
         estimatedCost: 100,
-        estimatedDate: null,
+        estimatedDate: undefined,
         isWarrantyReturn: false,
         reportedProblem: "Screen broken",
-        technicianId: null,
+        technicianId: undefined,
         warrantyForJobId: "job-1",
       },
       "user-1"
@@ -689,20 +700,20 @@ describe("create", () => {
     const result = await create(
       prisma,
       {
-        color: null,
-        conditionNotes: null,
-        customerEmail: null,
-        customerId: null,
+        color: undefined,
+        conditionNotes: undefined,
+        customerEmail: undefined,
+        customerId: undefined,
         customerName: "Test",
         customerPhone: "+1234567890",
-        depositAmount: null,
+        depositAmount: undefined,
         deviceBrand: "Apple",
         deviceModel: "iPhone 14",
         estimatedCost: 100,
-        estimatedDate: null,
+        estimatedDate: undefined,
         isWarrantyReturn: false,
         reportedProblem: "Screen broken",
-        technicianId: null,
+        technicianId: undefined,
         warrantyForJobId: "job-1",
       },
       "user-1"
@@ -719,21 +730,21 @@ describe("create", () => {
     const result = await create(
       prisma,
       {
-        color: null,
-        conditionNotes: null,
-        customerEmail: null,
+        color: undefined,
+        conditionNotes: undefined,
+        customerEmail: undefined,
         customerId: "invalid-customer",
         customerName: "Test",
         customerPhone: "+1234567890",
-        depositAmount: null,
+        depositAmount: undefined,
         deviceBrand: "Apple",
         deviceModel: "iPhone 14",
         estimatedCost: 100,
-        estimatedDate: null,
+        estimatedDate: undefined,
         isWarrantyReturn: false,
         reportedProblem: "Screen broken",
-        technicianId: null,
-        warrantyForJobId: null,
+        technicianId: undefined,
+        warrantyForJobId: undefined,
       },
       "user-1"
     );
@@ -768,7 +779,12 @@ describe("transitionStatus", () => {
       status: "DELIVERED",
     });
 
-    const result = await transitionStatus(prisma, "job-1", "PENDING", "user-1");
+    const result = await transitionStatus(
+      prisma,
+      "job-1",
+      "INTAKE" as unknown as import("@shared/constants").JobStatusType,
+      "user-1"
+    );
 
     expect(result).toHaveProperty("error", "CONFLICT_STATUS_TRANSITION");
     expect(result).toHaveProperty("currentStatus", "DELIVERED");

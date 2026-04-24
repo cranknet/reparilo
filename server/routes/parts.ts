@@ -8,6 +8,7 @@ import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
 import {
   create as createPart,
+  remove as deletePart,
   getById as getPartById,
   list as listParts,
   toggleActive,
@@ -116,6 +117,32 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
         return sendError(reply, 404, "PART_NOT_FOUND", "Part not found");
       }
       return reply.send(result);
+    }
+  );
+
+  app.delete(
+    "/:id",
+    { preHandler: [requirePermission({ parts: ["manageCatalog"] })] },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      try {
+        const result = await deletePart(app.prisma, id);
+        if (!result) {
+          return sendError(reply, 404, "PART_NOT_FOUND", "Part not found");
+        }
+        return reply.status(204).send();
+      } catch (err) {
+        if (err instanceof Error && err.message.includes("referenced by")) {
+          return sendError(
+            reply,
+            409,
+            "PART_IN_USE",
+            "Part is referenced by existing jobs. Deactivate it instead."
+          );
+        }
+        req.log.error(err);
+        return sendError(reply, 500, "INTERNAL_ERROR", "Internal server error");
+      }
     }
   );
 };

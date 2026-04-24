@@ -143,17 +143,24 @@ describe("Warranty return broadcast", () => {
     });
 
     expect(res.statusCode).toBe(201);
-    expect(broadcastCalls).toHaveLength(1);
-    expect(broadcastCalls[0].payload.type).toBe("WARRANTY_RETURN_CREATED");
-    expect(broadcastCalls[0].payload.job).toEqual({
+    const warrantyCalls = broadcastCalls.filter(
+      (c) => c.payload.type === "WARRANTY_RETURN_CREATED"
+    );
+    const dashboardCalls = broadcastCalls.filter(
+      (c) => c.payload.type === "dashboard:invalidate"
+    );
+    expect(warrantyCalls).toHaveLength(1);
+    expect(warrantyCalls[0].payload.job).toEqual({
       id: "job-1",
       jobCode: "RPR-001",
     });
 
     const ownerClient = { role: "OWNER" };
     const techClient = { role: "TECHNICIAN" };
-    expect(broadcastCalls[0].predicate(ownerClient)).toBe(true);
-    expect(broadcastCalls[0].predicate(techClient)).toBe(false);
+    expect(warrantyCalls[0].predicate(ownerClient)).toBe(true);
+    expect(warrantyCalls[0].predicate(techClient)).toBe(false);
+
+    expect(dashboardCalls.length).toBe(2);
   });
 
   it("does not broadcast when job is not a warranty return", async () => {
@@ -178,6 +185,13 @@ describe("Warranty return broadcast", () => {
     });
 
     expect(res.statusCode).toBe(201);
-    expect(broadcastCalls).toHaveLength(0);
+    const warrantyCalls = broadcastCalls.filter(
+      (c) => c.payload.type === "WARRANTY_RETURN_CREATED"
+    );
+    const dashboardCalls = broadcastCalls.filter(
+      (c) => c.payload.type === "dashboard:invalidate"
+    );
+    expect(warrantyCalls).toHaveLength(0);
+    expect(dashboardCalls.length).toBe(2);
   });
 });

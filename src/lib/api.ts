@@ -5,7 +5,6 @@ const baseURL = import.meta.env.VITE_API_BASE_URL || "";
 const api = axios.create({
   baseURL: `${baseURL}/api`,
   timeout: 15_000,
-  headers: { "Content-Type": "application/json" },
 });
 
 let csrfToken: string | null = null;

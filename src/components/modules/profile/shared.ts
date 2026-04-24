@@ -1,0 +1,29 @@
+export interface ActivityItem {
+  action: string;
+  createdAt: string;
+  fromValue: string | null;
+  id: string;
+  metadata?: { jobId?: string } | null;
+  toValue: string | null;
+}
+
+export interface SessionItem {
+  createdAt: string;
+  expiresAt: string;
+  id: string;
+  ipAddress: string | null;
+  isCurrent: boolean;
+  userAgent: string | null;
+}
+
+export const INPUT_CLS =
+  "w-full rounded-lg border-none bg-surface-container-lowest px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20";
+
+export const LABEL_CLS =
+  "block font-bold text-xs text-on-surface-variant uppercase tracking-wider mb-2";
+
+export const LANGUAGE_OPTIONS = [
+  { value: "en", label: "English" },
+  { value: "fr", label: "Français" },
+  { value: "ar", label: "العربية" },
+];

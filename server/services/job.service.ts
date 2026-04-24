@@ -1,5 +1,5 @@
-import type { Job, Prisma, PrismaClient } from "@prisma/client";
-import { AuditAction, type RepairCategory } from "@prisma/client";
+import type { Job, Prisma, PrismaClient } from "@generated/client";
+import { AuditAction, type RepairCategory } from "@generated/client";
 import type { JobStatusType, RoleType } from "@shared/constants";
 import {
   ACTIVE_STATUSES,
@@ -106,7 +106,9 @@ export async function list(prisma: PrismaClient, query: JobListQueryInput) {
       orderBy: { id: "desc" },
       take: limit + 1,
     }),
-    cursor ? Promise.resolve(null) : prisma.job.count({ where }),
+    cursor
+      ? (Promise.resolve(null) as Promise<null>)
+      : prisma.job.count({ where }),
   ]);
 
   let nextCursor: string | null = null;
@@ -437,7 +439,7 @@ export async function lookupByCode(
       // phone is fetched for comparison only — never included in the response
       customer: { select: { name: true, phone: true } },
       device: { select: { brand: true, model: true } },
-      repairs: { select: { name: true, price: true } },
+      repairs: { select: { repairName: true, price: true } },
       partsUsed: { select: { partName: true, totalCost: true } },
       notes: {
         where: { isCustomerVisible: true },
@@ -450,7 +452,6 @@ export async function lookupByCode(
     return { job: null, jobExists: false };
   }
 
-  // Normalize: strip non-digits from stored phone, compare last 4
   const storedPhone = job.customer.phone;
   if (!storedPhone) {
     return { job: null, jobExists: true };
@@ -459,6 +460,20 @@ export async function lookupByCode(
   if (normalizedPhone.length < 4 || normalizedPhone.slice(-4) !== phone4) {
     return { job: null, jobExists: true };
   }
+
+  const shopSettings = await prisma.shopSettings.findUnique({
+    where: { id: "default" },
+    select: { shopName: true, phone: true, address: true },
+  });
+
+  const statusTransitions = await prisma.auditLog.findMany({
+    where: {
+      jobId: job.id,
+      action: "STATUS_CHANGED",
+    },
+    select: { fromValue: true, toValue: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+  });
 
   return {
     jobExists: true,
@@ -475,9 +490,88 @@ export async function lookupByCode(
         createdAt: n.createdAt,
       })),
       repairs: job.repairs.map((r) => ({
-        name: r.name,
+        name: r.repairName,
         price: r.price.toNumber(),
       })),
+      statusTransitions: statusTransitions.map((t) => ({
+        from: t.fromValue,
+        to: t.toValue,
+        date: t.createdAt,
+      })),
+      shop: shopSettings
+        ? {
+            name: shopSettings.shopName,
+            phone: shopSettings.phone,
+            address: shopSettings.address,
+          }
+        : null,
     },
+  };
+}
+
+export async function lookupByCodeAuth(
+  prisma: PrismaClient,
+  jobCode: string
+): Promise<Record<string, unknown> | null> {
+  const job = await prisma.job.findFirst({
+    where: { jobCode },
+    include: {
+      customer: { select: { name: true } },
+      device: { select: { brand: true, model: true } },
+      repairs: { select: { repairName: true, price: true } },
+      partsUsed: { select: { partName: true, totalCost: true } },
+      notes: {
+        where: { isCustomerVisible: true },
+        select: { content: true, createdAt: true },
+        orderBy: { createdAt: "desc" as const },
+      },
+    },
+  });
+  if (!job) {
+    return null;
+  }
+
+  const statusTransitions = await prisma.auditLog.findMany({
+    where: {
+      jobId: job.id,
+      action: "STATUS_CHANGED",
+    },
+    select: { fromValue: true, toValue: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const shopSettings = await prisma.shopSettings.findUnique({
+    where: { id: "default" },
+    select: { shopName: true, phone: true, address: true },
+  });
+
+  return {
+    jobCode: job.jobCode,
+    status: job.status,
+    device: `${job.device.brand} ${job.device.model}`,
+    reportedProblem: job.reportedProblem,
+    estimatedDate: job.estimatedDate,
+    createdAt: job.createdAt,
+    customer: { name: job.customer.name },
+    notes: job.notes.map((n) => ({
+      content: n.content,
+      createdAt: n.createdAt,
+    })),
+    repairs: job.repairs.map((r) => ({
+      name: r.repairName,
+      price: r.price.toNumber(),
+    })),
+    statusTransitions: statusTransitions.map((t) => ({
+      from: t.fromValue,
+      to: t.toValue,
+      date: t.createdAt,
+    })),
+    shop: shopSettings
+      ? {
+          name: shopSettings.shopName,
+          phone: shopSettings.phone,
+          address: shopSettings.address,
+        }
+      : null,
   };
 }

@@ -1,5 +1,5 @@
 import type { Customer } from "@shared/types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCustomersStore } from "@/stores/customers";
 
@@ -31,6 +31,8 @@ export default function EditCustomerDialog({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const updateCustomer = useCustomersStore((s) => s.updateCustomer);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) {
@@ -60,6 +62,41 @@ export default function EditCustomerDialog({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    function trapFocus(e: KeyboardEvent) {
+      if (e.key !== "Tab" || !dialogRef.current) {
+        return;
+      }
+      const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) {
+        return;
+      }
+      const focusableArr = Array.from(focusable);
+      const first = focusableArr[0];
+      const last = focusableArr.at(-1);
+      if (e.shiftKey && document.activeElement === first && last) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last && first) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+    document.addEventListener("keydown", trapFocus, true);
+    return () => document.removeEventListener("keydown", trapFocus, true);
+  }, [open]);
+
+  useEffect(() => {
+    if (open) {
+      nameInputRef.current?.focus();
+    }
+  }, [open]);
 
   const handleSubmit = useCallback(async () => {
     if (!(form.name.trim() && form.phone.trim())) {
@@ -103,8 +140,9 @@ export default function EditCustomerDialog({
 
   return (
     <div
+      aria-labelledby="edit-customer-title"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      className="fixed inset-0 z-[60] flex items-end px-0 sm:items-center sm:justify-center sm:px-4"
       role="dialog"
     >
       <button
@@ -113,9 +151,15 @@ export default function EditCustomerDialog({
         onClick={onClose}
         type="button"
       />
-      <div className="modal-surface relative z-10 flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-xl bg-surface-container-lowest shadow-2xl">
-        <div className="flex items-center justify-between border-outline-variant border-b px-6 py-4">
-          <h2 className="font-bold font-headline text-lg text-on-surface">
+      <div
+        className="modal-surface relative z-10 flex max-h-[85vh] w-full flex-col overflow-hidden rounded-b-none bg-surface-container-lowest shadow-2xl sm:max-h-[80vh] sm:max-w-md sm:rounded-xl"
+        ref={dialogRef}
+      >
+        <div className="flex items-center justify-between px-6 py-4">
+          <h2
+            className="font-bold font-headline text-lg text-on-surface"
+            id="edit-customer-title"
+          >
             {t("customer_edit_title")}
           </h2>
           <button
@@ -142,6 +186,7 @@ export default function EditCustomerDialog({
                 onChange={(e) =>
                   setForm((p) => ({ ...p, name: e.target.value }))
                 }
+                ref={nameInputRef}
                 type="text"
                 value={form.name}
               />
@@ -187,24 +232,21 @@ export default function EditCustomerDialog({
         </div>
 
         {submitError && (
-          <div
-            className="border-outline-variant border-t px-6 py-2"
-            role="alert"
-          >
+          <div className="px-6 py-2" role="alert">
             <p className="font-body text-error text-xs">{submitError}</p>
           </div>
         )}
 
-        <div className="flex justify-end gap-3 border-outline-variant border-t px-6 py-4">
+        <div className="flex justify-end gap-3 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <button
-            className="px-4 py-2 font-bold font-headline text-on-surface-variant text-sm hover:text-on-surface"
+            className="min-h-[44px] px-4 py-2 font-bold font-headline text-on-surface-variant text-sm hover:text-on-surface"
             onClick={onClose}
             type="button"
           >
             {t("customer_edit_cancel")}
           </button>
           <button
-            className="rounded-xl bg-primary px-6 py-2 font-bold font-headline text-on-primary text-sm disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-[44px] rounded-xl bg-primary px-6 py-2 font-bold font-headline text-on-primary text-sm disabled:cursor-not-allowed disabled:opacity-50"
             disabled={!canSubmit || submitting}
             onClick={handleSubmit}
             type="button"

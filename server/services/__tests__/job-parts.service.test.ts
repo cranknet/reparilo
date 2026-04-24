@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@generated/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { add, remove } from "../job-parts.service";
 
@@ -36,10 +36,10 @@ describe("add", () => {
       "job-1",
       {
         category: "SCREEN",
-        partId: null,
+        partId: undefined,
         partName: "iPhone 14 Screen",
         quantity: 1,
-        supplier: null,
+        supplier: undefined,
         unitPrice: 150,
       },
       "user-1"
@@ -59,10 +59,10 @@ describe("add", () => {
       "job-1",
       {
         category: "SCREEN",
-        partId: null,
+        partId: undefined,
         partName: "iPhone 14 Screen",
         quantity: 1,
-        supplier: null,
+        supplier: undefined,
         unitPrice: 150,
       },
       "user-1"

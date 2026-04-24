@@ -1,8 +1,8 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@generated/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { add, list } from "../job-notes.service";
 
-vi.mock("../audit.service.js", () => ({
+vi.mock("../audit.service", () => ({
   createAuditLog: vi.fn().mockResolvedValue(undefined),
 }));
 

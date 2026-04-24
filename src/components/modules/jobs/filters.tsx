@@ -1,31 +1,54 @@
 import type { JobStatusType } from "@shared/constants";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { StatusGroupKey } from "./jobs-shared";
 import { STATUS_GROUPS } from "./jobs-shared";
 
-interface JobsFiltersProps {
-  activeGroup?: StatusGroupKey | "ALL";
-  activeStatus?: JobStatusType | "ALL";
+interface UnifiedJobsFilterProps {
+  activeGroup: StatusGroupKey | "ALL";
+  activeStatus: JobStatusType | "ALL";
+  metrics: Record<string, number> | null;
   onGroupChange: (group: StatusGroupKey | "ALL") => void;
   onSearchChange: (query: string) => void;
   onStatusChange: (status: JobStatusType | "ALL") => void;
   searchQuery: string;
 }
 
-export default function JobsFilters({
-  activeStatus = "ALL",
-  activeGroup = "ALL",
-  onStatusChange,
+export default function UnifiedJobsFilter({
+  activeGroup,
+  activeStatus,
+  metrics,
   onGroupChange,
+  onStatusChange,
   onSearchChange,
   searchQuery,
-}: JobsFiltersProps) {
+}: UnifiedJobsFilterProps) {
   const { t } = useTranslation();
+
+  const groupCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const group of STATUS_GROUPS) {
+      counts[group.key] = group.statuses.reduce(
+        (sum, s) => sum + (metrics?.[s] ?? 0),
+        0
+      );
+    }
+    counts.ALL = Object.values(metrics ?? {}).reduce((a, b) => a + b, 0);
+    return counts;
+  }, [metrics]);
+
+  const activeSubStatuses =
+    activeGroup === "ALL"
+      ? []
+      : (STATUS_GROUPS.find((g) => g.key === activeGroup)?.statuses ?? []);
+
+  const pillBase =
+    "min-h-[44px] shrink-0 rounded-lg px-3 py-2 font-bold font-label text-xs uppercase tracking-wider transition-all";
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1">
+      <div className="flex items-center gap-3">
+        <div className="relative w-full sm:w-64 sm:shrink-0">
           <span className="material-symbols-outlined absolute start-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">
             search
           </span>
@@ -38,63 +61,60 @@ export default function JobsFilters({
             value={searchQuery}
           />
         </div>
-      </div>
-
-      <div
-        className="flex items-center gap-1.5 overflow-x-auto"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-      >
-        <button
-          className={[
-            "min-h-[44px] shrink-0 rounded-lg px-3 py-2 font-bold font-label text-xs uppercase tracking-wider transition-all",
-            activeGroup === "ALL" && activeStatus === "ALL"
-              ? "bg-primary text-on-primary"
-              : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container",
-          ].join(" ")}
-          onClick={() => onGroupChange("ALL")}
-          type="button"
+        <div
+          className="flex items-center gap-1.5 overflow-x-auto"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {t("status_label")}
-        </button>
-
-        {STATUS_GROUPS.map((group) => (
           <button
             className={[
-              "min-h-[44px] shrink-0 rounded-lg px-3 py-2 font-bold font-label text-xs uppercase tracking-wider transition-all",
-              activeGroup === group.key && activeStatus === "ALL"
+              pillBase,
+              activeGroup === "ALL" && activeStatus === "ALL"
                 ? "bg-primary text-on-primary"
                 : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container",
             ].join(" ")}
-            key={group.key}
-            onClick={() => onGroupChange(group.key)}
+            onClick={() => onGroupChange("ALL")}
             type="button"
           >
-            {t(group.labelKey)}
+            {t("status_label")} ({groupCounts.ALL})
           </button>
-        ))}
 
-        {activeGroup !== "ALL" && (
-          <>
-            <span className="mx-1 h-6 w-px bg-outline-variant" />
-            {(
-              STATUS_GROUPS.find((g) => g.key === activeGroup)?.statuses ?? []
-            ).map((s) => (
-              <button
-                className={[
-                  "min-h-[44px] shrink-0 rounded-lg px-3 py-2 font-bold font-label text-xs uppercase tracking-wider transition-all",
-                  activeStatus === s
-                    ? "bg-primary text-on-primary"
-                    : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container",
-                ].join(" ")}
-                key={s}
-                onClick={() => onStatusChange(s)}
-                type="button"
-              >
-                {t(`status.${s}`)}
-              </button>
-            ))}
-          </>
-        )}
+          {STATUS_GROUPS.map((group) => (
+            <button
+              className={[
+                pillBase,
+                activeGroup === group.key && activeStatus === "ALL"
+                  ? "bg-primary text-on-primary"
+                  : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container",
+              ].join(" ")}
+              key={group.key}
+              onClick={() => onGroupChange(group.key)}
+              type="button"
+            >
+              {t(group.labelKey)} ({groupCounts[group.key]})
+            </button>
+          ))}
+
+          {activeGroup !== "ALL" && (
+            <>
+              <span className="mx-1 h-5 w-px bg-outline-variant" />
+              {activeSubStatuses.map((s) => (
+                <button
+                  className={[
+                    pillBase,
+                    activeStatus === s
+                      ? "bg-primary text-on-primary"
+                      : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container",
+                  ].join(" ")}
+                  key={s}
+                  onClick={() => onStatusChange(s)}
+                  type="button"
+                >
+                  {t(`status.${s}`)} {metrics?.[s] ?? 0}
+                </button>
+              ))}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

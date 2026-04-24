@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@generated/client";
 import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
@@ -110,13 +110,19 @@ const authPlugin: FastifyPluginAsync = async (app) => {
   });
 
   app.addHook("preHandler", async (request, reply) => {
+    const url = request.url;
+    const pathname = url.split("?")[0];
+
     if (
-      request.url === "/health" ||
-      request.url === "/api/csrf-token" ||
-      request.url.startsWith("/tracking") ||
-      request.url.startsWith("/api/auth") ||
-      request.url.startsWith("/api/jobs/lookup")
+      pathname === "/health" ||
+      pathname === "/api/csrf-token" ||
+      pathname.startsWith("/api/auth") ||
+      pathname.startsWith("/api/jobs/lookup")
     ) {
+      return;
+    }
+
+    if (!pathname.startsWith("/api")) {
       return;
     }
 

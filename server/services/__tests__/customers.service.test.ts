@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@generated/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { create, list, search, update } from "../customers.service";
 
@@ -41,7 +41,7 @@ describe("create", () => {
 
   it("trims email and handles empty string as null", async () => {
     (prisma.customer.upsert as ReturnType<typeof vi.fn>).mockResolvedValue({
-      email: null,
+      email: undefined,
       id: "cust-1",
       name: "Jane Doe",
       phone: "+0987654321",
@@ -143,9 +143,9 @@ describe("list", () => {
     (prisma.customer.count as ReturnType<typeof vi.fn>).mockResolvedValue(2);
 
     const result = await list(prisma, {
-      cursor: null,
+      cursor: undefined,
       limit: 10,
-      search: null,
+      search: undefined,
     });
 
     expect(result.customers).toHaveLength(2);
@@ -160,7 +160,7 @@ describe("list", () => {
     (prisma.customer.count as ReturnType<typeof vi.fn>).mockResolvedValue(0);
 
     await list(prisma, {
-      cursor: null,
+      cursor: undefined,
       limit: 10,
       search: "Alice",
     });

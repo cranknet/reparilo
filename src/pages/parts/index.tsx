@@ -3,14 +3,22 @@ import { PartCategory } from "@shared/constants";
 import type { PartsCatalog } from "@shared/types";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Can } from "@/components/modules/can";
 import AddPartModal from "@/components/modules/parts/add-part-modal";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
+import { useCan } from "@/hooks/use-can";
+import { useDebounce } from "@/hooks/use-debounce";
 import { formatDzd } from "@/lib/format";
 import { usePartsCatalogStore } from "@/stores/parts-catalog";
 
 type SortField = "name" | "category" | "defaultPrice" | "supplier";
+
+interface AddPartForm {
+  category: PartCategoryType | "";
+  isActive: boolean;
+  name: string;
+  supplier: string;
+}
 
 const CATEGORY_COLORS: Record<string, string> = {
   BATTERY: "bg-tertiary-fixed text-on-tertiary-fixed-variant",
@@ -41,141 +49,273 @@ function getAriaSort(
   return currentSortDir === "asc" ? "ascending" : "descending";
 }
 
-function SkeletonRow() {
+function ConfirmToggle({
+  isActive,
+  onCancel,
+  onConfirm,
+  t,
+}: {
+  isActive: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+  t: (key: string) => string;
+}) {
+  return (
+    <div className="flex flex-col gap-2 p-2" role="alert">
+      <p className="font-bold text-on-surface text-sm">
+        {isActive ? t("confirm_deactivate") : t("confirm_activate")}
+      </p>
+      <p className="text-on-surface-variant text-xs">
+        {isActive ? t("confirm_deactivate_desc") : t("confirm_activate_desc")}
+      </p>
+      <div className="flex gap-2">
+        <button
+          className="min-h-[44px] flex-1 rounded-lg bg-surface-container-high px-3 py-2 font-bold text-on-surface-variant text-xs transition-colors hover:bg-surface-container-highest"
+          onClick={onCancel}
+          type="button"
+        >
+          {t("add_part_modal.cancel")}
+        </button>
+        <button
+          className={`min-h-[44px] flex-1 rounded-lg px-3 py-2 font-bold text-xs transition-colors ${
+            isActive
+              ? "bg-error-container text-on-error-container hover:opacity-90"
+              : "bg-primary text-on-primary hover:opacity-90"
+          }`}
+          onClick={onConfirm}
+          type="button"
+        >
+          {isActive ? t("deactivate_part") : t("activate_part")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SkeletonRow({ showCost }: { showCost: boolean }) {
   return (
     <tr>
-      <td className="px-6 py-5">
+      <td className="px-5 py-4">
         <div className="flex flex-col gap-2">
           <div className="h-3 w-3/5 animate-pulse rounded bg-surface-container-high" />
           <div className="h-2 w-2/5 animate-pulse rounded bg-surface-container-highest" />
         </div>
       </td>
-      <td className="px-6 py-5">
+      <td className="px-5 py-4">
         <div className="h-5 w-16 animate-pulse rounded-full bg-surface-container-high" />
       </td>
-      <td className="px-6 py-5">
+      <td className="px-5 py-4">
         <div className="h-3 w-2/5 animate-pulse rounded bg-surface-container-high" />
       </td>
-      <td className="px-6 py-5">
-        <div className="h-3 w-1/4 animate-pulse rounded bg-surface-container-high" />
-      </td>
-      <td className="px-6 py-5">
+      {showCost && (
+        <td className="px-5 py-4">
+          <div className="h-3 w-1/4 animate-pulse rounded bg-surface-container-high" />
+        </td>
+      )}
+      <td className="px-5 py-4">
         <div className="h-5 w-16 animate-pulse rounded-full bg-surface-container-high" />
       </td>
-      <td className="px-6 py-5">
-        <div className="h-8 w-8 animate-pulse rounded-xl bg-surface-container-high" />
+      <td className="px-5 py-4">
+        <div className="h-11 w-11 animate-pulse rounded-xl bg-surface-container-high" />
       </td>
     </tr>
   );
 }
 
 function DesktopPartRow({
+  confirmingId,
+  deletingId,
+  isActive,
+  nameCls,
+  onDelete,
   onToggle,
+  onCancelConfirm,
+  onCancelDelete,
+  onShowConfirm,
+  onShowDelete,
+  onEdit,
   part,
+  showCost,
+  statusBadgeCls,
   t,
   togglingId,
+  toggleBtnCls,
 }: {
+  confirmingId: string | null;
+  deletingId: string | null;
+  isActive: boolean;
+  nameCls: string;
+  onDelete: (part: PartsCatalog) => void;
   onToggle: (part: PartsCatalog) => void;
+  onCancelConfirm: () => void;
+  onCancelDelete: () => void;
+  onShowConfirm: (id: string) => void;
+  onShowDelete: (id: string) => void;
+  onEdit: (part: PartsCatalog) => void;
   part: PartsCatalog;
+  showCost: boolean;
+  statusBadgeCls: string;
   t: (key: string) => string;
   togglingId: string | null;
+  toggleBtnCls: string;
 }) {
-  const isActive = part.isActive;
+  const isConfirming = confirmingId === part.id;
+
   const rowCls = isActive
     ? "transition-colors hover:bg-surface-container-lowest"
-    : "bg-surface-container/50 opacity-60 transition-colors hover:bg-surface-container-lowest";
-  const nameCls = isActive
-    ? "font-bold text-on-surface text-sm"
-    : "font-bold line-through text-on-surface text-sm";
-  const statusBadgeCls = isActive
-    ? "bg-primary-container text-on-primary-container"
-    : "bg-surface-container-high text-on-surface-variant";
-  const toggleBtnCls = isActive
-    ? "text-on-surface-variant hover:bg-surface-container-high hover:text-primary"
-    : "text-primary hover:bg-primary-container";
+    : "bg-surface-container/30 transition-colors hover:bg-surface-container-lowest";
 
   return (
     <tr className={rowCls}>
-      <td className="px-6 py-5">
+      <td className="px-5 py-4">
         <div className="flex flex-col">
           <span className={nameCls}>{part.name}</span>
-          <span className="font-mono text-[11px] text-outline tracking-tight">
+          <span className="font-mono text-on-surface-variant text-xs">
             {part.id.slice(0, 8)}
           </span>
         </div>
       </td>
-      <td className="px-6 py-5">
+      <td className="px-5 py-4">
         <span
-          className={`rounded-full px-3 py-1 font-bold text-xs uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
+          className={`rounded-full px-2.5 py-1 font-bold text-xs uppercase ${CATEGORY_COLORS[part.category] ?? "bg-surface-container-high text-on-surface-variant"}`}
         >
           {t(`part_category.${part.category}`)}
         </span>
       </td>
-      <td className="px-6 py-5">
+      <td className="px-5 py-4">
         <span className="text-on-surface-variant text-sm">
           {part.supplier ?? "\u2014"}
         </span>
       </td>
-      <Can perm={{ parts: ["viewCost"] }}>
-        <td className="px-6 py-5">
+      {showCost && (
+        <td className="px-5 py-4">
           <span className="font-mono font-semibold text-sm">
             {formatDzd(Number(part.defaultPrice))} {t("currency_dzd")}
           </span>
         </td>
-      </Can>
-      <td className="px-6 py-5">
+      )}
+      <td className="px-5 py-4">
         <span
-          className={`rounded-full px-3 py-1 font-bold text-xs ${statusBadgeCls}`}
+          className={`rounded-full px-2.5 py-1 font-bold text-xs ${statusBadgeCls}`}
         >
           {isActive ? t("active") : t("inactive")}
         </span>
       </td>
-      <td className="px-6 py-5">
-        <div className="flex items-center gap-1">
-          <button
-            aria-label={isActive ? t("deactivate_part") : t("activate_part")}
-            className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${toggleBtnCls}`}
-            disabled={togglingId === part.id}
-            onClick={() => onToggle(part)}
-            type="button"
-          >
-            <Icon name={isActive ? "toggle_on" : "toggle_off"} size="sm" />
-          </button>
-        </div>
+      <td className="px-5 py-4">
+        {isConfirming && (
+          <ConfirmToggle
+            isActive={isActive}
+            onCancel={onCancelConfirm}
+            onConfirm={() => onToggle(part)}
+            t={t}
+          />
+        )}
+        {!isConfirming && deletingId === part.id && (
+          <div className="flex flex-col gap-2 p-2" role="alert">
+            <p className="font-bold text-on-surface text-sm">
+              {t("delete_part_confirm_title")}
+            </p>
+            <p className="text-on-surface-variant text-xs">
+              {t("delete_part_confirm_desc")}
+            </p>
+            <div className="flex gap-2">
+              <button
+                className="min-h-[44px] flex-1 rounded-lg bg-surface-container-high px-3 py-2 font-bold text-on-surface-variant text-xs transition-colors hover:bg-surface-container-highest"
+                onClick={onCancelDelete}
+                type="button"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                className="min-h-[44px] flex-1 rounded-lg bg-error-container px-3 py-2 font-bold text-on-error-container text-xs transition-colors hover:opacity-90"
+                onClick={() => onDelete(part)}
+                type="button"
+              >
+                {t("delete")}
+              </button>
+            </div>
+          </div>
+        )}
+        {!isConfirming && deletingId !== part.id && (
+          <div className="flex items-center gap-1">
+            <button
+              aria-label={t("edit_part")}
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
+              onClick={() => onEdit(part)}
+              type="button"
+            >
+              <Icon name="edit" size="sm" />
+            </button>
+            <button
+              aria-label={isActive ? t("deactivate_part") : t("activate_part")}
+              className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${toggleBtnCls}`}
+              disabled={togglingId === part.id}
+              onClick={() => onShowConfirm(part.id)}
+              type="button"
+            >
+              <Icon name={isActive ? "toggle_on" : "toggle_off"} size="sm" />
+            </button>
+            <button
+              aria-label={t("delete_part")}
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
+              onClick={() => onShowDelete(part.id)}
+              type="button"
+            >
+              <Icon name="delete" size="sm" />
+            </button>
+          </div>
+        )}
       </td>
     </tr>
   );
 }
 
 function MobilePartCard({
+  confirmingId,
+  deletingId,
   onToggle,
+  onDelete,
+  onCancelConfirm,
+  onCancelDelete,
+  onShowConfirm,
+  onShowDelete,
+  onEdit,
   part,
+  showCost,
   t,
   togglingId,
 }: {
+  confirmingId: string | null;
+  deletingId: string | null;
   onToggle: (part: PartsCatalog) => void;
+  onDelete: (part: PartsCatalog) => void;
+  onCancelConfirm: () => void;
+  onCancelDelete: () => void;
+  onShowConfirm: (id: string) => void;
+  onShowDelete: (id: string) => void;
+  onEdit: (part: PartsCatalog) => void;
   part: PartsCatalog;
+  showCost: boolean;
   t: (key: string) => string;
   togglingId: string | null;
 }) {
   const isActive = part.isActive;
-  const cardCls = isActive ? "p-4" : "bg-surface-container/50 opacity-60 p-4";
+  const isConfirming = confirmingId === part.id;
+
+  const cardCls = isActive ? "p-4" : "bg-surface-container/30 p-4";
   const nameCls = isActive
     ? "font-bold text-on-surface text-sm"
-    : "font-bold line-through text-on-surface text-sm";
+    : "font-bold text-on-surface-variant text-sm";
   const statusBadgeCls = isActive
     ? "bg-primary-container text-on-primary-container"
     : "bg-surface-container-high text-on-surface-variant";
-  const toggleBtnCls = isActive
-    ? "flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl font-bold text-on-surface-variant text-xs transition-all hover:bg-surface-container-high hover:text-primary"
-    : "flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl font-bold text-primary text-xs transition-all hover:bg-primary-container";
 
   return (
     <div className={cardCls}>
       <div className="mb-3 flex items-start justify-between">
         <div className="min-w-0">
           <h3 className={nameCls}>{part.name}</h3>
-          <span className="font-mono text-[11px] text-outline">
+          <span className="font-mono text-on-surface-variant text-xs">
             {part.id.slice(0, 8)}
           </span>
         </div>
@@ -187,15 +327,15 @@ function MobilePartCard({
       </div>
       <div className="mb-3 flex items-center justify-between">
         <span
-          className={`rounded-full px-3 py-1 font-bold text-xs ${statusBadgeCls}`}
+          className={`rounded-full px-2.5 py-1 font-bold text-xs ${statusBadgeCls}`}
         >
           {isActive ? t("active") : t("inactive")}
         </span>
-        <Can perm={{ parts: ["viewCost"] }}>
+        {showCost && (
           <span className="font-bold font-mono text-primary text-sm">
             {formatDzd(Number(part.defaultPrice))} {t("currency_dzd")}
           </span>
-        </Can>
+        )}
       </div>
       <div className="-mx-1 flex items-center gap-2 rounded-xl bg-surface-container-lowest px-1 py-1">
         {part.supplier && (
@@ -203,16 +343,77 @@ function MobilePartCard({
             {part.supplier}
           </span>
         )}
-        <button
-          aria-label={isActive ? t("deactivate_part") : t("activate_part")}
-          className={toggleBtnCls}
-          disabled={togglingId === part.id}
-          onClick={() => onToggle(part)}
-          type="button"
-        >
-          <Icon name={isActive ? "toggle_on" : "toggle_off"} size="sm" />
-          <span>{isActive ? t("deactivate_part") : t("activate_part")}</span>
-        </button>
+        {deletingId === part.id && (
+          <div className="flex flex-1 flex-col gap-2 p-2" role="alert">
+            <p className="font-bold text-on-surface text-sm">
+              {t("delete_part_confirm_title")}
+            </p>
+            <p className="text-on-surface-variant text-xs">
+              {t("delete_part_confirm_desc")}
+            </p>
+            <div className="flex gap-2">
+              <button
+                className="min-h-[44px] flex-1 rounded-lg bg-surface-container-high px-3 py-2 font-bold text-on-surface-variant text-xs transition-colors hover:bg-surface-container-highest"
+                onClick={onCancelDelete}
+                type="button"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                className="min-h-[44px] flex-1 rounded-lg bg-error-container px-3 py-2 font-bold text-on-error-container text-xs transition-colors hover:opacity-90"
+                onClick={() => onDelete(part)}
+                type="button"
+              >
+                {t("delete")}
+              </button>
+            </div>
+          </div>
+        )}
+        {deletingId !== part.id && isConfirming && (
+          <ConfirmToggle
+            isActive={isActive}
+            onCancel={onCancelConfirm}
+            onConfirm={() => onToggle(part)}
+            t={t}
+          />
+        )}
+        {deletingId !== part.id && !isConfirming && (
+          <>
+            <button
+              aria-label={t("edit_part")}
+              className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl font-bold text-on-surface-variant text-xs transition-all hover:bg-surface-container-high hover:text-primary"
+              onClick={() => onEdit(part)}
+              type="button"
+            >
+              <Icon name="edit" size="sm" />
+              <span>{t("edit")}</span>
+            </button>
+            <button
+              aria-label={isActive ? t("deactivate_part") : t("activate_part")}
+              className={`flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl font-bold text-xs transition-all ${
+                isActive
+                  ? "text-on-surface-variant hover:bg-surface-container-high hover:text-primary"
+                  : "text-primary hover:bg-primary-container"
+              }`}
+              disabled={togglingId === part.id}
+              onClick={() => onShowConfirm(part.id)}
+              type="button"
+            >
+              <Icon name={isActive ? "toggle_on" : "toggle_off"} size="sm" />
+              <span>
+                {isActive ? t("deactivate_part") : t("activate_part")}
+              </span>
+            </button>
+            <button
+              aria-label={t("delete_part")}
+              className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl font-bold text-on-surface-variant text-xs transition-all hover:bg-error-container hover:text-on-error-container"
+              onClick={() => onShowDelete(part.id)}
+              type="button"
+            >
+              <Icon name="delete" size="sm" />
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -236,7 +437,11 @@ function CategoryFilterPills({
   );
 
   return (
-    <div className="hide-scrollbar flex flex-wrap items-center gap-2">
+    <fieldset
+      aria-label={t("filters")}
+      className="hide-scrollbar flex flex-wrap items-center gap-2"
+    >
+      <legend className="sr-only">{t("filter_by_category")}</legend>
       {visibleCats.map((cat) => {
         const isActive = activeFilter === cat;
         return (
@@ -273,36 +478,57 @@ function CategoryFilterPills({
           {t("show_less")}
         </button>
       )}
-    </div>
+    </fieldset>
   );
 }
 
 function PartsDesktopTable({
+  confirmingId,
+  deletingId,
   isLoading,
+  onCancelConfirm,
+  onCancelDelete,
+  onShowConfirm,
+  onShowDelete,
+  onDelete,
   onSort,
+  onToggle,
+  onEdit,
   parts,
+  showCost,
   sortBy,
   sortDir,
   t,
   togglingId,
-  onToggle,
 }: {
+  confirmingId: string | null;
+  deletingId: string | null;
   isLoading: boolean;
+  onCancelConfirm: () => void;
+  onCancelDelete: () => void;
+  onShowConfirm: (id: string) => void;
+  onShowDelete: (id: string) => void;
+  onDelete: (part: PartsCatalog) => void;
   onSort: (field: SortField) => void;
   onToggle: (part: PartsCatalog) => void;
+  onEdit: (part: PartsCatalog) => void;
   parts: PartsCatalog[];
+  showCost: boolean;
   sortBy: SortField;
   sortDir: "asc" | "desc";
   t: (key: string) => string;
   togglingId: string | null;
 }) {
+  const sortableCls =
+    "cursor-pointer px-5 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary";
+
   return (
     <table className="w-full border-collapse text-start">
       <thead>
         <tr className="bg-surface-container-high/50">
           <th
             aria-sort={getAriaSort(sortBy, sortDir, "name")}
-            className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
+            className={sortableCls}
             onClick={() => onSort("name")}
           >
             {t("part_details")}
@@ -316,7 +542,7 @@ function PartsDesktopTable({
           </th>
           <th
             aria-sort={getAriaSort(sortBy, sortDir, "category")}
-            className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
+            className={sortableCls}
             onClick={() => onSort("category")}
           >
             {t("category")}
@@ -330,7 +556,7 @@ function PartsDesktopTable({
           </th>
           <th
             aria-sort={getAriaSort(sortBy, sortDir, "supplier")}
-            className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
+            className={sortableCls}
             onClick={() => onSort("supplier")}
           >
             {t("supplier")}
@@ -342,10 +568,10 @@ function PartsDesktopTable({
               />
             )}
           </th>
-          <Can perm={{ parts: ["viewCost"] }}>
+          {showCost && (
             <th
               aria-sort={getAriaSort(sortBy, sortDir, "defaultPrice")}
-              className="cursor-pointer px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide transition-colors hover:text-primary"
+              className={sortableCls}
               onClick={() => onSort("defaultPrice")}
             >
               {t("unit_cost")}
@@ -357,11 +583,11 @@ function PartsDesktopTable({
                 />
               )}
             </th>
-          </Can>
-          <th className="px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide">
+          )}
+          <th className="px-5 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide">
             {t("status_label")}
           </th>
-          <th className="px-6 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide">
+          <th className="px-5 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide">
             {t("manage")}
           </th>
         </tr>
@@ -369,24 +595,104 @@ function PartsDesktopTable({
       <tbody>
         {isLoading
           ? Array.from({ length: 5 }).map((_, i) => (
-              <SkeletonRow key={`skeleton-${String(i)}`} />
+              <SkeletonRow key={`skeleton-${String(i)}`} showCost={showCost} />
             ))
-          : parts.map((part) => (
-              <DesktopPartRow
-                key={part.id}
-                onToggle={onToggle}
-                part={part}
-                t={t}
-                togglingId={togglingId}
-              />
-            ))}
+          : parts.map((part) => {
+              const isActive = part.isActive;
+              return (
+                <DesktopPartRow
+                  confirmingId={confirmingId}
+                  deletingId={deletingId}
+                  isActive={isActive}
+                  key={part.id}
+                  nameCls={
+                    isActive
+                      ? "font-bold text-on-surface text-sm"
+                      : "font-bold text-on-surface-variant text-sm"
+                  }
+                  onCancelConfirm={onCancelConfirm}
+                  onCancelDelete={onCancelDelete}
+                  onDelete={onDelete}
+                  onEdit={onEdit}
+                  onShowConfirm={onShowConfirm}
+                  onShowDelete={onShowDelete}
+                  onToggle={onToggle}
+                  part={part}
+                  showCost={showCost}
+                  statusBadgeCls={
+                    isActive
+                      ? "bg-primary-container text-on-primary-container"
+                      : "bg-surface-container-high text-on-surface-variant"
+                  }
+                  t={t}
+                  toggleBtnCls={
+                    isActive
+                      ? "text-on-surface-variant hover:bg-surface-container-high hover:text-primary"
+                      : "text-primary hover:bg-primary-container"
+                  }
+                  togglingId={togglingId}
+                />
+              );
+            })}
       </tbody>
     </table>
   );
 }
 
+function EmptyCatalogState({
+  onAdd,
+  t,
+}: {
+  onAdd: () => void;
+  t: (key: string) => string;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-container">
+        <Icon className="text-on-primary-container" name="category" size="xl" />
+      </div>
+      <h3 className="font-bold font-headline text-lg text-on-surface">
+        {t("empty_catalog_title")}
+      </h3>
+      <p className="mt-1 mb-6 max-w-xs text-on-surface-variant text-sm">
+        {t("empty_catalog_desc")}
+      </p>
+      <button
+        className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-on-primary text-sm shadow-md shadow-primary/10 transition-all hover:bg-primary/90 active:scale-[0.98]"
+        onClick={onAdd}
+        type="button"
+      >
+        <Icon name="add" size="sm" />
+        <span>{t("add_new_part")}</span>
+      </button>
+    </div>
+  );
+}
+
+function ToastNotification({
+  isError,
+  message,
+}: {
+  isError: boolean;
+  message: string;
+}) {
+  return (
+    <div
+      aria-live="polite"
+      className={`fixed end-6 bottom-6 z-50 flex animate-[fadeSlideUp_0.3s_ease-out] items-center gap-2 rounded-2xl px-5 py-3 font-bold text-sm shadow-2xl ${
+        isError ? "bg-error text-on-error" : "bg-primary text-on-primary"
+      }`}
+      role="status"
+    >
+      <Icon name={isError ? "error" : "check_circle"} size="sm" />
+      {message}
+    </div>
+  );
+}
+
 export default function PartsCatalogPage() {
   const { t } = useTranslation();
+  const canViewCost = useCan({ parts: ["viewCost"] });
   const {
     parts,
     isLoading,
@@ -394,7 +700,12 @@ export default function PartsCatalogPage() {
     totalCount,
     fetchParts,
     createPart,
+    loadMoreParts,
+    nextCursor,
+    isLoadingMore,
     togglePartActive,
+    deletePart,
+    updatePart,
     clearError,
   } = usePartsCatalogStore();
 
@@ -405,25 +716,29 @@ export default function PartsCatalogPage() {
     "ALL"
   );
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showCategoryFilters, setShowCategoryFilters] = useState(false);
+  const [editingPart, setEditingPart] = useState<PartsCatalog | null>(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const [confirmingPartId, setConfirmingPartId] = useState<string | null>(null);
+  const [deletingPartId, setDeletingPartId] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     isError: boolean;
     message: string;
   } | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
+  const debouncedSearch = useDebounce(search, 300);
+
   const showToast = useCallback((message: string, isError = false) => {
     setToast({ isError, message });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 4000);
   }, []);
 
   const fetchParams = useMemo(
     () => ({
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       category: activeFilter === "ALL" ? undefined : activeFilter,
     }),
-    [search, activeFilter]
+    [debouncedSearch, activeFilter]
   );
 
   useEffect(() => {
@@ -478,15 +793,7 @@ export default function PartsCatalogPage() {
   }, [parts]);
 
   const handleAddPart = async (
-    data: Omit<
-      {
-        category: PartCategoryType | "";
-        isActive: boolean;
-        name: string;
-        supplier: string;
-      },
-      "defaultPrice"
-    > & { defaultPrice: number }
+    data: Omit<AddPartForm, "defaultPrice"> & { defaultPrice: number }
   ) => {
     if (!data.category) {
       showToast(t("failed_to_create_part"), true);
@@ -508,6 +815,7 @@ export default function PartsCatalogPage() {
   };
 
   const handleToggleActive = async (part: PartsCatalog) => {
+    setConfirmingPartId(null);
     setTogglingId(part.id);
     try {
       await togglePartActive(part.id, !part.isActive);
@@ -519,8 +827,64 @@ export default function PartsCatalogPage() {
     }
   };
 
+  const handleEditPart = (part: PartsCatalog) => {
+    setEditingPart(part);
+  };
+
+  const handleEditSubmit = async (data: {
+    category: PartCategoryType | "";
+    defaultPrice: number;
+    isActive: boolean;
+    name: string;
+    supplier: string;
+  }) => {
+    if (!editingPart) {
+      return;
+    }
+    if (!data.category) {
+      showToast(t("failed_to_create_part"), true);
+      return;
+    }
+    try {
+      await updatePart(editingPart.id, {
+        name: data.name,
+        category: data.category,
+        defaultPrice: data.defaultPrice,
+        supplier: data.supplier || undefined,
+        isActive: data.isActive,
+      });
+      setEditingPart(null);
+      showToast(t("part_updated_successfully"));
+    } catch {
+      showToast(t("errors.update_part"), true);
+    }
+  };
+
+  const handleDeletePart = async (part: PartsCatalog) => {
+    setDeletingPartId(null);
+    try {
+      await deletePart(part.id);
+      showToast(t("part_deleted_successfully"));
+    } catch {
+      showToast(t("failed_to_delete_part"), true);
+    }
+  };
+
   const hasParts = sorted.length > 0 || isLoading;
-  const showEmptyState = sorted.length === 0 && !isLoading;
+  const showSearchEmpty = sorted.length === 0 && !isLoading && search !== "";
+  const showEmptyCatalog = totalCount === 0 && !isLoading && search === "";
+  const hasMore = nextCursor !== null && !isLoading;
+
+  const handleLoadMore = useCallback(() => {
+    loadMoreParts({
+      search: debouncedSearch || undefined,
+      category: activeFilter === "ALL" ? undefined : activeFilter,
+    });
+  }, [loadMoreParts, debouncedSearch, activeFilter]);
+
+  const metricGridCols = canViewCost
+    ? "grid-cols-2 sm:grid-cols-4"
+    : "grid-cols-2 sm:grid-cols-3";
 
   return (
     <>
@@ -533,112 +897,105 @@ export default function PartsCatalogPage() {
             {t("parts_inventory_desc")}
           </p>
         </div>
-        <div className="flex w-full flex-wrap gap-3 sm:w-auto">
-          <button
-            className="hidden min-h-[44px] items-center justify-center gap-2 rounded-xl bg-surface-container-high px-4 py-3 font-bold text-on-surface-variant text-sm transition-all hover:bg-surface-container-highest sm:flex"
-            onClick={() => setShowCategoryFilters((prev) => !prev)}
-            type="button"
-          >
-            <Icon name="filter_list" size="sm" />
-            <span className="whitespace-nowrap">{t("filters")}</span>
-          </button>
-          <button
-            className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-on-primary text-sm shadow-md shadow-primary/10 transition-all hover:bg-primary/90 active:scale-[0.98] sm:flex-none md:px-8"
-            onClick={() => setShowAddModal(true)}
-            type="button"
-          >
-            <Icon name="add" size="sm" />
-            <span className="whitespace-nowrap">{t("add_new_part")}</span>
-          </button>
-        </div>
+        <button
+          className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-on-primary text-sm shadow-md shadow-primary/10 transition-all hover:bg-primary/90 active:scale-[0.98] sm:flex-none md:px-8"
+          onClick={() => setShowAddModal(true)}
+          type="button"
+        >
+          <Icon name="add" size="sm" />
+          <span className="whitespace-nowrap">{t("add_new_part")}</span>
+        </button>
       </div>
 
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4 text-on-surface-variant text-sm">
-          <span className="font-bold text-on-surface">{totalCount}</span>{" "}
-          {t("total_parts")}
-          <span className="text-outline-variant">&middot;</span>
-          <span className="font-bold text-on-surface">{activeCount}</span>{" "}
-          {t("active")}
-          <span className="text-outline-variant">&middot;</span>
-          <Can perm={{ parts: ["viewCost"] }}>
-            <span className="font-bold text-on-surface">
-              {catalogValue > 0 ? formatDzd(catalogValue) : "0"}
-            </span>{" "}
-            {t("currency_dzd")}
-            <span className="text-outline-variant">&middot;</span>
-          </Can>
-          <span className="font-bold text-on-surface">{uniqueSuppliers}</span>{" "}
-          {t("active_suppliers")}
-        </div>
-      </div>
-
-      <div className="mb-5">
-        <Input
-          iconStart="search"
-          id="parts-search"
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t("search_parts_placeholder")}
-          value={search}
-        />
-        <div className="mt-2 sm:hidden">
-          <div className="relative">
-            <select
-              aria-label={t("all_categories")}
-              className="h-11 w-full appearance-none rounded-xl border-none bg-surface-container-highest px-4 pe-10 text-on-surface text-sm outline-none focus:ring-2 focus:ring-primary/20"
-              onChange={(e) => {
-                setActiveFilter(
-                  e.target.value === "ALL"
-                    ? "ALL"
-                    : (e.target.value as PartCategoryType)
-                );
-              }}
-              value={activeFilter}
-            >
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat === "ALL"
-                    ? t("all_categories")
-                    : t(`part_category.${cat}`)}
-                </option>
-              ))}
-            </select>
-            <span className="material-symbols-outlined pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">
-              expand_more
-            </span>
+      {!showEmptyCatalog && (
+        <section aria-label={t("inventory_value")}>
+          <h3 className="sr-only">{t("inventory_value")}</h3>
+          <div className={`mb-6 grid gap-4 ${metricGridCols}`}>
+            <div className="rounded-xl bg-surface-container-low p-4">
+              <p className="font-medium text-on-surface-variant text-xs uppercase tracking-wide">
+                {t("total_parts")}
+              </p>
+              <p className="mt-1 font-extrabold font-headline text-2xl text-on-surface">
+                {totalCount}
+              </p>
+            </div>
+            <div className="rounded-xl bg-surface-container-low p-4">
+              <p className="font-medium text-on-surface-variant text-xs uppercase tracking-wide">
+                {t("active")}
+              </p>
+              <p className="mt-1 font-extrabold font-headline text-2xl text-on-surface">
+                {activeCount}
+              </p>
+            </div>
+            {canViewCost && (
+              <div className="rounded-xl bg-surface-container-low p-4">
+                <p className="font-medium text-on-surface-variant text-xs uppercase tracking-wide">
+                  {t("inventory_value")}
+                </p>
+                <p className="mt-1 font-extrabold font-headline text-2xl text-on-surface">
+                  {catalogValue > 0 ? formatDzd(catalogValue) : "0"}
+                </p>
+                <p className="mt-0.5 text-on-surface-variant text-xs">
+                  {t("currency_dzd")}
+                </p>
+              </div>
+            )}
+            <div className="rounded-xl bg-surface-container-low p-4">
+              <p className="font-medium text-on-surface-variant text-xs uppercase tracking-wide">
+                {t("active_suppliers")}
+              </p>
+              <p className="mt-1 font-extrabold font-headline text-2xl text-on-surface">
+                {uniqueSuppliers}
+              </p>
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
+      )}
 
-      {showCategoryFilters && (
-        <div className="mb-5 hidden rounded-2xl bg-surface-container-low p-4 sm:block">
-          <CategoryFilterPills
-            activeFilter={activeFilter}
-            onFilterChange={setActiveFilter}
-            onToggleAll={setShowAllCategories}
-            showAllCategories={showAllCategories}
-            t={t}
+      {!showEmptyCatalog && (
+        <div className="mb-5">
+          <Input
+            iconStart="search"
+            id="parts-search"
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("search_parts_placeholder")}
+            value={search}
           />
+          <div className="mt-3">
+            <CategoryFilterPills
+              activeFilter={activeFilter}
+              onFilterChange={setActiveFilter}
+              onToggleAll={setShowAllCategories}
+              showAllCategories={showAllCategories}
+              t={t}
+            />
+          </div>
+          {activeFilter !== "ALL" && (
+            <div className="mt-2 flex items-center gap-2">
+              <span className="rounded-full bg-primary px-3 py-1 font-bold text-on-primary text-xs uppercase">
+                {t(`part_category.${activeFilter}`)}
+              </span>
+              <button
+                className="flex min-h-[44px] items-center gap-1 rounded-full px-2 py-1 text-on-surface-variant text-xs transition-all hover:text-on-surface"
+                onClick={() => setActiveFilter("ALL")}
+                type="button"
+              >
+                <Icon name="close" size="xs" />
+              </button>
+            </div>
+          )}
         </div>
       )}
 
-      {!showCategoryFilters && activeFilter !== "ALL" && (
-        <div className="mb-5 hidden items-center gap-2 sm:flex">
-          <span className="rounded-full bg-primary px-3 py-1 font-bold text-on-primary text-xs uppercase">
-            {t(`part_category.${activeFilter}`)}
-          </span>
-          <button
-            className="flex min-h-[44px] items-center gap-1 rounded-full px-2 py-1 text-on-surface-variant text-xs transition-all hover:text-on-surface"
-            onClick={() => setActiveFilter("ALL")}
-            type="button"
-          >
-            <Icon name="close" size="xs" />
-          </button>
-        </div>
+      {showEmptyCatalog && (
+        <EmptyCatalogState onAdd={() => setShowAddModal(true)} t={t} />
       )}
 
-      {showEmptyState && (
-        <div className="flex flex-col items-center justify-center py-16">
+      {showSearchEmpty && (
+        <div
+          className="flex flex-col items-center justify-center py-16"
+          role="status"
+        >
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-container-low">
             <Icon
               className="text-on-surface-variant"
@@ -659,10 +1016,19 @@ export default function PartsCatalogPage() {
         <div className="overflow-hidden rounded-2xl bg-surface-container-low">
           <div className="hidden overflow-x-auto md:block">
             <PartsDesktopTable
+              confirmingId={confirmingPartId}
+              deletingId={deletingPartId}
               isLoading={isLoading}
+              onCancelConfirm={() => setConfirmingPartId(null)}
+              onCancelDelete={() => setDeletingPartId(null)}
+              onDelete={handleDeletePart}
+              onEdit={handleEditPart}
+              onShowConfirm={setConfirmingPartId}
+              onShowDelete={setDeletingPartId}
               onSort={toggleSort}
               onToggle={handleToggleActive}
               parts={sorted}
+              showCost={canViewCost}
               sortBy={sortBy}
               sortDir={sortDir}
               t={t}
@@ -687,15 +1053,44 @@ export default function PartsCatalogPage() {
             ) : (
               sorted.map((part) => (
                 <MobilePartCard
+                  confirmingId={confirmingPartId}
+                  deletingId={deletingPartId}
                   key={part.id}
+                  onCancelConfirm={() => setConfirmingPartId(null)}
+                  onCancelDelete={() => setDeletingPartId(null)}
+                  onDelete={handleDeletePart}
+                  onEdit={handleEditPart}
+                  onShowConfirm={setConfirmingPartId}
+                  onShowDelete={setDeletingPartId}
                   onToggle={handleToggleActive}
                   part={part}
+                  showCost={canViewCost}
                   t={t}
                   togglingId={togglingId}
                 />
               ))
             )}
           </div>
+        </div>
+      )}
+
+      {hasMore && (
+        <div className="flex justify-center py-4">
+          <button
+            className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-surface-container-high px-6 py-3 font-bold text-on-surface-variant text-sm transition-all hover:bg-surface-container-highest active:scale-[0.98]"
+            disabled={isLoadingMore}
+            onClick={handleLoadMore}
+            type="button"
+          >
+            {isLoadingMore && (
+              <Icon
+                className="animate-spin"
+                name="progress_activity"
+                size="sm"
+              />
+            )}
+            <span>{t("load_more")}</span>
+          </button>
         </div>
       )}
 
@@ -706,19 +1101,16 @@ export default function PartsCatalogPage() {
         />
       )}
 
+      {editingPart && (
+        <AddPartModal
+          editingPart={editingPart}
+          onClose={() => setEditingPart(null)}
+          onSubmit={handleEditSubmit}
+        />
+      )}
+
       {toast && (
-        <div
-          aria-live="polite"
-          className={`fixed end-6 bottom-6 z-50 flex animate-[fadeSlideUp_0.3s_ease-out] items-center gap-2 rounded-2xl px-5 py-3 font-bold text-sm shadow-2xl ${
-            toast.isError
-              ? "bg-error text-on-error"
-              : "bg-on-surface text-on-primary"
-          }`}
-          role="status"
-        >
-          <Icon name={toast.isError ? "error" : "check_circle"} size="sm" />
-          {toast.message}
-        </div>
+        <ToastNotification isError={toast.isError} message={toast.message} />
       )}
     </>
   );

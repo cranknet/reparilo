@@ -12,6 +12,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "@shared": path.resolve(__dirname, "./shared"),
+      "@generated": path.resolve(__dirname, "./generated"),
     },
   },
   server: {
@@ -31,5 +32,6 @@ export default defineConfig({
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    sourcemap: "hidden",
   },
 });

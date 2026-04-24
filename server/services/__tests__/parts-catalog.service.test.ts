@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@generated/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   create,
@@ -40,11 +40,11 @@ describe("list", () => {
     );
 
     const result = await list(prisma, {
-      category: null,
-      cursor: null,
-      isActive: null,
+      category: undefined,
+      cursor: undefined,
+      isActive: undefined,
       limit: 10,
-      search: null,
+      search: undefined,
     });
 
     expect(result.parts).toHaveLength(2);
@@ -62,10 +62,10 @@ describe("list", () => {
 
     await list(prisma, {
       category: "SCREEN",
-      cursor: null,
-      isActive: null,
+      cursor: undefined,
+      isActive: undefined,
       limit: 10,
-      search: null,
+      search: undefined,
     });
 
     const findManyCall = (
@@ -83,11 +83,11 @@ describe("list", () => {
     );
 
     await list(prisma, {
-      category: null,
-      cursor: null,
+      category: undefined,
+      cursor: undefined,
       isActive: true,
       limit: 10,
-      search: null,
+      search: undefined,
     });
 
     const findManyCall = (
@@ -105,9 +105,9 @@ describe("list", () => {
     );
 
     await list(prisma, {
-      category: null,
-      cursor: null,
-      isActive: null,
+      category: undefined,
+      cursor: undefined,
+      isActive: undefined,
       limit: 10,
       search: "iPhone",
     });
@@ -136,11 +136,11 @@ describe("list", () => {
     );
 
     const result = await list(prisma, {
-      category: null,
-      cursor: null,
-      isActive: null,
+      category: undefined,
+      cursor: undefined,
+      isActive: undefined,
       limit: 10,
-      search: null,
+      search: undefined,
     });
 
     expect(result.parts).toHaveLength(10);
@@ -153,11 +153,11 @@ describe("list", () => {
     ).mockResolvedValue([]);
 
     const result = await list(prisma, {
-      category: null,
+      category: undefined,
       cursor: "100",
-      isActive: null,
+      isActive: undefined,
       limit: 10,
-      search: null,
+      search: undefined,
     });
 
     expect(result.totalCount).toBeNull();

@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@generated/client";
 import type {
   CreateRepairInput,
   ListRepairsQueryInput,
@@ -86,4 +86,20 @@ export async function toggleActive(
     data: { isActive },
     where: { id },
   });
+}
+
+export async function remove(prisma: PrismaClient, id: string) {
+  const existing = await prisma.repairCatalog.findUnique({ where: { id } });
+  if (!existing) {
+    return null;
+  }
+
+  const refCount = await prisma.jobRepair.count({ where: { repairId: id } });
+  if (refCount > 0) {
+    throw new Error(
+      `Cannot delete repair "${existing.name}" — referenced by ${refCount} job(s). Deactivate it instead.`
+    );
+  }
+
+  return await prisma.repairCatalog.delete({ where: { id } });
 }

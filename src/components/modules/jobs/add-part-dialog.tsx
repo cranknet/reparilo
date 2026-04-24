@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useJobsStore } from "@/stores/jobs";
 import { usePartsCatalogStore } from "@/stores/parts-catalog";
+import { useToastStore } from "@/stores/toast";
 
 const PART_CATEGORIES = Object.values(PartCategory);
 
@@ -40,6 +41,7 @@ export default function AddPartDialog({
   onAdded,
 }: AddPartDialogProps) {
   const { t } = useTranslation();
+  const toast = useToastStore((s) => s.toast);
   const [mode, setMode] = useState<Mode>("catalog");
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [catalogSearch, setCatalogSearch] = useState("");
@@ -132,11 +134,13 @@ export default function AddPartDialog({
         quantity,
         ...(form.supplier.trim() ? { supplier: form.supplier.trim() } : {}),
       });
+      toast("job_part_success");
       onAdded();
       onClose();
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: string } } };
       const code = axiosErr.response?.data?.error;
+      toast("job_part_failed", "error");
       if (code === "JOB_IN_TERMINAL_STATUS") {
         setSubmitError(t("jobs_parts_terminal_status_error"));
       } else {
@@ -145,7 +149,7 @@ export default function AddPartDialog({
     } finally {
       setSubmitting(false);
     }
-  }, [form, jobId, onAdded, onClose, t]);
+  }, [form, jobId, onAdded, onClose, t, toast]);
 
   if (!open) {
     return null;
@@ -154,6 +158,13 @@ export default function AddPartDialog({
   const unitPrice = Number.parseFloat(form.unitPrice) || 0;
   const quantity = Number.parseInt(form.quantity, 10) || 1;
   const canSubmit = form.partName.trim().length > 0 && unitPrice >= 0;
+  const isFormDirty =
+    form.partName !== "" ||
+    form.unitPrice !== "" ||
+    form.quantity !== "1" ||
+    form.supplier !== "" ||
+    form.category !== "OTHER" ||
+    form.partId !== undefined;
 
   return (
     <div
@@ -164,7 +175,7 @@ export default function AddPartDialog({
       <button
         aria-label={t("close_modal")}
         className="absolute inset-0 bg-on-surface/40"
-        onClick={onClose}
+        onClick={isFormDirty ? undefined : onClose}
         type="button"
       />
       <div className="modal-surface relative z-10 flex max-h-[80vh] w-full max-w-lg flex-col overflow-hidden rounded-xl bg-surface-container-lowest shadow-2xl">
