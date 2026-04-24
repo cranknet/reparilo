@@ -43,10 +43,18 @@ describe("startOverdueScheduler", () => {
 
     await vi.advanceTimersByTimeAsync(50);
 
-    expect(broadcastCalls.length).toBe(2);
-    expect(broadcastCalls[0].payload.type).toBe("JOB_OVERDUE");
-    expect(broadcastCalls[0].predicate({ role: "OWNER" })).toBe(true);
-    expect(broadcastCalls[0].predicate({ role: "TECHNICIAN" })).toBe(false);
+    const overdueCalls = broadcastCalls.filter(
+      (c) => c.payload.type === "JOB_OVERDUE"
+    );
+    const dashboardCalls = broadcastCalls.filter(
+      (c) => c.payload.type === "dashboard:invalidate"
+    );
+
+    expect(overdueCalls.length).toBe(2);
+    expect(overdueCalls[0].predicate({ role: "OWNER" })).toBe(true);
+    expect(overdueCalls[0].predicate({ role: "TECHNICIAN" })).toBe(false);
+
+    expect(dashboardCalls.length).toBe(4);
 
     stop();
   });
@@ -59,10 +67,16 @@ describe("startOverdueScheduler", () => {
     const stop = startOverdueScheduler(mockApp);
 
     await vi.advanceTimersByTimeAsync(50);
-    expect(broadcastCalls.length).toBe(1);
+    const overdueAfterFirst = broadcastCalls.filter(
+      (c) => c.payload.type === "JOB_OVERDUE"
+    );
+    expect(overdueAfterFirst.length).toBe(1);
 
     await vi.advanceTimersByTimeAsync(15 * 60 * 1000);
-    expect(broadcastCalls.length).toBe(1);
+    const overdueAfterSecond = broadcastCalls.filter(
+      (c) => c.payload.type === "JOB_OVERDUE"
+    );
+    expect(overdueAfterSecond.length).toBe(1);
 
     stop();
   });

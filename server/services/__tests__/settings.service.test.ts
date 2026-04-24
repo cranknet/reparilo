@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@generated/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getAiSettings,
@@ -81,24 +81,43 @@ describe("upsertAiSettings", () => {
     expect(result).toHaveProperty("id", "default");
   });
 
-  it("sets apiKeyEncrypted when apiKey is provided", async () => {
+  it("encrypts apiKey when provided and never returns the plaintext", async () => {
     (prisma.aiSettings.upsert as ReturnType<typeof vi.fn>).mockResolvedValue({
-      apiKeyEncrypted: "new-api-key",
+      apiKeyEncrypted: "v1:iv:tag:ciphertext",
       endpointUrl: "https://api.example.com",
       id: "default",
     });
 
-    await upsertAiSettings(prisma, {
+    const result = await upsertAiSettings(prisma, {
       apiKey: "new-api-key",
       endpointUrl: "https://api.example.com",
     });
 
     const upsertCall = (prisma.aiSettings.upsert as ReturnType<typeof vi.fn>)
       .mock.calls[0];
-    expect(upsertCall[0].update).toHaveProperty(
-      "apiKeyEncrypted",
-      "new-api-key"
-    );
+    const stored = upsertCall[0].update.apiKeyEncrypted as string;
+    expect(stored).not.toBe("new-api-key");
+    expect(stored.startsWith("v1:")).toBe(true);
+    // Response exposes only a boolean, never the ciphertext
+    expect(result).not.toHaveProperty("apiKeyEncrypted");
+    expect((result as { hasApiKey: boolean }).hasApiKey).toBe(true);
+  });
+
+  it("treats empty apiKey as no-change to avoid wiping the stored key", async () => {
+    (prisma.aiSettings.upsert as ReturnType<typeof vi.fn>).mockResolvedValue({
+      apiKeyEncrypted: "v1:iv:tag:existing",
+      endpointUrl: "https://api.example.com",
+      id: "default",
+    });
+
+    await upsertAiSettings(prisma, {
+      apiKey: "",
+      endpointUrl: "https://api.example.com",
+    });
+
+    const upsertCall = (prisma.aiSettings.upsert as ReturnType<typeof vi.fn>)
+      .mock.calls[0];
+    expect(upsertCall[0].update).not.toHaveProperty("apiKeyEncrypted");
   });
 });
 

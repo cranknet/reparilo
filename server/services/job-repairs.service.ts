@@ -1,5 +1,5 @@
-import type { PrismaClient } from "@prisma/client";
-import { AuditAction, type RepairCategory } from "@prisma/client";
+import type { PrismaClient } from "@generated/client";
+import { AuditAction, type RepairCategory } from "@generated/client";
 import { INACTIVE_STATUSES } from "@shared/constants";
 import type { AddJobRepairInput } from "@shared/schemas";
 import { createAuditLog } from "./audit.service.js";

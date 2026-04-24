@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@generated/client";
 import type {
   CreatePartInput,
   ListPartsQueryInput,
@@ -86,5 +86,23 @@ export async function toggleActive(
   return prisma.partsCatalog.update({
     data: { isActive },
     where: { id },
+  });
+}
+
+export async function remove(prisma: PrismaClient, id: string) {
+  return await prisma.$transaction(async (tx) => {
+    const part = await tx.partsCatalog.findUnique({ where: { id } });
+    if (!part) {
+      return null;
+    }
+
+    const refCount = await tx.jobPart.count({ where: { partId: id } });
+    if (refCount > 0) {
+      throw new Error(
+        `Cannot delete part "${part.name}" — referenced by ${refCount} job(s). Deactivate it instead.`
+      );
+    }
+
+    return tx.partsCatalog.delete({ where: { id } });
   });
 }

@@ -7,6 +7,7 @@ import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
 import {
   create as createRepair,
+  remove as deleteRepair,
   getById as getRepairById,
   list as listRepairs,
   toggleActive,
@@ -114,6 +115,32 @@ export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
         return sendError(reply, 404, "REPAIR_NOT_FOUND", "Repair not found");
       }
       return reply.send(result);
+    }
+  );
+
+  app.delete(
+    "/:id",
+    { preHandler: [requirePermission({ repairs: ["manageCatalog"] })] },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      try {
+        const result = await deleteRepair(app.prisma, id);
+        if (!result) {
+          return sendError(reply, 404, "REPAIR_NOT_FOUND", "Repair not found");
+        }
+        return reply.status(204).send();
+      } catch (err) {
+        if (err instanceof Error && err.message.includes("referenced by")) {
+          return sendError(
+            reply,
+            409,
+            "REPAIR_IN_USE",
+            "Repair is referenced by existing jobs. Deactivate it instead."
+          );
+        }
+        req.log.error(err);
+        return sendError(reply, 500, "INTERNAL_ERROR", "Internal server error");
+      }
     }
   );
 };

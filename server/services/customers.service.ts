@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@generated/client";
 import type {
   CreateCustomerInput,
   CustomerListQueryInput,
