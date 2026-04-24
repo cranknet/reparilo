@@ -1,12 +1,13 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
 import type { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
+import { PrismaClient } from "../../generated/client";
+import { loadEnv } from "../config/env.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 const prismaPlugin: FastifyPluginAsync = async (app) => {
   const adapter = new PrismaPg({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: loadEnv().DATABASE_URL,
   });
   const prisma = new PrismaClient({ adapter });
 

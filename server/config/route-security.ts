@@ -1,4 +1,7 @@
+import type { FastifyRequest } from "fastify";
+
 export interface RateLimitConfig {
+  keyGenerator?: (req: FastifyRequest) => string;
   max: number;
   timeWindow: string;
 }
@@ -8,6 +11,23 @@ export interface RouteSecurityOverride {
   csrf?: boolean;
   rateLimit?: RateLimitConfig | false;
 }
+
+// Rate-limit keyed on the identifier the attacker is targeting (email/username)
+// to prevent one IP from locking a NAT'd office out of sign-in, and to make
+// credential-stuffing attacks wait per-account.
+const signInKeyGenerator = (req: FastifyRequest): string => {
+  const body = req.body as Record<string, unknown> | undefined;
+  let identifier = "";
+  if (typeof body?.email === "string") {
+    identifier = body.email;
+  } else if (typeof body?.username === "string") {
+    identifier = body.username;
+  }
+  if (identifier) {
+    return `signin:${identifier.toLowerCase().trim()}`;
+  }
+  return `signin:ip:${req.ip}`;
+};
 
 export const DEFAULT_SECURITY: RouteSecurityOverride = {
   rateLimit: { max: 100, timeWindow: "1 minute" },
@@ -74,6 +94,30 @@ export const routeSecurity: [string, RouteSecurityOverride][] = [
   [
     "/api/auth/must-change-password",
     { rateLimit: { max: 20, timeWindow: "1 minute" }, csrf: false },
+  ],
+  [
+    "/api/auth/sign-in/email",
+    {
+      csrf: false,
+      allowSensitiveKeys: true,
+      rateLimit: {
+        max: 5,
+        timeWindow: "5 minute",
+        keyGenerator: signInKeyGenerator,
+      },
+    },
+  ],
+  [
+    "/api/auth/sign-in/username",
+    {
+      csrf: false,
+      allowSensitiveKeys: true,
+      rateLimit: {
+        max: 5,
+        timeWindow: "5 minute",
+        keyGenerator: signInKeyGenerator,
+      },
+    },
   ],
   ["/api/auth/*", { csrf: false, allowSensitiveKeys: true }],
   [

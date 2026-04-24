@@ -9,6 +9,7 @@ import type {
   FastifyPluginAsync,
 } from "fastify";
 import fp from "fastify-plugin";
+import { loadEnv, resolveUrls } from "../config/env.js";
 import {
   DEFAULT_SECURITY,
   isMutation,
@@ -16,37 +17,63 @@ import {
   routeSecurity,
 } from "../config/route-security.js";
 
-const IS_PROD = process.env.NODE_ENV === "production";
-const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://localhost:5173";
-
 const SENSITIVE_KEYS = new Set(["password", "role", "mustChangePassword"]);
 
+function generateNonce(): string {
+  return globalThis.crypto.randomUUID().replace(/-/g, "");
+}
+
 const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
+  const env = loadEnv();
+  const IS_PROD = env.NODE_ENV === "production";
+
   // ── Layer 1: Security Headers ──────────────────────────────────────────
+  // Nonce-based CSP: generate a unique nonce per request and set the
+  // Content-Security-Policy header manually so we can inject it into HTML.
+  app.addHook("onRequest", (request, reply, done) => {
+    const nonce = generateNonce();
+    request.cspNonce = nonce;
+
+    const wsOrigins = IS_PROD ? "'self' wss:" : "'self' ws: wss:";
+    reply.header(
+      "Content-Security-Policy",
+      [
+        `default-src 'self'`,
+        `script-src 'self' 'nonce-${nonce}'`,
+        `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+        `img-src 'self' data: blob:`,
+        `font-src 'self' https://fonts.gstatic.com`,
+        `connect-src ${wsOrigins}`,
+        `frame-src 'none'`,
+        `frame-ancestors 'none'`,
+        `object-src 'none'`,
+        `base-uri 'self'`,
+        `form-action 'self'`,
+        ...(IS_PROD ? ["upgrade-insecure-requests"] : []),
+      ].join(";")
+    );
+
+    done();
+  });
+
   await app.register(helmet, {
-    contentSecurityPolicy: {
-      useDefaults: false,
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:", "blob:"],
-        fontSrc: ["'self'"],
-        connectSrc: ["'self'", "ws:", "wss:"],
-        frameSrc: ["'none'"],
-        objectSrc: ["'none'"],
-        upgradeInsecureRequests: [],
-      },
-    },
+    contentSecurityPolicy: false,
     hsts: IS_PROD
       ? { maxAge: 31_536_000, includeSubDomains: true, preload: true }
       : false,
   });
 
   // ── Layer 2: CORS ───────────────────────────────────────────────────────
+  const { trustedOrigins } = resolveUrls(env);
   const allowedOrigins = IS_PROD
-    ? [FRONTEND_URL]
-    : [FRONTEND_URL, "http://localhost:5173"];
+    ? trustedOrigins
+    : Array.from(
+        new Set([
+          ...trustedOrigins,
+          "http://localhost:5173",
+          "http://localhost:4000",
+        ])
+      );
 
   await app.register(cors, {
     origin: allowedOrigins,
@@ -58,8 +85,11 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
   });
 
   // ── Layer 3: Rate Limiting (global — all routes rate-limited by default) ──
+  // hook: 'preHandler' so the request body is parsed by the time per-route
+  // keyGenerators run (sign-in rate-limits key on body.email/body.username).
   await app.register(rateLimit, {
     global: true,
+    hook: "preHandler",
     max:
       DEFAULT_SECURITY.rateLimit &&
       typeof DEFAULT_SECURITY.rateLimit === "object"
@@ -83,12 +113,16 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
   });
 
   // ── Layer 4: CSRF Protection ───────────────────────────────────────────
-  // @fastify/cookie must be registered before csrf-protection
-  await app.register(cookie);
+  // Cookie secret is required when cookies are signed.
+  await app.register(cookie, {
+    secret: env.COOKIE_SECRET ?? env.BETTER_AUTH_SECRET,
+  });
 
   await app.register(csrf, {
     cookieOpts: {
-      sameSite: IS_PROD ? "strict" : "lax",
+      // 'lax' is required for the Capacitor WebView (custom scheme) to send
+      // the CSRF cookie back with mutations.
+      sameSite: "lax",
       httpOnly: true,
       path: "/",
       secure: IS_PROD,
@@ -222,52 +256,46 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
     reply.status(statusCode).send(payload);
   });
 
-  app.setNotFoundHandler((request, reply) => {
-    reply.status(404).send({
-      statusCode: 404,
-      error: "Not Found",
-      message: `Route ${request.method} ${request.url} not found`,
-    });
-  });
-
-  // ── Layer 8: Audit Logging ─────────────────────────────────────────────
+  // ── Layer 8: Audit Logging (fire-and-forget off the hot path) ──────────
   const MUTATION_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
 
-  app.addHook("onResponse", async (request, reply) => {
+  app.addHook("onResponse", (request, reply, done) => {
+    done();
     if (!MUTATION_METHODS.has(request.method)) {
       return;
     }
-
     const userId = request.user?.id;
     if (!userId) {
       return;
     }
 
     const action = `${request.method} ${request.routeOptions?.url ?? request.url}`;
+    const statusCode = reply.statusCode;
 
-    request.log.info({
-      audit: { userId, action, statusCode: reply.statusCode },
+    setImmediate(() => {
+      request.server.prisma.auditLog
+        .create({
+          data: {
+            userId,
+            action: "API_MUTATION",
+            toValue: action,
+            jobId: null,
+            metadata: { statusCode },
+          },
+        })
+        .catch((err) => {
+          request.log.error({ err }, "Failed to write audit log");
+        });
     });
-
-    try {
-      await request.server.prisma.auditLog.create({
-        data: {
-          userId,
-          action: "API_MUTATION",
-          toValue: action,
-          jobId: null,
-          metadata: { statusCode: reply.statusCode },
-        },
-      });
-    } catch (err) {
-      request.log.error({ err }, "Failed to write audit log");
-    }
   });
 };
 
 export default fp(securityPlugin, { name: "security-plugin" });
 
 declare module "fastify" {
+  interface FastifyRequest {
+    cspNonce: string;
+  }
   interface FastifyContextConfig {
     allowSensitiveKeys?: boolean;
   }
