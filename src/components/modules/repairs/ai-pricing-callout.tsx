@@ -1,10 +1,8 @@
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 
 export default function AiPricingCallout() {
   const { t } = useTranslation();
-  const [confirming, setConfirming] = useState(false);
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-primary-container p-6 md:p-8">
@@ -16,41 +14,16 @@ export default function AiPricingCallout() {
           <h3 className="font-extrabold font-headline text-lg text-on-primary-container">
             {t("improve_pricing")}
           </h3>
+          <span className="rounded-full bg-on-primary-container/15 px-2.5 py-0.5 font-bold text-on-primary-container text-xs uppercase tracking-wide">
+            {t("coming_soon")}
+          </span>
         </div>
         <p className="mb-6 max-w-2xl text-on-primary-container text-sm leading-relaxed md:text-base">
           {t("improve_pricing_desc")}
         </p>
-        {confirming ? (
-          <div>
-            <p className="mb-3 text-on-primary-container text-sm">
-              {t("confirm_market_suggestion")}
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => setConfirming(false)}
-                size="sm"
-                variant="gradient"
-              >
-                {t("confirm")}
-              </Button>
-              <Button
-                onClick={() => setConfirming(false)}
-                size="sm"
-                variant="ghost"
-              >
-                {t("cancel")}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <Button
-            icon="check_circle"
-            onClick={() => setConfirming(true)}
-            variant="secondary"
-          >
-            {t("use_recommended_price")}
-          </Button>
-        )}
+        <Button disabled icon="check_circle" variant="secondary">
+          {t("use_recommended_price")}
+        </Button>
       </div>
     </div>
   );

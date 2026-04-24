@@ -59,10 +59,10 @@ export default function CategoryHealth({ repairs }: CategoryHealthProps) {
         {categories.map((cat) => (
           <div key={cat.key}>
             <div className="mb-1.5 flex items-center justify-between">
-              <span className="font-bold text-on-surface text-sm">
+              <span className="font-medium text-on-surface text-sm">
                 {t(`repair_category.${cat.key}`)}
               </span>
-              <span className="font-bold text-on-surface-variant text-xs">
+              <span className="font-semibold text-on-surface-variant text-xs">
                 {cat.pct}%
               </span>
             </div>
@@ -76,7 +76,9 @@ export default function CategoryHealth({ repairs }: CategoryHealthProps) {
         ))}
       </div>
       <button
-        className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-surface-container-highest px-4 py-3 font-bold font-headline text-on-surface-variant text-xs uppercase tracking-wider transition-all hover:bg-surface-container-lowest"
+        aria-disabled="true"
+        className="mt-6 flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-surface-container-highest px-4 py-3 font-headline font-medium text-on-surface-variant text-xs uppercase tracking-wider opacity-50 transition-all"
+        disabled
         type="button"
       >
         <span
@@ -86,6 +88,9 @@ export default function CategoryHealth({ repairs }: CategoryHealthProps) {
           download
         </span>
         {t("download_service_report")}
+        <span className="rounded-full bg-on-surface-variant/15 px-2 py-0.5 font-medium text-[10px] text-on-surface-variant uppercase tracking-wide">
+          {t("coming_soon")}
+        </span>
       </button>
     </div>
   );

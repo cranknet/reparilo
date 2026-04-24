@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { RepairCategory } from "./repair-table";
 
@@ -39,6 +40,18 @@ export default function RepairFilters({
   searchQuery,
 }: RepairFiltersProps) {
   const { t } = useTranslation();
+  const [localQuery, setLocalQuery] = useState(searchQuery);
+
+  useEffect(() => {
+    setLocalQuery(searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onSearchChange(localQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [localQuery, onSearchChange]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -47,12 +60,25 @@ export default function RepairFilters({
           search
         </span>
         <input
-          className="w-full rounded-xl bg-surface-container-high py-2.5 ps-10 pe-4 font-body text-on-surface text-sm outline-none placeholder:text-on-surface-variant/60 focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary/20"
-          onChange={(e) => onSearchChange(e.target.value)}
+          className="w-full rounded-xl bg-surface-container-high py-2.5 ps-10 font-body text-on-surface text-sm outline-none placeholder:text-on-surface-variant/60 focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary/20"
+          onChange={(e) => setLocalQuery(e.target.value)}
           placeholder={t("search_repairs")}
           type="text"
-          value={searchQuery}
+          value={localQuery}
         />
+        {localQuery && (
+          <button
+            aria-label={t("clear_filters")}
+            className="absolute end-3 top-1/2 -translate-y-1/2 text-on-surface-variant transition-colors hover:text-on-surface"
+            onClick={() => {
+              setLocalQuery("");
+              onSearchChange("");
+            }}
+            type="button"
+          >
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        )}
       </div>
 
       <div className="flex items-center gap-2">
@@ -86,7 +112,7 @@ export default function RepairFilters({
         >
           {CATEGORIES.map((cat) => (
             <button
-              className={`shrink-0 rounded-full px-4 py-2 font-bold font-headline text-xs uppercase tracking-wide transition-all ${
+              className={`shrink-0 rounded-full px-4 py-2 font-headline font-medium text-xs uppercase tracking-wide transition-all ${
                 activeCategory === cat
                   ? "bg-primary text-on-primary"
                   : "bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest"
@@ -105,7 +131,7 @@ export default function RepairFilters({
         </span>
         <select
           aria-label={t("sort_by")}
-          className="rounded-xl bg-surface-container-highest px-3 py-2 font-bold font-headline text-on-surface text-xs uppercase tracking-wide outline-none transition-colors focus:bg-surface-container"
+          className="rounded-xl bg-surface-container-highest px-3 py-2 font-headline font-medium text-on-surface text-xs uppercase tracking-wide outline-none transition-colors focus:bg-surface-container"
           onChange={(e) => onSortChange(e.target.value as SortOption)}
           value={activeSort}
         >

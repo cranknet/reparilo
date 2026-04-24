@@ -1,18 +1,23 @@
 import { useTranslation } from "react-i18next";
 import { formatDzd } from "@/lib/format";
-import type { RepairCategory, RepairItem } from "./repair-table";
-
-const CATEGORY_COLORS: Record<RepairCategory, string> = {
-  HARDWARE: "bg-secondary-container text-on-secondary-container",
-  SOFTWARE: "bg-tertiary-fixed text-on-tertiary-fixed",
-  DIAGNOSTIC: "bg-primary-fixed text-on-primary-fixed",
-};
+import type { RepairItem } from "./repair-table";
+import { CATEGORY_COLORS } from "./repair-table";
 
 interface RepairMobileCardProps {
+  onEdit: (item: RepairItem) => void;
+  onShowDelete: (id: string) => void;
+  onToggleActive: (item: RepairItem) => void;
   repair: RepairItem;
+  togglingId: string | null;
 }
 
-export default function RepairMobileCard({ repair }: RepairMobileCardProps) {
+export default function RepairMobileCard({
+  onEdit,
+  onShowDelete,
+  onToggleActive,
+  repair,
+  togglingId,
+}: RepairMobileCardProps) {
   const { t } = useTranslation();
 
   return (
@@ -29,39 +34,72 @@ export default function RepairMobileCard({ repair }: RepairMobileCardProps) {
             </span>
           </div>
           <div>
-            <h3 className="font-bold font-headline text-sm">{repair.name}</h3>
+            <h3 className="font-headline font-semibold text-sm">
+              {repair.name}
+            </h3>
             <span className="font-mono text-on-surface-variant text-xs uppercase tracking-tight">
               {repair.code}
             </span>
           </div>
         </div>
-        <span
-          className={`rounded-full px-2 py-0.5 font-bold text-xs uppercase ${CATEGORY_COLORS[repair.category]}`}
-        >
-          {t(`repair_category.${repair.category}`)}
-        </span>
-      </div>
-      <div className="flex items-end justify-between border-outline-variant/10 border-t pt-3">
-        <div className="flex flex-col">
-          <span className="font-bold text-on-surface-variant text-xs uppercase tracking-wide">
-            {t("duration")}
-          </span>
-          <span className="font-bold text-on-surface text-sm">
-            {repair.duration}
+        <div className="flex items-center gap-2">
+          {!repair.isActive && (
+            <span className="rounded-full bg-surface-container-high px-2 py-0.5 font-medium text-on-surface-variant text-xs">
+              {t("inactive")}
+            </span>
+          )}
+          <span
+            className={`rounded-full px-2 py-0.5 font-medium text-xs uppercase ${CATEGORY_COLORS[repair.category]}`}
+          >
+            {t(`repair_category.${repair.category}`)}
           </span>
         </div>
+      </div>
+      <div className="flex items-end justify-between pt-3">
         <div className="flex items-center gap-2">
-          <span className="font-bold font-mono text-primary text-sm">
+          <span className="font-mono font-semibold text-primary text-sm">
             {formatDzd(repair.basePrice)} DZD
           </span>
-          <button
-            aria-label={t("edit_repair", { name: repair.name })}
-            className="flex h-11 w-11 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
-            type="button"
-          >
-            <span className="material-symbols-outlined text-[20px]">edit</span>
-          </button>
         </div>
+      </div>
+      <div className="mt-3 flex items-center gap-2">
+        <button
+          aria-label={t("edit_repair", { name: repair.name })}
+          className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl font-bold text-on-surface-variant text-xs transition-all hover:bg-surface-container-high hover:text-primary"
+          onClick={() => onEdit(repair)}
+          type="button"
+        >
+          <span className="material-symbols-outlined text-[18px]">edit</span>
+          <span>{t("edit")}</span>
+        </button>
+        <button
+          aria-label={
+            repair.isActive ? t("deactivate_repair") : t("activate_repair")
+          }
+          className={`flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl font-bold text-xs transition-all ${
+            repair.isActive
+              ? "text-on-surface-variant hover:bg-surface-container-high hover:text-primary"
+              : "text-primary hover:bg-primary-container"
+          }`}
+          disabled={togglingId === repair.id}
+          onClick={() => onToggleActive(repair)}
+          type="button"
+        >
+          <span className="material-symbols-outlined text-[18px]">
+            {repair.isActive ? "toggle_on" : "toggle_off"}
+          </span>
+          <span>
+            {repair.isActive ? t("deactivate_repair") : t("activate_repair")}
+          </span>
+        </button>
+        <button
+          aria-label={t("delete_repair")}
+          className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl font-bold text-on-surface-variant text-xs transition-all hover:bg-error-container hover:text-on-error-container"
+          onClick={() => onShowDelete(repair.id)}
+          type="button"
+        >
+          <span className="material-symbols-outlined text-[18px]">delete</span>
+        </button>
       </div>
     </div>
   );

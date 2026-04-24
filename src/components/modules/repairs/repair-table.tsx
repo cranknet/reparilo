@@ -7,25 +7,35 @@ export interface RepairItem {
   basePrice: number;
   category: RepairCategory;
   code: string;
-  duration: string;
   icon: string;
   iconBg: string;
   iconColor: string;
   id: string;
+  isActive: boolean;
   name: string;
 }
 
-const CATEGORY_COLORS: Record<RepairCategory, string> = {
+export const CATEGORY_COLORS: Record<RepairCategory, string> = {
   HARDWARE: "bg-secondary-container text-on-secondary-container",
   SOFTWARE: "bg-tertiary-fixed text-on-tertiary-fixed",
   DIAGNOSTIC: "bg-primary-fixed text-on-primary-fixed",
 };
 
 interface RepairTableProps {
+  onEdit: (item: RepairItem) => void;
+  onShowDelete: (id: string) => void;
+  onToggleActive: (item: RepairItem) => void;
   repairs: RepairItem[];
+  togglingId: string | null;
 }
 
-export default function RepairTable({ repairs }: RepairTableProps) {
+export default function RepairTable({
+  onEdit,
+  onShowDelete,
+  onToggleActive,
+  repairs,
+  togglingId,
+}: RepairTableProps) {
   const { t } = useTranslation();
 
   return (
@@ -35,36 +45,36 @@ export default function RepairTable({ repairs }: RepairTableProps) {
           <thead>
             <tr className="bg-surface-container-high/30">
               <th
-                className="p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-widest"
+                className="p-4 font-body font-medium text-on-surface-variant text-xs uppercase tracking-widest"
                 scope="col"
               >
                 {t("repair_name")}
               </th>
               <th
-                className="p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-widest"
+                className="p-4 font-body font-medium text-on-surface-variant text-xs uppercase tracking-widest"
                 scope="col"
               >
                 {t("category")}
               </th>
               <th
-                className="p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-widest"
+                className="p-4 font-body font-medium text-on-surface-variant text-xs uppercase tracking-widest"
                 scope="col"
               >
                 {t("base_price")}
               </th>
               <th
-                className="p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-widest"
+                className="p-4 font-body font-medium text-on-surface-variant text-xs uppercase tracking-widest"
                 scope="col"
               >
-                {t("duration")}
+                {t("status_label")}
               </th>
-              <th className="p-4" scope="col" />
+              <th aria-label={t("actions")} className="p-4" scope="col" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-outline-variant/10">
+          <tbody>
             {repairs.map((repair) => (
               <tr
-                className="transition-colors hover:bg-surface-container-lowest"
+                className="transition-colors even:bg-surface-container-lowest/50 hover:bg-surface-container-lowest"
                 key={repair.id}
               >
                 <td className="p-4">
@@ -79,7 +89,7 @@ export default function RepairTable({ repairs }: RepairTableProps) {
                       </span>
                     </div>
                     <div>
-                      <p className="font-bold font-headline text-sm">
+                      <p className="font-headline font-medium text-sm">
                         {repair.name}
                       </p>
                       <p className="font-mono text-on-surface-variant text-xs uppercase tracking-tight">
@@ -90,7 +100,7 @@ export default function RepairTable({ repairs }: RepairTableProps) {
                 </td>
                 <td className="p-4">
                   <span
-                    className={`rounded-full px-3 py-1 font-bold text-xs uppercase ${CATEGORY_COLORS[repair.category]}`}
+                    className={`rounded-full px-3 py-1 font-medium text-xs uppercase ${CATEGORY_COLORS[repair.category]}`}
                   >
                     {t(`repair_category.${repair.category}`)}
                   </span>
@@ -101,20 +111,62 @@ export default function RepairTable({ repairs }: RepairTableProps) {
                   </span>
                 </td>
                 <td className="p-4">
-                  <span className="text-on-surface-variant text-sm">
-                    {repair.duration}
-                  </span>
+                  {!repair.isActive && (
+                    <span className="rounded-full bg-surface-container-high px-2.5 py-1 font-medium text-on-surface-variant text-xs">
+                      {t("inactive")}
+                    </span>
+                  )}
+                  {repair.isActive && (
+                    <span className="rounded-full bg-primary-container px-2.5 py-1 font-medium text-on-primary-container text-xs">
+                      {t("active")}
+                    </span>
+                  )}
                 </td>
                 <td className="p-4 text-end">
-                  <button
-                    aria-label={t("edit_repair", { name: repair.name })}
-                    className="flex h-11 w-11 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
-                    type="button"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">
-                      edit
-                    </span>
-                  </button>
+                  <div className="flex items-center justify-end gap-1">
+                    <button
+                      aria-label={t("edit_repair", { name: repair.name })}
+                      className="flex h-11 w-11 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-primary"
+                      onClick={() => onEdit(repair)}
+                      title={t("edit_repair", { name: repair.name })}
+                      type="button"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">
+                        edit
+                      </span>
+                    </button>
+                    <button
+                      aria-label={
+                        repair.isActive
+                          ? t("deactivate_repair")
+                          : t("activate_repair")
+                      }
+                      className={`flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${repair.isActive ? "text-on-surface-variant hover:bg-surface-container-high hover:text-primary" : "text-primary hover:bg-primary-container"}`}
+                      disabled={togglingId === repair.id}
+                      onClick={() => onToggleActive(repair)}
+                      title={
+                        repair.isActive
+                          ? t("deactivate_repair")
+                          : t("activate_repair")
+                      }
+                      type="button"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">
+                        {repair.isActive ? "toggle_on" : "toggle_off"}
+                      </span>
+                    </button>
+                    <button
+                      aria-label={t("delete_repair")}
+                      className="flex h-11 w-11 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
+                      onClick={() => onShowDelete(repair.id)}
+                      title={t("delete_repair")}
+                      type="button"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">
+                        delete
+                      </span>
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
