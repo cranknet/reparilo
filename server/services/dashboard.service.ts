@@ -163,15 +163,18 @@ export async function financialTrend(
        )::date AS day
      )
      SELECT s.day,
-       COALESCE(SUM(jr."price"), 0) + COALESCE(SUM(jp."totalCost"), 0) AS revenue,
-       COALESCE(SUM(jp."totalCost"), 0) AS cost
+       COALESCE(SUM(
+         COALESCE((SELECT SUM(jr."price") FROM "job_repairs" jr WHERE jr."jobId" = j."id"), 0)
+         + COALESCE((SELECT SUM(jp."totalCost") FROM "job_parts" jp WHERE jp."jobId" = j."id"), 0)
+       ), 0) AS revenue,
+       COALESCE(SUM(
+         COALESCE((SELECT SUM(jp."totalCost") FROM "job_parts" jp WHERE jp."jobId" = j."id"), 0)
+       ), 0) AS cost
      FROM series s
      LEFT JOIN "jobs" j
        ON j."status" = 'DELIVERED'
       AND (j."updatedAt" AT TIME ZONE $1)::date = s.day
       ${techClause}
-     LEFT JOIN "job_repairs" jr ON jr."jobId" = j."id"
-     LEFT JOIN "job_parts"   jp ON jp."jobId" = j."id"
      GROUP BY s.day
      ORDER BY s.day ASC`,
     ...params
@@ -529,24 +532,24 @@ export async function priorityAlerts(
   ]);
   const combined: Array<PriorityAlertDTO & { ts: number }> = [
     ...overdue.map((j) => ({
+      customerName: null,
       id: `od-${j.id}`,
       jobCode: j.jobCode,
       kind: "OVERDUE" as const,
-      message: `${j.jobCode} is overdue`,
       ts: j.updatedAt.getTime(),
     })),
     ...warranty.map((j) => ({
+      customerName: j.customer.name,
       id: `wr-${j.id}`,
       jobCode: j.jobCode,
       kind: "WARRANTY_RETURN" as const,
-      message: `Warranty return — ${j.customer.name}`,
       ts: j.updatedAt.getTime(),
     })),
     ...ready.map((j) => ({
+      customerName: j.customer.name,
       id: `rp-${j.id}`,
       jobCode: j.jobCode,
       kind: "READY_FOR_PICKUP" as const,
-      message: `${j.customer.name} — ready for pickup`,
       ts: j.updatedAt.getTime(),
     })),
   ];

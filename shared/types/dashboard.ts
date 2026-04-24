@@ -94,10 +94,10 @@ export interface RecentIntakeDTO {
 }
 
 export interface PriorityAlertDTO {
+  customerName: string | null;
   id: string;
   jobCode: string;
   kind: "OVERDUE" | "WARRANTY_RETURN" | "READY_FOR_PICKUP";
-  message: string;
 }
 
 export interface PickupReadyDTO {

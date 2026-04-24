@@ -54,7 +54,7 @@ describe("startOverdueScheduler", () => {
     expect(overdueCalls[0].predicate({ role: "OWNER" })).toBe(true);
     expect(overdueCalls[0].predicate({ role: "TECHNICIAN" })).toBe(false);
 
-    expect(dashboardCalls.length).toBe(4);
+    expect(dashboardCalls.length).toBe(2);
 
     stop();
   });

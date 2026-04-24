@@ -80,6 +80,14 @@ if (IS_PROD) {
   });
 
   app.setNotFoundHandler((request, reply) => {
+    if (request.url.startsWith("/api/")) {
+      reply.status(404).send({
+        statusCode: 404,
+        error: "Not Found",
+        message: `Route ${request.method} ${request.url} not found`,
+      });
+      return;
+    }
     const html = indexHtml.replace(
       /<script /g,
       `<script nonce="${request.cspNonce}" `

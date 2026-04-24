@@ -13,7 +13,7 @@ function sendError(
   code: string,
   message: string
 ) {
-  return reply.status(status).send({ code, error: message });
+  return reply.status(status).send({ error: code, message });
 }
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async

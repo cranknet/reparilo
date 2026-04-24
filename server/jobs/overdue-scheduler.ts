@@ -34,15 +34,19 @@ async function processOverdueJobs(app: FastifyInstance): Promise<void> {
     }
   }
 
+  let hasNewAlerts = false;
   for (const job of overdue) {
     if (alerted.has(job.id)) {
       continue;
     }
     alerted.add(job.id);
+    hasNewAlerts = true;
     app.wsBroadcast?.((c) => c.role === "OWNER", {
       type: "JOB_OVERDUE",
       job: { id: job.id, jobCode: job.jobCode },
     });
+  }
+  if (hasNewAlerts) {
     emitDashboardChanged(app, ["OWNER", "FRONT_DESK"]);
   }
 }
