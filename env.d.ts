@@ -10,3 +10,9 @@ declare namespace NodeJS {
     UPLOAD_DIR: string;
   }
 }
+
+declare module "import.meta.env" {
+  interface ImportMetaEnv {
+    VITE_API_BASE_URL?: string;
+  }
+}

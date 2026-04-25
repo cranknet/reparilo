@@ -17,6 +17,8 @@ import {
   routeSecurity,
 } from "../config/route-security.js";
 
+const HTTP_SCHEME_REPLACE = /^http/;
+
 const SENSITIVE_KEYS = new Set(["password", "role", "mustChangePassword"]);
 
 function generateNonce(): string {
@@ -35,6 +37,16 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
     request.cspNonce = nonce;
 
     const wsOrigins = IS_PROD ? "'self' wss:" : "'self' ws: wss:";
+    const apiOrigin = env.API_URL ?? env.APP_URL ?? "";
+    const connectSrc = [wsOrigins];
+    if (apiOrigin && IS_PROD) {
+      connectSrc.push(apiOrigin, apiOrigin.replace(HTTP_SCHEME_REPLACE, "ws"));
+    }
+    for (const origin of env.EXTRA_TRUSTED_ORIGINS) {
+      if (!connectSrc.includes(origin)) {
+        connectSrc.push(origin);
+      }
+    }
     reply.header(
       "Content-Security-Policy",
       [
@@ -43,7 +55,7 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
         `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
         `img-src 'self' data: blob:`,
         `font-src 'self' https://fonts.gstatic.com`,
-        `connect-src ${wsOrigins}`,
+        `connect-src ${connectSrc.join(" ")}`,
         `frame-src 'none'`,
         `frame-ancestors 'none'`,
         `object-src 'none'`,
@@ -120,9 +132,11 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
 
   await app.register(csrf, {
     cookieOpts: {
-      // 'lax' is required for the Capacitor WebView (custom scheme) to send
-      // the CSRF cookie back with mutations.
-      sameSite: "lax",
+      // Prod is cross-site for the Capacitor Android WebView (origin
+      // https://localhost → API https://reparilo.shop), so the cookie must
+      // be SameSite=None; Secure to be sent on cross-site mutations.
+      // Dev is same-origin via the Vite proxy, so Lax is sufficient.
+      sameSite: IS_PROD ? "none" : "lax",
       httpOnly: true,
       path: "/",
       secure: IS_PROD,

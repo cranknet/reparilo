@@ -5,6 +5,7 @@ const config: CapacitorConfig = {
   appName: "Reparilo",
   webDir: "dist",
   server: {
+    androidScheme: "https",
     ...(process.env.NODE_ENV === "development" && {
       url: "http://localhost:5173",
       cleartext: true,
@@ -17,6 +18,9 @@ const config: CapacitorConfig = {
     Camera: {
       presentationStyle: "fullscreen",
     },
+  },
+  android: {
+    allowMixedContent: false,
   },
 };
 

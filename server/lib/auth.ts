@@ -14,12 +14,21 @@ import { sendPasswordResetEmail } from "./email.js";
 export function createAuth(prisma: PrismaClient) {
   const env = loadEnv();
   const { apiUrl, trustedOrigins } = resolveUrls(env);
+  const isProd = env.NODE_ENV === "production";
 
   return betterAuth({
     baseURL: apiUrl,
     basePath: "/api/auth",
     secret: env.BETTER_AUTH_SECRET,
     trustedOrigins,
+    advanced: {
+      // Prod serves the Android WebView (origin https://localhost) cross-site
+      // against https://reparilo.shop, so the session cookie must be
+      // SameSite=None; Secure. Dev is same-origin via the Vite proxy.
+      defaultCookieAttributes: isProd
+        ? { sameSite: "none", secure: true, httpOnly: true }
+        : { sameSite: "lax", httpOnly: true },
+    },
     database: prismaAdapter(prisma, {
       provider: "postgresql",
     }),
