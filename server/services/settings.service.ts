@@ -3,6 +3,7 @@ import type {
   UpdateAiSettingsInput,
   UpdateNotificationTemplateInput,
   UpdateShopSettingsInput,
+  UpdateWhatsAppSettingsInput,
 } from "@shared/schemas";
 import { decryptSecret, encryptSecret, isEncrypted } from "../lib/crypto.js";
 
@@ -162,4 +163,64 @@ export async function testAiConnection(prisma: PrismaClient) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return { message, success: false };
   }
+}
+
+export async function getWhatsAppSettings(prisma: PrismaClient) {
+  const row = await prisma.shopSettings.findUnique({
+    where: { id: "default" },
+  });
+  if (!row) {
+    return {
+      businessId: null,
+      enabled: false,
+      hasApiToken: false,
+      phoneNumberId: null,
+    };
+  }
+  return {
+    businessId: (row as Record<string, unknown>).whatsappBusinessId as
+      | string
+      | null,
+    enabled: (row as Record<string, unknown>).whatsappEnabled as boolean,
+    hasApiToken: Boolean(
+      (row as Record<string, unknown>).whatsappApiTokenEncrypted
+    ),
+    phoneNumberId: (row as Record<string, unknown>).whatsappPhoneNumberId as
+      | string
+      | null,
+  };
+}
+
+export async function upsertWhatsAppSettings(
+  prisma: PrismaClient,
+  input: UpdateWhatsAppSettingsInput
+) {
+  const data: Record<string, unknown> = {};
+  if (input.enabled !== undefined) {
+    data.whatsappEnabled = input.enabled;
+  }
+  if (input.businessId !== undefined) {
+    data.whatsappBusinessId = input.businessId;
+  }
+  if (input.phoneNumberId !== undefined) {
+    data.whatsappPhoneNumberId = input.phoneNumberId;
+  }
+  if (input.apiToken !== undefined && input.apiToken !== "") {
+    data.whatsappApiTokenEncrypted = encryptSecret(input.apiToken);
+  }
+
+  return await prisma.shopSettings.upsert({
+    create: {
+      id: "default",
+      shopName: "",
+      whatsappApiTokenEncrypted:
+        (data.whatsappApiTokenEncrypted as string) ?? null,
+      whatsappBusinessId: (data.whatsappBusinessId as string) ?? null,
+      whatsappEnabled: (data.whatsappEnabled as boolean) ?? false,
+      whatsappPhoneNumberId: (data.whatsappPhoneNumberId as string) ?? null,
+      ...data,
+    },
+    update: data,
+    where: { id: "default" },
+  });
 }

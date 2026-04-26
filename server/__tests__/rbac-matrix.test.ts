@@ -216,7 +216,7 @@ const rolePermissions: Record<RoleType, Record<string, string[]>> = {
     user: ["list", "get"],
   },
   FRONT_DESK: {
-    jobs: ["view", "create", "cancel"],
+    jobs: ["view", "create", "edit", "cancel"],
     jobStatus: ["DELIVERED", "RETURNED", "CANCELLED"],
     customers: ["view", "create", "edit"],
     notifications: ["read", "send"],

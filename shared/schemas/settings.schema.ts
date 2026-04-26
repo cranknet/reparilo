@@ -22,8 +22,18 @@ export const updateNotificationTemplateSchema = z.object({
   isDefault: z.boolean().optional(),
 });
 
+export const updateWhatsAppSettingsSchema = z.object({
+  apiToken: z.string().optional(),
+  businessId: z.string().optional(),
+  phoneNumberId: z.string().optional(),
+  enabled: z.boolean().optional(),
+});
+
 export type UpdateAiSettingsInput = z.infer<typeof updateAiSettingsSchema>;
 export type UpdateShopSettingsInput = z.infer<typeof updateShopSettingsSchema>;
 export type UpdateNotificationTemplateInput = z.infer<
   typeof updateNotificationTemplateSchema
+>;
+export type UpdateWhatsAppSettingsInput = z.infer<
+  typeof updateWhatsAppSettingsSchema
 >;

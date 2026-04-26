@@ -2,6 +2,7 @@ import {
   updateAiSettingsSchema,
   updateNotificationTemplateSchema,
   updateShopSettingsSchema,
+  updateWhatsAppSettingsSchema,
 } from "@shared/schemas";
 import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
@@ -9,10 +10,12 @@ import {
   getAiSettings,
   getNotificationTemplates,
   getShopSettings,
+  getWhatsAppSettings,
   testAiConnection,
   updateNotificationTemplate,
   upsertAiSettings,
   upsertShopSettings,
+  upsertWhatsAppSettings,
 } from "../services/settings.service.js";
 
 function sendError(
@@ -129,6 +132,30 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
           "Notification template not found"
         );
       }
+      return reply.send(updated);
+    }
+  );
+
+  app.get("/whatsapp", async (_req, reply) => {
+    const settings = await getWhatsAppSettings(app.prisma);
+    return reply.send(settings);
+  });
+
+  app.put(
+    "/whatsapp",
+    { preHandler: [requirePermission({ settings: ["edit"] })] },
+    async (req, reply) => {
+      const parsed = updateWhatsAppSettingsSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return sendError(
+          reply,
+          400,
+          "VALIDATION_ERROR",
+          "Invalid request body",
+          { errors: parsed.error.flatten().fieldErrors }
+        );
+      }
+      const updated = await upsertWhatsAppSettings(app.prisma, parsed.data);
       return reply.send(updated);
     }
   );

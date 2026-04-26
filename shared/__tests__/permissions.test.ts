@@ -230,12 +230,12 @@ describe("TECHNICIAN role", () => {
 // ---------------------------------------------------------------------------
 
 describe("FRONT_DESK role", () => {
-  it("has jobs view, create, cancel but NOT edit or delete", () => {
+  it("has jobs view, create, edit, cancel but NOT delete", () => {
     const { jobs } = frontDeskRole.statements as { jobs: readonly string[] };
     expect(jobs).toContain("view");
     expect(jobs).toContain("create");
+    expect(jobs).toContain("edit");
     expect(jobs).toContain("cancel");
-    expect(jobs).not.toContain("edit");
     expect(jobs).not.toContain("delete");
     expect(jobs).not.toContain("assign");
     expect(jobs).not.toContain("selfAssign");

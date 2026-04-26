@@ -142,7 +142,7 @@ export const frontDeskRole = ac.newRole({
   // No session access
 
   // Business resources
-  jobs: ["view", "create", "cancel"],
+  jobs: ["view", "create", "edit", "cancel"],
   jobStatus: ["DELIVERED", "RETURNED", "CANCELLED"],
   // No parts
   customers: ["view", "create", "edit"],

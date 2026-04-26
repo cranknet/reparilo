@@ -61,9 +61,11 @@ export type {
   UpdateAiSettingsInput,
   UpdateNotificationTemplateInput,
   UpdateShopSettingsInput,
+  UpdateWhatsAppSettingsInput,
 } from "./settings.schema";
 export {
   updateAiSettingsSchema,
   updateNotificationTemplateSchema,
   updateShopSettingsSchema,
+  updateWhatsAppSettingsSchema,
 } from "./settings.schema";
