@@ -1,3 +1,4 @@
+import { jobIdParamSchema } from "@shared/schemas";
 import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import { resolveUrls } from "../config/env.js";
 import { requirePermission } from "../middlewares/rbac.js";
@@ -22,7 +23,11 @@ export const receiptRoutes: FastifyPluginAsync = async (app) => {
     "/:id/receipt",
     { preHandler: [requirePermission({ jobs: ["view"] })] },
     async (req, reply) => {
-      const { id } = req.params as { id: string };
+      const paramParsed = jobIdParamSchema.safeParse(req.params);
+      if (!paramParsed.success) {
+        return sendError(reply, 400, "VALIDATION_ERROR", "Invalid job ID");
+      }
+      const { id } = paramParsed.data;
       const job = await getJobById(app.prisma, id);
       if (!job) {
         return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
@@ -55,7 +60,11 @@ export const receiptRoutes: FastifyPluginAsync = async (app) => {
     "/:id/label",
     { preHandler: [requirePermission({ jobs: ["view"] })] },
     async (req, reply) => {
-      const { id } = req.params as { id: string };
+      const paramParsed = jobIdParamSchema.safeParse(req.params);
+      if (!paramParsed.success) {
+        return sendError(reply, 400, "VALIDATION_ERROR", "Invalid job ID");
+      }
+      const { id } = paramParsed.data;
       const job = await getJobById(app.prisma, id);
       if (!job) {
         return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");

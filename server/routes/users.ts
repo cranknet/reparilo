@@ -2,14 +2,18 @@ import type { PrismaClient } from "@generated/client";
 import { Prisma } from "@generated/client";
 import type { RoleType } from "@shared/constants/roles";
 import {
+  activityListQuerySchema,
   createUserSchema,
   resetPasswordSchema,
+  toggleUserStatusSchema,
   updateProfileSchema,
+  userIdParamSchema,
 } from "@shared/schemas/auth.schema";
 import { hashPassword } from "better-auth/crypto";
 import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
 import { deleteAvatar, uploadAvatar } from "../services/avatar.service.js";
+import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 
 async function checkUniqueFields(
   prisma: PrismaClient,
@@ -223,7 +227,17 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     },
     async (request, reply) => {
       const { id } = request.params as { id: string };
-      const { isActive } = request.body as { isActive: boolean };
+      const parsed = toggleUserStatusSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({
+          error: "VALIDATION_ERROR",
+          details: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            request.locale
+          ),
+        });
+      }
+      const { isActive } = parsed.data;
 
       if (id === request.user?.id && !isActive) {
         return reply
@@ -260,7 +274,10 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       if (!parsed.success) {
         return reply.status(400).send({
           error: "Validation failed",
-          details: parsed.error.flatten().fieldErrors,
+          details: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            request.locale
+          ),
         });
       }
 
@@ -324,7 +341,10 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     if (!parsed.success) {
       return reply.status(400).send({
         error: "Validation failed",
-        details: parsed.error.flatten().fieldErrors,
+        details: resolveZodErrors(
+          parsed.error.flatten().fieldErrors,
+          request.locale
+        ),
       });
     }
 
@@ -361,11 +381,31 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   });
 
   app.get("/:id/activity", async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const { cursor, limit } = request.query as {
-      cursor?: string;
-      limit?: string;
-    };
+    const paramParsed = userIdParamSchema.safeParse(
+      (request.params as { id: string }).id
+    );
+    if (!paramParsed.success) {
+      return reply.status(400).send({
+        error: "VALIDATION_ERROR",
+        details: resolveZodErrors(
+          paramParsed.error.flatten().fieldErrors,
+          request.locale
+        ),
+      });
+    }
+    const id = paramParsed.data;
+    const queryParsed = activityListQuerySchema.safeParse(request.query);
+    if (!queryParsed.success) {
+      return reply.status(400).send({
+        error: "VALIDATION_ERROR",
+        details: resolveZodErrors(
+          queryParsed.error.flatten().fieldErrors,
+          request.locale
+        ),
+      });
+    }
+    const take = queryParsed.data.limit;
+    const cursor = queryParsed.data.cursor;
     const requestingUser = request.user;
 
     if (!requestingUser) {
@@ -383,8 +423,6 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
         return reply.status(403).send({ error: "Insufficient permissions" });
       }
     }
-
-    const take = Math.min(Math.max(Number(limit) || 4, 1), 100);
 
     let cursorFilter = {};
     if (cursor) {
