@@ -1,6 +1,3 @@
-// TODO: i18n — validation messages below are hardcoded English strings.
-// These schemas run on both server and client, so they need a shared
-// i18n strategy before messages can be internationalized.
 import { JobStatus, PartCategory, RepairCategory } from "@shared/constants";
 import { z } from "zod";
 
@@ -17,22 +14,24 @@ export const intakeRepairItemSchema = z.object({
 });
 
 export const createJobSchema = z.object({
-  customerEmail: z.string().email().optional().or(z.literal("")),
-  customerId: z.string().cuid().optional(),
-  customerName: z.string().min(1, { error: "Enter a customer name" }),
-  customerPhone: z.string().min(1, { error: "Enter a phone number" }),
-  deviceBrand: z.string().min(1, { error: "Enter a device brand" }),
-  deviceModel: z.string().min(1, { error: "Enter a device model" }),
-  color: z.string().optional(),
-  reportedProblem: z
+  customerEmail: z
     .string()
-    .min(1, { error: "Describe the reported problem" }),
+    .email({ error: "validations.email" })
+    .optional()
+    .or(z.literal("")),
+  customerId: z.string().cuid().optional(),
+  customerName: z.string().min(1, { error: "validations.enter_name" }),
+  customerPhone: z.string().min(1, { error: "validations.enter_phone" }),
+  deviceBrand: z.string().min(1, { error: "validations.enter_brand" }),
+  deviceModel: z.string().min(1, { error: "validations.enter_model" }),
+  color: z.string().optional(),
+  reportedProblem: z.string().min(1, { error: "validations.describe_problem" }),
   conditionNotes: z.string().optional(),
-  estimatedCost: z.number().min(0, { error: "Enter a valid cost" }),
+  estimatedCost: z.number().min(0, { error: "validations.valid_cost" }),
   estimatedDate: z.string().optional(),
   depositAmount: z
     .number()
-    .min(0, { error: "Enter a valid deposit amount" })
+    .min(0, { error: "validations.valid_deposit" })
     .optional(),
   technicianId: z.string().min(1).optional(),
   isWarrantyReturn: z.boolean().optional(),
@@ -73,7 +72,7 @@ export const transitionStatusSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["reason"],
-        message: "Reason is required for CANCELLED and ON_HOLD",
+        message: "validations.reason_required",
       });
     }
   });

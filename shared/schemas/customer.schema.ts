@@ -1,17 +1,25 @@
 import { z } from "zod";
 
 export const createCustomerSchema = z.object({
-  email: z.string().email().optional().or(z.literal("")),
-  name: z.string().min(1, { error: "Enter a customer name" }),
-  phone: z.string().min(1, { error: "Enter a phone number" }),
+  email: z
+    .string()
+    .email({ error: "validations.email" })
+    .optional()
+    .or(z.literal("")),
+  name: z.string().min(1, { error: "validations.enter_name" }),
+  phone: z.string().min(1, { error: "validations.enter_phone" }),
 });
 
 export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
 
 export const updateCustomerSchema = z.object({
-  name: z.string().min(1, { error: "Enter a customer name" }).optional(),
-  phone: z.string().min(1, { error: "Enter a phone number" }).optional(),
-  email: z.string().email().or(z.literal("")).optional(),
+  name: z.string().min(1, { error: "validations.enter_name" }).optional(),
+  phone: z.string().min(1, { error: "validations.enter_phone" }).optional(),
+  email: z
+    .string()
+    .email({ error: "validations.email" })
+    .or(z.literal(""))
+    .optional(),
 });
 
 export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;

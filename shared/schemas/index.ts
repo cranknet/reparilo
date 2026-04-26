@@ -1,6 +1,25 @@
-export type { UpdateProfileInput } from "./auth.schema";
+export type {
+  ActivityListQueryInput,
+  ChangePasswordInput,
+  CreateUserInput,
+  ResetPasswordInput,
+  SignInInput,
+  ToggleUserStatusInput,
+  UpdateProfileInput,
+  UpdateUserInput,
+} from "./auth.schema";
 // biome-ignore lint/performance/noBarrelFile: shared schemas barrel is intentional
-export { updateProfileSchema } from "./auth.schema";
+export {
+  activityListQuerySchema,
+  changePasswordSchema,
+  createUserSchema,
+  resetPasswordSchema,
+  signInSchema,
+  toggleUserStatusSchema,
+  updateProfileSchema,
+  updateUserSchema,
+  userIdParamSchema,
+} from "./auth.schema";
 export type {
   CreateCustomerInput,
   CustomerListQueryInput,
@@ -36,6 +55,8 @@ export {
   transitionStatusSchema,
   updateJobSchema,
 } from "./job.schema";
+export type { TemplateIdParamInput } from "./notification.schema";
+export { templateIdParamSchema } from "./notification.schema";
 export type {
   CreatePartInput,
   ListPartsQueryInput,
@@ -48,6 +69,8 @@ export {
   togglePartStatusSchema,
   updatePartSchema,
 } from "./parts-catalog.schema";
+export type { JobIdParamInput } from "./receipt.schema";
+export { jobIdParamSchema } from "./receipt.schema";
 export type {
   CreateRepairInput,
   ListRepairsQueryInput,

@@ -1,18 +1,19 @@
 import { z } from "zod";
 
 export const updateAiSettingsSchema = z.object({
-  endpointUrl: z.string().min(1, "Endpoint URL is required"),
+  endpointUrl: z.string().min(1, "validations.endpoint_required"),
   apiKey: z.string().optional(),
   model: z.string().optional(),
   temperature: z.number().min(0).max(1).optional(),
 });
 
 export const updateShopSettingsSchema = z.object({
-  shopName: z.string().min(1, "Shop name is required"),
+  shopName: z.string().min(1, "validations.shop_name_required"),
   address: z.string().optional(),
   phone: z.string().optional(),
   currency: z.string().optional(),
   receiptFooter: z.string().optional(),
+  countryCode: z.string().optional(),
 });
 
 export const updateNotificationTemplateSchema = z.object({
@@ -35,7 +36,7 @@ export const updateWhatsAppSettingsSchema = z
       data.businessId !== undefined ||
       data.phoneNumberId !== undefined ||
       data.enabled !== undefined,
-    { message: "errors.at_least_one_field" }
+    { message: "validations.at_least_one_field" }
   );
 
 export type UpdateAiSettingsInput = z.infer<typeof updateAiSettingsSchema>;
