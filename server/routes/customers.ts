@@ -8,6 +8,7 @@ import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
 import {
   create as createCustomer,
+  getById,
   list as listCustomers,
   search as searchCustomers,
   update as updateCustomer,
@@ -98,6 +99,15 @@ export const customersRoutes: FastifyPluginAsync = async (app) => {
     }
     const results = await searchCustomers(app.prisma, parsed.data);
     return reply.send(results);
+  });
+
+  app.get("/:id", async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const customer = await getById(app.prisma, id);
+    if (!customer) {
+      return sendError(reply, 404, "CUSTOMER_NOT_FOUND", "Customer not found");
+    }
+    return reply.send(customer);
   });
 
   app.get("/", async (req, reply) => {

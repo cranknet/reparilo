@@ -120,3 +120,38 @@ export async function search(
     orderBy: { name: "asc" },
   });
 }
+
+export async function getById(prisma: PrismaClient, id: string) {
+  const customer = await prisma.customer.findUnique({
+    where: { id },
+    include: {
+      jobs: {
+        include: {
+          device: { select: { brand: true, model: true } },
+          repairs: { select: { repairName: true, price: true } },
+          partsUsed: { select: { partName: true, totalCost: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
+  if (!customer) {
+    return null;
+  }
+  const { jobs, ...customerInfo } = customer;
+  return {
+    ...customerInfo,
+    jobs: jobs.map((j) => ({
+      createdAt: j.createdAt.toISOString(),
+      deviceModel: `${j.device.brand} ${j.device.model}`,
+      estimatedCost: Number(j.estimatedCost),
+      finalCost:
+        j.repairs.reduce((sum, r) => sum + Number(r.price), 0) +
+        j.partsUsed.reduce((sum, p) => sum + Number(p.totalCost), 0),
+      id: j.id,
+      jobCode: j.jobCode,
+      reportedProblem: j.reportedProblem,
+      status: j.status,
+    })),
+  };
+}
