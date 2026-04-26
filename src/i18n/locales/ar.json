@@ -324,6 +324,7 @@
   "shop_address": "العنوان",
   "shop_phone": "الهاتف",
   "currency": "العملة",
+  "country_code": "رمز البلد",
   "receipt_footer": "رسالة تذييل الإيصال",
   "save_changes": "حفظ التعديلات",
   "unsaved_changes": "لديك تعديلات غير محفوظة",

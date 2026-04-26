@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { getPhonePlaceholder } from "@/lib/phone-formats";
 import { useSettingsStore } from "@/stores/settings";
 
 export interface SettingsShopTabHandle {
@@ -31,6 +32,7 @@ export default function SettingsShopTab({
     shopName: "",
     address: "",
     phone: "",
+    countryCode: "DZ",
     currency: "DZD",
     receiptFooter: "",
   });
@@ -47,6 +49,7 @@ export default function SettingsShopTab({
         shopName: shopSettings.shopName ?? "",
         address: shopSettings.address ?? "",
         phone: shopSettings.phone ?? "",
+        countryCode: shopSettings.countryCode ?? "DZ",
         currency: shopSettings.currency ?? "DZD",
         receiptFooter: shopSettings.receiptFooter ?? "",
       };
@@ -126,7 +129,7 @@ export default function SettingsShopTab({
                 setShopForm((f) => ({ ...f, phone: e.target.value }));
                 onDirtyChange(true);
               }}
-              placeholder="+213 XX XXX XXXX"
+              placeholder={getPhonePlaceholder(shopForm.countryCode)}
               type="tel"
               value={shopForm.phone}
             />
@@ -157,6 +160,41 @@ export default function SettingsShopTab({
           {t("regional_settings_label")}
         </p>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="space-y-2">
+            <label
+              className="block font-semibold text-on-surface text-sm"
+              htmlFor="shop-country-code"
+            >
+              {t("country_code")}
+            </label>
+            <div className="relative">
+              <select
+                className="w-full cursor-pointer appearance-none rounded-xl border-none bg-surface-container-lowest px-4 py-3 pe-10 text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20"
+                id="shop-country-code"
+                onChange={(e) => {
+                  setShopForm((f) => ({
+                    ...f,
+                    countryCode: e.target.value,
+                  }));
+                  onDirtyChange(true);
+                }}
+                value={shopForm.countryCode}
+              >
+                <option value="DZ">DZ — Algeria</option>
+                <option value="FR">FR — France</option>
+                <option value="US">US — United States</option>
+                <option value="GB">GB — United Kingdom</option>
+                <option value="DE">DE — Germany</option>
+                <option value="TN">TN — Tunisia</option>
+                <option value="MA">MA — Morocco</option>
+              </select>
+              <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
+                <span className="material-symbols-outlined text-[20px]">
+                  expand_more
+                </span>
+              </span>
+            </div>
+          </div>
           <div className="space-y-2">
             <label
               className="block font-semibold text-on-surface text-sm"

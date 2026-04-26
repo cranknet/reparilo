@@ -324,6 +324,7 @@
   "shop_address": "Adresse",
   "shop_phone": "Téléphone",
   "currency": "Devise",
+  "country_code": "Code du pays",
   "receipt_footer": "Message de pied de reçu",
   "save_changes": "Enregistrer",
   "unsaved_changes": "Vous avez des modifications non enregistrées",

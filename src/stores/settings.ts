@@ -48,6 +48,7 @@ interface SettingsState {
     shopName: string;
     address?: string;
     phone?: string;
+    countryCode?: string;
     currency?: string;
     receiptFooter?: string;
   }) => Promise<ShopSettings>;

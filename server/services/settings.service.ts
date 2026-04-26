@@ -67,6 +67,7 @@ export async function upsertShopSettings(
   return await prisma.shopSettings.upsert({
     create: {
       address: input.address ?? null,
+      countryCode: input.countryCode ?? "DZ",
       currency: input.currency ?? "DZD",
       id: "default",
       phone: input.phone ?? null,
@@ -75,6 +76,7 @@ export async function upsertShopSettings(
     },
     update: {
       address: input.address,
+      countryCode: input.countryCode,
       currency: input.currency,
       phone: input.phone,
       receiptFooter: input.receiptFooter,
