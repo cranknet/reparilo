@@ -1,15 +1,18 @@
 import type { RoleType } from "@shared/constants";
 import type { NotificationTemplate } from "@shared/types";
-import type { FormEvent, KeyboardEvent, ReactNode } from "react";
+import type { KeyboardEvent } from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import AddUserModal from "@/components/modules/settings/add-user-modal";
 import ResetPasswordModal from "@/components/modules/settings/reset-password-modal";
+import type { SettingsAiTabHandle } from "@/components/modules/settings/settings-ai-tab";
+import SettingsAiTab from "@/components/modules/settings/settings-ai-tab";
+import SettingsNotificationsTab from "@/components/modules/settings/settings-notifications-tab";
+import type { SettingsShopTabHandle } from "@/components/modules/settings/settings-shop-tab";
+import SettingsShopTab from "@/components/modules/settings/settings-shop-tab";
+import SettingsUsersTab from "@/components/modules/settings/settings-users-tab";
 import TemplateEditor from "@/components/modules/settings/template-editor";
-import { Avatar } from "@/components/ui/avatar";
-import { getAvatarSrc } from "@/lib/utils";
-import { useAuthStore } from "@/stores/auth";
 import { useSettingsStore } from "@/stores/settings";
 import { useUsersStore } from "@/stores/users";
 
@@ -24,169 +27,7 @@ const TAB_ICONS: Record<SettingsTab, string> = {
   users: "group",
 };
 
-const AI_MODELS = [
-  {
-    id: "gpt-4o-mini",
-    labelKey: "model_label_fast",
-    labelShort: "GPT-4o Mini",
-  },
-  { id: "gpt-4o", labelKey: "model_label_balanced", labelShort: "GPT-4o" },
-  {
-    id: "gpt-4-turbo",
-    labelKey: "model_label_best",
-    labelShort: "GPT-4 Turbo",
-  },
-  {
-    id: "o1-preview",
-    labelKey: "model_label_advanced",
-    labelShort: "o1-preview",
-  },
-];
-
-const ROLE_CONFIG: Record<string, { color: string; icon: string }> = {
-  OWNER: { color: "bg-primary/10 text-primary", icon: "admin_panel_settings" },
-  TECHNICIAN: {
-    color: "bg-on-secondary-container/10 text-on-secondary-container",
-    icon: "build",
-  },
-  FRONT_DESK: { color: "bg-tertiary/10 text-tertiary", icon: "desk" },
-};
-
 type ToastType = "success" | "error" | null;
-
-const TEST_BUTTON_CLASSES: Record<string, string> = {
-  success: "bg-success text-on-success",
-  fail: "bg-error text-on-error",
-};
-
-const TEST_ICON: Record<string, string> = {
-  loading: "progress_activity",
-  success: "check_circle",
-  fail: "error",
-};
-
-function getCreativityLabel(value: number, t: (key: string) => string): string {
-  if (value <= 0.2) {
-    return t("creativity_very_precise");
-  }
-  if (value <= 0.5) {
-    return t("creativity_slightly_precise");
-  }
-  if (value <= 0.7) {
-    return t("creativity_balanced");
-  }
-  return t("creativity_creative");
-}
-
-interface UserRowData {
-  email: string;
-  id: string;
-  image: string | null;
-  isActive: boolean;
-  role: string;
-  username: string;
-}
-
-function UserRow({
-  user,
-  isSelf,
-  onEdit,
-  onResetPassword,
-  onToggleStatus,
-  t,
-}: {
-  isSelf: boolean;
-  onEdit: () => void;
-  onResetPassword: () => void;
-  onToggleStatus: () => void;
-  t: (key: string, options?: Record<string, string>) => string;
-  user: UserRowData;
-}) {
-  const roleCfg = ROLE_CONFIG[user.role] ?? {
-    color: "bg-surface-container text-on-surface-variant",
-    icon: "person",
-  };
-  return (
-    <div className="flex items-center gap-4 rounded-2xl bg-surface-container-low p-4 transition-colors hover:bg-surface-container-high/60">
-      <Avatar
-        alt={user.username}
-        initials={user.username.charAt(0).toUpperCase()}
-        size="md"
-        src={getAvatarSrc(user.image)}
-      />
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-bold text-on-surface text-sm">
-            {user.username}
-          </span>
-          <span
-            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold text-xs uppercase ${roleCfg.color}`}
-          >
-            <span className="material-symbols-outlined text-[12px]">
-              {roleCfg.icon}
-            </span>
-            {t(`role.${user.role}`)}
-          </span>
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-medium text-xs ${user.isActive ? "bg-success/10 text-success" : "bg-on-surface-variant/10 text-on-surface-variant"}`}
-          >
-            <span
-              className={`inline-block h-1.5 w-1.5 rounded-full ${user.isActive ? "bg-success" : "bg-on-surface-variant/40"}`}
-            />
-            {user.isActive ? t("status_active") : t("status_inactive")}
-          </span>
-        </div>
-        <p className="mt-0.5 truncate text-on-surface-variant text-xs">
-          {user.email}
-        </p>
-      </div>
-      <div className="flex shrink-0 items-center gap-2">
-        {!isSelf && (
-          <button
-            aria-checked={user.isActive}
-            aria-label={
-              user.isActive
-                ? t("disable_user", { name: user.username })
-                : t("enable_user", { name: user.username })
-            }
-            className="relative h-6 w-11 rounded-full transition-colors"
-            onClick={onToggleStatus}
-            role="switch"
-            style={{
-              backgroundColor: user.isActive
-                ? "var(--color-primary)"
-                : "var(--color-outline-variant)",
-            }}
-            type="button"
-          >
-            <span
-              className="absolute top-0.5 h-5 w-5 rounded-full bg-on-primary shadow-sm transition-all"
-              style={{ insetInlineStart: user.isActive ? "22px" : "2px" }}
-            />
-          </button>
-        )}
-        <button
-          aria-label={t("reset_password_title")}
-          className="flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg p-2 text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-primary"
-          onClick={onResetPassword}
-          title={t("reset_password_title")}
-          type="button"
-        >
-          <span className="material-symbols-outlined text-[16px]">key</span>
-        </button>
-        <button
-          aria-label={`${t("edit")} ${user.username}`}
-          className="flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg p-2 text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-primary"
-          onClick={onEdit}
-          type="button"
-        >
-          <span className="material-symbols-outlined text-[16px]">edit</span>
-          <span className="hidden sm:inline">{t("edit")}</span>
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export default function SettingsPage() {
   const { t } = useTranslation();
@@ -194,8 +35,6 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>("ai");
   const [dirtyTabs, setDirtyTabs] = useState<Set<SettingsTab>>(new Set());
   const [saving, setSaving] = useState(false);
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
     type: ToastType;
@@ -203,8 +42,6 @@ export default function SettingsPage() {
   const [toastTimer, setToastTimer] = useState<ReturnType<
     typeof setTimeout
   > | null>(null);
-  const aiFormRef = useRef<HTMLFormElement>(null);
-  const shopFormRef = useRef<HTMLFormElement>(null);
   const tabPanelRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Record<SettingsTab, HTMLButtonElement | null>>({
@@ -217,39 +54,15 @@ export default function SettingsPage() {
   const [editingTemplate, setEditingTemplate] =
     useState<NotificationTemplate | null>(null);
 
-  const {
-    aiSettings,
-    shopSettings,
-    notificationTemplates,
-    fetchAiSettings,
-    saveAiSettings,
-    testAiConnection,
-    fetchShopSettings,
-    saveShopSettings,
-    fetchNotificationTemplates,
-  } = useSettingsStore();
-  const { users, isLoading: usersLoading, fetchUsers } = useUsersStore();
+  const aiTabRef = useRef<SettingsAiTabHandle>(null);
+  const shopTabRef = useRef<SettingsShopTabHandle>(null);
 
-  const [aiForm, setAiForm] = useState({
-    endpointUrl: "",
-    apiKey: "",
-    model: "gpt-4o",
-    temperature: 0.4,
-  });
-  const [aiFormInitial, setAiFormInitial] = useState(aiForm);
-  const [shopForm, setShopForm] = useState({
-    shopName: "",
-    address: "",
-    phone: "",
-    currency: "DZD",
-    receiptFooter: "",
-  });
-  const [shopFormInitial, setShopFormInitial] = useState(shopForm);
-  const [testStatus, setTestStatus] = useState<
-    "idle" | "loading" | "success" | "fail"
-  >("idle");
+  const { notificationTemplates, fetchNotificationTemplates } =
+    useSettingsStore();
   const navigate = useNavigate();
-  const currentUser = useAuthStore((s) => s.user);
+
+  const [pendingTab, setPendingTab] = useState<SettingsTab | null>(null);
+
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetTarget, setResetTarget] = useState<{
@@ -258,64 +71,12 @@ export default function SettingsPage() {
   } | null>(null);
 
   useEffect(() => {
-    if (aiSettings) {
-      const form = {
-        endpointUrl: aiSettings.endpointUrl ?? "",
-        apiKey: "",
-        model: aiSettings.model ?? "gpt-4o",
-        temperature: aiSettings.temperature ?? 0.4,
-      };
-      setAiForm(form);
-      setAiFormInitial(form);
-    }
-  }, [aiSettings]);
-
-  useEffect(() => {
-    if (shopSettings) {
-      const form = {
-        shopName: shopSettings.shopName ?? "",
-        address: shopSettings.address ?? "",
-        phone: shopSettings.phone ?? "",
-        currency: shopSettings.currency ?? "DZD",
-        receiptFooter: shopSettings.receiptFooter ?? "",
-      };
-      setShopForm(form);
-      setShopFormInitial(form);
-    }
-  }, [shopSettings]);
-
-  useEffect(() => {
-    if (activeTab === "ai" && !aiSettings) {
-      fetchAiSettings().catch(() => {
-        // Error is stored in the Zustand state via fetchAiSettings
-      });
-    }
-    if (activeTab === "shop" && !shopSettings) {
-      fetchShopSettings().catch(() => {
-        // Error is stored in the Zustand state via fetchShopSettings
-      });
-    }
     if (activeTab === "notifications" && notificationTemplates.length === 0) {
       fetchNotificationTemplates().catch(() => {
         // Error is stored in the Zustand state via fetchNotificationTemplates
       });
     }
-    if (activeTab === "users" && users.length === 0) {
-      fetchUsers().catch(() => {
-        // Error is stored in the Zustand state via fetchUsers
-      });
-    }
-  }, [
-    activeTab,
-    aiSettings,
-    shopSettings,
-    notificationTemplates.length,
-    users.length,
-    fetchAiSettings,
-    fetchShopSettings,
-    fetchNotificationTemplates,
-    fetchUsers,
-  ]);
+  }, [activeTab, notificationTemplates.length, fetchNotificationTemplates]);
 
   const dirty = dirtyTabs.size > 0;
   const currentTabDirty = dirtyTabs.has(activeTab);
@@ -364,11 +125,17 @@ export default function SettingsPage() {
     { key: "users", label: t("users_management") },
   ];
 
-  function markTabDirty(tab: SettingsTab) {
-    setDirtyTabs((prev) => new Set(prev).add(tab));
+  function markTabDirty(tab: SettingsTab, isDirty = true) {
+    setDirtyTabs((prev) => {
+      const next = new Set(prev);
+      if (isDirty) {
+        next.add(tab);
+      } else {
+        next.delete(tab);
+      }
+      return next;
+    });
   }
-
-  const [pendingTab, setPendingTab] = useState<SettingsTab | null>(null);
 
   function switchTab(key: SettingsTab) {
     if (dirtyTabs.has(activeTab) && activeTab !== key) {
@@ -426,15 +193,11 @@ export default function SettingsPage() {
       return;
     }
     if (activeTab === "ai") {
-      setAiForm({ ...aiFormInitial });
+      aiTabRef.current?.reset();
     } else if (activeTab === "shop") {
-      setShopForm({ ...shopFormInitial });
+      shopTabRef.current?.reset();
     }
-    setDirtyTabs((prev) => {
-      const next = new Set(prev);
-      next.delete(activeTab);
-      return next;
-    });
+    markTabDirty(activeTab, false);
     setActiveTab(pendingTab);
     tabRefs.current[pendingTab]?.focus();
     setPendingTab(null);
@@ -463,74 +226,13 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleTestConnection() {
-    setTestStatus("loading");
-    const result = await testAiConnection();
-    if (result.success) {
-      setTestStatus("success");
-    } else {
-      setTestStatus("fail");
-    }
-    setTimeout(() => setTestStatus("idle"), 3000);
-  }
-
-  async function handleAiSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!aiForm.endpointUrl.trim()) {
-      showToast(t("settings_error_endpoint_required"), "error");
-      return;
-    }
-    setSaving(true);
-    try {
-      await saveAiSettings(aiForm);
-      setAiFormInitial({ ...aiForm });
-      setDirtyTabs((prev) => {
-        const next = new Set(prev);
-        next.delete("ai");
-        return next;
-      });
-      showToast(t("ai_config_saved"), "success");
-    } catch {
-      showToast(t("settings_save_error"), "error");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleShopSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!shopForm.shopName.trim()) {
-      showToast(t("settings_error_shop_name_required"), "error");
-      return;
-    }
-    setSaving(true);
-    try {
-      await saveShopSettings(shopForm);
-      setShopFormInitial({ ...shopForm });
-      setDirtyTabs((prev) => {
-        const next = new Set(prev);
-        next.delete("shop");
-        return next;
-      });
-      showToast(t("shop_config_saved"), "success");
-    } catch {
-      showToast(t("settings_save_error"), "error");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   function handleCancel() {
     if (activeTab === "ai") {
-      setAiForm({ ...aiFormInitial });
+      aiTabRef.current?.reset();
     } else if (activeTab === "shop") {
-      setShopForm({ ...shopFormInitial });
+      shopTabRef.current?.reset();
     }
-    setDirtyTabs((prev) => {
-      const next = new Set(prev);
-      next.delete(activeTab);
-      return next;
-    });
+    markTabDirty(activeTab, false);
   }
 
   async function handleCreateUser(data: {
@@ -552,499 +254,11 @@ export default function SettingsPage() {
     setResetTarget(null);
   }
 
-  function renderAiSection() {
-    const isTesting = testStatus === "loading";
-    return (
-      <form className="space-y-6" onSubmit={handleAiSubmit} ref={aiFormRef}>
-        <div className="rounded-2xl bg-surface-container-low p-5">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="space-y-2">
-              <label
-                className="block font-semibold text-on-surface text-sm"
-                htmlFor="ai-endpoint"
-              >
-                {t("ai_endpoint_label")}
-                <span aria-hidden="true" className="ms-0.5 text-error">
-                  *
-                </span>
-              </label>
-              <input
-                className="w-full rounded-xl border-none bg-surface-container-lowest px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20"
-                id="ai-endpoint"
-                onChange={(e) => {
-                  setAiForm((f) => ({ ...f, endpointUrl: e.target.value }));
-                  markTabDirty("ai");
-                }}
-                placeholder="https://api.openai.com/v1"
-                required
-                type="url"
-                value={aiForm.endpointUrl}
-              />
-              <p className="text-on-surface-variant text-xs">
-                {t("ai_endpoint_hint")}
-              </p>
-            </div>
-            <div className="space-y-2">
-              <label
-                className="block font-semibold text-on-surface text-sm"
-                htmlFor="ai-key"
-              >
-                {t("ai_key_label")}
-              </label>
-              <div className="relative">
-                <input
-                  className="w-full rounded-xl border-none bg-surface-container-lowest px-4 py-3 pe-12 text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20"
-                  id="ai-key"
-                  onChange={(e) => {
-                    setAiForm((f) => ({ ...f, apiKey: e.target.value }));
-                    markTabDirty("ai");
-                  }}
-                  placeholder="sk-\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
-                  type={showApiKey ? "text" : "password"}
-                  value={aiForm.apiKey}
-                />
-                <button
-                  aria-label={
-                    showApiKey
-                      ? t("auth_hide_password")
-                      : t("auth_show_password")
-                  }
-                  className="absolute end-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
-                  onClick={() => setShowApiKey(!showApiKey)}
-                  type="button"
-                >
-                  <span className="material-symbols-outlined text-[18px]">
-                    {showApiKey ? "visibility_off" : "visibility"}
-                  </span>
-                </button>
-              </div>
-              <p className="text-on-surface-variant text-xs">
-                {t("ai_key_hint")}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl bg-surface-container-low p-5">
-          <div className="space-y-2">
-            <label
-              className="block font-semibold text-on-surface text-sm"
-              htmlFor="ai-model"
-            >
-              {t("analytical_model")}
-            </label>
-            <div className="relative">
-              <select
-                className="w-full cursor-pointer appearance-none rounded-xl border-none bg-surface-container-lowest px-4 py-3 pe-10 text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20"
-                id="ai-model"
-                onChange={(e) => {
-                  setAiForm((f) => ({ ...f, model: e.target.value }));
-                  markTabDirty("ai");
-                }}
-                value={aiForm.model}
-              >
-                {AI_MODELS.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {t(m.labelKey)}
-                  </option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
-                <span className="material-symbols-outlined text-[20px]">
-                  expand_more
-                </span>
-              </span>
-            </div>
-          </div>
-          <button
-            aria-expanded={showAdvanced}
-            className="mt-4 flex items-center gap-2 text-on-surface-variant text-sm transition-colors hover:text-primary"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            type="button"
-          >
-            <span
-              className={`material-symbols-outlined text-[18px] transition-transform duration-200 ${showAdvanced ? "rotate-180" : ""}`}
-            >
-              expand_more
-            </span>
-            {t("advanced_settings")}
-          </button>
-          {showAdvanced && (
-            <div className="mt-4 space-y-4 pt-2">
-              <div className="flex items-center justify-between">
-                <label
-                  className="font-semibold text-on-surface text-sm"
-                  htmlFor="ai-temp"
-                >
-                  {t("ai_creativity_label")}
-                </label>
-                <span className="font-mono font-semibold text-primary text-sm">
-                  {aiForm.temperature.toFixed(1)}
-                </span>
-              </div>
-              <input
-                aria-labelledby="ai-temp"
-                aria-valuetext={getCreativityLabel(aiForm.temperature, t)}
-                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-outline-variant/30 accent-primary"
-                id="ai-temp"
-                max="1"
-                min="0"
-                onChange={(e) => {
-                  setAiForm((f) => ({
-                    ...f,
-                    temperature: Number.parseFloat(e.target.value),
-                  }));
-                  markTabDirty("ai");
-                }}
-                step="0.1"
-                type="range"
-                value={aiForm.temperature}
-              />
-              <div className="flex justify-between text-on-surface-variant text-xs">
-                <span>{t("precise")}</span>
-                <span>{t("creative")}</span>
-              </div>
-              <p className="text-on-surface-variant text-xs leading-relaxed">
-                {t("temperature_note")}
-              </p>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-4">
-          <button
-            className={`flex min-h-11 items-center gap-2 rounded-xl px-6 py-3 font-bold text-sm transition-all ${TEST_BUTTON_CLASSES[testStatus] ?? "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"}`}
-            disabled={isTesting}
-            onClick={handleTestConnection}
-            type="button"
-          >
-            <span
-              className={`material-symbols-outlined text-[18px] ${isTesting ? "animate-spin" : ""}`}
-            >
-              {TEST_ICON[testStatus] ?? "network_check"}
-            </span>
-            {isTesting ? t("testing_connection") : t("test_connection")}
-          </button>
-          {testStatus === "success" && (
-            <span className="font-medium text-sm text-success">
-              {t("connection_success")}
-            </span>
-          )}
-          {testStatus === "fail" && (
-            <span className="font-medium text-error text-sm">
-              {t("connection_failed")}
-            </span>
-          )}
-        </div>
-
-        <div className="rounded-2xl bg-primary/5 p-5">
-          <div className="flex items-start gap-3">
-            <span className="material-symbols-outlined mt-0.5 text-[20px] text-primary">
-              psychology
-            </span>
-            <div>
-              <p className="font-semibold text-on-surface text-sm">
-                {t("ai_memory_title")}
-              </p>
-              <p className="mt-0.5 max-w-prose text-on-surface-variant text-xs leading-relaxed">
-                {t("ai_memory_desc")}
-              </p>
-            </div>
-          </div>
-        </div>
-      </form>
-    );
-  }
-
-  function renderShopSection() {
-    return (
-      <form className="space-y-6" onSubmit={handleShopSubmit} ref={shopFormRef}>
-        <div className="rounded-2xl bg-surface-container-low p-5">
-          <p className="mb-4 font-semibold text-on-surface text-sm">
-            {t("shop_identity_label")}
-          </p>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="space-y-2">
-              <label
-                className="block font-semibold text-on-surface text-sm"
-                htmlFor="shop-name"
-              >
-                {t("shop_name")}
-                <span aria-hidden="true" className="ms-0.5 text-error">
-                  *
-                </span>
-              </label>
-              <input
-                className="w-full rounded-xl border-none bg-surface-container-lowest px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20"
-                id="shop-name"
-                onChange={(e) => {
-                  setShopForm((f) => ({ ...f, shopName: e.target.value }));
-                  markTabDirty("shop");
-                }}
-                placeholder="Reparilo"
-                required
-                type="text"
-                value={shopForm.shopName}
-              />
-            </div>
-            <div className="space-y-2">
-              <label
-                className="block font-semibold text-on-surface text-sm"
-                htmlFor="shop-phone"
-              >
-                {t("shop_phone")}
-              </label>
-              <input
-                className="w-full rounded-xl border-none bg-surface-container-lowest px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20"
-                id="shop-phone"
-                onChange={(e) => {
-                  setShopForm((f) => ({ ...f, phone: e.target.value }));
-                  markTabDirty("shop");
-                }}
-                placeholder="+213 XX XXX XXXX"
-                type="tel"
-                value={shopForm.phone}
-              />
-            </div>
-          </div>
-          <div className="mt-6 space-y-2">
-            <label
-              className="block font-semibold text-on-surface text-sm"
-              htmlFor="shop-address"
-            >
-              {t("shop_address")}
-            </label>
-            <textarea
-              className="w-full resize-none rounded-xl border-none bg-surface-container-lowest px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20"
-              id="shop-address"
-              onChange={(e) => {
-                setShopForm((f) => ({ ...f, address: e.target.value }));
-                markTabDirty("shop");
-              }}
-              placeholder="123 Rue Didouche Mourad, Algiers"
-              rows={3}
-              value={shopForm.address}
-            />
-          </div>
-        </div>
-        <div className="rounded-2xl bg-surface-container-low p-5">
-          <p className="mb-4 font-semibold text-on-surface text-sm">
-            {t("regional_settings_label")}
-          </p>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <div className="space-y-2">
-              <label
-                className="block font-semibold text-on-surface text-sm"
-                htmlFor="shop-currency"
-              >
-                {t("currency")}
-              </label>
-              <div className="relative">
-                <select
-                  className="w-full cursor-pointer appearance-none rounded-xl border-none bg-surface-container-lowest px-4 py-3 pe-10 text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20"
-                  id="shop-currency"
-                  onChange={(e) => {
-                    setShopForm((f) => ({ ...f, currency: e.target.value }));
-                    markTabDirty("shop");
-                  }}
-                  value={shopForm.currency}
-                >
-                  <option value="DZD">DZD \u2014 Algerian Dinar (DA)</option>
-                  <option value="USD">USD \u2014 US Dollar ($)</option>
-                  <option value="EUR">EUR \u2014 Euro (\u20ac)</option>
-                </select>
-                <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
-                  <span className="material-symbols-outlined text-[20px]">
-                    expand_more
-                  </span>
-                </span>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label
-                className="block font-semibold text-on-surface text-sm"
-                htmlFor="shop-receipt"
-              >
-                {t("receipt_footer")}
-              </label>
-              <input
-                className="w-full rounded-xl border-none bg-surface-container-lowest px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20"
-                id="shop-receipt"
-                onChange={(e) => {
-                  setShopForm((f) => ({ ...f, receiptFooter: e.target.value }));
-                  markTabDirty("shop");
-                }}
-                placeholder="Thanks for choosing Reparilo!"
-                type="text"
-                value={shopForm.receiptFooter}
-              />
-            </div>
-          </div>
-        </div>
-      </form>
-    );
-  }
-
-  function renderTemplateGroup(
-    title: string,
-    icon: string,
-    templates: NotificationTemplate[]
-  ) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[20px] text-on-surface">
-            {icon}
-          </span>
-          <h4 className="font-bold font-headline text-on-surface text-sm">
-            {title}
-          </h4>
-        </div>
-        {templates.length === 0 ? (
-          <div className="rounded-2xl bg-surface-container-low py-12 text-center">
-            <span className="material-symbols-outlined text-4xl text-on-surface-variant/40">
-              markdown
-            </span>
-            <p className="mt-3 text-on-surface-variant text-sm">
-              {t("no_templates")}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {templates.map((tpl) => (
-              <div
-                className="rounded-2xl bg-surface-container-low p-4 transition-colors hover:bg-surface-container-high/60"
-                key={tpl.id}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-on-surface text-sm">
-                        {tpl.name}
-                      </span>
-                      {tpl.isDefault && (
-                        <span className="rounded-full bg-primary/10 px-2 py-0.5 font-bold text-primary text-xs uppercase">
-                          {t("default_template")}
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-1.5 font-mono text-on-surface-variant text-xs leading-relaxed sm:text-sm">
-                      {tpl.body}
-                    </p>
-                  </div>
-                  <button
-                    aria-label={`${t("edit")} ${tpl.name}`}
-                    className="flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-3 py-2 text-on-surface-variant text-xs transition-colors hover:bg-surface-container hover:text-primary"
-                    onClick={() => setEditingTemplate(tpl)}
-                    type="button"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">
-                      edit
-                    </span>
-                    <span className="hidden sm:inline">{t("edit")}</span>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  function renderNotificationsSection() {
-    const whatsappTemplates = notificationTemplates.filter(
-      (tpl) => tpl.channel === "WHATSAPP"
-    );
-    const smsTemplates = notificationTemplates.filter(
-      (tpl) => tpl.channel === "SMS"
-    );
-    return (
-      <div className="space-y-8">
-        {renderTemplateGroup(
-          t("whatsapp_templates"),
-          "chat",
-          whatsappTemplates
-        )}
-        {renderTemplateGroup(t("sms_templates"), "sms", smsTemplates)}
-      </div>
-    );
-  }
-
-  function renderUsersSection() {
-    if (usersLoading) {
-      return (
-        <div className="flex items-center justify-center py-16">
-          <span className="material-symbols-outlined animate-spin text-3xl text-primary">
-            progress_activity
-          </span>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-end">
-          <button
-            className="flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 py-2.5 font-bold text-on-primary text-sm transition-all active:opacity-80"
-            onClick={() => setShowAddUserModal(true)}
-            type="button"
-          >
-            <span className="material-symbols-outlined text-[18px]">
-              person_add
-            </span>
-            {t("add_user")}
-          </button>
-        </div>
-        {users.length === 0 ? (
-          <div className="rounded-2xl bg-surface-container-low py-12 text-center">
-            <span className="material-symbols-outlined text-4xl text-on-surface-variant/40">
-              group_off
-            </span>
-            <p className="mt-3 text-on-surface-variant text-sm">
-              {t("no_users_found")}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {users.map((user) => (
-              <UserRow
-                isSelf={currentUser?.id === user.id}
-                key={user.id}
-                onEdit={() => {
-                  navigate(`/profile/${user.id}`);
-                }}
-                onResetPassword={() => {
-                  setResetTarget({ id: user.id, username: user.username });
-                  setShowResetModal(true);
-                }}
-                onToggleStatus={() => {
-                  useUsersStore
-                    .getState()
-                    .toggleUserStatus(user.id, !user.isActive);
-                }}
-                t={t}
-                user={user}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
   const sectionDescriptions: Record<SettingsTab, string> = {
     ai: t("ai_configuration_desc"),
     shop: t("shop_information_desc"),
     notifications: t("notifications_settings_desc"),
     users: t("users_management_desc"),
-  };
-
-  const sectionRenderers: Record<SettingsTab, () => ReactNode> = {
-    ai: renderAiSection,
-    shop: renderShopSection,
-    notifications: renderNotificationsSection,
-    users: renderUsersSection,
   };
 
   const isFormTab = activeTab === "ai" || activeTab === "shop";
@@ -1119,7 +333,37 @@ export default function SettingsPage() {
                 {sectionDescriptions[activeTab]}
               </p>
             </div>
-            {sectionRenderers[activeTab]()}
+            {activeTab === "ai" && (
+              <SettingsAiTab
+                onDirtyChange={(d) => markTabDirty("ai", d)}
+                onSavingChange={setSaving}
+                onToast={(msg, type) => showToast(msg, type)}
+                ref={aiTabRef}
+              />
+            )}
+            {activeTab === "shop" && (
+              <SettingsShopTab
+                onDirtyChange={(d) => markTabDirty("shop", d)}
+                onSavingChange={setSaving}
+                onToast={(msg, type) => showToast(msg, type)}
+                ref={shopTabRef}
+              />
+            )}
+            {activeTab === "notifications" && (
+              <SettingsNotificationsTab
+                onEditTemplate={(tpl) => setEditingTemplate(tpl)}
+              />
+            )}
+            {activeTab === "users" && (
+              <SettingsUsersTab
+                onAddUser={() => setShowAddUserModal(true)}
+                onEditUser={(id) => navigate(`/profile/${id}`)}
+                onResetPassword={(id, username) => {
+                  setResetTarget({ id, username });
+                  setShowResetModal(true);
+                }}
+              />
+            )}
           </div>
 
           <div
@@ -1145,12 +389,10 @@ export default function SettingsPage() {
                   className="flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 py-2 font-bold text-on-primary text-sm transition-all active:opacity-80"
                   disabled={saving}
                   onClick={() => {
-                    const form =
-                      activeTab === "ai"
-                        ? aiFormRef.current
-                        : shopFormRef.current;
-                    if (form) {
-                      form.requestSubmit();
+                    if (activeTab === "ai") {
+                      aiTabRef.current?.requestSubmit();
+                    } else if (activeTab === "shop") {
+                      shopTabRef.current?.requestSubmit();
                     }
                   }}
                   type="submit"

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "@/components/ui/avatar";
 import { getAvatarSrc } from "@/lib/utils";
@@ -139,11 +140,13 @@ export default function SettingsUsersTab({
   const currentUser = useAuthStore((s) => s.user);
 
   // Fetch users on mount if needed
-  if (users.length === 0 && !usersLoading) {
-    fetchUsers().catch(() => {
-      // Error is stored in the Zustand state via fetchUsers
-    });
-  }
+  useEffect(() => {
+    if (users.length === 0 && !usersLoading) {
+      fetchUsers().catch(() => {
+        // Error is stored in the Zustand state via fetchUsers
+      });
+    }
+  }, [users.length, usersLoading, fetchUsers]);
 
   if (usersLoading) {
     return (
