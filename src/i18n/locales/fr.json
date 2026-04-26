@@ -1023,7 +1023,7 @@
     "describe_problem": "Décrire le problème signalé",
     "valid_cost": "Entrez un coût valide",
     "valid_deposit": "Entrez un montant de dépôt valide",
-    "reason_required": "Le motif est requis pour CANCELED et ON_HOLD",
+    "reason_required": "Le motif est requis pour CANCELLED et ON_HOLD",
     "username_min": "Le nom d'utilisateur doit comporter au moins 3 caractères",
     "username_pattern": "Le nom d'utilisateur ne peut contenir que des lettres, des chiffres et des traits de soulignement",
     "password_min": "Le mot de passe doit contenir au moins 8 caractères",
