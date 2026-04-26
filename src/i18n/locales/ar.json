@@ -883,7 +883,8 @@
     "reset_password": "فشل في إعادة تعيين كلمة المرور",
     "login_failed": "فشل تسجيل الدخول",
     "no_user_session": "لا يوجد مستخدم في استجابة الجلسة",
-    "update_customer": "فشل تحديث العميل"
+    "update_customer": "فشل تحديث العميل",
+    "at_least_one_field": "يجب توفير حقل واحد على الأقل"
   },
   "customer_edit_title": "تحرير العميل",
   "customer_edit_name": "اسم",

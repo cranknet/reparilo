@@ -9,6 +9,7 @@ export type {
 } from "./customer.schema";
 export {
   createCustomerSchema,
+  customerIdParamSchema,
   customerListQuerySchema,
   customerSearchQuerySchema,
   updateCustomerSchema,

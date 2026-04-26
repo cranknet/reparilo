@@ -29,12 +29,6 @@ const NAV_ITEMS: NavItem[] = [
     to: "/jobs",
   },
   {
-    icon: "people",
-    labelKey: "customers",
-    perm: { customers: ["view"] },
-    to: "/customers",
-  },
-  {
     icon: "settings",
     labelKey: "settings",
     perm: { settings: ["view"] },
@@ -43,6 +37,12 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 const MORE_ITEMS: NavItem[] = [
+  {
+    icon: "people",
+    labelKey: "customers",
+    perm: { customers: ["view"] },
+    to: "/customers",
+  },
   {
     icon: "menu_book",
     labelKey: "repairs",
@@ -61,12 +61,6 @@ const MORE_ITEMS: NavItem[] = [
     perm: { notifications: ["read"] },
     to: "/notifications",
   },
-  {
-    icon: "person",
-    labelKey: "profile",
-    perm: { jobs: ["view"] },
-    to: "/profile",
-  },
 ];
 
 const ROLE_LABEL_KEYS: Record<RoleType, string> = {
@@ -80,7 +74,7 @@ const ACTIVE_FONT_SETTINGS = '"FILL" 1, "wght" 700, "GRAD" 0, "opsz" 24';
 const FOCUS_VISIBLE =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
-function MoreSheetProfile() {
+function MoreSheetProfile({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
   const role = useAuthStore((s) => s.role);
   const userName = useAuthStore((s) => s.user?.name || s.user?.username || "");
@@ -107,45 +101,69 @@ function MoreSheetProfile() {
 
   return (
     <div className="mt-2 border-outline-variant/40 border-t pt-2">
-      <div className="flex min-h-[48px] items-center gap-3 rounded-xl px-3 py-2">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-on-primary text-sm">
-          {getInitials(userName)}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-bold text-on-surface text-sm">
-            {userName}
-          </p>
-          <p className="truncate text-on-surface-variant text-xs">
-            {t(ROLE_LABEL_KEYS[role])}
-          </p>
-        </div>
-      </div>
-      <button
-        aria-label={
-          logoutPending
-            ? t("auth_sign_out_confirm")
-            : t("auth_sign_out_instead")
-        }
-        className={`flex min-h-[48px] w-full items-center gap-3 rounded-xl px-3 py-3 text-sm transition-[color,background-color] duration-200 ${FOCUS_VISIBLE} ${
-          logoutPending
-            ? "bg-error-container font-semibold text-on-error-container"
-            : "text-on-surface-variant active:bg-surface-container-high active:text-primary"
+      <div
+        className={`flex min-h-[48px] items-center gap-3 rounded-xl px-3 py-2 transition-[color,background-color] duration-200 ${
+          logoutPending ? "bg-error-container" : ""
         }`}
-        onClick={handleLogoutClick}
-        type="button"
       >
-        <span
-          aria-hidden="true"
-          className="material-symbols-outlined text-[22px]"
+        {logoutPending ? (
+          <>
+            <span
+              aria-hidden="true"
+              className="material-symbols-outlined shrink-0 text-[22px] text-on-error-container"
+            >
+              warning
+            </span>
+            <span className="flex-1 font-semibold text-on-error-container text-sm">
+              {t("auth_sign_out_confirm")}
+            </span>
+          </>
+        ) : (
+          <NavLink
+            className="flex min-w-0 flex-1 items-center gap-3 rounded-xl"
+            onClick={onClose}
+            to="/profile"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-on-primary text-sm">
+              {getInitials(userName)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-bold text-on-surface text-sm">
+                {userName}
+              </p>
+              <p className="truncate text-on-surface-variant text-xs">
+                {t(ROLE_LABEL_KEYS[role])}
+              </p>
+            </div>
+          </NavLink>
+        )}
+        <button
+          aria-label={
+            logoutPending
+              ? t("auth_sign_out_confirm")
+              : t("auth_sign_out_instead")
+          }
+          className={`flex shrink-0 items-center justify-center rounded-xl px-2 py-2 transition-[color,background-color] duration-200 ${FOCUS_VISIBLE} ${
+            logoutPending
+              ? "font-semibold text-on-error-container"
+              : "text-on-surface-variant active:bg-surface-container-high active:text-on-surface"
+          }`}
+          onClick={handleLogoutClick}
+          title={
+            logoutPending
+              ? t("auth_sign_out_confirm")
+              : t("auth_sign_out_instead")
+          }
+          type="button"
         >
-          {logoutPending ? "warning" : "logout"}
-        </span>
-        <span>
-          {logoutPending
-            ? t("auth_sign_out_confirm")
-            : t("auth_sign_out_instead")}
-        </span>
-      </button>
+          <span
+            aria-hidden="true"
+            className="material-symbols-outlined text-[22px]"
+          >
+            {logoutPending ? "warning" : "power_settings_new"}
+          </span>
+        </button>
+      </div>
     </div>
   );
 }
@@ -350,9 +368,9 @@ export default function BottomNav() {
             onClick={closeMoreSheet}
             type="button"
           />
-          <div className="pointer-events-auto relative rounded-t-2xl bg-surface-container-low pb-[env(safe-area-inset-bottom)] shadow-lg motion-reduce:block">
-            <div className="mx-auto mt-2 h-1 w-8 rounded-full bg-on-surface-variant/30" />
-            <nav className="p-3">
+          <div className="pointer-events-auto relative flex max-h-[70vh] flex-col overflow-y-auto rounded-t-2xl bg-surface-container-low shadow-lg motion-reduce:block">
+            <div className="mx-auto mt-2 h-1 w-8 shrink-0 rounded-full bg-on-surface-variant/30" />
+            <nav className="flex-1 overflow-y-auto p-3 pb-20">
               {visibleMoreItems.map(({ icon, labelKey, to }) => (
                 <NavLink
                   className={({ isActive }) =>
@@ -389,7 +407,7 @@ export default function BottomNav() {
                 </NavLink>
               ))}
 
-              <MoreSheetProfile />
+              <MoreSheetProfile onClose={closeMoreSheet} />
             </nav>
           </div>
         </div>

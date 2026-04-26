@@ -883,7 +883,8 @@
     "reset_password": "Échec de la réinitialisation du mot de passe",
     "login_failed": "La connexion a échoué",
     "no_user_session": "Aucun utilisateur en réponse à la session",
-    "update_customer": "Échec de la mise à jour du client"
+    "update_customer": "Échec de la mise à jour du client",
+    "at_least_one_field": "Au moins un champ doit être renseigné"
   },
   "customer_edit_title": "Modifier le client",
   "customer_edit_name": "Nom",

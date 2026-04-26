@@ -625,6 +625,9 @@ async function triggerNotification(
 ): Promise<void> {
   const template = await findTemplate(prisma, options.templateName, "WHATSAPP");
   if (!template) {
+    console.warn(
+      `[notifications] Template "${options.templateName}" not found — skipping notification for job ${options.jobId ?? "unknown"}`
+    );
     return;
   }
   const { queueNotification } = await import(

@@ -883,7 +883,8 @@
     "reset_password": "Failed to reset password",
     "login_failed": "Login failed",
     "no_user_session": "No user in session response",
-    "update_customer": "Failed to update customer"
+    "update_customer": "Failed to update customer",
+    "at_least_one_field": "At least one field must be provided"
   },
   "customer_edit_title": "Edit Customer",
   "customer_edit_name": "Name",

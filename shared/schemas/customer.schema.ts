@@ -27,6 +27,8 @@ export const customerSearchQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(10),
 });
 
+export const customerIdParamSchema = z.string().cuid();
+
 export type CustomerListQueryInput = z.infer<typeof customerListQuerySchema>;
 export type CustomerSearchQueryInput = z.infer<
   typeof customerSearchQuerySchema

@@ -192,7 +192,7 @@ export default function Sidebar() {
                   aria-hidden="true"
                   className="material-symbols-outlined text-lg"
                 >
-                  logout
+                  power_settings_new
                 </span>
               )}
             </button>

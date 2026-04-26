@@ -34,7 +34,7 @@ const ACTION_ICONS: Record<string, string> = {
   WARRANTY_RETURN_CREATED: "autorenew",
   NOTIFICATION_SENT: "notifications",
   USER_SIGN_IN: "login",
-  USER_SIGN_OUT: "logout",
+  USER_SIGN_OUT: "power_settings_new",
   USER_CREATED: "person_add",
   PASSWORD_RESET: "key",
   API_MUTATION: "api",

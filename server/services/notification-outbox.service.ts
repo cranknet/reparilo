@@ -16,6 +16,9 @@ interface OutboxEntry {
 
 const POLL_INTERVAL_MS = 5000;
 let intervalRef: ReturnType<typeof setInterval> | null = null;
+// NOTE: This flag only prevents concurrent processing within a single Node process.
+// If the server runs in cluster mode or is restarted mid-processing, concurrent
+// runs are still possible. A DB-level advisory lock would be needed for full safety.
 let isProcessing = false;
 
 export async function findTemplate(

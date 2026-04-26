@@ -35,7 +35,7 @@ export const updateWhatsAppSettingsSchema = z
       data.businessId !== undefined ||
       data.phoneNumberId !== undefined ||
       data.enabled !== undefined,
-    { message: "At least one field must be provided" }
+    { message: "errors.at_least_one_field" }
   );
 
 export type UpdateAiSettingsInput = z.infer<typeof updateAiSettingsSchema>;

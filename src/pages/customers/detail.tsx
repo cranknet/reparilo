@@ -2,7 +2,7 @@ import type { JobStatusType } from "@shared/constants";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
-import StatusBadge from "@/components/ui/status-badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { useCustomersStore } from "@/stores/customers";
 
 export default function CustomerDetailPage() {
@@ -66,13 +66,17 @@ export default function CustomerDetailPage() {
   }
 
   const handleSave = async () => {
-    await updateCustomer(currentCustomer.id, {
-      name: editName,
-      phone: editPhone,
-      email: editEmail || undefined,
-    });
-    await fetchCustomer(currentCustomer.id);
-    setEditing(false);
+    try {
+      await updateCustomer(currentCustomer.id, {
+        name: editName,
+        phone: editPhone,
+        email: editEmail || undefined,
+      });
+      await fetchCustomer(currentCustomer.id);
+      setEditing(false);
+    } catch {
+      // updateCustomer and fetchCustomer both set error state in the store
+    }
   };
 
   return (
