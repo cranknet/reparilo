@@ -1009,5 +1009,26 @@
   "status_sent": "مرسل",
   "status_failed": "فشل",
   "status_queued": "في قائمة الانتظار",
-  "no_notifications_sent": "لم يتم إرسال أي إخطارات حتى الآن"
+  "no_notifications_sent": "لم يتم إرسال أي إخطارات حتى الآن",
+  "validations": {
+    "required": "هذه الخانة مطلوبه",
+    "email": "أدخل عنوان بريد إلكتروني صالحًا",
+    "min_length": "يجب أن يكون على الأقل {{min}} حرفًا",
+    "max_length": "يجب أن يكون عدد الأحرف {{max}} على الأكثر",
+    "min_value": "يجب أن يكون على الأقل {{min}}",
+    "enter_name": "أدخل اسم العميل",
+    "enter_phone": "أدخل رقم الهاتف",
+    "enter_brand": "أدخل العلامة التجارية للجهاز",
+    "enter_model": "أدخل طراز الجهاز",
+    "describe_problem": "وصف المشكلة المبلغ عنها",
+    "valid_cost": "أدخل تكلفة صالحة",
+    "valid_deposit": "أدخل مبلغ إيداع صالح",
+    "reason_required": "السبب مطلوب للإلغاء وON_HOLD",
+    "username_min": "يجب أن يكون اسم المستخدم 3 أحرف على الأقل",
+    "username_pattern": "يمكن أن يحتوي اسم المستخدم على أحرف وأرقام وشرطات سفلية فقط",
+    "password_min": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل",
+    "shop_name_required": "اسم المحل مطلوب",
+    "endpoint_required": "عنوان URL لنقطة النهاية مطلوب",
+    "at_least_one_field": "مطلوب حقل واحد على الأقل"
+  }
 }

@@ -1009,5 +1009,26 @@
   "status_sent": "Sent",
   "status_failed": "Failed",
   "status_queued": "Queued",
-  "no_notifications_sent": "No notifications sent yet"
+  "no_notifications_sent": "No notifications sent yet",
+  "validations": {
+    "required": "This field is required",
+    "email": "Enter a valid email address",
+    "min_length": "Must be at least {{min}} characters",
+    "max_length": "Must be at most {{max}} characters",
+    "min_value": "Must be at least {{min}}",
+    "enter_name": "Enter a customer name",
+    "enter_phone": "Enter a phone number",
+    "enter_brand": "Enter a device brand",
+    "enter_model": "Enter a device model",
+    "describe_problem": "Describe the reported problem",
+    "valid_cost": "Enter a valid cost",
+    "valid_deposit": "Enter a valid deposit amount",
+    "reason_required": "Reason is required for CANCELLED and ON_HOLD",
+    "username_min": "Username must be at least 3 characters",
+    "username_pattern": "Username can only contain letters, numbers, and underscores",
+    "password_min": "Password must be at least 8 characters",
+    "shop_name_required": "Shop name is required",
+    "endpoint_required": "Endpoint URL is required",
+    "at_least_one_field": "At least one field is required"
+  }
 }

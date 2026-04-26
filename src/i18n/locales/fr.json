@@ -1009,5 +1009,26 @@
   "status_sent": "Envoyé",
   "status_failed": "Échoué",
   "status_queued": "En file d'attente",
-  "no_notifications_sent": "Aucune notification envoyée pour l'instant"
+  "no_notifications_sent": "Aucune notification envoyée pour l'instant",
+  "validations": {
+    "required": "Ce champ est obligatoire",
+    "email": "Entrez une adresse e-mail valide",
+    "min_length": "Doit contenir au moins {{min}} caractères",
+    "max_length": "Doit contenir au maximum {{max}} caractères",
+    "min_value": "Doit être au moins {{min}}",
+    "enter_name": "Entrez un nom de client",
+    "enter_phone": "Entrez un numéro de téléphone",
+    "enter_brand": "Entrez une marque d'appareil",
+    "enter_model": "Entrez un modèle d'appareil",
+    "describe_problem": "Décrire le problème signalé",
+    "valid_cost": "Entrez un coût valide",
+    "valid_deposit": "Entrez un montant de dépôt valide",
+    "reason_required": "Le motif est requis pour CANCELED et ON_HOLD",
+    "username_min": "Le nom d'utilisateur doit comporter au moins 3 caractères",
+    "username_pattern": "Le nom d'utilisateur ne peut contenir que des lettres, des chiffres et des traits de soulignement",
+    "password_min": "Le mot de passe doit contenir au moins 8 caractères",
+    "shop_name_required": "Le nom de la boutique est obligatoire",
+    "endpoint_required": "L'URL du point de terminaison est obligatoire",
+    "at_least_one_field": "Au moins un champ est obligatoire"
+  }
 }
