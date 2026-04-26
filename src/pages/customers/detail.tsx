@@ -8,8 +8,13 @@ import { useCustomersStore } from "@/stores/customers";
 export default function CustomerDetailPage() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
-  const { currentCustomer, fetchCustomer, updateCustomer, isLoadingCustomer } =
-    useCustomersStore();
+  const {
+    currentCustomer,
+    fetchCustomer,
+    updateCustomer,
+    isLoadingCustomer,
+    error,
+  } = useCustomersStore();
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
@@ -29,7 +34,7 @@ export default function CustomerDetailPage() {
     }
   }, [currentCustomer]);
 
-  if (isLoadingCustomer || !currentCustomer) {
+  if (isLoadingCustomer) {
     return (
       <div className="flex items-center justify-center py-24">
         <span className="material-symbols-outlined animate-spin text-4xl text-primary">
@@ -39,12 +44,34 @@ export default function CustomerDetailPage() {
     );
   }
 
+  if (error && !currentCustomer) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24">
+        <span className="material-symbols-outlined text-4xl text-error">
+          error
+        </span>
+        <p className="mt-3 font-medium text-on-surface-variant">{error}</p>
+        <a
+          className="mt-4 text-primary text-sm hover:underline"
+          href="/customers"
+        >
+          {t("back_to_customers")}
+        </a>
+      </div>
+    );
+  }
+
+  if (!currentCustomer) {
+    return null;
+  }
+
   const handleSave = async () => {
     await updateCustomer(currentCustomer.id, {
       name: editName,
       phone: editPhone,
       email: editEmail || undefined,
     });
+    await fetchCustomer(currentCustomer.id);
     setEditing(false);
   };
 

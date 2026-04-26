@@ -87,6 +87,8 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
           "Template not found"
         );
       }
+      // NOTE: Test sends to the shop's own phone number. This validates the
+      // WhatsApp connection works end-to-end but doesn't prove delivery to a customer.
       const shop = await app.prisma.shopSettings.findUnique({
         where: { id: "default" },
       });

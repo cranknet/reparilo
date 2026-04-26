@@ -583,7 +583,7 @@ export default function NotificationsPage() {
                 outbox
               </span>
               <p className="mt-3 font-medium text-on-surface-variant text-sm">
-                No notifications sent yet
+                {t("no_notifications_sent")}
               </p>
             </div>
           ) : (
@@ -603,7 +603,7 @@ export default function NotificationsPage() {
                     {t("channel")}
                   </th>
                   <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
-                    {t("test_send")}
+                    {t("details")}
                   </th>
                   <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
                     {t("date_short", { val: new Date() })}

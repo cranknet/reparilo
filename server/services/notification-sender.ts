@@ -80,6 +80,8 @@ export function decryptWhatsAppConfig(encrypted: {
 }
 
 function formatPhone(phone: string): string {
+  // NOTE: Currently only handles Algerian numbers (strips leading 0, adds 213 prefix).
+  // International numbers passed as-is. Consider E.164 validation for multi-country support.
   const digits = phone.replace(/\D/g, "");
   if (digits.startsWith("0")) {
     return `213${digits.slice(1)}`;

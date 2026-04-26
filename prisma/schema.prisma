@@ -59,6 +59,12 @@ enum NotifyChannel {
   SMS
 }
 
+enum OutboxStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
 enum AuditAction {
   JOB_CREATED
   STATUS_CHANGED
@@ -466,7 +472,7 @@ model NotificationOutbox {
   channel        NotifyChannel
   recipientPhone String
   renderedBody   String        @db.Text
-  status         String        @default("QUEUED") // QUEUED | SENT | FAILED
+  status         OutboxStatus @default(QUEUED)
   error          String?       @db.Text
   createdAt      DateTime      @default(now()) @db.Timestamptz
   sentAt         DateTime?     @db.Timestamptz

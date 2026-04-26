@@ -1007,5 +1007,6 @@
   "notification_queued": "Notification en file d'attente",
   "status_sent": "Envoyé",
   "status_failed": "Échoué",
-  "status_queued": "En file d'attente"
+  "status_queued": "En file d'attente",
+  "no_notifications_sent": "Aucune notification envoyée pour l'instant"
 }

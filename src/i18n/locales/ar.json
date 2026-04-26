@@ -1007,5 +1007,6 @@
   "notification_queued": "الإخطار في قائمة الانتظار",
   "status_sent": "مرسل",
   "status_failed": "فشل",
-  "status_queued": "في قائمة الانتظار"
+  "status_queued": "في قائمة الانتظار",
+  "no_notifications_sent": "لم يتم إرسال أي إخطارات حتى الآن"
 }

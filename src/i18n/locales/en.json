@@ -1007,5 +1007,6 @@
   "notification_queued": "Notification queued",
   "status_sent": "Sent",
   "status_failed": "Failed",
-  "status_queued": "Queued"
+  "status_queued": "Queued",
+  "no_notifications_sent": "No notifications sent yet"
 }

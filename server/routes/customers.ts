@@ -5,6 +5,7 @@ import {
   updateCustomerSchema,
 } from "@shared/schemas";
 import type { FastifyPluginAsync, FastifyReply } from "fastify";
+import { z } from "zod";
 import { requirePermission } from "../middlewares/rbac.js";
 import {
   create as createCustomer,
@@ -103,6 +104,10 @@ export const customersRoutes: FastifyPluginAsync = async (app) => {
 
   app.get("/:id", async (req, reply) => {
     const { id } = req.params as { id: string };
+    const parsed = z.string().cuid().safeParse(id);
+    if (!parsed.success) {
+      return sendError(reply, 400, "VALIDATION_ERROR", "Invalid customer ID");
+    }
     const customer = await getById(app.prisma, id);
     if (!customer) {
       return sendError(reply, 404, "CUSTOMER_NOT_FOUND", "Customer not found");

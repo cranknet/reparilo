@@ -608,11 +608,10 @@ export async function lookupByCodeAuth(
 }
 
 const STATUS_TEMPLATE_MAP: Record<string, string> = {
-  WAITING_FOR_PARTS: "status_waiting_for_parts",
-  IN_REPAIR: "status_in_repair",
-  ON_HOLD: "status_on_hold",
-  DONE: "status_done",
-  DELIVERED: "status_delivered",
+  WAITING_FOR_PARTS: "job_waiting_parts",
+  IN_REPAIR: "job_in_repair",
+  DONE: "job_done",
+  DELIVERED: "job_delivered",
 };
 
 async function triggerNotification(

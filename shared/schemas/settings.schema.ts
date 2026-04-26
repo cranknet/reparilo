@@ -22,12 +22,21 @@ export const updateNotificationTemplateSchema = z.object({
   isDefault: z.boolean().optional(),
 });
 
-export const updateWhatsAppSettingsSchema = z.object({
-  apiToken: z.string().optional(),
-  businessId: z.string().optional(),
-  phoneNumberId: z.string().optional(),
-  enabled: z.boolean().optional(),
-});
+export const updateWhatsAppSettingsSchema = z
+  .object({
+    apiToken: z.string().optional(),
+    businessId: z.string().optional(),
+    phoneNumberId: z.string().optional(),
+    enabled: z.boolean().optional(),
+  })
+  .refine(
+    (data) =>
+      data.apiToken !== undefined ||
+      data.businessId !== undefined ||
+      data.phoneNumberId !== undefined ||
+      data.enabled !== undefined,
+    { message: "At least one field must be provided" }
+  );
 
 export type UpdateAiSettingsInput = z.infer<typeof updateAiSettingsSchema>;
 export type UpdateShopSettingsInput = z.infer<typeof updateShopSettingsSchema>;
