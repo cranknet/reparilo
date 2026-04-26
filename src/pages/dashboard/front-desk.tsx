@@ -184,15 +184,6 @@ export default function FrontDeskPage() {
               {t("front_desk.print_receipt")}
             </span>
           </button>
-          <button
-            className="flex flex-col items-center gap-1 rounded-xl bg-surface-container-high px-2 py-2.5 font-semibold text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary sm:flex-row sm:justify-center sm:gap-2 sm:px-4"
-            type="button"
-          >
-            <span className="material-symbols-outlined text-lg">summarize</span>
-            <span className="text-[10px] leading-tight sm:text-xs sm:leading-normal">
-              {t("daily_summary")}
-            </span>
-          </button>
         </div>
       </section>
 
