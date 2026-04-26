@@ -250,6 +250,7 @@ model Job {
   partsWaiting    JobPartsWaiting[]
   repairs         JobRepair[]
   auditLogs       AuditLog[]
+  notifications   NotificationOutbox[]
 
   @@index([customerId])
   @@index([deviceId])
@@ -454,6 +455,27 @@ model NotificationTemplate {
 }
 
 // ─────────────────────────────────────────────
+// NOTIFICATION OUTBOX
+// ─────────────────────────────────────────────
+
+model NotificationOutbox {
+  id             String        @id @default(cuid())
+  jobId          String?
+  job            Job?          @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  templateName   String
+  channel        NotifyChannel
+  recipientPhone String
+  renderedBody   String        @db.Text
+  status         String        @default("QUEUED") // QUEUED | SENT | FAILED
+  error          String?       @db.Text
+  createdAt      DateTime      @default(now()) @db.Timestamptz
+  sentAt         DateTime?     @db.Timestamptz
+
+  @@index([status, createdAt])
+  @@map("notification_outbox")
+}
+
+// ─────────────────────────────────────────────
 // AI SETTINGS (single row)
 // apiKeyEncrypted: AES-256 encrypted at rest.
 // Fixed id for single-row upsert pattern.
@@ -504,6 +526,10 @@ model ShopSettings {
   currency      String   @default("DZD")
   timezone      String?  // IANA name, e.g. "Africa/Algiers". Null -> env TZ fallback.
   receiptFooter String?  @db.Text
+  whatsappApiTokenEncrypted String?
+  whatsappBusinessId         String?
+  whatsappPhoneNumberId      String?
+  whatsappEnabled            Boolean @default(false)
   createdAt     DateTime @default(now()) @db.Timestamptz
   updatedAt     DateTime @updatedAt      @db.Timestamptz
 
