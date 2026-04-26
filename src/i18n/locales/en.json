@@ -996,5 +996,16 @@
   "navigation": "Navigation",
   "more": "More",
   "more_navigation": "More navigation",
-  "close": "Close"
+  "close": "Close",
+  "whatsapp_settings": "WhatsApp Settings",
+  "whatsapp_api_token": "API Token",
+  "whatsapp_business_id": "Business ID",
+  "whatsapp_phone_number_id": "Phone Number ID",
+  "whatsapp_enabled": "Enable WhatsApp Notifications",
+  "notification_outbox": "Notification Log",
+  "test_send": "Send Test",
+  "notification_queued": "Notification queued",
+  "status_sent": "Sent",
+  "status_failed": "Failed",
+  "status_queued": "Queued"
 }

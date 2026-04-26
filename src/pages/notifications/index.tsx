@@ -1,7 +1,8 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { useAlertsStore } from "@/stores/alerts";
+import { useSettingsStore } from "@/stores/settings";
 import { useToastStore } from "@/stores/toast";
 
 type FilterType = "all" | "unread" | "read";
@@ -168,6 +169,25 @@ function AlertItem({
   );
 }
 
+function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
+  const colors: Record<string, string> = {
+    QUEUED: "bg-warning-container text-on-warning-container",
+    SENT: "bg-success/10 text-success",
+    FAILED: "bg-error/10 text-error",
+  };
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2 py-0.5 font-semibold text-xs ${colors[status] ?? "bg-surface-container-high text-on-surface-variant"}`}
+    >
+      {status === "QUEUED" && t("status_queued")}
+      {status === "SENT" && t("status_sent")}
+      {status === "FAILED" && t("status_failed")}
+      {!["QUEUED", "SENT", "FAILED"].includes(status) && status}
+    </span>
+  );
+}
+
 export default function NotificationsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -176,6 +196,91 @@ export default function NotificationsPage() {
   const markAllRead = useAlertsStore((s) => s.markAllRead);
   const dismissAlert = useAlertsStore((s) => s.dismissAlert);
   const undoToast = useToastStore((s) => s.undoToast);
+  const {
+    whatsAppSettings,
+    outboxLogs,
+    notificationTemplates,
+    fetchWhatsAppSettings,
+    fetchOutboxLogs,
+    fetchNotificationTemplates,
+    saveWhatsAppSettings,
+    sendTestNotification,
+  } = useSettingsStore();
+  const [whatsAppForm, setWhatsAppForm] = useState({
+    apiToken: "",
+    businessId: "",
+    phoneNumberId: "",
+    enabled: false,
+  });
+  const [whatsAppSaving, setWhatsAppSaving] = useState(false);
+  const [testSendingId, setTestSendingId] = useState<string | null>(null);
+  const [whatsAppLoaded, setWhatsAppLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!whatsAppLoaded) {
+      fetchWhatsAppSettings().catch(() => {
+        /* intentionally swallowed */
+      });
+      fetchOutboxLogs().catch(() => {
+        /* intentionally swallowed */
+      });
+      if (notificationTemplates.length === 0) {
+        fetchNotificationTemplates().catch(() => {
+          /* intentionally swallowed */
+        });
+      }
+      setWhatsAppLoaded(true);
+    }
+  }, [
+    whatsAppLoaded,
+    fetchWhatsAppSettings,
+    fetchOutboxLogs,
+    fetchNotificationTemplates,
+    notificationTemplates.length,
+  ]);
+
+  useEffect(() => {
+    if (whatsAppSettings && !whatsAppSaving) {
+      setWhatsAppForm((prev) => ({
+        apiToken: prev.apiToken || "",
+        businessId: whatsAppSettings.businessId ?? "",
+        phoneNumberId: whatsAppSettings.phoneNumberId ?? "",
+        enabled: whatsAppSettings.enabled,
+      }));
+    }
+  }, [whatsAppSettings, whatsAppSaving]);
+
+  const handleWhatsAppSave = useCallback(async () => {
+    setWhatsAppSaving(true);
+    try {
+      await saveWhatsAppSettings({
+        apiToken: whatsAppForm.apiToken || undefined,
+        businessId: whatsAppForm.businessId || undefined,
+        phoneNumberId: whatsAppForm.phoneNumberId || undefined,
+        enabled: whatsAppForm.enabled,
+      });
+    } catch {
+      // Error is stored in Zustand state
+    } finally {
+      setWhatsAppSaving(false);
+    }
+  }, [whatsAppForm, saveWhatsAppSettings]);
+
+  const handleTestSend = useCallback(
+    async (templateId: string) => {
+      setTestSendingId(templateId);
+      const result = await sendTestNotification(templateId);
+      if (result.success) {
+        useToastStore.getState().undoToast(t("notification_queued"), "", () => {
+          /* no undo */
+        });
+        await fetchOutboxLogs();
+      }
+      setTestSendingId(null);
+    },
+    [sendTestNotification, fetchOutboxLogs, t]
+  );
+
   const [filter, setFilter] = useState<FilterType>("all");
   const tabRefs = useRef<Record<FilterType, HTMLButtonElement | null>>({
     all: null,
@@ -354,6 +459,213 @@ export default function NotificationsPage() {
               onNavigate={handleNavigate}
             />
           ))
+        )}
+      </div>
+
+      {/* WhatsApp Settings */}
+      <div className="mt-10">
+        <h3 className="font-extrabold font-headline text-lg text-on-surface tracking-tight">
+          {t("whatsapp_settings")}
+        </h3>
+        <div className="mt-4 rounded-2xl bg-surface-container-low p-5">
+          <label className="flex cursor-pointer select-none items-center gap-3">
+            <input
+              checked={whatsAppForm.enabled}
+              className="sr-only"
+              onChange={(e) =>
+                setWhatsAppForm((f) => ({ ...f, enabled: e.target.checked }))
+              }
+              type="checkbox"
+            />
+            <span
+              className="relative inline-block h-6 w-11 rounded-full transition-colors"
+              style={{
+                backgroundColor: whatsAppForm.enabled
+                  ? "var(--color-primary)"
+                  : "var(--color-outline-variant)",
+              }}
+            >
+              <span
+                className="absolute top-0.5 h-5 w-5 rounded-full bg-on-primary shadow-sm transition-all"
+                style={{
+                  insetInlineStart: whatsAppForm.enabled ? "22px" : "2px",
+                }}
+              />
+            </span>
+            <span className="font-medium text-on-surface text-sm">
+              {t("whatsapp_enabled")}
+            </span>
+          </label>
+
+          {whatsAppForm.enabled && (
+            <div className="mt-5 space-y-4">
+              <div>
+                <label
+                  className="mb-1.5 block font-medium text-on-surface text-sm"
+                  htmlFor="wa-business-id"
+                >
+                  {t("whatsapp_business_id")}
+                </label>
+                <input
+                  className="w-full rounded-xl bg-surface-container px-4 py-2.5 text-on-surface text-sm outline outline-1 outline-outline-variant focus:outline-2 focus:outline-primary"
+                  id="wa-business-id"
+                  onChange={(e) =>
+                    setWhatsAppForm((f) => ({
+                      ...f,
+                      businessId: e.target.value,
+                    }))
+                  }
+                  type="text"
+                  value={whatsAppForm.businessId}
+                />
+              </div>
+              <div>
+                <label
+                  className="mb-1.5 block font-medium text-on-surface text-sm"
+                  htmlFor="wa-phone-id"
+                >
+                  {t("whatsapp_phone_number_id")}
+                </label>
+                <input
+                  className="w-full rounded-xl bg-surface-container px-4 py-2.5 text-on-surface text-sm outline outline-1 outline-outline-variant focus:outline-2 focus:outline-primary"
+                  id="wa-phone-id"
+                  onChange={(e) =>
+                    setWhatsAppForm((f) => ({
+                      ...f,
+                      phoneNumberId: e.target.value,
+                    }))
+                  }
+                  type="text"
+                  value={whatsAppForm.phoneNumberId}
+                />
+              </div>
+              <div>
+                <label
+                  className="mb-1.5 block font-medium text-on-surface text-sm"
+                  htmlFor="wa-api-token"
+                >
+                  {t("whatsapp_api_token")}
+                </label>
+                <input
+                  autoComplete="off"
+                  className="w-full rounded-xl bg-surface-container px-4 py-2.5 text-on-surface text-sm outline outline-1 outline-outline-variant focus:outline-2 focus:outline-primary"
+                  id="wa-api-token"
+                  onChange={(e) =>
+                    setWhatsAppForm((f) => ({ ...f, apiToken: e.target.value }))
+                  }
+                  placeholder={whatsAppSettings?.hasApiToken ? "••••••••" : ""}
+                  type="password"
+                  value={whatsAppForm.apiToken}
+                />
+              </div>
+              <button
+                className="flex min-h-11 items-center gap-2 rounded-xl bg-primary px-6 py-2.5 font-semibold text-on-primary text-sm transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-50"
+                disabled={whatsAppSaving}
+                onClick={handleWhatsAppSave}
+                type="button"
+              >
+                {whatsAppSaving ? t("settings_saving") : t("save_changes")}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Notification Outbox Log */}
+      <div className="mt-10">
+        <h3 className="font-extrabold font-headline text-lg text-on-surface tracking-tight">
+          {t("notification_outbox")}
+        </h3>
+        <div className="mt-4 overflow-x-auto rounded-2xl bg-surface-container-low">
+          {outboxLogs.length === 0 ? (
+            <div className="py-12 text-center">
+              <span className="material-symbols-outlined text-4xl text-on-surface-variant/30">
+                outbox
+              </span>
+              <p className="mt-3 font-medium text-on-surface-variant text-sm">
+                No notifications sent yet
+              </p>
+            </div>
+          ) : (
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-outline-variant/50 border-b">
+                  <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
+                    {t("template_name")}
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
+                    {t("customer_phone") ?? "Phone"}
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
+                    {t("status_label")}
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
+                    {t("channel")}
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
+                    {t("test_send")}
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
+                    {t("date_short", { val: new Date() })}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {outboxLogs.map((log) => (
+                  <tr
+                    className="border-outline-variant/30 border-b last:border-0 hover:bg-surface-container-high/40"
+                    key={log.id}
+                  >
+                    <td className="px-4 py-3 text-on-surface">
+                      {log.templateName}
+                    </td>
+                    <td className="px-4 py-3 text-on-surface-variant">
+                      {log.recipientPhone}
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={log.status} />
+                    </td>
+                    <td className="px-4 py-3 text-on-surface-variant">
+                      {log.channel}
+                    </td>
+                    <td className="px-4 py-3">
+                      {log.error && (
+                        <span className="text-error text-xs">{log.error}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-on-surface-variant text-xs">
+                      {new Date(log.createdAt).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Test send buttons per template */}
+        {notificationTemplates.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <p className="font-medium text-on-surface text-sm">
+              {t("test_send")}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {notificationTemplates.map((tmpl) => (
+                <button
+                  className="flex items-center gap-1.5 rounded-xl bg-surface-container px-4 py-2 font-medium text-on-surface text-xs transition-colors hover:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-50"
+                  disabled={testSendingId === tmpl.id}
+                  key={tmpl.id}
+                  onClick={() => handleTestSend(tmpl.id)}
+                  type="button"
+                >
+                  <span className="material-symbols-outlined text-[16px]">
+                    {testSendingId === tmpl.id ? "progress_activity" : "send"}
+                  </span>
+                  {tmpl.name}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </>

@@ -7,16 +7,37 @@ import { create } from "zustand";
 import i18n from "@/i18n";
 import api from "@/lib/api";
 
+interface OutboxLog {
+  channel: string;
+  createdAt: string;
+  error: string | null;
+  id: string;
+  jobId: string | null;
+  recipientPhone: string;
+  status: string;
+  templateName: string;
+}
+
+interface WhatsAppSettings {
+  businessId: string | null;
+  enabled: boolean;
+  hasApiToken: boolean;
+  phoneNumberId: string | null;
+}
+
 interface SettingsState {
   aiSettings: AiSettings | null;
   clearError: () => void;
   error: string | null;
   fetchAiSettings: () => Promise<void>;
   fetchNotificationTemplates: () => Promise<void>;
+  fetchOutboxLogs: () => Promise<void>;
   fetchSettings: () => Promise<void>;
   fetchShopSettings: () => Promise<void>;
+  fetchWhatsAppSettings: () => Promise<void>;
   isLoading: boolean;
   notificationTemplates: NotificationTemplate[];
+  outboxLogs: OutboxLog[];
   saveAiSettings: (data: {
     endpointUrl: string;
     apiKey?: string;
@@ -30,6 +51,16 @@ interface SettingsState {
     currency?: string;
     receiptFooter?: string;
   }) => Promise<ShopSettings>;
+  saveWhatsAppSettings: (data: {
+    apiToken?: string;
+    businessId?: string;
+    phoneNumberId?: string;
+    enabled?: boolean;
+  }) => Promise<void>;
+  sendTestNotification: (templateId: string) => Promise<{
+    message: string;
+    success: boolean;
+  }>;
   shopSettings: ShopSettings | null;
   testAiConnection: () => Promise<{ success: boolean; message: string }>;
   updateNotificationTemplate: (
@@ -41,12 +72,15 @@ interface SettingsState {
       isDefault?: boolean;
     }
   ) => Promise<NotificationTemplate>;
+  whatsAppSettings: WhatsAppSettings | null;
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
   aiSettings: null,
   shopSettings: null,
   notificationTemplates: [],
+  outboxLogs: [],
+  whatsAppSettings: null,
   isLoading: false,
   error: null,
 
@@ -174,6 +208,55 @@ export const useSettingsStore = create<SettingsState>((set) => ({
           : i18n.t("errors.update_notification_template");
       set({ error: message });
       throw new Error(message);
+    }
+  },
+
+  fetchWhatsAppSettings: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await api.get("/settings/whatsapp");
+      set({ whatsAppSettings: res.data, isLoading: false });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : i18n.t("errors.fetch_settings");
+      set({ isLoading: false, error: message });
+    }
+  },
+
+  saveWhatsAppSettings: async (data) => {
+    set({ error: null });
+    try {
+      await api.put("/settings/whatsapp", data);
+      await useSettingsStore.getState().fetchWhatsAppSettings();
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : i18n.t("errors.save_shop_settings");
+      set({ error: message });
+      throw new Error(message);
+    }
+  },
+
+  sendTestNotification: async (templateId) => {
+    try {
+      const res = await api.post(`/notifications/test/${templateId}`);
+      return res.data as { message: string; success: boolean };
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : i18n.t("errors.fetch_settings");
+      return { success: false, message };
+    }
+  },
+
+  fetchOutboxLogs: async () => {
+    try {
+      const res = await api.get("/notifications/outbox");
+      set({ outboxLogs: res.data });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : i18n.t("errors.fetch_settings");
+      set({ error: message });
     }
   },
 

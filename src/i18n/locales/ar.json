@@ -996,5 +996,16 @@
   "navigation": "ملاحة",
   "more": "أكثر",
   "more_navigation": "المزيد من الملاحة",
-  "close": "يغلق"
+  "close": "يغلق",
+  "whatsapp_settings": "إعدادات الواتساب",
+  "whatsapp_api_token": "رمز API",
+  "whatsapp_business_id": "معرف العمل",
+  "whatsapp_phone_number_id": "معرف رقم الهاتف",
+  "whatsapp_enabled": "تفعيل إشعارات الواتساب",
+  "notification_outbox": "سجل الإخطارات",
+  "test_send": "إرسال الاختبار",
+  "notification_queued": "الإخطار في قائمة الانتظار",
+  "status_sent": "مرسل",
+  "status_failed": "فشل",
+  "status_queued": "في قائمة الانتظار"
 }

@@ -996,5 +996,16 @@
   "navigation": "Navigation",
   "more": "Plus",
   "more_navigation": "Plus de navigation",
-  "close": "Fermer"
+  "close": "Fermer",
+  "whatsapp_settings": "Paramètres WhatsApp",
+  "whatsapp_api_token": "Jeton API",
+  "whatsapp_business_id": "Numéro d'identification de l'entreprise",
+  "whatsapp_phone_number_id": "Numéro de téléphone",
+  "whatsapp_enabled": "Activer les notifications WhatsApp",
+  "notification_outbox": "Journal des notifications",
+  "test_send": "Envoyer le test",
+  "notification_queued": "Notification en file d'attente",
+  "status_sent": "Envoyé",
+  "status_failed": "Échoué",
+  "status_queued": "En file d'attente"
 }
