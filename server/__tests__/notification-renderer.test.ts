@@ -44,3 +44,47 @@ describe("renderTemplate", () => {
     expect(result).toBe("Hi Lina, ");
   });
 });
+
+describe("renderTemplate conditionals", () => {
+  it("renders content inside {{if key}} when key is truthy", () => {
+    const result = renderTemplate(
+      "{{if warranty}}Warranty until {{warrantyDate}}{{endif}}",
+      { warranty: "yes", warrantyDate: "2025-12-01" }
+    );
+    expect(result).toContain("Warranty until");
+  });
+
+  it("hides content inside {{if key}} when key is empty string", () => {
+    const result = renderTemplate(
+      "{{if warranty}}Warranty until {{warrantyDate}}{{endif}}",
+      { warranty: "", warrantyDate: "2025-12-01" }
+    );
+    expect(result).not.toContain("Warranty");
+  });
+
+  it("hides content when key is undefined", () => {
+    const result = renderTemplate("{{if notes}}Notes: {{notes}}{{endif}}", {});
+    expect(result).not.toContain("Notes");
+  });
+});
+
+describe("renderTemplate locale formatting", () => {
+  it("formats numbers with locale", () => {
+    const result = renderTemplate("Cost: {{cost}}", { cost: 5000 }, "fr");
+    expect(result).toContain("5");
+  });
+
+  it("formats ISO date strings with locale", () => {
+    const result = renderTemplate(
+      "Date: {{date}}",
+      { date: "2025-01-15" },
+      "fr"
+    );
+    expect(result).toContain("2025");
+  });
+
+  it("does not format regular strings as dates", () => {
+    const result = renderTemplate("Code: {{code}}", { code: "REP-2025-001" });
+    expect(result).toBe("Code: REP-2025-001");
+  });
+});

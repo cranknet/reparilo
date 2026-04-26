@@ -11,8 +11,10 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("../services/notification-renderer.js", () => ({
-  renderTemplate: (body: string, vars: Record<string, string>) =>
-    body.replace(/\{\{(\w+)\}\}/g, (_: string, k: string) => vars[k] ?? ""),
+  renderTemplate: (body: string, vars: Record<string, string | number>) =>
+    body.replace(/\{\{(\w+)\}\}/g, (_: string, k: string) =>
+      String(vars[k] ?? "")
+    ),
 }));
 
 vi.mock("../services/notification-sender.js", () => ({
