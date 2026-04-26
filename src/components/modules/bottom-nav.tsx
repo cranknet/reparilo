@@ -1,8 +1,10 @@
+import type { RoleType } from "@shared/constants";
 import type { PermissionCheck } from "@shared/permissions";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router";
 import { can, useCan } from "@/hooks/use-can";
+import { getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
 import { useUiStore } from "@/stores/ui";
 
@@ -25,6 +27,12 @@ const NAV_ITEMS: NavItem[] = [
     labelKey: "jobs",
     perm: { jobs: ["view"] },
     to: "/jobs",
+  },
+  {
+    icon: "people",
+    labelKey: "customers",
+    perm: { customers: ["view"] },
+    to: "/customers",
   },
   {
     icon: "settings",
@@ -61,7 +69,86 @@ const MORE_ITEMS: NavItem[] = [
   },
 ];
 
+const ROLE_LABEL_KEYS: Record<RoleType, string> = {
+  OWNER: "role.OWNER",
+  TECHNICIAN: "role.TECHNICIAN",
+  FRONT_DESK: "role.FRONT_DESK",
+};
+
 const ACTIVE_FONT_SETTINGS = '"FILL" 1, "wght" 700, "GRAD" 0, "opsz" 24';
+
+const FOCUS_VISIBLE =
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+
+function MoreSheetProfile() {
+  const { t } = useTranslation();
+  const role = useAuthStore((s) => s.role);
+  const userName = useAuthStore((s) => s.user?.name || s.user?.username || "");
+  const [logoutPending, setLogoutPending] = useState(false);
+  const logoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (logoutTimerRef.current) {
+        clearTimeout(logoutTimerRef.current);
+      }
+    },
+    []
+  );
+
+  const handleLogoutClick = useCallback(() => {
+    if (!logoutPending) {
+      setLogoutPending(true);
+      logoutTimerRef.current = setTimeout(() => setLogoutPending(false), 3000);
+      return;
+    }
+    useAuthStore.getState().logout();
+  }, [logoutPending]);
+
+  return (
+    <div className="mt-2 border-outline-variant/40 border-t pt-2">
+      <div className="flex min-h-[48px] items-center gap-3 rounded-xl px-3 py-2">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-on-primary text-sm">
+          {getInitials(userName)}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-bold text-on-surface text-sm">
+            {userName}
+          </p>
+          <p className="truncate text-on-surface-variant text-xs">
+            {t(ROLE_LABEL_KEYS[role])}
+          </p>
+        </div>
+      </div>
+      <button
+        aria-label={
+          logoutPending
+            ? t("auth_sign_out_confirm")
+            : t("auth_sign_out_instead")
+        }
+        className={`flex min-h-[48px] w-full items-center gap-3 rounded-xl px-3 py-3 text-sm transition-[color,background-color] duration-200 ${FOCUS_VISIBLE} ${
+          logoutPending
+            ? "bg-error-container font-semibold text-on-error-container"
+            : "text-on-surface-variant active:bg-surface-container-high active:text-primary"
+        }`}
+        onClick={handleLogoutClick}
+        type="button"
+      >
+        <span
+          aria-hidden="true"
+          className="material-symbols-outlined text-[22px]"
+        >
+          {logoutPending ? "warning" : "logout"}
+        </span>
+        <span>
+          {logoutPending
+            ? t("auth_sign_out_confirm")
+            : t("auth_sign_out_instead")}
+        </span>
+      </button>
+    </div>
+  );
+}
 
 function NavTab({
   icon,
@@ -301,6 +388,8 @@ export default function BottomNav() {
                   )}
                 </NavLink>
               ))}
+
+              <MoreSheetProfile />
             </nav>
           </div>
         </div>

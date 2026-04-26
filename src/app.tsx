@@ -9,6 +9,8 @@ import ProtectedRoute, {
 import ChangePasswordPage from "@/pages/auth/change-password";
 import LoginPage from "@/pages/auth/login";
 import ResetPasswordPage from "@/pages/auth/reset-password";
+import CustomersPage from "@/pages/customers";
+import CustomerDetailPage from "@/pages/customers/detail";
 import DashboardPage from "@/pages/dashboard";
 import FrontDeskPage from "@/pages/dashboard/front-desk";
 import TechnicianDashboardPage from "@/pages/dashboard/technician";
@@ -131,6 +133,24 @@ export default function App() {
           }
           path="/profile/:userId"
         />
+        <Route element={<RequirePermission perm={{ customers: ["view"] }} />}>
+          <Route
+            element={
+              <DashboardLayout>
+                <CustomersPage />
+              </DashboardLayout>
+            }
+            path="/customers"
+          />
+          <Route
+            element={
+              <DashboardLayout>
+                <CustomerDetailPage />
+              </DashboardLayout>
+            }
+            path="/customers/:id"
+          />
+        </Route>
       </Route>
       <Route element={<TrackingPage />} path="/tracking/:jobCode?" />
     </Routes>

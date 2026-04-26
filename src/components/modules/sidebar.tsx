@@ -24,6 +24,12 @@ const NAV_ITEMS: NavItem[] = [
   },
   { icon: "build", labelKey: "jobs", to: "/jobs", perm: { jobs: ["view"] } },
   {
+    icon: "people",
+    labelKey: "customers",
+    to: "/customers",
+    perm: { customers: ["view"] },
+  },
+  {
     icon: "inventory_2",
     labelKey: "parts_inventory",
     to: "/parts",
