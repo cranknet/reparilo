@@ -1,5 +1,5 @@
 import type { JobStatusType } from "@shared/constants";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import AiCallout from "@/components/modules/dashboard/ai-callout";
 import FinancialTrend from "@/components/modules/dashboard/financial-trend";
@@ -7,50 +7,7 @@ import JobPipeline from "@/components/modules/dashboard/job-pipeline";
 import OverdueJobs from "@/components/modules/dashboard/overdue-jobs";
 import MetricCard from "@/components/ui/metric-card";
 import { useAuthStore } from "@/stores/auth";
-import { useJobsStore } from "@/stores/jobs";
-
-const MOCK_FINANCIAL_DATA = [
-  { revenue: 65, cost: 40 },
-  { revenue: 70, cost: 45 },
-  { revenue: 55, cost: 50 },
-  { revenue: 80, cost: 35 },
-  { revenue: 90, cost: 55 },
-  { revenue: 40, cost: 30 },
-  { revenue: 30, cost: 20 },
-];
-
-const MOCK_OVERDUE_JOBS = (
-  t: (key: string, opts?: Record<string, unknown>) => string
-) => [
-  {
-    id: "#REP-8821",
-    device: "iPhone 14 Pro",
-    repair: t("dashboard_page.repair_screen_replace"),
-    lateness: t("dashboard_page.hours_late", { hours: 24 }),
-  },
-  {
-    id: "#REP-8835",
-    device: "Samsung S23",
-    repair: t("dashboard_page.repair_battery_swap"),
-    lateness: t("dashboard_page.hours_late", { hours: 4 }),
-  },
-];
-
-const MOCK_WARRANTY_RETURNS = (
-  t: (key: string, opts?: Record<string, unknown>) => string
-) => [
-  {
-    id: "#WAR-012",
-    description: t("dashboard_page.warranty_phantom_touch"),
-    priority: t("dashboard_page.high_priority"),
-    timeAgo: t("dashboard_page.minutes_ago", { minutes: 10 }),
-  },
-  {
-    id: "#WAR-011",
-    description: t("dashboard_page.warranty_charging_port"),
-    timeAgo: t("dashboard_page.hours_ago", { hours: 2 }),
-  },
-];
+import { useDashboardStore } from "@/stores/dashboard";
 
 const EMPTY_PIPELINE: Record<JobStatusType, number> = {
   INTAKE: 0,
@@ -66,34 +23,20 @@ const EMPTY_PIPELINE: Record<JobStatusType, number> = {
 export default function DashboardPage() {
   const { t } = useTranslation();
   const userName = useAuthStore((s) => s.user?.name || s.user?.username || "");
-  const { metrics, fetchMetrics } = useJobsStore();
+  const { data, fetchDashboard, isLoading } = useDashboardStore();
 
   useEffect(() => {
-    fetchMetrics();
-  }, [fetchMetrics]);
+    fetchDashboard();
+  }, [fetchDashboard]);
 
-  const pipelineCounts: Record<JobStatusType, number> = useMemo(() => {
-    if (!metrics) {
-      return EMPTY_PIPELINE;
-    }
-    return {
-      INTAKE: metrics.INTAKE ?? 0,
-      WAITING_FOR_PARTS: metrics.WAITING_FOR_PARTS ?? 0,
-      IN_REPAIR: metrics.IN_REPAIR ?? 0,
-      ON_HOLD: metrics.ON_HOLD ?? 0,
-      DONE: metrics.DONE ?? 0,
-      DELIVERED: metrics.DELIVERED ?? 0,
-      RETURNED: metrics.RETURNED ?? 0,
-      CANCELLED: metrics.CANCELLED ?? 0,
-    };
-  }, [metrics]);
-
+  const pipelineCounts: Record<JobStatusType, number> =
+    data?.pipeline ?? EMPTY_PIPELINE;
   const activeJobs =
     pipelineCounts.INTAKE +
     pipelineCounts.IN_REPAIR +
     pipelineCounts.ON_HOLD +
     pipelineCounts.WAITING_FOR_PARTS;
-  const completedToday = pipelineCounts.DONE;
+  const completedToday = data?.completedToday ?? 0;
 
   return (
     <>
@@ -130,7 +73,7 @@ export default function DashboardPage() {
 
       <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
         <MetricCard
-          detail={t("dashboard_page.since_8am", { count: 3 })}
+          detail={t("dashboard_page.since_8am", { count: activeJobs })}
           icon="precision_manufacturing"
           label={t("active_jobs")}
           value={String(activeJobs)}
@@ -153,19 +96,21 @@ export default function DashboardPage() {
         </MetricCard>
 
         <MetricCard
-          detail=""
+          detail={isLoading ? "" : t("currency_dzd")}
           icon="payments"
           iconColor="text-tertiary"
           label={t("revenue_this_month")}
           unit={t("currency_dzd")}
-          value="--"
+          value={data ? String(data.revenueThisMonth) : "--"}
         >
-          <div className="flex items-center gap-1 font-bold text-tertiary text-xs">
-            <span className="material-symbols-outlined text-[14px]">
-              trending_up
-            </span>
-            -- {t("increase_from_prev")}
-          </div>
+          {data && data.revenueThisMonth > 0 && (
+            <div className="flex items-center gap-1 font-bold text-tertiary text-xs">
+              <span className="material-symbols-outlined text-[14px]">
+                trending_up
+              </span>
+              {t("increase_from_prev")}
+            </div>
+          )}
         </MetricCard>
 
         <MetricCard
@@ -173,12 +118,19 @@ export default function DashboardPage() {
           icon="bar_chart"
           label={t("avg_profit_margin")}
           unit="%"
-          value="--"
+          value={data ? `${Math.round(data.avgProfitMargin * 100)}` : "--"}
         >
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((i) => (
               <div
-                className={`h-1 flex-1 rounded-full ${i <= 3 ? "bg-primary" : "bg-surface-container-highest"}`}
+                className={`h-1 flex-1 rounded-full ${
+                  i <=
+                  Math.round(
+                    data?.avgProfitMargin ? data.avgProfitMargin * 5 : 0
+                  )
+                    ? "bg-primary"
+                    : "bg-surface-container-highest"
+                }`}
                 key={i}
               />
             ))}
@@ -192,14 +144,36 @@ export default function DashboardPage() {
         </div>
 
         <div className="space-y-8 md:col-span-12 lg:col-span-5">
-          <FinancialTrend data={MOCK_FINANCIAL_DATA} />
+          {data && <FinancialTrend data={data.financialTrend} />}
           <AiCallout insight={t("ai_insight_mock")} />
         </div>
 
         <div className="md:col-span-12 lg:col-span-3">
           <OverdueJobs
-            jobs={MOCK_OVERDUE_JOBS(t)}
-            warrantyReturns={MOCK_WARRANTY_RETURNS(t)}
+            jobs={
+              data?.overdueJobs.map((j) => ({
+                id: j.jobCode,
+                device: j.device,
+                repair: j.repairSummary,
+                lateness: t("dashboard_page.hours_late", {
+                  hours: j.hoursLate,
+                }),
+              })) ?? []
+            }
+            warrantyReturns={
+              data?.warrantyReturns.map((w) => ({
+                id: w.jobCode,
+                description: w.description,
+                priority: w.description.toLowerCase().includes("urgent")
+                  ? t("dashboard_page.high_priority")
+                  : undefined,
+                timeAgo: t("dashboard_page.hours_ago", {
+                  hours: Math.round(
+                    (Date.now() - new Date(w.createdAt).getTime()) / 3_600_000
+                  ),
+                }),
+              })) ?? []
+            }
           />
         </div>
       </div>

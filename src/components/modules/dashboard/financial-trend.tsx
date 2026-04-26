@@ -1,20 +1,31 @@
 import { useTranslation } from "react-i18next";
 
-interface DayData {
+interface FinancialTrendPoint {
   cost: number;
+  date: string;
   revenue: number;
 }
 
 interface FinancialTrendProps {
-  data: DayData[];
+  data: FinancialTrendPoint[];
 }
 
-const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
-
 export default function FinancialTrend({ data }: FinancialTrendProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const maxVal = Math.max(...data.flatMap((d) => [d.revenue, d.cost]), 1);
+
+  const LOCALES: Record<string, string> = {
+    ar: "ar-DZ",
+    fr: "fr-DZ",
+  };
+  const DEFAULT_LOCALE = "en-US";
+
+  const formatDay = (dateStr: string) => {
+    const d = new Date(`${dateStr}T00:00:00`);
+    const locale = LOCALES[i18n.language] ?? DEFAULT_LOCALE;
+    return d.toLocaleDateString(locale, { weekday: "short" });
+  };
 
   return (
     <div className="relative overflow-hidden rounded-xl bg-surface-container-low p-6">
@@ -38,10 +49,10 @@ export default function FinancialTrend({ data }: FinancialTrendProps) {
         </div>
       </div>
       <div className="flex h-48 items-end gap-1 px-2 sm:gap-2">
-        {data.map((day, i) => (
+        {data.map((day) => (
           <div
             className="flex flex-1 flex-col justify-end gap-1"
-            key={DAY_KEYS[i]}
+            key={day.date}
           >
             <div
               className="w-full rounded-t bg-outline-variant/40 transition-all duration-500"
@@ -52,7 +63,7 @@ export default function FinancialTrend({ data }: FinancialTrendProps) {
               style={{ height: `${(day.revenue / maxVal) * 100}%` }}
             />
             <span className="mt-2 text-center font-bold text-[8px] text-on-surface-variant uppercase sm:text-[9px]">
-              {t(DAY_KEYS[i])}
+              {formatDay(day.date)}
             </span>
           </div>
         ))}
