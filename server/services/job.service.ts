@@ -15,6 +15,7 @@ import type {
 } from "@shared/schemas";
 import { generateJobCode } from "../utils/job-code.js";
 import { createAuditLog } from "./audit.service.js";
+import { findTemplate } from "./notification-outbox.service.js";
 
 export function computeMargin(job: {
   finalCost: number | { toNumber: () => number };
@@ -273,6 +274,19 @@ export async function create(
     return created;
   });
 
+  // Fire-and-forget notification for job creation
+  triggerNotification(prisma, {
+    customerPhone: customer.phone,
+    jobId: job.id,
+    templateName: "job_created",
+    templateVars: {
+      jobCode: job.jobCode,
+      customerName: customer.name,
+    },
+  }).catch(() => {
+    /* fire-and-forget */
+  });
+
   const fullJob = await prisma.job.findUnique({
     where: { id: job.id },
     include: JOB_INCLUDE,
@@ -425,6 +439,23 @@ export async function transitionStatus(
     userId,
   });
 
+  // Fire-and-forget notification for status transitions
+  const templateName = STATUS_TEMPLATE_MAP[newStatus];
+  if (templateName && updated.customer?.phone) {
+    triggerNotification(prisma, {
+      customerPhone: updated.customer.phone,
+      jobId: id,
+      templateName,
+      templateVars: {
+        jobCode: updated.jobCode,
+        customerName: updated.customer.name,
+        newStatus,
+      },
+    }).catch(() => {
+      /* fire-and-forget */
+    });
+  }
+
   return { ...updated, finalCost: computeFinalCost(updated) };
 }
 
@@ -574,4 +605,38 @@ export async function lookupByCodeAuth(
         }
       : null,
   };
+}
+
+const STATUS_TEMPLATE_MAP: Record<string, string> = {
+  WAITING_FOR_PARTS: "status_waiting_for_parts",
+  IN_REPAIR: "status_in_repair",
+  ON_HOLD: "status_on_hold",
+  DONE: "status_done",
+  DELIVERED: "status_delivered",
+};
+
+async function triggerNotification(
+  prisma: PrismaClient,
+  options: {
+    jobId?: string;
+    templateName: string;
+    customerPhone: string;
+    templateVars: Record<string, string>;
+  }
+): Promise<void> {
+  const template = await findTemplate(prisma, options.templateName, "WHATSAPP");
+  if (!template) {
+    return;
+  }
+  const { queueNotification } = await import(
+    "./notification-outbox.service.js"
+  );
+  await queueNotification(prisma, {
+    jobId: options.jobId,
+    templateName: options.templateName,
+    channel: "WHATSAPP",
+    recipientPhone: options.customerPhone,
+    templateBody: template.body,
+    templateVars: options.templateVars,
+  });
 }

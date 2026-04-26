@@ -22,6 +22,7 @@ import { receiptRoutes } from "./routes/receipts.js";
 import { repairCatalogRoutes } from "./routes/repairs.js";
 import { settingsRoutes } from "./routes/settings.js";
 import { usersRoutes } from "./routes/users.js";
+import { startOutboxWorker } from "./services/notification-outbox.service.js";
 
 const env = loadEnv();
 const IS_PROD = env.NODE_ENV === "production";
@@ -55,6 +56,7 @@ await app.register(websocketPlugin);
 );
 
 const stopOverdue = startOverdueScheduler(app);
+const stopOutboxWorker = startOutboxWorker(app.prisma);
 
 app.register(healthRoutes);
 app.register(jobRoutes, { prefix: "/api/jobs" });
@@ -127,6 +129,7 @@ for (const signal of ["SIGINT", "SIGTERM"]) {
   process.on(signal, async () => {
     app.log.info(`Received ${signal}, shutting down...`);
     stopOverdue();
+    stopOutboxWorker();
     await app.close();
     process.exit(0);
   });
