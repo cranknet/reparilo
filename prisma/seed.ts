@@ -53,7 +53,8 @@ async function main() {
 
   if (existing) {
     console.log(`Admin user already exists: ${existing.username}`);
-    console.log("Skipping seed. Use the admin settings to manage users.");
+    console.log("Skipping admin seed. Seeding notification templates...");
+    await seedNotificationTemplates();
     return;
   }
 
@@ -83,6 +84,52 @@ async function main() {
     console.error("Failed to create admin user:", error);
     process.exit(1);
   }
+
+  await seedNotificationTemplates();
+}
+
+async function seedNotificationTemplates() {
+  const templates = [
+    {
+      name: "job_created",
+      channel: "WHATSAPP" as const,
+      body: "Hello {{customerName}}, your repair {{jobCode}} has been registered at {{shopName}}. You can track it at {{shopName}}/tracking/{{jobCode}}",
+      isDefault: true,
+    },
+    {
+      name: "job_done",
+      channel: "WHATSAPP" as const,
+      body: "Hello {{customerName}}, your device {{jobCode}} repair is complete and ready for pickup at {{shopName}}.",
+      isDefault: true,
+    },
+    {
+      name: "job_in_repair",
+      channel: "WHATSAPP" as const,
+      body: "Hello {{customerName}}, your device {{jobCode}} is now being repaired at {{shopName}}.",
+      isDefault: true,
+    },
+    {
+      name: "job_waiting_parts",
+      channel: "WHATSAPP" as const,
+      body: "Hello {{customerName}}, we are waiting for parts for your device {{jobCode}} at {{shopName}}.",
+      isDefault: true,
+    },
+    {
+      name: "job_delivered",
+      channel: "WHATSAPP" as const,
+      body: "Hello {{customerName}}, your device {{jobCode}} has been delivered. Thank you for choosing {{shopName}}!",
+      isDefault: true,
+    },
+  ];
+
+  for (const tmpl of templates) {
+    await prisma.notificationTemplate.upsert({
+      where: { name_channel: { name: tmpl.name, channel: tmpl.channel } },
+      create: tmpl,
+      update: {},
+    });
+  }
+  console.log("Notification templates seeded.");
 }
 
 main()
