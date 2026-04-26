@@ -14,6 +14,7 @@ import {
   search as searchCustomers,
   update as updateCustomer,
 } from "../services/customers.service.js";
+import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 
 function sendError(
   reply: FastifyReply,
@@ -42,7 +43,12 @@ export const customersRoutes: FastifyPluginAsync = async (app) => {
           400,
           "VALIDATION_ERROR",
           "Invalid customer data",
-          { errors: parsed.error.flatten().fieldErrors }
+          {
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
+          }
         );
       }
       try {
@@ -70,7 +76,12 @@ export const customersRoutes: FastifyPluginAsync = async (app) => {
           400,
           "VALIDATION_ERROR",
           "Invalid customer data",
-          { errors: parsed.error.flatten().fieldErrors }
+          {
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
+          }
         );
       }
       const { id } = req.params as { id: string };
@@ -95,7 +106,12 @@ export const customersRoutes: FastifyPluginAsync = async (app) => {
         400,
         "VALIDATION_ERROR",
         "Invalid query parameters",
-        { errors: parsed.error.flatten().fieldErrors }
+        {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        }
       );
     }
     const results = await searchCustomers(app.prisma, parsed.data);
@@ -123,7 +139,12 @@ export const customersRoutes: FastifyPluginAsync = async (app) => {
         400,
         "VALIDATION_ERROR",
         "Invalid query parameters",
-        { errors: parsed.error.flatten().fieldErrors }
+        {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        }
       );
     }
     const result = await listCustomers(app.prisma, parsed.data);

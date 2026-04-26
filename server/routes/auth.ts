@@ -2,6 +2,7 @@ import { changePasswordSchema } from "@shared/schemas/auth.schema";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyPluginAsync } from "fastify";
+import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async signature
 export const authRoutes: FastifyPluginAsync = async (app) => {
@@ -17,7 +18,10 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     if (!parsed.success) {
       return reply.status(400).send({
         error: "Validation failed",
-        details: parsed.error.flatten().fieldErrors,
+        details: resolveZodErrors(
+          parsed.error.flatten().fieldErrors,
+          request.locale
+        ),
       });
     }
 

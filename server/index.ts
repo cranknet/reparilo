@@ -8,6 +8,7 @@ import Fastify from "fastify";
 import { loadEnv } from "./config/env.js";
 import { startOverdueScheduler } from "./jobs/overdue-scheduler.js";
 import authPlugin from "./plugins/auth.js";
+import { localePlugin } from "./plugins/locale.js";
 import prismaPlugin from "./plugins/prisma.js";
 import securityPlugin from "./plugins/security.js";
 import { websocketPlugin, wsBroadcast } from "./plugins/websocket.js";
@@ -23,6 +24,7 @@ import { repairCatalogRoutes } from "./routes/repairs.js";
 import { settingsRoutes } from "./routes/settings.js";
 import { usersRoutes } from "./routes/users.js";
 import { startOutboxWorker } from "./services/notification-outbox.service.js";
+import { initValidationI18n } from "./utils/resolve-validation-messages.js";
 
 const env = loadEnv();
 const IS_PROD = env.NODE_ENV === "production";
@@ -45,6 +47,7 @@ app.addHook("onSend", (request, reply, _payload, done) => {
 await app.register(securityPlugin);
 await app.register(multipart, { limits: { fileSize: 5 * 1024 * 1024 } });
 await app.register(websocket);
+await app.register(localePlugin);
 
 await app.register(prismaPlugin);
 app.register(authRoutes);
@@ -57,6 +60,10 @@ await app.register(websocketPlugin);
 
 const stopOverdue = startOverdueScheduler(app);
 const stopOutboxWorker = startOutboxWorker(app.prisma);
+
+app.addHook("onReady", async () => {
+  await initValidationI18n();
+});
 
 app.register(healthRoutes);
 app.register(jobRoutes, { prefix: "/api/jobs" });

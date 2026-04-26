@@ -17,6 +17,7 @@ import {
   upsertShopSettings,
   upsertWhatsAppSettings,
 } from "../services/settings.service.js";
+import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 
 function sendError(
   reply: FastifyReply,
@@ -58,7 +59,12 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
           400,
           "VALIDATION_ERROR",
           "Invalid request body",
-          { errors: parsed.error.flatten().fieldErrors }
+          {
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
+          }
         );
       }
       const updated = await upsertAiSettings(app.prisma, parsed.data);
@@ -91,7 +97,12 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
           400,
           "VALIDATION_ERROR",
           "Invalid request body",
-          { errors: parsed.error.flatten().fieldErrors }
+          {
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
+          }
         );
       }
       const updated = await upsertShopSettings(app.prisma, parsed.data);
@@ -116,7 +127,12 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
           400,
           "VALIDATION_ERROR",
           "Invalid request body",
-          { errors: parsed.error.flatten().fieldErrors }
+          {
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
+          }
         );
       }
       const updated = await updateNotificationTemplate(
@@ -152,7 +168,12 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
           400,
           "VALIDATION_ERROR",
           "Invalid request body",
-          { errors: parsed.error.flatten().fieldErrors }
+          {
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
+          }
         );
       }
       const updated = await upsertWhatsAppSettings(app.prisma, parsed.data);

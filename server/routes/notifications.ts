@@ -6,6 +6,7 @@ import {
   getNotificationTemplates,
   updateNotificationTemplate,
 } from "../services/settings.service.js";
+import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 
 function sendError(
   reply: FastifyReply,
@@ -42,7 +43,12 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
           400,
           "VALIDATION_ERROR",
           "Invalid request body",
-          { errors: parsed.error.flatten().fieldErrors }
+          {
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
+          }
         );
       }
       const updated = await updateNotificationTemplate(

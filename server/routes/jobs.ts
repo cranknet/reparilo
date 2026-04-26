@@ -44,6 +44,7 @@ import {
   add as addWaitingPart,
   remove as removeWaitingPart,
 } from "../services/job-waiting-parts.service.js";
+import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 
 const JOB_CODE_RE = /^[A-Za-z0-9-]+$/;
 const PHONE4_RE = /^\d{4}$/;
@@ -228,7 +229,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         "VALIDATION_ERROR",
         "Invalid query parameters",
         {
-          errors: parsed.error.flatten().fieldErrors,
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
         }
       );
     }
@@ -281,7 +285,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
           "VALIDATION_ERROR",
           "Invalid request body",
           {
-            errors: parsed.error.flatten().fieldErrors,
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
           }
         );
       }
@@ -349,7 +356,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
           "VALIDATION_ERROR",
           "Invalid request body",
           {
-            errors: parsed.error.flatten().fieldErrors,
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
           }
         );
       }
@@ -395,7 +405,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
     const parsed = transitionStatusSchema.safeParse(req.body);
     if (!parsed.success) {
       return sendError(reply, 400, "VALIDATION_ERROR", "Invalid request body", {
-        errors: parsed.error.flatten().fieldErrors,
+        errors: resolveZodErrors(
+          parsed.error.flatten().fieldErrors,
+          req.locale
+        ),
       });
     }
 
@@ -488,7 +501,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
           "VALIDATION_ERROR",
           "Invalid request body",
           {
-            errors: parsed.error.flatten().fieldErrors,
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
           }
         );
       }
@@ -522,7 +538,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
           "VALIDATION_ERROR",
           "Invalid request body",
           {
-            errors: parsed.error.flatten().fieldErrors,
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
           }
         );
       }
@@ -570,7 +589,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
           "VALIDATION_ERROR",
           "Invalid request body",
           {
-            errors: parsed.error.flatten().fieldErrors,
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
           }
         );
       }
@@ -690,7 +712,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
           "VALIDATION_ERROR",
           "Invalid request body",
           {
-            errors: parsed.error.flatten().fieldErrors,
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
           }
         );
       }

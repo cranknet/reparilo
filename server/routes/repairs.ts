@@ -13,6 +13,7 @@ import {
   toggleActive,
   update as updateRepair,
 } from "../services/repair-catalog.service.js";
+import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 
 function sendError(
   reply: FastifyReply,
@@ -38,7 +39,12 @@ export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
         400,
         "VALIDATION_ERROR",
         "Invalid query parameters",
-        { errors: parsed.error.flatten().fieldErrors }
+        {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        }
       );
     }
     const result = await listRepairs(app.prisma, parsed.data);
@@ -65,7 +71,12 @@ export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
           400,
           "VALIDATION_ERROR",
           "Invalid request body",
-          { errors: parsed.error.flatten().fieldErrors }
+          {
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
+          }
         );
       }
       const repair = await createRepair(app.prisma, parsed.data);
@@ -85,7 +96,12 @@ export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
           400,
           "VALIDATION_ERROR",
           "Invalid request body",
-          { errors: parsed.error.flatten().fieldErrors }
+          {
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
+          }
         );
       }
       const result = await updateRepair(app.prisma, id, parsed.data);

@@ -14,6 +14,7 @@ import {
   toggleActive,
   update as updatePart,
 } from "../services/parts-catalog.service.js";
+import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 
 function sendError(
   reply: FastifyReply,
@@ -39,7 +40,12 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
         400,
         "VALIDATION_ERROR",
         "Invalid query parameters",
-        { errors: parsed.error.flatten().fieldErrors }
+        {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        }
       );
     }
     const result = await listParts(app.prisma, parsed.data);
@@ -66,7 +72,12 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
           400,
           "VALIDATION_ERROR",
           "Invalid request body",
-          { errors: parsed.error.flatten().fieldErrors }
+          {
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
+          }
         );
       }
       const part = await createPart(app.prisma, parsed.data);
@@ -86,7 +97,12 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
           400,
           "VALIDATION_ERROR",
           "Invalid request body",
-          { errors: parsed.error.flatten().fieldErrors }
+          {
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
+          }
         );
       }
       const result = await updatePart(app.prisma, id, parsed.data);
@@ -109,7 +125,12 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
           400,
           "VALIDATION_ERROR",
           "Invalid request body",
-          { errors: parsed.error.flatten().fieldErrors }
+          {
+            errors: resolveZodErrors(
+              parsed.error.flatten().fieldErrors,
+              req.locale
+            ),
+          }
         );
       }
       const result = await toggleActive(app.prisma, id, parsed.data.isActive);
