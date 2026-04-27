@@ -25,12 +25,7 @@ export function renderTemplate(
     CONDITIONAL_RE,
     (_match, key: string, content: string) => {
       const value = vars[key];
-      if (
-        value === undefined ||
-        value === null ||
-        value === "" ||
-        value === 0
-      ) {
+      if (value === undefined || value === null || value === "") {
         return "";
       }
       return content;

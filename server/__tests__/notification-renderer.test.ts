@@ -66,6 +66,13 @@ describe("renderTemplate conditionals", () => {
     const result = renderTemplate("{{if notes}}Notes: {{notes}}{{endif}}", {});
     expect(result).not.toContain("Notes");
   });
+
+  it("renders content when key is 0 (zero is a valid value)", () => {
+    const result = renderTemplate("{{if cost}}Cost: {{cost}}{{endif}}", {
+      cost: 0,
+    });
+    expect(result).toContain("Cost:");
+  });
 });
 
 describe("renderTemplate locale formatting", () => {
