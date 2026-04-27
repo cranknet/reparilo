@@ -1,7 +1,7 @@
 import type { RoleType } from "@shared/constants";
 import type { NotificationTemplate } from "@shared/types";
 import type { KeyboardEvent } from "react";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import AddUserModal from "@/components/modules/settings/add-user-modal";
@@ -13,6 +13,11 @@ import type { SettingsShopTabHandle } from "@/components/modules/settings/settin
 import SettingsShopTab from "@/components/modules/settings/settings-shop-tab";
 import SettingsUsersTab from "@/components/modules/settings/settings-users-tab";
 import TemplateEditor from "@/components/modules/settings/template-editor";
+import UnsavedChangesBar from "@/components/modules/settings/unsaved-changes-bar";
+import ConfirmDiscardDialog from "@/components/ui/confirm-discard-dialog";
+import { useDirtyState } from "@/hooks/use-dirty-state";
+import { useModalEffects } from "@/hooks/use-modal-effects";
+import { useToast } from "@/hooks/use-toast";
 import { useSettingsStore } from "@/stores/settings";
 import { useUsersStore } from "@/stores/users";
 
@@ -27,42 +32,14 @@ const TAB_ICONS: Record<SettingsTab, string> = {
   users: "group",
 };
 
-type ToastType = "success" | "error" | null;
-
 export default function SettingsPage() {
   const { t } = useTranslation();
   const baseId = useId();
   const [activeTab, setActiveTab] = useState<SettingsTab>("ai");
-  const [dirtyTabs, setDirtyTabs] = useState<Set<SettingsTab>>(new Set());
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{
-    message: string;
-    type: ToastType;
-  } | null>(null);
-  const [toastTimer, setToastTimer] = useState<ReturnType<
-    typeof setTimeout
-  > | null>(null);
-  const tabPanelRef = useRef<HTMLDivElement>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const tabRefs = useRef<Record<SettingsTab, HTMLButtonElement | null>>({
-    ai: null,
-    shop: null,
-    notifications: null,
-    users: null,
-  });
-  const previousActiveElement = useRef<HTMLElement | null>(null);
   const [editingTemplate, setEditingTemplate] =
     useState<NotificationTemplate | null>(null);
-
-  const aiTabRef = useRef<SettingsAiTabHandle>(null);
-  const shopTabRef = useRef<SettingsShopTabHandle>(null);
-
-  const { notificationTemplates, fetchNotificationTemplates } =
-    useSettingsStore();
-  const navigate = useNavigate();
-
   const [pendingTab, setPendingTab] = useState<SettingsTab | null>(null);
-
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetTarget, setResetTarget] = useState<{
@@ -70,53 +47,35 @@ export default function SettingsPage() {
     username: string;
   } | null>(null);
 
+  const tabRefs = useRef<Record<SettingsTab, HTMLButtonElement | null>>({
+    ai: null,
+    shop: null,
+    notifications: null,
+    users: null,
+  });
+  const aiTabRef = useRef<SettingsAiTabHandle>(null);
+  const shopTabRef = useRef<SettingsShopTabHandle>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  const { notificationTemplates, fetchNotificationTemplates } =
+    useSettingsStore();
+  const navigate = useNavigate();
+  const { toast, show: showToast, dismiss: dismissToast } = useToast();
+  const { markDirty, isDirty } = useDirtyState();
+
+  useModalEffects(pendingTab !== null, () => setPendingTab(null), dialogRef);
+
   useEffect(() => {
     if (activeTab === "notifications" && notificationTemplates.length === 0) {
       fetchNotificationTemplates().catch(() => {
-        // Error is stored in the Zustand state via fetchNotificationTemplates
+        // Error stored in Zustand state
       });
     }
   }, [activeTab, notificationTemplates.length, fetchNotificationTemplates]);
 
-  const dirty = dirtyTabs.size > 0;
-  const currentTabDirty = dirtyTabs.has(activeTab);
   const tabId = (key: SettingsTab) => `${baseId}-tab-${key}`;
   const headingId = (key: SettingsTab) => `${baseId}-heading-${key}`;
   const panelId = (key: SettingsTab) => `${baseId}-panel-${key}`;
-
-  const showToast = useCallback((message: string, type: ToastType) => {
-    setToast({ message, type });
-    const timer = setTimeout(() => setToast(null), 5000);
-    setToastTimer(timer);
-  }, []);
-
-  const dismissToast = useCallback(() => {
-    setToast(null);
-    if (toastTimer) {
-      clearTimeout(toastTimer);
-      setToastTimer(null);
-    }
-  }, [toastTimer]);
-
-  useEffect(
-    () => () => {
-      if (toastTimer) {
-        clearTimeout(toastTimer);
-      }
-    },
-    [toastTimer]
-  );
-
-  useEffect(() => {
-    if (!dirty) {
-      return;
-    }
-    function handleBeforeUnload(e: BeforeUnloadEvent) {
-      e.preventDefault();
-    }
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [dirty]);
 
   const tabs: { key: SettingsTab; label: string }[] = [
     { key: "ai", label: t("ai_configuration") },
@@ -125,68 +84,23 @@ export default function SettingsPage() {
     { key: "users", label: t("users_management") },
   ];
 
-  function markTabDirty(tab: SettingsTab, isDirty = true) {
-    setDirtyTabs((prev) => {
-      const next = new Set(prev);
-      if (isDirty) {
-        next.add(tab);
-      } else {
-        next.delete(tab);
-      }
-      return next;
-    });
-  }
+  const sectionDescriptions: Record<SettingsTab, string> = {
+    ai: t("ai_configuration_desc"),
+    shop: t("shop_information_desc"),
+    notifications: t("notifications_settings_desc"),
+    users: t("users_management_desc"),
+  };
+
+  const isFormTab = activeTab === "ai" || activeTab === "shop";
 
   function switchTab(key: SettingsTab) {
-    if (dirtyTabs.has(activeTab) && activeTab !== key) {
+    if (isDirty(activeTab) && activeTab !== key) {
       setPendingTab(key);
       return;
     }
     setActiveTab(key);
     tabRefs.current[key]?.focus();
   }
-
-  useEffect(() => {
-    if (!pendingTab) {
-      return;
-    }
-    previousActiveElement.current = document.activeElement as HTMLElement;
-    dialogRef.current?.querySelector<HTMLElement>("button")?.focus();
-
-    function handleDialogKey(e: globalThis.KeyboardEvent) {
-      if (e.key === "Escape") {
-        setPendingTab(null);
-        return;
-      }
-      if (e.key !== "Tab") {
-        return;
-      }
-      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      if (!focusable?.length) {
-        return;
-      }
-      const first = focusable[0];
-      const last = Array.from(focusable).at(-1);
-      if (!last) {
-        return;
-      }
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-
-    document.addEventListener("keydown", handleDialogKey);
-    return () => {
-      document.removeEventListener("keydown", handleDialogKey);
-      previousActiveElement.current?.focus();
-    };
-  }, [pendingTab]);
 
   function handleDiscardAndSwitch() {
     if (!pendingTab) {
@@ -197,32 +111,27 @@ export default function SettingsPage() {
     } else if (activeTab === "shop") {
       shopTabRef.current?.reset();
     }
-    markTabDirty(activeTab, false);
+    markDirty(activeTab, false);
     setActiveTab(pendingTab);
     tabRefs.current[pendingTab]?.focus();
     setPendingTab(null);
   }
 
-  function handleKeepEditing() {
-    setPendingTab(null);
-  }
-
   function handleTabKeyDown(e: KeyboardEvent<HTMLButtonElement>) {
-    const currentIndex = TAB_KEYS.indexOf(activeTab);
-    let nextIndex: number | undefined;
+    const idx = TAB_KEYS.indexOf(activeTab);
+    let next: number | undefined;
     if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-      nextIndex = (currentIndex + 1) % TAB_KEYS.length;
+      next = (idx + 1) % TAB_KEYS.length;
     } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-      nextIndex = (currentIndex - 1 + TAB_KEYS.length) % TAB_KEYS.length;
+      next = (idx - 1 + TAB_KEYS.length) % TAB_KEYS.length;
     } else if (e.key === "Home") {
-      nextIndex = 0;
+      next = 0;
     } else if (e.key === "End") {
-      nextIndex = TAB_KEYS.length - 1;
+      next = TAB_KEYS.length - 1;
     }
-    if (nextIndex !== undefined) {
+    if (next !== undefined) {
       e.preventDefault();
-      const nextTab = TAB_KEYS[nextIndex];
-      switchTab(nextTab);
+      switchTab(TAB_KEYS[next]);
     }
   }
 
@@ -232,7 +141,7 @@ export default function SettingsPage() {
     } else if (activeTab === "shop") {
       shopTabRef.current?.reset();
     }
-    markTabDirty(activeTab, false);
+    markDirty(activeTab, false);
   }
 
   async function handleCreateUser(data: {
@@ -253,15 +162,6 @@ export default function SettingsPage() {
     setShowResetModal(false);
     setResetTarget(null);
   }
-
-  const sectionDescriptions: Record<SettingsTab, string> = {
-    ai: t("ai_configuration_desc"),
-    shop: t("shop_information_desc"),
-    notifications: t("notifications_settings_desc"),
-    users: t("users_management_desc"),
-  };
-
-  const isFormTab = activeTab === "ai" || activeTab === "shop";
 
   return (
     <>
@@ -314,7 +214,6 @@ export default function SettingsPage() {
             aria-labelledby={headingId(activeTab)}
             className="rounded-3xl bg-surface-container-lowest p-5 md:p-7"
             id={panelId(activeTab)}
-            ref={tabPanelRef}
             role="tabpanel"
           >
             <div className="mb-5">
@@ -335,7 +234,7 @@ export default function SettingsPage() {
             </div>
             {activeTab === "ai" && (
               <SettingsAiTab
-                onDirtyChange={(d) => markTabDirty("ai", d)}
+                onDirtyChange={(d) => markDirty("ai", d)}
                 onSavingChange={setSaving}
                 onToast={(msg, type) => showToast(msg, type)}
                 ref={aiTabRef}
@@ -343,7 +242,7 @@ export default function SettingsPage() {
             )}
             {activeTab === "shop" && (
               <SettingsShopTab
-                onDirtyChange={(d) => markTabDirty("shop", d)}
+                onDirtyChange={(d) => markDirty("shop", d)}
                 onSavingChange={setSaving}
                 onToast={(msg, type) => showToast(msg, type)}
                 ref={shopTabRef}
@@ -366,51 +265,18 @@ export default function SettingsPage() {
             )}
           </div>
 
-          <div
-            className={`overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] ${
-              currentTabDirty && isFormTab
-                ? "mt-4 max-h-24 opacity-100"
-                : "max-h-0 opacity-0"
-            }`}
-          >
-            <div className="flex flex-col gap-3 rounded-2xl bg-surface-container-low px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <span className="text-on-surface-variant text-sm">
-                {t("unsaved_changes")}
-              </span>
-              <div className="flex gap-3">
-                <button
-                  className="rounded-xl px-4 py-2 font-semibold text-on-surface-variant text-sm transition-colors hover:bg-surface-container"
-                  onClick={handleCancel}
-                  type="button"
-                >
-                  {t("cancel")}
-                </button>
-                <button
-                  className="flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 py-2 font-bold text-on-primary text-sm transition-all active:opacity-80"
-                  disabled={saving}
-                  onClick={() => {
-                    if (activeTab === "ai") {
-                      aiTabRef.current?.requestSubmit();
-                    } else if (activeTab === "shop") {
-                      shopTabRef.current?.requestSubmit();
-                    }
-                  }}
-                  type="submit"
-                >
-                  {saving ? (
-                    <span className="material-symbols-outlined animate-spin text-[18px]">
-                      progress_activity
-                    </span>
-                  ) : (
-                    <span className="material-symbols-outlined text-[18px]">
-                      save
-                    </span>
-                  )}
-                  {saving ? t("settings_saving") : t("save_changes")}
-                </button>
-              </div>
-            </div>
-          </div>
+          <UnsavedChangesBar
+            onCancel={handleCancel}
+            onSave={() => {
+              if (activeTab === "ai") {
+                aiTabRef.current?.requestSubmit();
+              } else if (activeTab === "shop") {
+                shopTabRef.current?.requestSubmit();
+              }
+            }}
+            saving={saving}
+            visible={isDirty(activeTab) && isFormTab}
+          />
         </div>
       </div>
 
@@ -440,38 +306,17 @@ export default function SettingsPage() {
       )}
 
       {pendingTab && (
-        <div
-          aria-label={t("confirm_tab_switch_title")}
-          aria-modal="true"
-          className="fixed inset-0 z-40 flex items-center justify-center bg-on-surface/40 transition-all duration-200"
-          role="dialog"
-        >
-          <div
-            className="mx-4 w-full max-w-sm animate-[fadeSlideUp_0.2s_ease-out] rounded-2xl bg-surface-container-lowest p-6 shadow-xl"
-            ref={dialogRef}
-          >
-            <h4 className="font-extrabold font-headline text-base text-on-surface">
-              {t("confirm_tab_switch_title")}
-            </h4>
-            <p className="mt-2 text-on-surface-variant text-sm">
-              {t("confirm_tab_switch_desc")}
-            </p>
-            <div className="mt-5 flex justify-end gap-3">
-              <button
-                className="rounded-xl px-4 py-2 font-semibold text-on-surface-variant text-sm transition-colors hover:bg-surface-container"
-                onClick={handleKeepEditing}
-                type="button"
-              >
-                {t("keep_editing")}
-              </button>
-              <button
-                className="rounded-xl bg-primary px-4 py-2 font-bold text-on-primary text-sm transition-all active:opacity-80"
-                onClick={handleDiscardAndSwitch}
-                type="button"
-              >
-                {t("discard_changes")}
-              </button>
-            </div>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-on-surface/40">
+          <div ref={dialogRef}>
+            <ConfirmDiscardDialog
+              description={t("confirm_tab_switch_desc")}
+              discardLabel={t("discard_changes")}
+              keepLabel={t("keep_editing")}
+              onDiscard={handleDiscardAndSwitch}
+              onKeepEditing={() => setPendingTab(null)}
+              open
+              title={t("confirm_tab_switch_title")}
+            />
           </div>
         </div>
       )}

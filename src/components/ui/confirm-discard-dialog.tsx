@@ -3,9 +3,13 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 
 interface ConfirmDiscardDialogProps {
+  description?: string;
+  discardLabel?: string;
+  keepLabel?: string;
   onDiscard: () => void;
   onKeepEditing: () => void;
   open: boolean;
+  title?: string;
 }
 
 const FOCUSABLE_SELECTOR =
@@ -35,6 +39,10 @@ export default function ConfirmDiscardDialog({
   onDiscard,
   onKeepEditing,
   open,
+  title,
+  description,
+  keepLabel,
+  discardLabel,
 }: ConfirmDiscardDialogProps) {
   const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
@@ -80,21 +88,21 @@ export default function ConfirmDiscardDialog({
           className="font-bold font-headline text-lg text-on-surface"
           id="confirm-close-title"
         >
-          {t("add_part_modal.discard_title")}
+          {title ?? t("add_part_modal.discard_title")}
         </h3>
         <p
           className="mt-2 text-on-surface-variant text-sm"
           id="confirm-close-desc"
         >
-          {t("add_part_modal.discard_desc")}
+          {description ?? t("add_part_modal.discard_desc")}
         </p>
       </div>
       <div className="flex items-center justify-end gap-3 px-6 py-4">
         <Button onClick={onKeepEditing} type="button" variant="ghost">
-          {t("add_part_modal.keep_editing")}
+          {keepLabel ?? t("add_part_modal.keep_editing")}
         </Button>
         <Button onClick={onDiscard} type="button" variant="destructive">
-          {t("add_part_modal.discard")}
+          {discardLabel ?? t("add_part_modal.discard")}
         </Button>
       </div>
     </div>
