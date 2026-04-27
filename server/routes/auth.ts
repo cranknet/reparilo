@@ -17,7 +17,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     const parsed = changePasswordSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
-        error: "Validation failed",
+        error: "VALIDATION_ERROR",
         details: resolveZodErrors(
           parsed.error.flatten().fieldErrors,
           request.locale

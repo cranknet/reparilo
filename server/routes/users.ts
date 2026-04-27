@@ -279,7 +279,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       const parsed = resetPasswordSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply.status(400).send({
-          error: "Validation failed",
+          error: "VALIDATION_ERROR",
           details: resolveZodErrors(
             parsed.error.flatten().fieldErrors,
             request.locale
@@ -346,7 +346,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     const parsed = updateProfileSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({
-        error: "Validation failed",
+        error: "VALIDATION_ERROR",
         details: resolveZodErrors(
           parsed.error.flatten().fieldErrors,
           request.locale
