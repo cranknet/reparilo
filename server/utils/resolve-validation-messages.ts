@@ -54,3 +54,16 @@ export function resolveZodErrors(
   }
   return resolved;
 }
+
+export function resolveZodResult(
+  error: import("zod").ZodError,
+  locale: string
+): { fieldErrors: Record<string, string[]>; formErrors: string[] } {
+  const flattened = error.flatten();
+  return {
+    fieldErrors: resolveZodErrors(flattened.fieldErrors, locale),
+    formErrors: (flattened.formErrors as string[]).map((m) =>
+      resolveValidationMessage(m, locale)
+    ),
+  };
+}

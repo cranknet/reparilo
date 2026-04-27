@@ -17,7 +17,10 @@ import {
   upsertShopSettings,
   upsertWhatsAppSettings,
 } from "../services/settings.service.js";
-import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
+import {
+  resolveZodErrors,
+  resolveZodResult,
+} from "../utils/resolve-validation-messages.js";
 
 function sendError(
   reply: FastifyReply,
@@ -163,16 +166,20 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const parsed = updateWhatsAppSettingsSchema.safeParse(req.body);
       if (!parsed.success) {
+        const { fieldErrors, formErrors } = resolveZodResult(
+          parsed.error,
+          req.locale
+        );
         return sendError(
           reply,
           400,
           "VALIDATION_ERROR",
           "Invalid request body",
           {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
+            errors: {
+              ...fieldErrors,
+              ...(formErrors.length ? { _form: formErrors } : {}),
+            },
           }
         );
       }
