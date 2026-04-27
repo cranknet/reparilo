@@ -36,8 +36,7 @@ export function resolveValidationMessage(
     return message;
   }
   const key = message.slice(VALIDATION_PREFIX.length);
-  validationI18n.changeLanguage(locale);
-  return validationI18n.t(key, { defaultValue: message });
+  return validationI18n.t(key, { defaultValue: message, lng: locale });
 }
 
 export function resolveZodErrors(

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type ToastType = "success" | "error";
 
@@ -13,6 +13,9 @@ export function useToast(autohideMs = 5000) {
 
   const show = useCallback(
     (message: string, type: ToastType) => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
       setToast({ message, type });
       timerRef.current = setTimeout(() => setToast(null), autohideMs);
     },
@@ -26,6 +29,15 @@ export function useToast(autohideMs = 5000) {
       timerRef.current = null;
     }
   }, []);
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    },
+    []
+  );
 
   return { toast, show, dismiss };
 }

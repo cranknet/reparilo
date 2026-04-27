@@ -13,7 +13,10 @@ import { hashPassword } from "better-auth/crypto";
 import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
 import { deleteAvatar, uploadAvatar } from "../services/avatar.service.js";
-import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
+import {
+  resolveValidationMessage,
+  resolveZodErrors,
+} from "../utils/resolve-validation-messages.js";
 
 async function checkUniqueFields(
   prisma: PrismaClient,
@@ -157,8 +160,11 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       const parsed = createUserSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply.status(400).send({
-          error: "Validation failed",
-          details: parsed.error.flatten().fieldErrors,
+          error: "VALIDATION_ERROR",
+          details: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            request.locale
+          ),
         });
       }
 
@@ -387,10 +393,11 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     if (!paramParsed.success) {
       return reply.status(400).send({
         error: "VALIDATION_ERROR",
-        details: resolveZodErrors(
-          paramParsed.error.flatten().fieldErrors,
-          request.locale
-        ),
+        details: {
+          id: paramParsed.error
+            .flatten()
+            .formErrors.map((m) => resolveValidationMessage(m, request.locale)),
+        },
       });
     }
     const id = paramParsed.data;
