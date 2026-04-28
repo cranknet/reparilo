@@ -24,6 +24,10 @@ const ALLOWED_TABLES = new Set([
 
 const BLOCKED_TABLES = new Set(["accounts", "sessions", "verifications"]);
 
+const BLOCKED_COLUMNS: Record<string, Set<string>> = {
+  users: new Set(["password"]),
+};
+
 function stripSqlComments(sql: string): string {
   return sql.replace(/--.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 }
@@ -88,6 +92,47 @@ const BLOCKED_PATTERNS = [
 ];
 
 const SELECT_ONLY_REGEX = /^\s*SELECT\s/i;
+const SELECT_COLUMNS_RE = /\bSELECT\s+(.+?)\s+FROM/i;
+const AS_ALIAS_RE = /.*\bas\s+/i;
+const TABLE_PREFIX_RE = /.*\./;
+
+function checkBlockedColumns(
+  sql: string,
+  table: string,
+  blocked: Set<string>
+): string | null {
+  const selectMatch = sql.match(SELECT_COLUMNS_RE);
+  if (!selectMatch || selectMatch[1].includes("*")) {
+    return null;
+  }
+  const columns = selectMatch[1].split(",").map((c) => c.trim().toLowerCase());
+  for (const col of columns) {
+    const colName = col.replace(AS_ALIAS_RE, "").replace(TABLE_PREFIX_RE, "");
+    if (blocked.has(colName)) {
+      return `Access to column '${colName}' on table '${table}' is not allowed`;
+    }
+  }
+  return null;
+}
+
+function validateTables(sql: string, tables: string[]): string | null {
+  for (const table of tables) {
+    if (BLOCKED_TABLES.has(table)) {
+      return `Access to table '${table}' is not allowed`;
+    }
+    if (!ALLOWED_TABLES.has(table)) {
+      return `Table '${table}' is not in the allowed list`;
+    }
+    const blocked = BLOCKED_COLUMNS[table];
+    if (blocked) {
+      const colError = checkBlockedColumns(sql, table, blocked);
+      if (colError) {
+        return colError;
+      }
+    }
+  }
+  return null;
+}
 
 export async function executeQueryDatabase(
   prisma: PrismaClient,
@@ -114,23 +159,13 @@ export async function executeQueryDatabase(
 
   const stripped = stripSqlComments(trimmed);
   const tables = extractTableNames(stripped);
-  for (const table of tables) {
-    if (BLOCKED_TABLES.has(table)) {
-      return {
-        success: false,
-        data: `Access to table '${table}' is not allowed`,
-      };
-    }
-    if (!ALLOWED_TABLES.has(table)) {
-      return {
-        success: false,
-        data: `Table '${table}' is not in the allowed list`,
-      };
-    }
+  const tableError = validateTables(stripped, tables);
+  if (tableError) {
+    return { success: false, data: tableError };
   }
 
   try {
-    const result = await prisma.$queryRawUnsafe(trimmed);
+    const result = await prisma.$queryRawUnsafe(stripped);
     return { success: true, data: JSON.stringify(result) };
   } catch (err) {
     return {

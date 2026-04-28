@@ -97,7 +97,7 @@ export const addJobPartSchema = z.object({
     PartCategory.OTHER,
   ]),
   unitPrice: z.number().min(0).max(99_999_999.99),
-  quantity: z.number().int().min(1).default(1),
+  quantity: z.number().int().min(1).max(10_000).default(1),
   supplier: z.string().optional(),
 });
 
