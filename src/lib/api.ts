@@ -17,7 +17,7 @@ let csrfCooldownUntil = 0;
 const CSRF_FAILURE_THRESHOLD = 3;
 const CSRF_COOLDOWN_MS = 30_000;
 
-function fetchCsrfToken(): Promise<string | null> {
+export function fetchCsrfToken(): Promise<string | null> {
   if (csrfToken) {
     return Promise.resolve(csrfToken);
   }

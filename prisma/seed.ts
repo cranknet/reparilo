@@ -55,6 +55,7 @@ async function main() {
     console.log(`Admin user already exists: ${existing.username}`);
     console.log("Skipping admin seed. Seeding notification templates...");
     await seedNotificationTemplates();
+    await seedAgentDefinitions();
     return;
   }
 
@@ -86,6 +87,7 @@ async function main() {
   }
 
   await seedNotificationTemplates();
+  await seedAgentDefinitions();
 }
 
 async function seedNotificationTemplates() {
@@ -130,6 +132,38 @@ async function seedNotificationTemplates() {
     });
   }
   console.log("Notification templates seeded.");
+}
+
+async function seedAgentDefinitions() {
+  const agents = [
+    {
+      name: "general_assistant",
+      displayName: "General Assistant",
+      instructions:
+        "You are a helpful AI assistant for a phone repair shop called Reparilo.\nYou have access to the shop's database and can answer questions about repairs, parts, customers, revenue, and more.\nAlways respond in the language the user writes in. Be concise and data-driven.\nWhen showing numbers, format them as currency when appropriate.",
+      toolNames: ["queryDatabase", "getSchema"],
+      isActive: true,
+      isBuiltIn: true,
+    },
+    {
+      name: "data_analyst",
+      displayName: "Data Analyst",
+      instructions:
+        "You are a data analyst for a phone repair shop. You specialize in business insights, revenue analysis, and trend detection.\nAlways start by understanding the time period the user is interested in.\nUse charts-friendly formats when possible (tables with clear headers).\nRespond in the user's language.",
+      toolNames: ["queryDatabase", "getSchema"],
+      isActive: true,
+      isBuiltIn: true,
+    },
+  ];
+
+  for (const agent of agents) {
+    await prisma.aiAgentDefinition.upsert({
+      where: { name: agent.name },
+      update: {},
+      create: agent,
+    });
+  }
+  console.log("Agent definitions seeded.");
 }
 
 main()

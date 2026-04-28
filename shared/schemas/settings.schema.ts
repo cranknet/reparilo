@@ -1,11 +1,22 @@
 import { z } from "zod";
 
-export const updateAiSettingsSchema = z.object({
-  endpointUrl: z.string().min(1, "validations.endpoint_required"),
-  apiKey: z.string().optional(),
-  model: z.string().optional(),
-  temperature: z.number().min(0).max(1).optional(),
-});
+export const updateAiSettingsSchema = z
+  .object({
+    endpointUrl: z.string().min(1, "validations.endpoint_required").optional(),
+    apiKey: z.string().optional(),
+    model: z.string().optional(),
+    temperature: z.number().min(0).max(1).optional(),
+    enabled: z.boolean().optional(),
+  })
+  .refine(
+    (data) =>
+      data.endpointUrl !== undefined ||
+      data.apiKey !== undefined ||
+      data.model !== undefined ||
+      data.temperature !== undefined ||
+      data.enabled !== undefined,
+    { message: "validations.at_least_one_field" }
+  );
 
 export const updateShopSettingsSchema = z.object({
   shopName: z.string().min(1, "validations.shop_name_required"),

@@ -29,6 +29,12 @@ const NAV_ITEMS: NavItem[] = [
     to: "/jobs",
   },
   {
+    icon: "auto_awesome",
+    labelKey: "ai_agent_title",
+    perm: { ai: ["access"] },
+    to: "/ai-analyst",
+  },
+  {
     icon: "settings",
     labelKey: "settings",
     perm: { settings: ["view"] },

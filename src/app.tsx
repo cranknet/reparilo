@@ -6,6 +6,9 @@ import DashboardLayout from "@/components/modules/dashboard-layout";
 import ProtectedRoute, {
   RequirePermission,
 } from "@/components/modules/protected-route";
+import AiAnalystPage from "@/pages/ai-analyst";
+import AiAnalystLayout from "@/pages/ai-analyst/layout";
+import AiMemoriesPage from "@/pages/ai-analyst/memories/page";
 import ChangePasswordPage from "@/pages/auth/change-password";
 import LoginPage from "@/pages/auth/login";
 import ResetPasswordPage from "@/pages/auth/reset-password";
@@ -117,6 +120,28 @@ export default function App() {
           }
           path="/settings"
         />
+        <Route element={<RequirePermission perm={{ ai: ["access"] }} />}>
+          <Route
+            element={
+              <DashboardLayout>
+                <AiAnalystLayout>
+                  <AiAnalystPage />
+                </AiAnalystLayout>
+              </DashboardLayout>
+            }
+            path="/ai-analyst"
+          />
+          <Route
+            element={
+              <DashboardLayout>
+                <AiAnalystLayout>
+                  <AiMemoriesPage />
+                </AiAnalystLayout>
+              </DashboardLayout>
+            }
+            path="/ai-analyst/memories"
+          />
+        </Route>
         <Route
           element={
             <DashboardLayout>

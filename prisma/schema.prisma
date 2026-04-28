@@ -92,6 +92,11 @@ enum AiRole {
   ASSISTANT
 }
 
+enum AiMessageFeedback {
+  THUMBS_UP
+  THUMBS_DOWN
+}
+
 // ─────────────────────────────────────────────
 // USER
 // password stores Argon2id hash (~97 chars).
@@ -125,6 +130,7 @@ model User {
   jobRepairs     JobRepair[]
   auditLogs      AuditLog[]
   chatHistory    AiChatHistory[]
+  conversations  AiConversation[]
   sessions       Session[]
   accounts       Account[]
   verifications  Verification[]
@@ -493,6 +499,7 @@ model AiSettings {
   apiKeyEncrypted String   @default("")
   model           String?
   temperature     Float    @default(0.7)
+  enabled         Boolean  @default(false)
   createdAt       DateTime @default(now()) @db.Timestamptz
   updatedAt       DateTime @updatedAt      @db.Timestamptz
 
@@ -516,6 +523,95 @@ model AiChatHistory {
   @@index([userId, createdAt])
   @@index([createdAt])
   @@map("ai_chat_history")
+}
+
+// ─────────────────────────────────────────────
+// AI CONVERSATIONS
+// ─────────────────────────────────────────────
+
+model AiConversation {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String?
+  starred   Boolean     @default(false)
+  messages  AiMessage[]
+  createdAt DateTime    @default(now()) @db.Timestamptz
+  updatedAt DateTime    @updatedAt      @db.Timestamptz
+
+  @@index([userId, updatedAt])
+  @@index([userId, starred])
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id             String           @id @default(cuid())
+  conversationId String
+  conversation   AiConversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           AiRole
+  content        String           @db.Text
+  agentName      String?
+  toolCalls      Json?
+  pinned         Boolean          @default(false)
+  feedback       AiMessageFeedback?
+  createdAt      DateTime         @default(now()) @db.Timestamptz
+
+  @@index([conversationId, createdAt])
+  @@map("ai_messages")
+}
+
+// ─────────────────────────────────────────────
+// AI AGENT DEFINITIONS
+// ─────────────────────────────────────────────
+
+model AiAgentDefinition {
+  id                String   @id @default(cuid())
+  name              String   @unique
+  displayName       String
+  instructions      String   @default("") @db.Text
+  model             String?
+  temperature      Float?
+  toolNames         String[] @default([])
+  handoffKeywords   String[] @default([])
+  isActive          Boolean  @default(true)
+  isBuiltIn         Boolean  @default(false)
+  enabledHostedTools String[] @default([])
+  vectorStoreId     String?
+  createdAt         DateTime @default(now()) @db.Timestamptz
+  updatedAt         DateTime @updatedAt      @db.Timestamptz
+
+  @@map("ai_agent_definitions")
+}
+
+// ─────────────────────────────────────────────
+// AI MEMORIES
+// ─────────────────────────────────────────────
+
+model AiMemory {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  tags      String[] @default([])
+  source    String   @default("manual")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt      @db.Timestamptz
+
+  @@map("ai_memories")
+}
+
+// ─────────────────────────────────────────────
+// AI INSTRUCTIONS
+// ─────────────────────────────────────────────
+
+model AiInstruction {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  tags      String[] @default([])
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt      @db.Timestamptz
+
+  @@map("ai_instructions")
 }
 
 // ─────────────────────────────────────────────

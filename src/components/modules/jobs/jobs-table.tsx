@@ -170,18 +170,7 @@ export default function JobsTable({
                     </button>
                   </td>
                   <td className="p-4 text-end">
-                    <button
-                      className="inline-block"
-                      onClick={(e) => e.stopPropagation()}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.stopPropagation();
-                        }
-                      }}
-                      type="button"
-                    >
-                      <JobActionsMenu job={job} />
-                    </button>
+                    <JobActionsMenu job={job} />
                   </td>
                 </tr>
               );

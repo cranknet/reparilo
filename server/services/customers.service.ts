@@ -111,6 +111,7 @@ export async function search(
       ],
     },
     select: {
+      _count: { select: { jobs: true } },
       email: true,
       id: true,
       name: true,

@@ -3,9 +3,10 @@ import type { NotificationTemplate } from "@shared/types";
 import type { KeyboardEvent } from "react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import AddUserModal from "@/components/modules/settings/add-user-modal";
 import ResetPasswordModal from "@/components/modules/settings/reset-password-modal";
+import SettingsAgentsTab from "@/components/modules/settings/settings-agents-tab";
 import type { SettingsAiTabHandle } from "@/components/modules/settings/settings-ai-tab";
 import SettingsAiTab from "@/components/modules/settings/settings-ai-tab";
 import SettingsNotificationsTab from "@/components/modules/settings/settings-notifications-tab";
@@ -21,11 +22,18 @@ import { useToast } from "@/hooks/use-toast";
 import { useSettingsStore } from "@/stores/settings";
 import { useUsersStore } from "@/stores/users";
 
-type SettingsTab = "ai" | "shop" | "notifications" | "users";
+type SettingsTab = "agents" | "ai" | "shop" | "notifications" | "users";
 
-const TAB_KEYS: SettingsTab[] = ["ai", "shop", "notifications", "users"];
+const TAB_KEYS: SettingsTab[] = [
+  "agents",
+  "ai",
+  "shop",
+  "notifications",
+  "users",
+];
 
 const TAB_ICONS: Record<SettingsTab, string> = {
+  agents: "smart_toy",
   ai: "psychology",
   shop: "storefront",
   notifications: "notifications",
@@ -35,7 +43,10 @@ const TAB_ICONS: Record<SettingsTab, string> = {
 export default function SettingsPage() {
   const { t } = useTranslation();
   const baseId = useId();
-  const [activeTab, setActiveTab] = useState<SettingsTab>("ai");
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<SettingsTab>(
+    () => (searchParams.get("tab") as SettingsTab) || "ai"
+  );
   const [saving, setSaving] = useState(false);
   const [editingTemplate, setEditingTemplate] =
     useState<NotificationTemplate | null>(null);
@@ -48,6 +59,7 @@ export default function SettingsPage() {
   } | null>(null);
 
   const tabRefs = useRef<Record<SettingsTab, HTMLButtonElement | null>>({
+    agents: null,
     ai: null,
     shop: null,
     notifications: null,
@@ -78,6 +90,7 @@ export default function SettingsPage() {
   const panelId = (key: SettingsTab) => `${baseId}-panel-${key}`;
 
   const tabs: { key: SettingsTab; label: string }[] = [
+    { key: "agents", label: t("ai_defs_title") },
     { key: "ai", label: t("ai_configuration") },
     { key: "shop", label: t("shop_information") },
     { key: "notifications", label: t("notifications_settings") },
@@ -85,6 +98,7 @@ export default function SettingsPage() {
   ];
 
   const sectionDescriptions: Record<SettingsTab, string> = {
+    agents: t("ai_defs_description"),
     ai: t("ai_configuration_desc"),
     shop: t("shop_information_desc"),
     notifications: t("notifications_settings_desc"),
@@ -232,6 +246,7 @@ export default function SettingsPage() {
                 {sectionDescriptions[activeTab]}
               </p>
             </div>
+            {activeTab === "agents" && <SettingsAgentsTab />}
             {activeTab === "ai" && (
               <SettingsAiTab
                 onDirtyChange={(d) => markDirty("ai", d)}

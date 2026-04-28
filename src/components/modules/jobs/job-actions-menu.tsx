@@ -125,7 +125,10 @@ export default function JobActionsMenu({ job }: JobActionsMenuProps) {
           aria-haspopup="true"
           aria-label={t("job_actions")}
           className={`min-h-[44px] min-w-[44px] rounded-lg p-2 transition-colors hover:bg-surface-container-high hover:text-primary ${open ? "bg-primary-container text-on-primary" : "text-on-surface-variant"}`}
-          onClick={() => setOpen((prev) => !prev)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen((prev) => !prev);
+          }}
           ref={triggerRef}
           title={t("job_actions")}
           type="button"

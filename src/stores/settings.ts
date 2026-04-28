@@ -39,10 +39,11 @@ interface SettingsState {
   notificationTemplates: NotificationTemplate[];
   outboxLogs: OutboxLog[];
   saveAiSettings: (data: {
-    endpointUrl: string;
+    endpointUrl?: string;
     apiKey?: string;
     model?: string;
     temperature?: number;
+    enabled?: boolean;
   }) => Promise<AiSettings>;
   saveShopSettings: (data: {
     shopName: string;

@@ -12,6 +12,7 @@ import { localePlugin } from "./plugins/locale.js";
 import prismaPlugin from "./plugins/prisma.js";
 import securityPlugin from "./plugins/security.js";
 import { websocketPlugin, wsBroadcast } from "./plugins/websocket.js";
+import { aiRoutes } from "./routes/ai.js";
 import { authRoutes } from "./routes/auth.js";
 import { customersRoutes } from "./routes/customers.js";
 import { dashboardRoutes } from "./routes/dashboard.js";
@@ -75,6 +76,7 @@ app.register(usersRoutes, { prefix: "/api/users" });
 app.register(notificationsRoutes, { prefix: "/api/notifications" });
 app.register(settingsRoutes, { prefix: "/api/settings" });
 app.register(dashboardRoutes, { prefix: "/api/dashboard" });
+app.register(aiRoutes, { prefix: "/api/ai" });
 
 if (IS_PROD) {
   const distRoot = path.resolve("dist");

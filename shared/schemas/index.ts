@@ -1,4 +1,33 @@
 export type {
+  AgentDefinitionCreateInput,
+  AgentDefinitionUpdateInput,
+  AiInstructionInput,
+  AiMemoryInput,
+  BulkDeleteConversationsInput,
+  ChatMessageInput,
+  CreateConversationInput,
+  ExportQueryInput,
+  ListQueryInput,
+  MessagesQueryInput,
+  UpdateConversationInput,
+  UpdateMessageInput,
+} from "./ai.schema";
+// biome-ignore lint/performance/noBarrelFile: shared schemas barrel is intentional
+export {
+  agentDefinitionCreateSchema,
+  agentDefinitionUpdateSchema,
+  aiInstructionSchema,
+  aiMemorySchema,
+  bulkDeleteConversationsSchema,
+  chatMessageSchema,
+  createConversationSchema,
+  exportQuerySchema,
+  listQuerySchema,
+  messagesQuerySchema,
+  updateConversationSchema,
+  updateMessageSchema,
+} from "./ai.schema";
+export type {
   ActivityListQueryInput,
   ChangePasswordInput,
   CreateUserInput,
@@ -8,7 +37,6 @@ export type {
   UpdateProfileInput,
   UpdateUserInput,
 } from "./auth.schema";
-// biome-ignore lint/performance/noBarrelFile: shared schemas barrel is intentional
 export {
   activityListQuerySchema,
   changePasswordSchema,

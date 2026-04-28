@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Switch } from "@/components/ui/switch";
 import { useSettingsStore } from "@/stores/settings";
 
 const AI_MODELS = [
@@ -75,6 +76,7 @@ export default function SettingsAiTab({
     apiKey: "",
     model: "gpt-4o",
     temperature: 0.4,
+    enabled: false,
   });
   const [aiFormInitial, setAiFormInitial] = useState(aiForm);
   const [showApiKey, setShowApiKey] = useState(false);
@@ -95,6 +97,7 @@ export default function SettingsAiTab({
         apiKey: "",
         model: aiSettings.model ?? "gpt-4o",
         temperature: aiSettings.temperature ?? 0.4,
+        enabled: aiSettings.enabled ?? false,
       };
       setAiForm(form);
       setAiFormInitial(form);
@@ -143,6 +146,35 @@ export default function SettingsAiTab({
 
   return (
     <form className="space-y-6" onSubmit={handleAiSubmit} ref={formRef}>
+      <div className="flex items-center justify-between rounded-2xl bg-surface-container-low p-5">
+        <div className="flex items-center gap-3">
+          <div
+            className={`flex h-10 w-10 items-center justify-center rounded-xl ${aiForm.enabled ? "bg-primary/10" : "bg-surface-container-highest"}`}
+          >
+            <span
+              className={`material-symbols-outlined text-xl ${aiForm.enabled ? "text-primary" : "text-on-surface-variant"}`}
+            >
+              smart_toy
+            </span>
+          </div>
+          <div>
+            <p className="font-semibold text-on-surface text-sm">
+              {t("ai_analyst")}
+            </p>
+            <p className="text-on-surface-variant text-xs">
+              {aiForm.enabled ? t("ai_enabled_desc") : t("ai_disabled_desc")}
+            </p>
+          </div>
+        </div>
+        <Switch
+          ariaLabel={t("ai_analyst")}
+          checked={aiForm.enabled}
+          onChange={(checked) => {
+            setAiForm((f) => ({ ...f, enabled: checked }));
+            onDirtyChange(true);
+          }}
+        />
+      </div>
       <div className="rounded-2xl bg-surface-container-low p-5">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="space-y-2">

@@ -22,16 +22,18 @@ export async function getAiSettings(prisma: PrismaClient) {
   return publicAiSettings(row);
 }
 
+export async function getRawAiSettings(prisma: PrismaClient) {
+  return await prisma.aiSettings.findUnique({ where: { id: "default" } });
+}
+
 export async function upsertAiSettings(
   prisma: PrismaClient,
   input: UpdateAiSettingsInput
 ) {
-  const data: Record<string, unknown> = {
-    endpointUrl: input.endpointUrl,
-  };
-  // Treat empty apiKey as "no change" to avoid wiping the stored key when the
-  // form is saved without the user re-entering it. To clear the key, the
-  // caller must send a dedicated signal (not supported by the current UI).
+  const data: Record<string, unknown> = {};
+  if (input.endpointUrl !== undefined) {
+    data.endpointUrl = input.endpointUrl;
+  }
   if (input.apiKey !== undefined && input.apiKey !== "") {
     data.apiKeyEncrypted = encryptSecret(input.apiKey);
   }
@@ -42,13 +44,21 @@ export async function upsertAiSettings(
     data.temperature = input.temperature;
   }
 
+  const shouldAutoEnable =
+    input.endpointUrl && input.apiKey && input.enabled === undefined;
+
+  if (input.enabled !== undefined || shouldAutoEnable) {
+    data.enabled = input.enabled ?? true;
+  }
+
   const row = await prisma.aiSettings.upsert({
     create: {
-      id: "default",
       apiKeyEncrypted: (data.apiKeyEncrypted as string) ?? "",
-      endpointUrl: input.endpointUrl,
-      model: input.model ?? null,
-      temperature: input.temperature ?? 0.7,
+      enabled: (data.enabled as boolean) ?? false,
+      endpointUrl: (data.endpointUrl as string) ?? "",
+      id: "default",
+      model: (data.model as string | null) ?? null,
+      temperature: (data.temperature as number) ?? 0.7,
     },
     update: data,
     where: { id: "default" },
