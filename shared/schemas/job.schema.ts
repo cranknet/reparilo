@@ -5,6 +5,7 @@ const repairCategoryValues = Object.values(RepairCategory) as [
   string,
   ...string[],
 ];
+const jobStatusValues = Object.values(JobStatus) as [string, ...string[]];
 
 export const intakeRepairItemSchema = z.object({
   repairId: z.string().optional(),
@@ -30,14 +31,14 @@ export const createJobSchema = z.object({
   estimatedCost: z
     .number()
     .min(0, { error: "validations.valid_cost" })
-    .max(99_999_999.99),
-  estimatedDate: z.string().optional(),
+    .max(99_999_999.99, { error: "validations.valid_cost" }),
+  estimatedDate: z.coerce.date().optional(),
   depositAmount: z
     .number()
     .min(0, { error: "validations.valid_deposit" })
     .max(99_999_999.99)
     .optional(),
-  technicianId: z.string().min(1).optional(),
+  technicianId: z.string().cuid({ error: "validations.invalid_id" }).optional(),
   isWarrantyReturn: z.boolean().optional(),
   warrantyForJobId: z.string().optional(),
   repairs: z.array(intakeRepairItemSchema).optional(),
@@ -49,9 +50,9 @@ export const updateJobSchema = z.object({
   reportedProblem: z.string().min(1).optional(),
   conditionNotes: z.string().optional(),
   estimatedCost: z.number().min(0).max(99_999_999.99).optional(),
-  estimatedDate: z.string().min(1).nullable().optional(),
+  estimatedDate: z.coerce.date().nullable().optional(),
   depositAmount: z.number().min(0).max(99_999_999.99).nullable().optional(),
-  technicianId: z.string().min(1).nullable().optional(),
+  technicianId: z.string().cuid().nullable().optional(),
   color: z.string().optional(),
 });
 
@@ -121,7 +122,7 @@ export const addWaitingPartSchema = z.object({
 export const jobListQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  status: z.string().optional(),
+  status: z.enum(jobStatusValues).optional(),
   technicianId: z.string().optional(),
   search: z.string().optional(),
 });

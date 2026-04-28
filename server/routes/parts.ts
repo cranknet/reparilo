@@ -4,7 +4,7 @@ import {
   togglePartStatusSchema,
   updatePartSchema,
 } from "@shared/schemas/parts-catalog.schema";
-import type { FastifyPluginAsync, FastifyReply } from "fastify";
+import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
 import {
   create as createPart,
@@ -15,18 +15,7 @@ import {
   update as updatePart,
 } from "../services/parts-catalog.service.js";
 import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
-
-function sendError(
-  reply: FastifyReply,
-  status: number,
-  code: string,
-  message: string,
-  details?: Record<string, unknown>
-) {
-  return reply
-    .status(status)
-    .send({ error: code, message, details: details ?? {} });
-}
+import { sendError } from "../utils/send-error.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const partsRoutes: FastifyPluginAsync = async (app) => {

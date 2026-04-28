@@ -1,6 +1,7 @@
 import type { NotificationTemplate } from "@shared/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useModalEffects } from "@/hooks/use-modal-effects";
 import { useSettingsStore } from "@/stores/settings";
 
 const TEMPLATE_VARIABLES = [
@@ -30,6 +31,10 @@ export default function TemplateEditor({
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useModalEffects(open, onClose, dialogRef);
 
   useEffect(() => {
     if (!(open && template)) {
@@ -39,26 +44,7 @@ export default function TemplateEditor({
     setChannel(template.channel as "SMS" | "WHATSAPP");
     setBody(template.body);
     setError(null);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [open, template]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const insertVariable = useCallback(
     (variable: string) => {
@@ -119,7 +105,10 @@ export default function TemplateEditor({
         onClick={onClose}
         type="button"
       />
-      <div className="modal-surface relative z-10 flex max-h-[80vh] w-full max-w-lg flex-col overflow-hidden rounded-xl bg-surface-container-lowest shadow-2xl">
+      <div
+        className="modal-surface relative z-10 flex max-h-[80vh] w-full max-w-lg flex-col overflow-hidden rounded-xl bg-surface-container-lowest shadow-2xl"
+        ref={dialogRef}
+      >
         <div className="flex items-center justify-between border-outline-variant border-b px-6 py-4">
           <h2 className="font-bold font-headline text-lg text-on-surface">
             {t("notifications_edit_template")}

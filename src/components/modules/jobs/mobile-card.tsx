@@ -2,9 +2,9 @@ import type { JobStatusType } from "@shared/constants";
 import { DEVICE_ICONS } from "@shared/constants";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { StatusBadge } from "@/components/ui/status-badge";
 import JobActionsMenu from "./job-actions-menu";
 import type { JobRow } from "./jobs-shared";
-import StatusBadge from "./status-badge";
 import TechnicianSelect from "./technician-select";
 
 interface JobMobileCardProps {

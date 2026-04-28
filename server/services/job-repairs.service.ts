@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@generated/client";
 import { AuditAction, type RepairCategory } from "@generated/client";
-import { INACTIVE_STATUSES } from "@shared/constants";
 import type { AddJobRepairInput } from "@shared/schemas";
+import { assertJobMutable } from "../utils/job-mutations.js";
 import { createAuditLog } from "./audit.service.js";
 
 export async function add(
@@ -14,8 +14,9 @@ export async function add(
   if (!job) {
     return null;
   }
-  if (INACTIVE_STATUSES.includes(job.status)) {
-    return { error: "JOB_IN_TERMINAL_STATUS" as const };
+  const mutabilityError = assertJobMutable(job);
+  if (mutabilityError) {
+    return mutabilityError;
   }
 
   if (input.repairId) {
@@ -66,8 +67,9 @@ export async function remove(
   if (!repair) {
     return null;
   }
-  if (INACTIVE_STATUSES.includes(repair.job.status)) {
-    return { error: "JOB_IN_TERMINAL_STATUS" as const };
+  const mutabilityError = assertJobMutable(repair.job);
+  if (mutabilityError) {
+    return mutabilityError;
   }
 
   await prisma.$transaction(async (tx) => {

@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@generated/client";
 import { AuditAction } from "@generated/client";
-import { INACTIVE_STATUSES } from "@shared/constants";
 import type { AddJobNoteInput } from "@shared/schemas";
+import { assertJobMutable } from "../utils/job-mutations.js";
 import { createAuditLog } from "./audit.service.js";
 
 export async function list(prisma: PrismaClient, jobId: string) {
@@ -28,8 +28,9 @@ export async function add(
   if (!job) {
     return null;
   }
-  if (INACTIVE_STATUSES.includes(job.status)) {
-    return { error: "JOB_IN_TERMINAL_STATUS" as const };
+  const mutabilityError = assertJobMutable(job);
+  if (mutabilityError) {
+    return mutabilityError;
   }
 
   const note = await prisma.$transaction(async (tx) => {

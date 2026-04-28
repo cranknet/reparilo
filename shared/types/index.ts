@@ -35,6 +35,27 @@ export type NotificationTemplate = Prisma.NotificationTemplateGetPayload<
 >;
 export type ShopSettings = Prisma.ShopSettingsGetPayload<Record<string, never>>;
 export type AiSettings = Prisma.AiSettingsGetPayload<Record<string, never>>;
+export type Session = Prisma.SessionGetPayload<Record<string, never>>;
+export type Account = Prisma.AccountGetPayload<Record<string, never>>;
+export type Verification = Prisma.VerificationGetPayload<Record<string, never>>;
+export type JobPartsWaiting = Prisma.JobPartsWaitingGetPayload<
+  Record<string, never>
+>;
+export type JobCounter = Prisma.JobCounterGetPayload<Record<string, never>>;
+export type NotificationOutbox = Prisma.NotificationOutboxGetPayload<
+  Record<string, never>
+>;
+export type AiConversation = Prisma.AiConversationGetPayload<
+  Record<string, never>
+>;
+export type AiMessage = Prisma.AiMessageGetPayload<Record<string, never>>;
+export type AiAgentDefinition = Prisma.AiAgentDefinitionGetPayload<
+  Record<string, never>
+>;
+export type AiMemory = Prisma.AiMemoryGetPayload<Record<string, never>>;
+export type AiInstruction = Prisma.AiInstructionGetPayload<
+  Record<string, never>
+>;
 export type AiChatHistory = Prisma.AiChatHistoryGetPayload<
   Record<string, never>
 >;

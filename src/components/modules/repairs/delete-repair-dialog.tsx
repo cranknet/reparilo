@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useModalEffects } from "@/hooks/use-modal-effects";
 
 interface DeleteRepairDialogProps {
   onClose: () => void;
@@ -15,23 +16,9 @@ export default function DeleteRepairDialog({
   repairName,
 }: DeleteRepairDialogProps) {
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    document.body.style.overflow = "hidden";
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    }
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
-  }, [open, onClose]);
+  useModalEffects(open, onClose, dialogRef);
 
   if (!open) {
     return null;
@@ -49,7 +36,10 @@ export default function DeleteRepairDialog({
         onClick={onClose}
         type="button"
       />
-      <div className="modal-surface relative z-10 w-full max-w-md rounded-xl bg-surface-container-lowest p-6 shadow-2xl">
+      <div
+        className="modal-surface relative z-10 w-full max-w-md rounded-xl bg-surface-container-lowest p-6 shadow-2xl"
+        ref={dialogRef}
+      >
         <h2 className="mb-2 font-bold font-headline text-error text-lg">
           {t("delete_repair_confirm_title")}
         </h2>

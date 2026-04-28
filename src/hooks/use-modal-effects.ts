@@ -1,5 +1,7 @@
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 
+let scrollLockCount = 0;
+
 export function useModalEffects(
   open: boolean,
   onClose: () => void,
@@ -25,6 +27,10 @@ export function useModalEffects(
     if (!open) {
       return;
     }
+    scrollLockCount++;
+    if (scrollLockCount === 1) {
+      document.body.style.overflow = "hidden";
+    }
     previousFocus.current = document.activeElement as HTMLElement;
     document.addEventListener("keydown", handleKeyDown);
     if (dialogRef?.current) {
@@ -36,6 +42,10 @@ export function useModalEffects(
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       previousFocus.current?.focus();
+      scrollLockCount--;
+      if (scrollLockCount === 0) {
+        document.body.style.overflow = "";
+      }
     };
   }, [open, handleKeyDown, dialogRef]);
 }

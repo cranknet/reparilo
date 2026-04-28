@@ -5,7 +5,7 @@ import {
   customerSearchQuerySchema,
   updateCustomerSchema,
 } from "@shared/schemas";
-import type { FastifyPluginAsync, FastifyReply } from "fastify";
+import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
 import {
   create as createCustomer,
@@ -15,18 +15,7 @@ import {
   update as updateCustomer,
 } from "../services/customers.service.js";
 import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
-
-function sendError(
-  reply: FastifyReply,
-  status: number,
-  code: string,
-  message: string,
-  details?: Record<string, unknown>
-) {
-  return reply
-    .status(status)
-    .send({ error: code, message, details: details ?? {} });
-}
+import { sendError } from "../utils/send-error.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const customersRoutes: FastifyPluginAsync = async (app) => {

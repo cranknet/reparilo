@@ -3,20 +3,13 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { PrismaClient } from "@generated/client";
 import { AuditAction } from "@generated/client";
-import { INACTIVE_STATUSES } from "@shared/constants";
+import { validateMagicBytes } from "../utils/file-validation.js";
+import { assertJobMutable } from "../utils/job-mutations.js";
 import { createAuditLog } from "./audit.service.js";
 
 const UPLOAD_DIR = path.resolve("uploads/job-photos");
 const MAX_PHOTOS = 5;
 const ALLOWED_MIMES = ["image/jpeg", "image/png", "image/webp"];
-
-const MAGIC_BYTES: Record<string, number[]> = {
-  "image/jpeg": [0xff, 0xd8, 0xff],
-  "image/png": [0x89, 0x50, 0x4e, 0x47],
-  "image/webp": [0x52, 0x49, 0x46, 0x46],
-};
-
-const WEBP_MARKER = [0x57, 0x45, 0x42, 0x50];
 
 function extFromMime(mime: string): string {
   if (mime === "image/png") {
@@ -26,22 +19,6 @@ function extFromMime(mime: string): string {
     return "webp";
   }
   return "jpg";
-}
-
-function validateMagicBytes(buffer: Buffer, mime: string): boolean {
-  const expected = MAGIC_BYTES[mime];
-  if (!expected) {
-    return false;
-  }
-  const headerMatch = expected.every((byte, i) => buffer[i] === byte);
-  if (!headerMatch) {
-    return false;
-  }
-  if (mime === "image/webp") {
-    const offset = 8;
-    return WEBP_MARKER.every((byte, i) => buffer[offset + i] === byte);
-  }
-  return true;
 }
 
 export async function upload(
@@ -54,8 +31,9 @@ export async function upload(
   if (!job) {
     return null;
   }
-  if (INACTIVE_STATUSES.includes(job.status)) {
-    return { error: "JOB_IN_TERMINAL_STATUS" as const };
+  const mutabilityError = assertJobMutable(job);
+  if (mutabilityError) {
+    return mutabilityError;
   }
 
   const photoCount = await prisma.jobPhoto.count({ where: { jobId } });

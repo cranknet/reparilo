@@ -1,27 +1,9 @@
+import { AI_MODELS } from "@shared/constants";
 import type { FormEvent } from "react";
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Switch } from "@/components/ui/switch";
 import { useSettingsStore } from "@/stores/settings";
-
-const AI_MODELS = [
-  {
-    id: "gpt-4o-mini",
-    labelKey: "model_label_fast",
-    labelShort: "GPT-4o Mini",
-  },
-  { id: "gpt-4o", labelKey: "model_label_balanced", labelShort: "GPT-4o" },
-  {
-    id: "gpt-4-turbo",
-    labelKey: "model_label_best",
-    labelShort: "GPT-4 Turbo",
-  },
-  {
-    id: "o1-preview",
-    labelKey: "model_label_advanced",
-    labelShort: "o1-preview",
-  },
-];
 
 const TEST_BUTTON_CLASSES: Record<string, string> = {
   success: "bg-success text-on-success",
@@ -106,8 +88,8 @@ export default function SettingsAiTab({
 
   useEffect(() => {
     if (!aiSettings) {
-      fetchAiSettings().catch(() => {
-        // Error is stored in the Zustand state via fetchAiSettings
+      fetchAiSettings().catch((err) => {
+        console.error("Failed to fetch AI settings:", err);
       });
     }
   }, [aiSettings, fetchAiSettings]);

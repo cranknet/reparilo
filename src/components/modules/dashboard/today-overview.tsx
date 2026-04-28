@@ -1,5 +1,6 @@
 import type { JobStatusType } from "@shared/constants";
 import { useTranslation } from "react-i18next";
+import { STATUS_DOT_COLORS } from "@/lib/status-colors";
 
 interface RecentIntake {
   device: string;
@@ -7,17 +8,6 @@ interface RecentIntake {
   status: JobStatusType;
   timeAgo: string;
 }
-
-const STATUS_DOT_COLORS: Record<string, string> = {
-  INTAKE: "bg-secondary",
-  WAITING_FOR_PARTS: "bg-tertiary",
-  IN_REPAIR: "bg-primary",
-  ON_HOLD: "bg-error",
-  DONE: "bg-on-secondary-container",
-  DELIVERED: "bg-on-secondary-container",
-  RETURNED: "bg-outline-variant",
-  CANCELLED: "bg-outline-variant",
-};
 
 interface TodayOverviewProps {
   completedToday: number;

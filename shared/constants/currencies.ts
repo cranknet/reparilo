@@ -1,7 +1,7 @@
 export const CURRENCIES = [
-  { code: "DZD", name: "Algerian Dinar", symbol: "DA" },
-  { code: "USD", name: "US Dollar", symbol: "$" },
-  { code: "EUR", name: "Euro", symbol: "€" },
+  { code: "DZD", label: "DZD — Algerian Dinar (DA)" },
+  { code: "USD", label: "USD — US Dollar ($)" },
+  { code: "EUR", label: "EUR — Euro (€)" },
 ] as const;
 
 export type CurrencyCode = (typeof CURRENCIES)[number]["code"];

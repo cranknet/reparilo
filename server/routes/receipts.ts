@@ -1,5 +1,5 @@
 import { jobIdParamSchema } from "@shared/schemas";
-import type { FastifyPluginAsync, FastifyReply } from "fastify";
+import type { FastifyPluginAsync } from "fastify";
 import { resolveUrls } from "../config/env.js";
 import { requirePermission } from "../middlewares/rbac.js";
 import { getById as getJobById } from "../services/job.service.js";
@@ -7,15 +7,7 @@ import {
   renderLabelHtml,
   renderReceiptHtml,
 } from "../services/receipt.service.js";
-
-function sendError(
-  reply: FastifyReply,
-  status: number,
-  code: string,
-  message: string
-) {
-  return reply.status(status).send({ error: code, message });
-}
+import { sendError } from "../utils/send-error.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const receiptRoutes: FastifyPluginAsync = async (app) => {

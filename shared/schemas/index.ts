@@ -36,6 +36,7 @@ export type {
   ToggleUserStatusInput,
   UpdateProfileInput,
   UpdateUserInput,
+  UserListQueryInput,
 } from "./auth.schema";
 export {
   activityListQuerySchema,
@@ -47,6 +48,7 @@ export {
   updateProfileSchema,
   updateUserSchema,
   userIdParamSchema,
+  userListQuerySchema,
 } from "./auth.schema";
 export type {
   CreateCustomerInput,

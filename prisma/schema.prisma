@@ -270,6 +270,8 @@ model Job {
   @@index([technicianId])
   @@index([createdById])
   @@index([warrantyForJobId])
+  @@index([accessCode])
+  @@index([createdAt])
   @@index([status, createdAt])
   @@index([status, estimatedDate])
   @@map("jobs")

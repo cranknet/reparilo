@@ -13,6 +13,7 @@ import { loadEnv, resolveUrls } from "../config/env.js";
 import {
   DEFAULT_SECURITY,
   isMutation,
+  MUTATION_METHODS,
   matchRoute,
   routeSecurity,
 } from "../config/route-security.js";
@@ -271,7 +272,6 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
   });
 
   // ── Layer 8: Audit Logging (fire-and-forget off the hot path) ──────────
-  const MUTATION_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
 
   app.addHook("onResponse", (request, reply, done) => {
     done();

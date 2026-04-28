@@ -1,6 +1,7 @@
 import type { Customer } from "@shared/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useModalEffects } from "@/hooks/use-modal-effects";
 import { useCustomersStore } from "@/stores/customers";
 
 interface EditCustomerDialogProps {
@@ -34,6 +35,8 @@ export default function EditCustomerDialog({
   const dialogRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
+  useModalEffects(open, onClose, dialogRef);
+
   useEffect(() => {
     if (!open) {
       return;
@@ -44,53 +47,7 @@ export default function EditCustomerDialog({
       phone: customer.phone,
     });
     setSubmitError(null);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [open, customer]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    function trapFocus(e: KeyboardEvent) {
-      if (e.key !== "Tab" || !dialogRef.current) {
-        return;
-      }
-      const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      if (focusable.length === 0) {
-        return;
-      }
-      const focusableArr = Array.from(focusable);
-      const first = focusableArr[0];
-      const last = focusableArr.at(-1);
-      if (e.shiftKey && document.activeElement === first && last) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last && first) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-    document.addEventListener("keydown", trapFocus, true);
-    return () => document.removeEventListener("keydown", trapFocus, true);
-  }, [open]);
 
   useEffect(() => {
     if (open) {

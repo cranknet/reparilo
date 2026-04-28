@@ -1,5 +1,6 @@
 import type { JobStatusType } from "@shared/constants";
 import { useTranslation } from "react-i18next";
+import { STATUS_CHIP_STYLES, STATUS_DOT_COLORS } from "@/lib/status-colors";
 
 interface RepairJob {
   completedAt?: string;
@@ -10,28 +11,6 @@ interface RepairJob {
   status: JobStatusType;
   technician: string;
 }
-
-const STATUS_CHIP_STYLES: Record<string, string> = {
-  INTAKE: "bg-secondary-container text-on-secondary-container",
-  WAITING_FOR_PARTS: "bg-tertiary-fixed text-on-tertiary-fixed-variant",
-  IN_REPAIR: "bg-primary/10 text-primary",
-  ON_HOLD: "bg-error-container text-on-error-container",
-  DONE: "bg-on-secondary-container/10 text-on-secondary-container",
-  DELIVERED: "bg-on-secondary-container/10 text-on-secondary-container",
-  RETURNED: "bg-outline-variant/20 text-on-surface-variant",
-  CANCELLED: "bg-outline-variant/20 text-on-surface-variant",
-};
-
-const STATUS_DOT_STYLES: Record<string, string> = {
-  INTAKE: "bg-secondary",
-  WAITING_FOR_PARTS: "bg-tertiary",
-  IN_REPAIR: "bg-primary",
-  ON_HOLD: "bg-error",
-  DONE: "bg-on-secondary-container",
-  DELIVERED: "bg-on-secondary-container",
-  RETURNED: "bg-outline-variant",
-  CANCELLED: "bg-outline-variant",
-};
 
 interface ActiveRepairsQueueProps {
   jobs: RepairJob[];
@@ -78,7 +57,7 @@ export default function ActiveRepairsQueue({ jobs }: ActiveRepairsQueueProps) {
                     className={`flex items-center gap-1.5 rounded-full px-3 py-1 font-bold font-label text-xs uppercase ${STATUS_CHIP_STYLES[job.status] ?? "bg-primary/10 text-primary"}`}
                   >
                     <span
-                      className={`inline-block h-2 w-2 rounded-full ${STATUS_DOT_STYLES[job.status] ?? "bg-primary"}`}
+                      className={`inline-block h-2 w-2 rounded-full ${STATUS_DOT_COLORS[job.status] ?? "bg-primary"}`}
                     />
                     {t(`status.${job.status}`)}
                   </span>

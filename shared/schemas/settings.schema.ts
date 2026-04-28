@@ -2,10 +2,13 @@ import { z } from "zod";
 
 export const updateAiSettingsSchema = z
   .object({
-    endpointUrl: z.string().min(1, "validations.endpoint_required").optional(),
+    endpointUrl: z
+      .string()
+      .min(1, { error: "validations.endpoint_required" })
+      .optional(),
     apiKey: z.string().optional(),
     model: z.string().optional(),
-    temperature: z.number().min(0).max(1).optional(),
+    temperature: z.number().min(0).max(2).optional(),
     enabled: z.boolean().optional(),
   })
   .refine(
@@ -19,7 +22,10 @@ export const updateAiSettingsSchema = z
   );
 
 export const updateShopSettingsSchema = z.object({
-  shopName: z.string().min(1, "validations.shop_name_required"),
+  shopName: z
+    .string()
+    .min(1, { error: "validations.shop_name_required" })
+    .optional(),
   address: z.string().optional(),
   phone: z.string().optional(),
   currency: z.string().optional(),

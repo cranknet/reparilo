@@ -3,10 +3,10 @@ import { JOB_STATUS_FLOW } from "@shared/constants";
 import type { Job } from "@shared/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import { useJobsStore } from "@/stores/jobs";
 import { useToastStore } from "@/stores/toast";
-import StatusBadge from "./status-badge";
 
 const REQUIRES_REASON: JobStatusType[] = ["ON_HOLD", "CANCELLED"];
 

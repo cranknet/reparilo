@@ -1,4 +1,4 @@
-import type { RoleType } from "@shared/constants";
+import { ROLE_LABEL_KEYS } from "@shared/constants";
 import type { PermissionCheck } from "@shared/permissions";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -68,12 +68,6 @@ const MORE_ITEMS: NavItem[] = [
     to: "/notifications",
   },
 ];
-
-const ROLE_LABEL_KEYS: Record<RoleType, string> = {
-  OWNER: "role.OWNER",
-  TECHNICIAN: "role.TECHNICIAN",
-  FRONT_DESK: "role.FRONT_DESK",
-};
 
 const ACTIVE_FONT_SETTINGS = '"FILL" 1, "wght" 700, "GRAD" 0, "opsz" 24';
 

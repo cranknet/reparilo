@@ -14,6 +14,8 @@ import type {
   UpdateJobInput,
 } from "@shared/schemas";
 import { generateJobCode } from "../utils/job-code.js";
+import { assertJobMutable } from "../utils/job-mutations.js";
+import { logger } from "../utils/logger.js";
 import { createAuditLog } from "./audit.service.js";
 import { findTemplate } from "./notification-outbox.service.js";
 
@@ -245,17 +247,17 @@ export async function create(
       if (uniqueRepairIds.size !== repairIds.length) {
         throw new Error("DUPLICATE_REPAIR");
       }
+      await tx.jobRepair.createMany({
+        data: input.repairs.map((repair) => ({
+          category: repair.category as RepairCategory,
+          createdById: userId,
+          jobId: created.id,
+          price: repair.price,
+          repairId: repair.repairId ?? null,
+          repairName: repair.repairName,
+        })),
+      });
       for (const repair of input.repairs) {
-        await tx.jobRepair.create({
-          data: {
-            category: repair.category as RepairCategory,
-            createdById: userId,
-            jobId: created.id,
-            price: repair.price,
-            repairId: repair.repairId ?? null,
-            repairName: repair.repairName,
-          },
-        });
         await createAuditLog(tx, {
           action: AuditAction.REPAIR_ADDED,
           jobId: created.id,
@@ -307,8 +309,9 @@ export async function update(
   if (!job) {
     return null;
   }
-  if (INACTIVE_STATUSES.includes(job.status)) {
-    return { error: "JOB_IN_TERMINAL_STATUS" as const };
+  const mutabilityError = assertJobMutable(job);
+  if (mutabilityError) {
+    return mutabilityError;
   }
 
   if (input.technicianId !== undefined && input.technicianId !== null) {
@@ -627,7 +630,7 @@ async function triggerNotification(
 ): Promise<void> {
   const template = await findTemplate(prisma, options.templateName, "WHATSAPP");
   if (!template) {
-    console.warn(
+    logger.warn(
       `[notifications] Template "${options.templateName}" not found — skipping notification for job ${options.jobId ?? "unknown"}`
     );
     return;

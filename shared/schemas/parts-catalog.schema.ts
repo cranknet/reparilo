@@ -2,7 +2,7 @@ import { PartCategory } from "@shared/constants";
 import { z } from "zod";
 
 export const createPartSchema = z.object({
-  name: z.string().min(1, "Part name is required"),
+  name: z.string().min(1, "validations.part_name_required"),
   category: z.enum([
     PartCategory.SCREEN,
     PartCategory.BATTERY,
@@ -15,7 +15,10 @@ export const createPartSchema = z.object({
     PartCategory.BUTTON,
     PartCategory.OTHER,
   ]),
-  defaultPrice: z.number().min(0, "Price must be positive").max(99_999_999.99),
+  defaultPrice: z
+    .number()
+    .min(0, "validations.price_positive")
+    .max(99_999_999.99),
   supplier: z.string().optional(),
 });
 

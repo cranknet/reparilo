@@ -5,6 +5,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { fromNodeHeaders } from "better-auth/node";
 import { admin, username } from "better-auth/plugins";
 import { loadEnv, resolveUrls } from "../config/env.js";
+import { logger } from "../utils/logger.js";
 import { sendPasswordResetEmail } from "./email.js";
 
 /**
@@ -39,7 +40,7 @@ export function createAuth(prisma: PrismaClient) {
         try {
           await sendPasswordResetEmail(user.email, url);
         } catch (error) {
-          console.error("[auth] Failed to send password reset email", error);
+          logger.error("[auth] Failed to send password reset email", error);
           throw error;
         }
       },
@@ -54,7 +55,7 @@ export function createAuth(prisma: PrismaClient) {
             },
           });
         } catch {
-          console.error("[auth] Failed to audit password reset");
+          logger.error("[auth] Failed to audit password reset");
         }
       },
     },

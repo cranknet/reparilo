@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { STATUS_COLORS } from "@/lib/status-colors";
 
 interface ScheduleItem {
   customerName: string;
@@ -12,14 +13,6 @@ interface ScheduleItem {
 interface TodayScheduleProps {
   items: ScheduleItem[];
 }
-
-const STATUS_COLORS: Record<string, string> = {
-  IN_REPAIR: "bg-primary",
-  WAITING_FOR_PARTS: "bg-tertiary",
-  INTAKE: "bg-secondary",
-  TESTING: "bg-outline-variant",
-  DONE: "bg-on-secondary-container",
-};
 
 export default function TodaySchedule({ items }: TodayScheduleProps) {
   const { t } = useTranslation();

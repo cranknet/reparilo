@@ -1,4 +1,5 @@
 import { OutboxStatus, type PrismaClient } from "@generated/client";
+import { logger } from "../utils/logger.js";
 import { renderTemplate } from "./notification-renderer.js";
 import { decryptWhatsAppConfig, sendWhatsApp } from "./notification-sender.js";
 
@@ -112,7 +113,7 @@ export async function processOutbox(prisma: PrismaClient): Promise<void> {
 export function startOutboxWorker(prisma: PrismaClient): () => void {
   intervalRef = setInterval(() => {
     processOutbox(prisma).catch((err) => {
-      console.error("Outbox worker error:", err);
+      logger.error("Outbox worker error:", err);
     });
   }, POLL_INTERVAL_MS);
   if (intervalRef.unref) {

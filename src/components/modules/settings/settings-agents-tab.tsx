@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { useModalEffects } from "@/hooks/use-modal-effects";
 import api from "@/lib/api";
 
 interface AgentDefinition {
@@ -438,6 +439,13 @@ export default function SettingsAgentsTab() {
   const [deleteTarget, setDeleteTarget] = useState<AgentDefinition | null>(
     null
   );
+  const deleteDialogRef = useRef<HTMLDivElement>(null);
+
+  useModalEffects(
+    deleteTarget !== null,
+    () => setDeleteTarget(null),
+    deleteDialogRef
+  );
 
   const fetchAgents = useCallback(async () => {
     try {
@@ -563,7 +571,10 @@ export default function SettingsAgentsTab() {
 
       {deleteTarget && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-on-surface/40">
-          <div className="relative z-[60] mx-4 w-full max-w-[360px] overflow-y-auto rounded-2xl bg-surface-container-lowest shadow-2xl">
+          <div
+            className="relative z-[60] mx-4 w-full max-w-[360px] overflow-y-auto rounded-2xl bg-surface-container-lowest shadow-2xl"
+            ref={deleteDialogRef}
+          >
             <div className="px-6 py-6">
               <h3 className="font-bold font-headline text-lg text-on-surface">
                 {t("ai_defs_delete_confirm_title")}

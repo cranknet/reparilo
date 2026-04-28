@@ -2,38 +2,7 @@ import type { JobStatusType } from "@shared/constants";
 import { JobStatus } from "@shared/constants";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-
-const PIPELINE_ITEMS: {
-  status: JobStatusType;
-  color: string;
-  descriptionKey: string;
-}[] = [
-  {
-    status: JobStatus.INTAKE,
-    color: "bg-secondary-container",
-    descriptionKey: "pipeline_intake_desc",
-  },
-  {
-    status: JobStatus.WAITING_FOR_PARTS,
-    color: "bg-tertiary-fixed",
-    descriptionKey: "pipeline_waiting_desc",
-  },
-  {
-    status: JobStatus.IN_REPAIR,
-    color: "bg-primary",
-    descriptionKey: "pipeline_repair_desc",
-  },
-  {
-    status: JobStatus.ON_HOLD,
-    color: "bg-error-container",
-    descriptionKey: "pipeline_hold_desc",
-  },
-  {
-    status: JobStatus.DONE,
-    color: "bg-on-secondary-container",
-    descriptionKey: "pipeline_done_desc",
-  },
-];
+import { PIPELINE_ITEMS_ACCENT } from "@/lib/pipeline-items";
 
 interface JobPipelineProps {
   benchCapacity: number;
@@ -58,7 +27,7 @@ export default function JobPipeline({
         {t("repair_status_board")}
       </h3>
       <div className="space-y-3">
-        {PIPELINE_ITEMS.map(({ status, color, descriptionKey }) => (
+        {PIPELINE_ITEMS_ACCENT.map(({ status, color, descriptionKey }) => (
           <button
             className={`flex w-full cursor-pointer items-center justify-between rounded-lg p-3 text-start transition-all hover:bg-surface-container-low ${
               status === JobStatus.IN_REPAIR

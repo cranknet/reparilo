@@ -1,5 +1,7 @@
-export type { CurrencyCode } from "./currencies";
 // biome-ignore lint/performance/noBarrelFile: shared constants barrel is intentional
+export { AI_MODELS } from "./ai-models";
+export { COUNTRIES } from "./countries";
+export type { CurrencyCode } from "./currencies";
 export { CURRENCIES } from "./currencies";
 export { DEVICE_ICONS } from "./device-icons";
 export type { JobStatusType } from "./job-statuses";
@@ -17,4 +19,4 @@ export { PartCategory } from "./part-categories";
 export type { RepairCategoryType } from "./repair-categories";
 export { RepairCategory } from "./repair-categories";
 export type { RoleType } from "./roles";
-export { ROLE_LABELS, Role } from "./roles";
+export { ROLE_LABEL_KEYS, ROLE_LABELS, Role } from "./roles";

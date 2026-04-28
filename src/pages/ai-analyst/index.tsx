@@ -11,8 +11,8 @@ export default function AiAnalystPage() {
       setLoading(false);
     } else {
       fetchAiSettings()
-        .catch(() => {
-          /* stored in Zustand state */
+        .catch((err) => {
+          console.error("Failed to fetch AI settings:", err);
         })
         .finally(() => setLoading(false));
     }

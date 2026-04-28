@@ -98,15 +98,16 @@ async function revenueAndCost(
 ): Promise<{ cost: number; revenue: number }> {
   const rows = await prisma.$queryRaw<RevCostRow[]>(
     Prisma.sql`SELECT
-       COALESCE((SELECT SUM("price") FROM "job_repairs" jr WHERE jr."jobId" = j."id"), 0)
-       + COALESCE((SELECT SUM("totalCost") FROM "job_parts" jp WHERE jp."jobId" = j."id"), 0)
-         AS revenue,
-       COALESCE((SELECT SUM("totalCost") FROM "job_parts" jp WHERE jp."jobId" = j."id"), 0)
-         AS cost
-     FROM "jobs" j
-     WHERE j."status" = 'DELIVERED'
-       AND j."updatedAt" >= ${range.start} AND j."updatedAt" < ${range.end}
-       ${scope.role === "TECHNICIAN" ? Prisma.sql`AND j."technicianId" = ${scope.userId}` : Prisma.empty}`
+        COALESCE(SUM(rt.total), 0) + COALESCE(SUM(pt.total), 0) AS revenue,
+        COALESCE(SUM(pt.total), 0) AS cost
+      FROM "jobs" j
+      LEFT JOIN (SELECT "jobId", SUM("price") AS total FROM "job_repairs" GROUP BY "jobId") rt
+        ON rt."jobId" = j."id"
+      LEFT JOIN (SELECT "jobId", SUM("totalCost") AS total FROM "job_parts" GROUP BY "jobId") pt
+        ON pt."jobId" = j."id"
+      WHERE j."status" = 'DELIVERED'
+        AND j."updatedAt" >= ${range.start} AND j."updatedAt" < ${range.end}
+        ${scope.role === "TECHNICIAN" ? Prisma.sql`AND j."technicianId" = ${scope.userId}` : Prisma.empty}`
   );
   let revenue = 0;
   let cost = 0;
@@ -152,20 +153,23 @@ export async function financialTrend(
          (date_trunc('day', now() AT TIME ZONE ${scope.shopTz}))::date,
          '1 day'::interval
        )::date AS day
+     ),
+     repair_totals AS (
+       SELECT "jobId", SUM("price") AS total FROM "job_repairs" GROUP BY "jobId"
+     ),
+     parts_totals AS (
+       SELECT "jobId", SUM("totalCost") AS total FROM "job_parts" GROUP BY "jobId"
      )
      SELECT s.day,
-       COALESCE(SUM(
-         COALESCE((SELECT SUM(jr."price") FROM "job_repairs" jr WHERE jr."jobId" = j."id"), 0)
-         + COALESCE((SELECT SUM(jp."totalCost") FROM "job_parts" jp WHERE jp."jobId" = j."id"), 0)
-       ), 0) AS revenue,
-       COALESCE(SUM(
-         COALESCE((SELECT SUM(jp."totalCost") FROM "job_parts" jp WHERE jp."jobId" = j."id"), 0)
-       ), 0) AS cost
+       COALESCE(SUM(rt.total), 0) + COALESCE(SUM(pt.total), 0) AS revenue,
+       COALESCE(SUM(pt.total), 0) AS cost
      FROM series s
      LEFT JOIN "jobs" j
        ON j."status" = 'DELIVERED'
       AND (j."updatedAt" AT TIME ZONE ${scope.shopTz})::date = s.day
       ${scope.role === "TECHNICIAN" ? Prisma.sql`AND j."technicianId" = ${scope.userId}` : Prisma.empty}
+     LEFT JOIN repair_totals rt ON rt."jobId" = j."id"
+     LEFT JOIN parts_totals pt ON pt."jobId" = j."id"
      GROUP BY s.day
      ORDER BY s.day ASC`
   );

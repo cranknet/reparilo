@@ -1,4 +1,4 @@
-import type { RoleType } from "@shared/constants";
+import { ROLE_LABEL_KEYS } from "@shared/constants";
 import type { PermissionCheck } from "@shared/permissions";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -60,12 +60,6 @@ const NAV_ITEMS: NavItem[] = [
     perm: { settings: ["view"] },
   },
 ];
-
-const ROLE_LABEL_KEYS: Record<RoleType, string> = {
-  OWNER: "role.OWNER",
-  TECHNICIAN: "role.TECHNICIAN",
-  FRONT_DESK: "role.FRONT_DESK",
-};
 
 const FOCUS_VISIBLE =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";

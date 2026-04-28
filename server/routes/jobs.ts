@@ -45,6 +45,7 @@ import {
   remove as removeWaitingPart,
 } from "../services/job-waiting-parts.service.js";
 import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
+import { sendError } from "../utils/send-error.js";
 
 const JOB_CODE_RE = /^[A-Za-z0-9-]+$/;
 const PHONE4_RE = /^\d{4}$/;
@@ -55,9 +56,7 @@ interface LockoutEntry {
 }
 
 function sendNotFound(reply: FastifyReply) {
-  return reply
-    .status(404)
-    .send({ error: "JOB_NOT_FOUND", message: "Job not found" });
+  return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
 }
 
 function validateLookupParams(
@@ -66,24 +65,25 @@ function validateLookupParams(
 ): ((reply: FastifyReply) => unknown) | null {
   if (!(code && phone4)) {
     return (reply) =>
-      reply.status(400).send({
-        error: "MISSING_CODE",
-        message: "code and phone4 query parameters are required",
-      });
+      sendError(
+        reply,
+        400,
+        "MISSING_CODE",
+        "code and phone4 query parameters are required"
+      );
   }
   if (code.length > 50 || !JOB_CODE_RE.test(code)) {
     return (reply) =>
-      reply.status(400).send({
-        error: "INVALID_CODE",
-        message: "Invalid job code format",
-      });
+      sendError(reply, 400, "INVALID_CODE", "Invalid job code format");
   }
   if (!PHONE4_RE.test(phone4)) {
     return (reply) =>
-      reply.status(400).send({
-        error: "INVALID_PHONE4",
-        message: "phone4 must be exactly 4 digits",
-      });
+      sendError(
+        reply,
+        400,
+        "INVALID_PHONE4",
+        "phone4 must be exactly 4 digits"
+      );
   }
   return null;
 }
@@ -95,18 +95,6 @@ function trackFailedAttempt(lockouts: Map<string, LockoutEntry>, code: string) {
     existing.lockedUntil = Date.now() + 60 * 60 * 1000;
   }
   lockouts.set(code, existing);
-}
-
-function sendError(
-  reply: FastifyReply,
-  status: number,
-  code: string,
-  message: string,
-  details?: Record<string, unknown>
-) {
-  return reply
-    .status(status)
-    .send({ error: code, message, details: details ?? {} });
 }
 
 function getUserId(req: FastifyRequest): string {

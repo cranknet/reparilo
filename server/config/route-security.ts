@@ -34,7 +34,7 @@ export const DEFAULT_SECURITY: RouteSecurityOverride = {
   allowSensitiveKeys: false,
 };
 
-const MUTATION_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
+export const MUTATION_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
 
 export function isMutation(method: string): boolean {
   return MUTATION_METHODS.has(method.toUpperCase());

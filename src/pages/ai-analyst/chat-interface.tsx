@@ -10,6 +10,7 @@ import { Link } from "react-router";
 import { toast } from "sonner";
 import AgentSelector from "@/components/modules/ai-analyst/agent-selector";
 import ChatEmptyState from "@/components/modules/ai-analyst/chat-empty-state";
+import { useModalEffects } from "@/hooks/use-modal-effects";
 import api, { fetchCsrfToken } from "@/lib/api";
 import { useAiChatStore } from "@/stores/ai-chat";
 
@@ -323,6 +324,9 @@ function AgentSwitchDialog({
   onCancel: () => void;
 }) {
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useModalEffects(open, onCancel, dialogRef);
 
   if (!open) {
     return null;
@@ -330,7 +334,10 @@ function AgentSwitchDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-surface-container-high p-6 shadow-xl">
+      <div
+        className="w-full max-w-sm rounded-2xl bg-surface-container-high p-6 shadow-xl"
+        ref={dialogRef}
+      >
         <h3 className="mb-2 font-bold text-lg text-on-surface">
           {t("ai_agent_agent_switch_title")}
         </h3>
@@ -368,6 +375,9 @@ function NewConversationDialog({
   onCancel: () => void;
 }) {
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useModalEffects(open, onCancel, dialogRef);
 
   if (!open) {
     return null;
@@ -375,7 +385,10 @@ function NewConversationDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-surface-container-high p-6 shadow-xl">
+      <div
+        className="w-full max-w-sm rounded-2xl bg-surface-container-high p-6 shadow-xl"
+        ref={dialogRef}
+      >
         <h3 className="mb-2 font-bold text-lg text-on-surface">
           {t("ai_agent_new_conversation_title")}
         </h3>
@@ -504,7 +517,8 @@ function ChatInterface({ agentEnabled = true }: ChatInterfaceProps) {
           });
         setAgentOptions(options);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Failed to fetch agent definitions:", err);
         setAgentOptions([]);
       });
   }, []);

@@ -142,8 +142,8 @@ export default function SettingsUsersTab({
   // Fetch users on mount if needed
   useEffect(() => {
     if (users.length === 0 && !usersLoading) {
-      fetchUsers().catch(() => {
-        // Error is stored in the Zustand state via fetchUsers
+      fetchUsers().catch((err) => {
+        console.error("Failed to fetch users:", err);
       });
     }
   }, [users.length, usersLoading, fetchUsers]);

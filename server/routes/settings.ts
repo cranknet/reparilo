@@ -4,7 +4,7 @@ import {
   updateShopSettingsSchema,
   updateWhatsAppSettingsSchema,
 } from "@shared/schemas";
-import type { FastifyPluginAsync, FastifyReply } from "fastify";
+import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
 import {
   getAiSettings,
@@ -21,18 +21,7 @@ import {
   resolveZodErrors,
   resolveZodResult,
 } from "../utils/resolve-validation-messages.js";
-
-function sendError(
-  reply: FastifyReply,
-  status: number,
-  code: string,
-  message: string,
-  details?: Record<string, unknown>
-) {
-  return reply
-    .status(status)
-    .send({ error: code, message, details: details ?? {} });
-}
+import { sendError } from "../utils/send-error.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const settingsRoutes: FastifyPluginAsync = async (app) => {

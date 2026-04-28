@@ -1,3 +1,4 @@
+import { COUNTRIES, CURRENCIES } from "@shared/constants";
 import type { FormEvent } from "react";
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -60,8 +61,8 @@ export default function SettingsShopTab({
 
   useEffect(() => {
     if (!shopSettings) {
-      fetchShopSettings().catch(() => {
-        // Error is stored in the Zustand state via fetchShopSettings
+      fetchShopSettings().catch((err) => {
+        console.error("Failed to fetch shop settings:", err);
       });
     }
   }, [shopSettings, fetchShopSettings]);
@@ -180,13 +181,11 @@ export default function SettingsShopTab({
                 }}
                 value={shopForm.countryCode}
               >
-                <option value="DZ">DZ — Algeria</option>
-                <option value="FR">FR — France</option>
-                <option value="US">US — United States</option>
-                <option value="GB">GB — United Kingdom</option>
-                <option value="DE">DE — Germany</option>
-                <option value="TN">TN — Tunisia</option>
-                <option value="MA">MA — Morocco</option>
+                {COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.label}
+                  </option>
+                ))}
               </select>
               <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
                 <span className="material-symbols-outlined text-[20px]">
@@ -212,9 +211,11 @@ export default function SettingsShopTab({
                 }}
                 value={shopForm.currency}
               >
-                <option value="DZD">DZD — Algerian Dinar (DA)</option>
-                <option value="USD">USD — US Dollar ($)</option>
-                <option value="EUR">EUR — Euro (€)</option>
+                {CURRENCIES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.label}
+                  </option>
+                ))}
               </select>
               <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
                 <span className="material-symbols-outlined text-[20px]">

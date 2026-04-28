@@ -49,18 +49,7 @@ import {
   testAiConnection,
 } from "../services/settings.service.js";
 import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
-
-function sendError(
-  reply: FastifyReply,
-  status: number,
-  code: string,
-  message: string,
-  details?: Record<string, unknown>
-) {
-  return reply
-    .status(status)
-    .send({ error: code, message, details: details ?? {} });
-}
+import { sendError } from "../utils/send-error.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const aiRoutes: FastifyPluginAsync = async (app) => {
@@ -129,7 +118,15 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/chat/stream",
-    { preHandler: [requireAiEnabled] },
+    {
+      preHandler: [requireAiEnabled],
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: 60_000,
+        },
+      },
+    },
     async (req, reply) => {
       const parsed = chatMessageSchema.safeParse(req.body);
       if (!parsed.success) {

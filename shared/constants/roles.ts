@@ -7,7 +7,13 @@ export const Role = {
 export type RoleType = (typeof Role)[keyof typeof Role];
 
 export const ROLE_LABELS: Record<RoleType, string> = {
-  OWNER: "Owner",
-  TECHNICIAN: "Technician",
-  FRONT_DESK: "Front Desk",
+  OWNER: "role.OWNER",
+  TECHNICIAN: "role.TECHNICIAN",
+  FRONT_DESK: "role.FRONT_DESK",
+};
+
+export const ROLE_LABEL_KEYS: Record<RoleType, string> = {
+  OWNER: "role.OWNER",
+  TECHNICIAN: "role.TECHNICIAN",
+  FRONT_DESK: "role.FRONT_DESK",
 };

@@ -3,8 +3,8 @@ import { JOB_STATUS_FLOW } from "@shared/constants";
 import type { Job } from "@shared/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { useJobsStore } from "@/stores/jobs";
-import StatusBadge from "./status-badge";
 
 interface StatusChangeMenuProps {
   job: Job;
