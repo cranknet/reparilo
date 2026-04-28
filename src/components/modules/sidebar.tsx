@@ -1,4 +1,4 @@
-import { ROLE_LABEL_KEYS } from "@shared/constants";
+import { ROLE_LABELS } from "@shared/constants";
 import type { PermissionCheck } from "@shared/permissions";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -159,7 +159,7 @@ export default function Sidebar() {
                 {userName}
               </p>
               <p className="truncate text-on-surface-variant text-xs">
-                {t(ROLE_LABEL_KEYS[role])}
+                {t(ROLE_LABELS[role])}
               </p>
             </div>
             <button

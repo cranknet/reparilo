@@ -41,7 +41,11 @@ export const useUsersStore = create<UsersState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const res = await api.get("/users");
-      set({ users: res.data, isLoading: false });
+      const data = res.data;
+      set({
+        users: Array.isArray(data) ? data : (data.users ?? []),
+        isLoading: false,
+      });
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to fetch users";

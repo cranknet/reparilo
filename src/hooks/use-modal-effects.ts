@@ -2,6 +2,13 @@ import { type RefObject, useCallback, useEffect, useRef } from "react";
 
 let scrollLockCount = 0;
 
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    scrollLockCount = 0;
+    document.body.style.overflow = "";
+  });
+}
+
 export function useModalEffects(
   open: boolean,
   onClose: () => void,

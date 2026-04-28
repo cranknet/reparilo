@@ -21,17 +21,28 @@ export const updateAiSettingsSchema = z
     { message: "validations.at_least_one_field" }
   );
 
-export const updateShopSettingsSchema = z.object({
-  shopName: z
-    .string()
-    .min(1, { error: "validations.shop_name_required" })
-    .optional(),
-  address: z.string().optional(),
-  phone: z.string().optional(),
-  currency: z.string().optional(),
-  receiptFooter: z.string().optional(),
-  countryCode: z.string().optional(),
-});
+export const updateShopSettingsSchema = z
+  .object({
+    shopName: z
+      .string()
+      .min(1, { error: "validations.shop_name_required" })
+      .optional(),
+    address: z.string().optional(),
+    phone: z.string().optional(),
+    currency: z.string().optional(),
+    receiptFooter: z.string().optional(),
+    countryCode: z.string().optional(),
+  })
+  .refine(
+    (data) =>
+      data.shopName !== undefined ||
+      data.address !== undefined ||
+      data.phone !== undefined ||
+      data.currency !== undefined ||
+      data.receiptFooter !== undefined ||
+      data.countryCode !== undefined,
+    { message: "validations.at_least_one_field" }
+  );
 
 export const updateNotificationTemplateSchema = z.object({
   name: z.string().min(1),

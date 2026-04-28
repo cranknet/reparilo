@@ -11,9 +11,3 @@ export const ROLE_LABELS: Record<RoleType, string> = {
   TECHNICIAN: "role.TECHNICIAN",
   FRONT_DESK: "role.FRONT_DESK",
 };
-
-export const ROLE_LABEL_KEYS: Record<RoleType, string> = {
-  OWNER: "role.OWNER",
-  TECHNICIAN: "role.TECHNICIAN",
-  FRONT_DESK: "role.FRONT_DESK",
-};
