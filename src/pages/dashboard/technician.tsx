@@ -7,6 +7,7 @@ import RecentActivity from "@/components/modules/dashboard/recent-activity";
 import TechJobPipeline from "@/components/modules/dashboard/tech-job-pipeline";
 import TodaySchedule from "@/components/modules/dashboard/today-schedule";
 import MetricCard from "@/components/ui/metric-card";
+import { useDashboardStore } from "@/stores/dashboard";
 import { useJobsStore } from "@/stores/jobs";
 
 const EMPTY_PIPELINE: Record<JobStatusType, number> = {
@@ -20,83 +21,83 @@ const EMPTY_PIPELINE: Record<JobStatusType, number> = {
   CANCELLED: 0,
 };
 
-const MOCK_SCHEDULE = (t: (key: string) => string) => [
-  {
-    customerName: "Ahmed B.",
-    device: "iPhone 14 Pro",
-    id: "#REP-0124",
-    repairType: t("dashboard_page.repair_screen_replace"),
-    status: "IN_REPAIR",
-    time: "09:00",
+const ACTION_ICON_MAP: Record<
+  string,
+  { icon: string; iconColor: string; textKey: string }
+> = {
+  JOB_CREATED: {
+    icon: "add_circle",
+    iconColor: "bg-primary/10 text-primary",
+    textKey: "tech_dashboard.activity_job_created",
   },
-  {
-    customerName: "Sarah K.",
-    device: "Samsung S21",
-    id: "#REP-0128",
-    repairType: t("dashboard_page.repair_battery_swap"),
-    status: "WAITING_FOR_PARTS",
-    time: "11:30",
-  },
-  {
-    customerName: "Michael R.",
-    device: "iPad Air Gen 4",
-    id: "#REP-0131",
-    repairType: t("tech_dashboard.repair_port_cleaning"),
-    status: "INTAKE",
-    time: "14:00",
-  },
-];
-
-const MOCK_ACTIVITY = [
-  {
-    icon: "task_alt",
+  STATUS_CHANGED: {
+    icon: "swap_horiz",
     iconColor: "bg-secondary/10 text-secondary",
-    id: "#REP-0120",
-    textKey: "tech_dashboard.activity_marked_done",
-    timeAgo: "15 min ago",
+    textKey: "tech_dashboard.activity_status_changed",
   },
-  {
-    icon: "local_shipping",
+  REPAIR_ADDED: {
+    icon: "build",
     iconColor: "bg-tertiary/10 text-tertiary",
-    id: "#REP-0128",
-    textKey: "tech_dashboard.activity_part_requested",
-    timeAgo: "1 hour ago",
+    textKey: "tech_dashboard.activity_repair_added",
   },
-];
+  PART_ADDED: {
+    icon: "inventory_2",
+    iconColor: "bg-tertiary/10 text-tertiary",
+    textKey: "tech_dashboard.activity_part_added",
+  },
+  JOB_UPDATED: {
+    icon: "edit",
+    iconColor: "bg-primary/10 text-primary",
+    textKey: "tech_dashboard.activity_job_updated",
+  },
+  TECHNICIAN_ASSIGNED: {
+    icon: "person_add",
+    iconColor: "bg-secondary/10 text-secondary",
+    textKey: "tech_dashboard.activity_tech_assigned",
+  },
+  COST_UPDATED: {
+    icon: "payments",
+    iconColor: "bg-tertiary/10 text-tertiary",
+    textKey: "tech_dashboard.activity_cost_updated",
+  },
+};
 
-const MOCK_PRIORITY_ACTIONS = [
-  {
-    count: 3,
-    labelKey: "tech_dashboard.jobs_need_status",
-    variant: "default" as const,
-  },
-  {
-    count: 1,
-    labelKey: "tech_dashboard.job_overdue_deadline",
-    variant: "warning" as const,
-  },
-  {
-    count: 2,
-    labelKey: "tech_dashboard.parts_requests_pending",
-    variant: "default" as const,
-  },
-];
+function formatTimeAgo(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diffMin = Math.floor((now - then) / 60_000);
+  if (diffMin < 1) {
+    return "just now";
+  }
+  if (diffMin < 60) {
+    return `${diffMin}m ago`;
+  }
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) {
+    return `${diffH}h ago`;
+  }
+  return `${Math.floor(diffH / 24)}d ago`;
+}
 
-const MOCK_PARTS_ALERTS = [
-  { name: "iPhone 15 Battery", quantity: 2, stockLevel: 15, threshold: 3 },
-  { name: "Samsung S23 Screen", quantity: 0, stockLevel: 10, threshold: 2 },
-  { name: "USB-C Port (A1)", quantity: 5, stockLevel: 12, threshold: 3 },
-];
+// TODO: Parts alerts require a stock/inventory API (no API yet)
+const PARTS_ALERTS_EMPTY: Array<{
+  name: string;
+  quantity: number;
+  stockLevel: number;
+  threshold: number;
+}> = [];
 
 export default function TechnicianDashboardPage() {
   const { t } = useTranslation();
   const { metrics, fetchMetrics } = useJobsStore();
+  const { techData, fetchTechnician } = useDashboardStore();
 
   useEffect(() => {
     fetchMetrics().catch(() => {
       /* metrics fetch handled by store */
     });
-  }, [fetchMetrics]);
+    fetchTechnician();
+  }, [fetchMetrics, fetchTechnician]);
 
   const pipelineCounts = useMemo<Record<JobStatusType, number>>(() => {
     if (!metrics) {
@@ -107,9 +108,76 @@ export default function TechnicianDashboardPage() {
     ) as Record<JobStatusType, number>;
   }, [metrics]);
 
-  const activeJobs = metrics?.IN_REPAIR ?? 0;
-  const completedToday = metrics?.DONE ?? 0;
-  const waitingForParts = metrics?.WAITING_FOR_PARTS ?? 0;
+  const activeJobs = techData?.myActiveJobs ?? metrics?.IN_REPAIR ?? 0;
+  const completedToday = techData?.completedToday ?? metrics?.DONE ?? 0;
+  const waitingForParts =
+    techData?.waitingForParts ?? metrics?.WAITING_FOR_PARTS ?? 0;
+  const avgRepairTime = techData?.avgRepairTimeHours ?? 0;
+
+  // Map real schedule data from API
+  const scheduleItems = useMemo(() => {
+    if (!techData?.todaySchedule) {
+      return [];
+    }
+    return techData.todaySchedule.map((s) => ({
+      customerName: s.customerName,
+      device: s.device,
+      id: s.jobCode,
+      repairType: s.repairSummary,
+      status: s.status,
+      time: s.estimatedDate
+        ? new Date(s.estimatedDate).toLocaleTimeString(undefined, {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "—",
+    }));
+  }, [techData?.todaySchedule]);
+
+  // Map real activity data from API
+  const activityItems = useMemo(() => {
+    if (!techData?.recentActivity) {
+      return [];
+    }
+    return techData.recentActivity.map((a) => {
+      const mapping = ACTION_ICON_MAP[a.action] ?? {
+        icon: "info",
+        iconColor: "bg-primary/10 text-primary",
+        textKey: "tech_dashboard.activity_generic",
+      };
+      return {
+        icon: mapping.icon,
+        iconColor: mapping.iconColor,
+        id: a.jobCode ?? a.id,
+        textKey: mapping.textKey,
+        timeAgo: formatTimeAgo(a.createdAt),
+      };
+    });
+  }, [techData?.recentActivity]);
+
+  // Map real priority actions from API
+  const priorityActions = useMemo(() => {
+    if (!techData?.priorityActions) {
+      return [];
+    }
+    return [
+      {
+        count: techData.priorityActions.jobsNeedingStatusUpdate,
+        labelKey: "tech_dashboard.jobs_need_status",
+        variant: "default" as const,
+      },
+      {
+        count: techData.priorityActions.overdueCount,
+        labelKey: "tech_dashboard.job_overdue_deadline",
+        variant: "warning" as const,
+      },
+      {
+        count: techData.priorityActions.partsWaitingCount,
+        labelKey: "tech_dashboard.parts_requests_pending",
+        variant: "default" as const,
+      },
+    ].filter((a) => a.count > 0);
+  }, [techData?.priorityActions]);
 
   return (
     <>
@@ -200,12 +268,12 @@ export default function TechnicianDashboardPage() {
           iconColor="text-primary-container"
           label={t("tech_dashboard.avg_repair_time")}
           unit="h"
-          value="2.4"
+          value={String(avgRepairTime)}
         >
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((i) => (
               <div
-                className={`h-1 flex-1 rounded-full ${i <= 4 ? "bg-tertiary" : "bg-surface-container-highest"}`}
+                className={`h-1 flex-1 rounded-full ${i <= Math.min(Math.round(avgRepairTime), 5) ? "bg-tertiary" : "bg-surface-container-highest"}`}
                 key={i}
               />
             ))}
@@ -224,13 +292,13 @@ export default function TechnicianDashboardPage() {
         </div>
 
         <div className="space-y-8 md:col-span-12 lg:col-span-5">
-          <TodaySchedule items={MOCK_SCHEDULE(t)} />
-          <RecentActivity items={MOCK_ACTIVITY} />
+          <TodaySchedule items={scheduleItems} />
+          <RecentActivity items={activityItems} />
         </div>
 
         <div className="space-y-6 md:col-span-12 lg:col-span-3">
-          <PriorityActions actions={MOCK_PRIORITY_ACTIONS} />
-          <PartsAlert items={MOCK_PARTS_ALERTS} />
+          <PriorityActions actions={priorityActions} />
+          <PartsAlert items={PARTS_ALERTS_EMPTY} />
         </div>
       </div>
     </>

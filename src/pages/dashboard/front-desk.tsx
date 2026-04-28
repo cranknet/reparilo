@@ -11,6 +11,7 @@ import QuickIntakeForm from "@/components/modules/dashboard/quick-intake-form";
 import QuickStatsChips from "@/components/modules/dashboard/quick-stats-chips";
 import TodayOverview from "@/components/modules/dashboard/today-overview";
 import WaitingCustomers from "@/components/modules/dashboard/waiting-customers";
+import { useDashboardStore } from "@/stores/dashboard";
 import { useJobsStore } from "@/stores/jobs";
 
 /** Format a date as a relative time string (e.g. "5m ago", "2h ago") */
@@ -44,42 +45,15 @@ function formatDate(date: Date | string): string {
   });
 }
 
-const MOCK_ALERTS = [
-  {
-    id: "alert-overdue",
-    icon: "warning",
-    title: "2 Repairs Overdue",
-    description: "Action required immediately",
-    variant: "error" as const,
-  },
-  {
-    id: "alert-parts",
-    icon: "inventory_2",
-    title: "Parts Arrived",
-    description: "Screen for #8812 arrived",
-    variant: "secondary" as const,
-  },
-  {
-    id: "alert-warranty",
-    icon: "history",
-    title: "Warranty Return",
-    description: "Customer: Jordan Bates",
-    variant: "tertiary" as const,
-  },
-];
-
-const MOCK_WAITING = [
-  { id: "w-1", initials: "BT", name: "Ben Thompson", waitMinutes: 12 },
-  { id: "w-2", initials: "MK", name: "Maria Khan", waitMinutes: 5 },
-];
-
 export default function FrontDeskPage() {
   const { t } = useTranslation();
   const { jobs, isLoadingJobs, fetchJobs } = useJobsStore();
+  const { frontDeskData, fetchFrontDesk } = useDashboardStore();
 
   useEffect(() => {
     fetchJobs();
-  }, [fetchJobs]);
+    fetchFrontDesk();
+  }, [fetchJobs, fetchFrontDesk]);
 
   // Map real jobs to the shape expected by ActiveRepairsQueue
   const activeRepairs = useMemo(() => {
@@ -140,6 +114,74 @@ export default function FrontDeskPage() {
     ).length;
     return { completedToday: completed, totalToday: todayJobs.length };
   }, [jobs, todayStart]);
+
+  // Map priority alerts from API to component shape
+  const priorityAlerts = useMemo(() => {
+    if (!frontDeskData?.priorityAlerts) {
+      return [];
+    }
+    return frontDeskData.priorityAlerts.map((a) => {
+      const config: Record<
+        string,
+        {
+          icon: string;
+          title: string;
+          variant: "error" | "secondary" | "tertiary";
+        }
+      > = {
+        OVERDUE: {
+          icon: "warning",
+          title: t("front_desk.alert_overdue", { jobCode: a.jobCode }),
+          variant: "error",
+        },
+        WARRANTY_RETURN: {
+          icon: "history",
+          title: t("front_desk.alert_warranty"),
+          variant: "tertiary",
+        },
+        READY_FOR_PICKUP: {
+          icon: "inventory_2",
+          title: t("front_desk.alert_ready"),
+          variant: "secondary",
+        },
+      };
+      const c = config[a.kind] ?? {
+        icon: "info",
+        title: a.jobCode,
+        variant: "default" as const,
+      };
+      return {
+        description: a.customerName ?? a.jobCode,
+        icon: c.icon,
+        id: a.id,
+        title: c.title,
+        variant: c.variant,
+      };
+    });
+  }, [frontDeskData?.priorityAlerts, t]);
+
+  // Derive waiting customers from active repairs in INTAKE status
+  const waitingCustomers = useMemo(() => {
+    if (!frontDeskData?.activeRepairs) {
+      return [];
+    }
+    const now = Date.now();
+    return frontDeskData.activeRepairs
+      .filter((r) => r.status === "INTAKE")
+      .map((r) => ({
+        id: r.id,
+        initials: r.customerName
+          .split(" ")
+          .map((w) => w[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2),
+        name: r.customerName,
+        waitMinutes: Math.floor(
+          (now - new Date(r.updatedAt).getTime()) / 60_000
+        ),
+      }));
+  }, [frontDeskData?.activeRepairs]);
 
   if (isLoadingJobs && jobs.length === 0) {
     return (
@@ -202,8 +244,8 @@ export default function FrontDeskPage() {
         </div>
 
         <div className="flex flex-col gap-8 md:col-span-12 lg:col-span-3">
-          <PriorityAlertsPanel alerts={MOCK_ALERTS} />
-          <WaitingCustomers customers={MOCK_WAITING} />
+          <PriorityAlertsPanel alerts={priorityAlerts} />
+          <WaitingCustomers customers={waitingCustomers} />
           <QuickStatsChips
             stats={[
               { labelKey: "front_desk.mttr", value: "2.4", unit: "h" },

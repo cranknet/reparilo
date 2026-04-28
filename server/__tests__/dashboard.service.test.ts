@@ -61,7 +61,7 @@ function makePrisma(overrides: Record<string, unknown> = {}) {
     auditLog: {
       findMany: vi.fn().mockResolvedValue([]),
     },
-    $queryRawUnsafe: vi.fn().mockResolvedValue([]),
+    $queryRaw: vi.fn().mockResolvedValue([]),
     ...overrides,
   } as any;
 }
@@ -175,7 +175,7 @@ describe("completedTodayCount", () => {
 describe("revenueThisMonth", () => {
   it("sums revenue from raw query rows", async () => {
     const prisma = makePrisma({
-      $queryRawUnsafe: vi.fn().mockResolvedValue([
+      $queryRaw: vi.fn().mockResolvedValue([
         { revenue: "500", cost: "200" },
         { revenue: "300", cost: "100" },
       ]),
@@ -192,24 +192,23 @@ describe("revenueThisMonth", () => {
 
   it("passes date range params to raw query", async () => {
     const raw = vi.fn().mockResolvedValue([]);
-    const prisma = makePrisma({ $queryRawUnsafe: raw });
+    const prisma = makePrisma({ $queryRaw: raw });
     await revenueThisMonth(prisma, ownerScope, monthRange);
     expect(raw).toHaveBeenCalledWith(
-      expect.any(String),
-      monthRange.start,
-      monthRange.end
+      expect.objectContaining({
+        values: expect.arrayContaining([monthRange.start, monthRange.end]),
+      })
     );
   });
 
   it("adds technicianId param for TECHNICIAN scope", async () => {
     const raw = vi.fn().mockResolvedValue([]);
-    const prisma = makePrisma({ $queryRawUnsafe: raw });
+    const prisma = makePrisma({ $queryRaw: raw });
     await revenueThisMonth(prisma, techScope, monthRange);
-    expect(raw).toHaveBeenCalledWith(
-      expect.stringContaining("technicianId"),
-      monthRange.start,
-      monthRange.end,
-      "tech-1"
+    const call = raw.mock.calls[0][0];
+    expect(call.strings.join("")).toContain("technicianId");
+    expect(call.values).toEqual(
+      expect.arrayContaining([monthRange.start, monthRange.end, "tech-1"])
     );
   });
 });
@@ -221,9 +220,7 @@ describe("revenueThisMonth", () => {
 describe("avgProfitMargin", () => {
   it("computes (revenue - cost) / revenue", async () => {
     const prisma = makePrisma({
-      $queryRawUnsafe: vi
-        .fn()
-        .mockResolvedValue([{ revenue: "1000", cost: "400" }]),
+      $queryRaw: vi.fn().mockResolvedValue([{ revenue: "1000", cost: "400" }]),
     });
     const result = await avgProfitMargin(prisma, ownerScope, monthRange);
     expect(result).toBe(0.6);
@@ -231,7 +228,7 @@ describe("avgProfitMargin", () => {
 
   it("returns 0 when revenue is 0", async () => {
     const prisma = makePrisma({
-      $queryRawUnsafe: vi.fn().mockResolvedValue([{ revenue: "0", cost: "0" }]),
+      $queryRaw: vi.fn().mockResolvedValue([{ revenue: "0", cost: "0" }]),
     });
     const result = await avgProfitMargin(prisma, ownerScope, monthRange);
     expect(result).toBe(0);
@@ -251,7 +248,7 @@ describe("avgProfitMargin", () => {
 describe("financialTrend", () => {
   it("maps raw rows to FinancialTrendPoint array", async () => {
     const prisma = makePrisma({
-      $queryRawUnsafe: vi.fn().mockResolvedValue([
+      $queryRaw: vi.fn().mockResolvedValue([
         { day: new Date("2025-04-24"), revenue: "500", cost: "200" },
         { day: new Date("2025-04-25"), revenue: "300", cost: "100" },
       ]),
@@ -823,7 +820,7 @@ describe("empty data (zero revenue / zero jobs)", () => {
 
   it("avgProfitMargin returns 0 with no revenue", async () => {
     const prisma = makePrisma({
-      $queryRawUnsafe: vi.fn().mockResolvedValue([{ revenue: "0", cost: "0" }]),
+      $queryRaw: vi.fn().mockResolvedValue([{ revenue: "0", cost: "0" }]),
     });
     const result = await avgProfitMargin(prisma, ownerScope, monthRange);
     expect(result).toBe(0);

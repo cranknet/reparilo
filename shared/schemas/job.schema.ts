@@ -10,7 +10,7 @@ export const intakeRepairItemSchema = z.object({
   repairId: z.string().optional(),
   repairName: z.string().min(1),
   category: z.enum(repairCategoryValues),
-  price: z.number().min(0),
+  price: z.number().min(0).max(99_999_999.99),
 });
 
 export const createJobSchema = z.object({
@@ -27,11 +27,15 @@ export const createJobSchema = z.object({
   color: z.string().optional(),
   reportedProblem: z.string().min(1, { error: "validations.describe_problem" }),
   conditionNotes: z.string().optional(),
-  estimatedCost: z.number().min(0, { error: "validations.valid_cost" }),
+  estimatedCost: z
+    .number()
+    .min(0, { error: "validations.valid_cost" })
+    .max(99_999_999.99),
   estimatedDate: z.string().optional(),
   depositAmount: z
     .number()
     .min(0, { error: "validations.valid_deposit" })
+    .max(99_999_999.99)
     .optional(),
   technicianId: z.string().min(1).optional(),
   isWarrantyReturn: z.boolean().optional(),
@@ -44,9 +48,9 @@ export type CreateJobInput = z.infer<typeof createJobSchema>;
 export const updateJobSchema = z.object({
   reportedProblem: z.string().min(1).optional(),
   conditionNotes: z.string().optional(),
-  estimatedCost: z.number().min(0).optional(),
+  estimatedCost: z.number().min(0).max(99_999_999.99).optional(),
   estimatedDate: z.string().min(1).nullable().optional(),
-  depositAmount: z.number().min(0).nullable().optional(),
+  depositAmount: z.number().min(0).max(99_999_999.99).nullable().optional(),
   technicianId: z.string().min(1).nullable().optional(),
   color: z.string().optional(),
 });
@@ -92,7 +96,7 @@ export const addJobPartSchema = z.object({
     PartCategory.BUTTON,
     PartCategory.OTHER,
   ]),
-  unitPrice: z.number().min(0),
+  unitPrice: z.number().min(0).max(99_999_999.99),
   quantity: z.number().int().min(1).default(1),
   supplier: z.string().optional(),
 });
@@ -101,7 +105,7 @@ export const addJobRepairSchema = z.object({
   repairId: z.string().optional(),
   repairName: z.string().min(1),
   category: z.enum(repairCategoryValues),
-  price: z.number().min(0),
+  price: z.number().min(0).max(99_999_999.99),
 });
 
 export const addJobNoteSchema = z.object({

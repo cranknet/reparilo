@@ -40,8 +40,12 @@ const auth = betterAuth({
   plugins: [username()],
 });
 
+if (!process.env.SEED_ADMIN_PASSWORD) {
+  throw new Error("SEED_ADMIN_PASSWORD env var is required");
+}
+
 const SEED_ADMIN_USERNAME = "admin";
-const SEED_ADMIN_PASSWORD = "admin1234";
+const SEED_ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD;
 const SEED_ADMIN_EMAIL = "admin@reparilo.local";
 
 async function main() {

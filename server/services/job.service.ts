@@ -52,14 +52,16 @@ const JOB_INCLUDE = {
   customer: true,
   device: true,
   notes: {
-    include: { createdBy: true },
+    include: {
+      createdBy: { select: { id: true, name: true, username: true } },
+    },
     orderBy: { createdAt: "desc" as const },
   },
   partsUsed: true,
   partsWaiting: true,
   photos: true,
   repairs: true,
-  technician: true,
+  technician: { select: { id: true, name: true, username: true } },
 } as const satisfies Prisma.JobInclude;
 
 export function computeFinalCost(job: {

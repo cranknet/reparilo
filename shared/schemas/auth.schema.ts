@@ -47,7 +47,6 @@ export const updateUserSchema = z.object({
     .optional(),
   role: z.enum(["OWNER", "TECHNICIAN", "FRONT_DESK"]).optional(),
   isActive: z.boolean().optional(),
-  phone: z.string().optional(),
 });
 
 export const toggleUserStatusSchema = z.object({

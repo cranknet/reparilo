@@ -1,8 +1,55 @@
 import type { PrismaClient } from "@generated/client";
+import { Prisma } from "@generated/client";
 
 interface ToolResult {
   data: string;
   success: boolean;
+}
+
+const ALLOWED_TABLES = new Set([
+  "jobs",
+  "customers",
+  "devices",
+  "job_repairs",
+  "job_parts",
+  "job_notes",
+  "job_photos",
+  "job_parts_waiting",
+  "repair_catalog",
+  "parts_catalog",
+  "audit_logs",
+  "users",
+  "shop_settings",
+]);
+
+const BLOCKED_TABLES = new Set(["accounts", "sessions", "verifications"]);
+
+function stripSqlComments(sql: string): string {
+  return sql.replace(/--.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
+}
+
+const KEYWORD_PREFIX_RE = /^(FROM|JOIN|UPDATE|INTO)\s+/i;
+const QUOTE_RE = /"/g;
+
+function extractTableNames(sql: string): string[] {
+  const tables: string[] = [];
+  const fromMatch = sql.match(/\bFROM\s+([^\s(]+)/gi);
+  const joinMatch = sql.match(/\bJOIN\s+([^\s(]+)/gi);
+  const updateMatch = sql.match(/\bUPDATE\s+([^\s(]+)/gi);
+  const intoMatch = sql.match(/\bINTO\s+([^\s(]+)/gi);
+  for (const m of [
+    ...(fromMatch ?? []),
+    ...(joinMatch ?? []),
+    ...(updateMatch ?? []),
+    ...(intoMatch ?? []),
+  ]) {
+    const table = m
+      .replace(KEYWORD_PREFIX_RE, "")
+      .replace(QUOTE_RE, "")
+      .toLowerCase();
+    tables.push(table);
+  }
+  return tables;
 }
 
 export async function executeGetSchema(
@@ -16,12 +63,11 @@ export async function executeGetSchema(
   const results: Record<string, unknown> = {};
   for (const table of tables) {
     try {
-      const columns = await prisma.$queryRawUnsafe(
-        `SELECT column_name, data_type, is_nullable, column_default
+      const columns = await prisma.$queryRaw(
+        Prisma.sql`SELECT column_name, data_type, is_nullable, column_default
          FROM information_schema.columns
-         WHERE table_name = $1 AND table_schema = 'public'
-         ORDER BY ordinal_position`,
-        table
+         WHERE table_name = ${table} AND table_schema = 'public'
+         ORDER BY ordinal_position`
       );
       results[table] = columns;
     } catch {
@@ -62,6 +108,23 @@ export async function executeQueryDatabase(
       return {
         success: false,
         data: "Access to system objects is not allowed",
+      };
+    }
+  }
+
+  const stripped = stripSqlComments(trimmed);
+  const tables = extractTableNames(stripped);
+  for (const table of tables) {
+    if (BLOCKED_TABLES.has(table)) {
+      return {
+        success: false,
+        data: `Access to table '${table}' is not allowed`,
+      };
+    }
+    if (!ALLOWED_TABLES.has(table)) {
+      return {
+        success: false,
+        data: `Table '${table}' is not in the allowed list`,
       };
     }
   }

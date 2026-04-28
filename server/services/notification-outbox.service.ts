@@ -16,9 +16,12 @@ interface OutboxEntry {
 
 const POLL_INTERVAL_MS = 5000;
 let intervalRef: ReturnType<typeof setInterval> | null = null;
-// NOTE: This flag only prevents concurrent processing within a single Node process.
-// If the server runs in cluster mode or is restarted mid-processing, concurrent
-// runs are still possible. A DB-level advisory lock would be needed for full safety.
+// NOTE: isProcessing is per-process state — it will NOT prevent concurrent
+// processing across multiple server instances. For Reparilo's single-location
+// deployment (one server) this is acceptable. If multi-instance deployment is
+// ever needed, this should be replaced with a DB-level advisory lock
+// (e.g. SELECT pg_advisory_lock(id) per outbox batch).
+// TODO: Add DB-level advisory lock for multi-instance support.
 let isProcessing = false;
 
 export async function findTemplate(

@@ -20,8 +20,11 @@ const queryClient = new QueryClient({
   },
 });
 
-// Expose queryClient for error-boundary reset
-(window as unknown as Record<string, unknown>).__reactQueryClient = queryClient;
+// Expose queryClient for error-boundary reset (dev only)
+if (import.meta.env.DEV) {
+  (window as unknown as Record<string, unknown>).__reactQueryClient =
+    queryClient;
+}
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {

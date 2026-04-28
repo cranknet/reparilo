@@ -1,4 +1,9 @@
-import type { AuditAction, JobStatus, PrismaClient } from "@generated/client";
+import {
+  type AuditAction,
+  type JobStatus,
+  Prisma,
+  type PrismaClient,
+} from "@generated/client";
 import type {
   ActiveRepairDTO,
   ActivityItemDTO,
@@ -91,15 +96,8 @@ async function revenueAndCost(
   scope: Scope,
   range: DateRange
 ): Promise<{ cost: number; revenue: number }> {
-  const techFilter =
-    scope.role === "TECHNICIAN" ? `AND j."technicianId" = $3` : "";
-  const params: unknown[] = [range.start, range.end];
-  if (scope.role === "TECHNICIAN") {
-    params.push(scope.userId);
-  }
-
-  const rows = await prisma.$queryRawUnsafe<RevCostRow[]>(
-    `SELECT
+  const rows = await prisma.$queryRaw<RevCostRow[]>(
+    Prisma.sql`SELECT
        COALESCE((SELECT SUM("price") FROM "job_repairs" jr WHERE jr."jobId" = j."id"), 0)
        + COALESCE((SELECT SUM("totalCost") FROM "job_parts" jp WHERE jp."jobId" = j."id"), 0)
          AS revenue,
@@ -107,9 +105,8 @@ async function revenueAndCost(
          AS cost
      FROM "jobs" j
      WHERE j."status" = 'DELIVERED'
-       AND j."updatedAt" >= $1 AND j."updatedAt" < $2
-       ${techFilter}`,
-    ...params
+       AND j."updatedAt" >= ${range.start} AND j."updatedAt" < ${range.end}
+       ${scope.role === "TECHNICIAN" ? Prisma.sql`AND j."technicianId" = ${scope.userId}` : Prisma.empty}`
   );
   let revenue = 0;
   let cost = 0;
@@ -146,19 +143,13 @@ export async function financialTrend(
   scope: Scope,
   days: number
 ): Promise<FinancialTrendPoint[]> {
-  const techClause =
-    scope.role === "TECHNICIAN" ? `AND j."technicianId" = $3` : "";
-  const params: unknown[] = [scope.shopTz, days - 1];
-  if (scope.role === "TECHNICIAN") {
-    params.push(scope.userId);
-  }
-  const rows = await prisma.$queryRawUnsafe<
+  const rows = await prisma.$queryRaw<
     Array<{ cost: string; day: Date; revenue: string }>
   >(
-    `WITH series AS (
+    Prisma.sql`WITH series AS (
        SELECT generate_series(
-         (date_trunc('day', now() AT TIME ZONE $1) - INTERVAL '1 day' * $2)::date,
-         (date_trunc('day', now() AT TIME ZONE $1))::date,
+         (date_trunc('day', now() AT TIME ZONE ${scope.shopTz}) - INTERVAL '1 day' * ${days - 1})::date,
+         (date_trunc('day', now() AT TIME ZONE ${scope.shopTz}))::date,
          '1 day'::interval
        )::date AS day
      )
@@ -173,11 +164,10 @@ export async function financialTrend(
      FROM series s
      LEFT JOIN "jobs" j
        ON j."status" = 'DELIVERED'
-      AND (j."updatedAt" AT TIME ZONE $1)::date = s.day
-      ${techClause}
+      AND (j."updatedAt" AT TIME ZONE ${scope.shopTz})::date = s.day
+      ${scope.role === "TECHNICIAN" ? Prisma.sql`AND j."technicianId" = ${scope.userId}` : Prisma.empty}
      GROUP BY s.day
-     ORDER BY s.day ASC`,
-    ...params
+     ORDER BY s.day ASC`
   );
   return rows.map((r) => ({
     cost: toMoney(Number(r.cost)),

@@ -132,7 +132,11 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
   app.addHook("preHandler", requirePermission({ jobs: ["view"] }));
 
   // In-memory lockout store: jobCode → { failures, lockedUntil }
-  // Periodic cleanup runs every 15 min to prune expired entries
+  // NOTE: This is per-process state — it will NOT be shared across multiple
+  // server instances. For Reparilo's single-location deployment (one server)
+  // this is acceptable. If multi-instance deployment is ever needed, this
+  // should be replaced with a Redis or DB-backed store.
+  // TODO: Migrate to Redis/DB-backed store for multi-instance support.
   const codeLockouts = new Map<
     string,
     { failures: number; lockedUntil: number }

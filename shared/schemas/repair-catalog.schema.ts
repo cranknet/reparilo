@@ -9,7 +9,7 @@ export const createRepairSchema = z.object({
     RepairCategory.DIAGNOSTIC,
     RepairCategory.OTHER,
   ]),
-  defaultPrice: z.number().min(0, "Price must be positive"),
+  defaultPrice: z.number().min(0, "Price must be positive").max(99_999_999.99),
 });
 
 export const updateRepairSchema = z.object({
@@ -22,7 +22,7 @@ export const updateRepairSchema = z.object({
       RepairCategory.OTHER,
     ])
     .optional(),
-  defaultPrice: z.number().min(0).optional(),
+  defaultPrice: z.number().min(0).max(99_999_999.99).optional(),
   isActive: z.boolean().optional(),
 });
 

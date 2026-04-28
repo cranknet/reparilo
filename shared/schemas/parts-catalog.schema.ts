@@ -15,7 +15,7 @@ export const createPartSchema = z.object({
     PartCategory.BUTTON,
     PartCategory.OTHER,
   ]),
-  defaultPrice: z.number().min(0, "Price must be positive"),
+  defaultPrice: z.number().min(0, "Price must be positive").max(99_999_999.99),
   supplier: z.string().optional(),
 });
 
@@ -35,7 +35,7 @@ export const updatePartSchema = z.object({
       PartCategory.OTHER,
     ])
     .optional(),
-  defaultPrice: z.number().min(0).optional(),
+  defaultPrice: z.number().min(0).max(99_999_999.99).optional(),
   supplier: z.string().optional(),
   isActive: z.boolean().optional(),
 });
