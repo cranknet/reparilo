@@ -484,6 +484,7 @@
     "unexpected_title": "حدث خطأ ما",
     "unexpected_body": "حدث خطأ غير متوقع. ",
     "unexpected_reload": "إعادة تحميل",
+    "fetch_customers": "فشل في تحميل العملاء",
     "fetch_jobs": "فشل في تحميل المهام",
     "fetch_metrics": "فشل تحميل المقاييس",
     "create_job": "فشل في إنشاء الوظيفة",

@@ -104,11 +104,13 @@ export { jobIdParamSchema } from "./receipt.schema";
 export type {
   CreateRepairInput,
   ListRepairsQueryInput,
+  ToggleRepairStatusInput,
   UpdateRepairInput,
 } from "./repair-catalog.schema";
 export {
   createRepairSchema,
   listRepairsQuerySchema,
+  toggleRepairStatusSchema,
   updateRepairSchema,
 } from "./repair-catalog.schema";
 export type {

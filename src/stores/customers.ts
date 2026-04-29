@@ -80,8 +80,11 @@ export const useCustomersStore = create<CustomersState>((set) => ({
         totalCount: data.totalCount,
         isLoading: false,
       });
-    } catch {
-      set({ isLoading: false });
+    } catch (err: unknown) {
+      set({
+        isLoading: false,
+        error: getErrorMessage(err, i18n.t("errors.fetch_customers")),
+      });
     }
   },
 

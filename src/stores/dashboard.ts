@@ -39,8 +39,10 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     try {
       const res = await api.get("/dashboard/front-desk");
       set({ frontDeskData: res.data as FrontDeskDashboardDTO });
-    } catch {
-      /* front-desk dashboard fetch handled silently */
+    } catch (err: unknown) {
+      set({
+        error: getErrorMessage(err, "Failed to load front desk dashboard"),
+      });
     }
   },
 
@@ -48,8 +50,10 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     try {
       const res = await api.get("/dashboard/technician");
       set({ techData: res.data as TechnicianDashboardDTO });
-    } catch {
-      /* technician dashboard fetch handled silently */
+    } catch (err: unknown) {
+      set({
+        error: getErrorMessage(err, "Failed to load technician dashboard"),
+      });
     }
   },
 }));

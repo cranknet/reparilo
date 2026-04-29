@@ -484,6 +484,7 @@
     "unexpected_title": "Quelque chose s'est mal passé",
     "unexpected_body": "Une erreur inattendue s'est produite. ",
     "unexpected_reload": "Recharger",
+    "fetch_customers": "Échec du chargement des clients",
     "fetch_jobs": "Échec du chargement des tâches",
     "fetch_metrics": "Échec du chargement des métriques",
     "create_job": "Échec de la création de l'emploi",

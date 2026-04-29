@@ -37,6 +37,11 @@ export const listRepairsQuerySchema = z.object({
   isActive: z.coerce.boolean().optional(),
 });
 
+export const toggleRepairStatusSchema = z.object({
+  isActive: z.boolean(),
+});
+
 export type CreateRepairInput = z.infer<typeof createRepairSchema>;
 export type UpdateRepairInput = z.infer<typeof updateRepairSchema>;
 export type ListRepairsQueryInput = z.infer<typeof listRepairsQuerySchema>;
+export type ToggleRepairStatusInput = z.infer<typeof toggleRepairStatusSchema>;

@@ -2,6 +2,7 @@ import { AppError } from "@shared/errors/app-error.js";
 import {
   createRepairSchema,
   listRepairsQuerySchema,
+  toggleRepairStatusSchema,
   updateRepairSchema,
 } from "@shared/schemas/repair-catalog.schema";
 import type { FastifyPluginAsync } from "fastify";
@@ -88,10 +89,11 @@ export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: [requirePermission({ repairs: ["manageCatalog"] })] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
-      const { isActive } = req.body as { isActive: boolean };
-      if (typeof isActive !== "boolean") {
-        throw new AppError("VALIDATION_ERROR");
+      const parsed = toggleRepairStatusSchema.safeParse(req.body);
+      if (!parsed.success) {
+        throw new AppError("IS_ACTIVE_BOOLEAN");
       }
+      const { isActive } = parsed.data;
       const result = await toggleActive(app.prisma, id, isActive);
       if (!result) {
         throw new AppError("REPAIR_NOT_FOUND");

@@ -484,6 +484,7 @@
     "unexpected_title": "Something went wrong",
     "unexpected_body": "An unexpected error occurred. Please reload the page.",
     "unexpected_reload": "Reload",
+    "fetch_customers": "Failed to load customers",
     "fetch_jobs": "Failed to load jobs",
     "fetch_metrics": "Failed to load metrics",
     "create_job": "Failed to create job",

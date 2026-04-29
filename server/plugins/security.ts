@@ -251,7 +251,7 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
     if (error instanceof ZodError) {
       reply.status(400).send({
         code: "VALIDATION_ERROR",
-        message: "Validation failed",
+        message: "errors.validation_error",
         details: { errors: error.flatten().fieldErrors },
       });
       return;
