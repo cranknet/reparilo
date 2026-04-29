@@ -474,7 +474,6 @@ const LOOKUP_INCLUDE_PUBLIC = {
   customer: { select: { name: true, phone: true } },
   device: { select: { brand: true, model: true } },
   repairs: { select: { repairName: true, price: true } },
-  partsUsed: { select: { partName: true, totalCost: true } },
   notes: {
     where: { isCustomerVisible: true },
     select: { content: true, createdAt: true },
@@ -486,7 +485,6 @@ const LOOKUP_INCLUDE_AUTH = {
   customer: { select: { name: true } },
   device: { select: { brand: true, model: true } },
   repairs: { select: { repairName: true, price: true } },
-  partsUsed: { select: { partName: true, totalCost: true } },
   notes: {
     where: { isCustomerVisible: true },
     select: { content: true, createdAt: true },
@@ -511,7 +509,7 @@ async function buildJobLookupPayload(
 ) {
   const [statusTransitions, shopSettings] = await Promise.all([
     prisma.auditLog.findMany({
-      where: { jobId, action: "STATUS_CHANGED" },
+      where: { jobId, action: AuditAction.STATUS_CHANGED },
       select: { fromValue: true, toValue: true, createdAt: true },
       orderBy: { createdAt: "asc" },
     }),

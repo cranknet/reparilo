@@ -134,7 +134,7 @@ reparilo/
 - When you dispatch "EXPLORE" agent in parallel, make sure to collect all issues found including minor ones; do not rely solely on the "EXPLORE" agent's recommendation.
 - Do not create or use Barrel files; apply best practice with explicit imports.
 
-- Create Prisma migrations after every schema change
+- Create Prisma manual migrations after every schema change
 - Use the Postgres URL from `.env` for DB access
 
 ## QA & Dev

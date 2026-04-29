@@ -24,6 +24,9 @@ interface ErrorResult {
 
 export function throwIfError<T>(result: T | ErrorResult): asserts result is T {
   if (result && typeof result === "object" && "error" in result) {
-    throw new AppError((result as ErrorResult).error as ErrorCode);
+    const code = (result as ErrorResult).error;
+    const validCode =
+      code in ERRORS ? (code as ErrorCode) : ("INTERNAL_ERROR" as ErrorCode);
+    throw new AppError(validCode);
   }
 }
