@@ -120,10 +120,9 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
     ban: 5,
     allowList: ["/health"],
     errorResponseBuilder: (_request, context) => ({
-      statusCode: 429,
-      error: "Too Many Requests",
-      message: "Rate limit exceeded. Try again later.",
-      retryAfter: Math.ceil(context.ttl / 1000),
+      code: "RATE_LIMITED",
+      message: "errors.rate_limited",
+      details: { retryAfter: Math.ceil(context.ttl / 1000) },
     }),
   });
 

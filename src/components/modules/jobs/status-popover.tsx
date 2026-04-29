@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useClickOutside } from "@/hooks/use-click-outside";
+import { getErrorMessage } from "@/lib/api";
 import { useJobsStore } from "@/stores/jobs";
 
 const REQUIRES_REASON: JobStatusType[] = ["ON_HOLD", "CANCELLED"];
@@ -83,11 +84,7 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
           });
         })
         .catch((err: unknown) => {
-          setError(
-            err instanceof Error
-              ? err.message
-              : t("jobs_status_change_error_unknown")
-          );
+          setError(getErrorMessage(err, t("jobs_status_change_error_unknown")));
           toast.error(t("job_status_failed"));
         })
         .finally(() => setLoading(false));
@@ -108,7 +105,7 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
       setPending(null);
       setReason("");
       onChanged?.();
-      toast("job_status_success", {
+      toast(t("job_status_success"), {
         action: {
           label: t("undo"),
           onClick: () => {
@@ -125,11 +122,7 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
         duration: 5000,
       });
     } catch (err: unknown) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t("jobs_status_change_error_unknown")
-      );
+      setError(getErrorMessage(err, t("jobs_status_change_error_unknown")));
       toast.error(t("job_status_failed"));
     } finally {
       setLoading(false);

@@ -4,6 +4,7 @@ import type {
   TechnicianDashboardDTO,
 } from "@shared/types/dashboard";
 import { create } from "zustand";
+import i18n from "@/i18n";
 import api, { getErrorMessage } from "@/lib/api";
 
 interface DashboardState {
@@ -30,7 +31,7 @@ export const useDashboardStore = create<DashboardState>((set) => ({
       const res = await api.get("/dashboard/owner");
       set({ data: res.data as OwnerDashboardDTO, isLoading: false });
     } catch (err: unknown) {
-      const message = getErrorMessage(err, "Failed to load dashboard");
+      const message = getErrorMessage(err, i18n.t("errors.fetch_dashboard"));
       set({ isLoading: false, error: message });
     }
   },
@@ -41,7 +42,7 @@ export const useDashboardStore = create<DashboardState>((set) => ({
       set({ frontDeskData: res.data as FrontDeskDashboardDTO });
     } catch (err: unknown) {
       set({
-        error: getErrorMessage(err, "Failed to load front desk dashboard"),
+        error: getErrorMessage(err, i18n.t("errors.fetch_front_desk")),
       });
     }
   },
@@ -52,7 +53,7 @@ export const useDashboardStore = create<DashboardState>((set) => ({
       set({ techData: res.data as TechnicianDashboardDTO });
     } catch (err: unknown) {
       set({
-        error: getErrorMessage(err, "Failed to load technician dashboard"),
+        error: getErrorMessage(err, i18n.t("errors.fetch_technician")),
       });
     }
   },

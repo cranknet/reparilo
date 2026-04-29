@@ -221,11 +221,9 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
         where: { OR: [{ username }, { email }] },
       });
       if (existing) {
-        const message =
-          existing.username === username
-            ? "Username already exists"
-            : "Email already exists";
-        throw new AppError("CONFLICT", { message });
+        const errorCode =
+          existing.username === username ? "USERNAME_EXISTS" : "EMAIL_EXISTS";
+        throw new AppError(errorCode);
       }
 
       const created = await app.auth.api.createUser({
