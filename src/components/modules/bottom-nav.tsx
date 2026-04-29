@@ -29,12 +29,6 @@ const NAV_ITEMS: NavItem[] = [
     to: "/jobs",
   },
   {
-    icon: "auto_awesome",
-    labelKey: "ai_agent_title",
-    perm: { ai: ["access"] },
-    to: "/ai-analyst",
-  },
-  {
     icon: "settings",
     labelKey: "settings",
     perm: { settings: ["view"] },
@@ -43,6 +37,12 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 const MORE_ITEMS: NavItem[] = [
+  {
+    icon: "auto_awesome",
+    labelKey: "ai_agent_title",
+    perm: { ai: ["access"] },
+    to: "/ai-analyst",
+  },
   {
     icon: "people",
     labelKey: "customers",
@@ -213,25 +213,40 @@ function NavTab({
   );
 }
 
-function FabButton({ onClick }: { onClick: () => void }) {
+function FabButton({
+  disabled,
+  onClick,
+}: {
+  disabled: boolean;
+  onClick: () => void;
+}) {
   const { t } = useTranslation();
   return (
     <button
       aria-label={t("new_checkin")}
       className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-end px-1 pb-0.5"
+      disabled={disabled}
       onClick={onClick}
       type="button"
     >
-      <span className="-mt-7 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-surface-tint shadow-lg transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-95 motion-reduce:active:scale-100">
+      <span
+        className={`-mt-7 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-95 motion-reduce:active:scale-100 ${
+          disabled
+            ? "bg-surface-container-highest opacity-50"
+            : "bg-gradient-to-br from-primary to-surface-tint"
+        }`}
+      >
         <span
           aria-hidden="true"
-          className="material-symbols-outlined text-[26px] text-on-primary"
+          className={`material-symbols-outlined text-[26px] ${disabled ? "text-on-surface-variant" : "text-on-primary"}`}
           style={{ fontVariationSettings: ACTIVE_FONT_SETTINGS }}
         >
           add_circle
         </span>
       </span>
-      <span className="mt-0.5 font-semibold text-[12px] text-primary leading-tight">
+      <span
+        className={`mt-0.5 text-[12px] leading-tight ${disabled ? "text-on-surface-variant" : "font-semibold text-primary"}`}
+      >
         {t("new_checkin")}
       </span>
     </button>
@@ -248,21 +263,18 @@ export default function BottomNav() {
   const closeMoreSheet = useUiStore((s) => s.closeMoreSheet);
   const location = useLocation();
 
-  const visibleItems = NAV_ITEMS.filter(
+  const visibleNavItems = NAV_ITEMS.filter(
     (item) => item.perm && can(role, item.perm)
+  );
+  const visibleNavItemsByPath = new Map(
+    visibleNavItems.map((item) => [item.to, item])
   );
   const visibleMoreItems = MORE_ITEMS.filter(
     (item) => item.perm && can(role, item.perm)
   );
-  const hasMore = visibleMoreItems.length > 0;
   const isMoreActive = visibleMoreItems.some(
     (item) => item.to === location.pathname
   );
-
-  // Split nav items around the center FAB: left group | FAB | right group
-  const half = Math.ceil((visibleItems.length + (hasMore ? 1 : 0)) / 2);
-  const leftItems = visibleItems.slice(0, half);
-  const rightItems = visibleItems.slice(half);
 
   useEffect(() => {
     if (!moreSheetOpen) {
@@ -292,7 +304,11 @@ export default function BottomNav() {
     return null;
   }
 
-  const moreButton = hasMore ? (
+  const dashboardItem = visibleNavItemsByPath.get("/");
+  const jobsItem = visibleNavItemsByPath.get("/jobs");
+  const settingsItem = visibleNavItemsByPath.get("/settings");
+
+  const moreButton = (
     <button
       aria-expanded={moreSheetOpen}
       aria-label={t("more")}
@@ -321,37 +337,7 @@ export default function BottomNav() {
         {t("more")}
       </span>
     </button>
-  ) : null;
-
-  const navBar = (
-    <nav
-      aria-label={t("navigation")}
-      className="fixed right-0 bottom-0 left-0 z-50 flex items-center bg-surface-container-low px-1 pt-1 pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_0_var(--color-outline-variant)] backdrop-blur-sm lg:hidden"
-    >
-      {leftItems.map((item) => (
-        <NavTab
-          icon={item.icon}
-          key={item.to}
-          labelKey={item.labelKey}
-          to={item.to}
-        />
-      ))}
-      {canCreateJob && <FabButton onClick={openIntakeModal} />}
-      {rightItems.map((item) => (
-        <NavTab
-          icon={item.icon}
-          key={item.to}
-          labelKey={item.labelKey}
-          to={item.to}
-        />
-      ))}
-      {moreButton}
-    </nav>
   );
-
-  if (!hasMore) {
-    return navBar;
-  }
 
   return (
     <>
@@ -412,7 +398,35 @@ export default function BottomNav() {
           </div>
         </div>
       )}
-      {navBar}
+
+      <nav
+        aria-label={t("navigation")}
+        className="fixed right-0 bottom-0 left-0 z-50 flex items-center bg-surface-container-low px-1 pt-1 pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_0_var(--color-outline-variant)] backdrop-blur-sm lg:hidden"
+      >
+        {dashboardItem && (
+          <NavTab
+            icon={dashboardItem.icon}
+            labelKey={dashboardItem.labelKey}
+            to={dashboardItem.to}
+          />
+        )}
+        {jobsItem && (
+          <NavTab
+            icon={jobsItem.icon}
+            labelKey={jobsItem.labelKey}
+            to={jobsItem.to}
+          />
+        )}
+        <FabButton disabled={!canCreateJob} onClick={openIntakeModal} />
+        {settingsItem && (
+          <NavTab
+            icon={settingsItem.icon}
+            labelKey={settingsItem.labelKey}
+            to={settingsItem.to}
+          />
+        )}
+        {moreButton}
+      </nav>
     </>
   );
 }

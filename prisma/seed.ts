@@ -60,6 +60,7 @@ async function main() {
     console.log("Skipping admin seed. Seeding notification templates...");
     await seedNotificationTemplates();
     await seedAgentDefinitions();
+    await seedRepairCatalog();
     return;
   }
 
@@ -92,6 +93,7 @@ async function main() {
 
   await seedNotificationTemplates();
   await seedAgentDefinitions();
+  await seedRepairCatalog();
 }
 
 async function seedNotificationTemplates() {
@@ -136,6 +138,136 @@ async function seedNotificationTemplates() {
     });
   }
   console.log("Notification templates seeded.");
+}
+
+async function seedRepairCatalog() {
+  const repairs = [
+    {
+      name: "Screen Replacement",
+      category: "HARDWARE" as const,
+      defaultPrice: 4500,
+    },
+    {
+      name: "Battery Replacement",
+      category: "HARDWARE" as const,
+      defaultPrice: 2500,
+    },
+    {
+      name: "Charging Port Replacement",
+      category: "HARDWARE" as const,
+      defaultPrice: 2000,
+    },
+    {
+      name: "Back Glass Replacement",
+      category: "HARDWARE" as const,
+      defaultPrice: 3000,
+    },
+    {
+      name: "Camera Replacement (Rear)",
+      category: "HARDWARE" as const,
+      defaultPrice: 3500,
+    },
+    {
+      name: "Front Camera Replacement",
+      category: "HARDWARE" as const,
+      defaultPrice: 2500,
+    },
+    {
+      name: "Speaker Replacement",
+      category: "HARDWARE" as const,
+      defaultPrice: 1500,
+    },
+    {
+      name: "Microphone Replacement",
+      category: "HARDWARE" as const,
+      defaultPrice: 1500,
+    },
+    {
+      name: "Motherboard Repair",
+      category: "HARDWARE" as const,
+      defaultPrice: 6000,
+    },
+    {
+      name: "Housing Replacement",
+      category: "HARDWARE" as const,
+      defaultPrice: 3000,
+    },
+    {
+      name: "Button Replacement (Power/Volume)",
+      category: "HARDWARE" as const,
+      defaultPrice: 1500,
+    },
+    {
+      name: "Vibrator Motor Replacement",
+      category: "HARDWARE" as const,
+      defaultPrice: 1200,
+    },
+    {
+      name: "Water Damage Repair",
+      category: "HARDWARE" as const,
+      defaultPrice: 4000,
+    },
+    {
+      name: "Screen Protector Installation",
+      category: "HARDWARE" as const,
+      defaultPrice: 500,
+    },
+    {
+      name: "FRP Bypass / Google Account Removal",
+      category: "SOFTWARE" as const,
+      defaultPrice: 2000,
+    },
+    {
+      name: "Software Update / Flash",
+      category: "SOFTWARE" as const,
+      defaultPrice: 1000,
+    },
+    {
+      name: "OS Reinstall / Factory Reset",
+      category: "SOFTWARE" as const,
+      defaultPrice: 800,
+    },
+    {
+      name: "Data Transfer / Backup",
+      category: "SOFTWARE" as const,
+      defaultPrice: 500,
+    },
+    {
+      name: "Unlock Network / Carrier",
+      category: "SOFTWARE" as const,
+      defaultPrice: 1500,
+    },
+
+    {
+      name: "Data Recovery",
+      category: "SOFTWARE" as const,
+      defaultPrice: 3000,
+    },
+    {
+      name: "Virus / Malware Removal",
+      category: "SOFTWARE" as const,
+      defaultPrice: 1000,
+    },
+    {
+      name: "Diagnostic Fee",
+      category: "DIAGNOSTIC" as const,
+      defaultPrice: 500,
+    },
+    {
+      name: "Water Damage Diagnostic",
+      category: "DIAGNOSTIC" as const,
+      defaultPrice: 800,
+    },
+  ];
+
+  for (const repair of repairs) {
+    await prisma.repairCatalog.upsert({
+      where: { name: repair.name },
+      update: {},
+      create: repair,
+    });
+  }
+  console.log("Repair catalog seeded.");
 }
 
 async function seedAgentDefinitions() {

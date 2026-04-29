@@ -6,8 +6,10 @@ import FinancialTrend from "@/components/modules/dashboard/financial-trend";
 import JobPipeline from "@/components/modules/dashboard/job-pipeline";
 import OverdueJobs from "@/components/modules/dashboard/overdue-jobs";
 import MetricCard from "@/components/ui/metric-card";
+import { useCan } from "@/hooks/use-can";
 import { useAuthStore } from "@/stores/auth";
 import { useDashboardStore } from "@/stores/dashboard";
+import { useUiStore } from "@/stores/ui";
 
 const EMPTY_PIPELINE: Record<JobStatusType, number> = {
   INTAKE: 0,
@@ -24,6 +26,8 @@ export default function DashboardPage() {
   const { t } = useTranslation();
   const userName = useAuthStore((s) => s.user?.name || s.user?.username || "");
   const { data, fetchDashboard, isLoading } = useDashboardStore();
+  const openIntakeModal = useUiStore((s) => s.openIntakeModal);
+  const canCreateJob = useCan({ jobs: ["create"] });
 
   useEffect(() => {
     fetchDashboard();
@@ -52,7 +56,9 @@ export default function DashboardPage() {
 
         <div className="flex w-full flex-wrap gap-3 sm:w-auto">
           <button
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-4 py-2.5 font-bold font-headline text-sm text-white shadow-lg shadow-primary/20 transition-all hover:opacity-90 sm:flex-none md:px-8"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-4 py-2.5 font-bold font-headline text-sm text-white shadow-lg shadow-primary/20 transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none md:px-8"
+            disabled={!canCreateJob}
+            onClick={() => openIntakeModal()}
             type="button"
           >
             <span className="material-symbols-outlined text-[18px] md:text-[20px]">
