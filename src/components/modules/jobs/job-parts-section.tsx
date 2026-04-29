@@ -2,10 +2,10 @@ import { INACTIVE_STATUSES } from "@shared/constants";
 import type { Job, JobPart } from "@shared/types";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { Can } from "@/components/modules/can";
 import { formatDzd } from "@/lib/format";
 import { useJobsStore } from "@/stores/jobs";
-import { useToastStore } from "@/stores/toast";
 import AddPartDialog from "./add-part-dialog";
 
 interface JobPartsSectionProps {
@@ -24,8 +24,6 @@ export default function JobPartsSection({
   const { t } = useTranslation();
   const removePart = useJobsStore((s) => s.removePart);
   const addPart = useJobsStore((s) => s.addPart);
-  const undoToast = useToastStore((s) => s.undoToast);
-  const regularToast = useToastStore((s) => s.toast);
   const [showAddDialog, setShowAddDialog] = useState(false);
 
   const isTerminal = INACTIVE_STATUSES.includes(
@@ -37,26 +35,32 @@ export default function JobPartsSection({
       try {
         await removePart(job.id, partId);
         onChanged?.();
-        undoToast("job_part_remove_success", "undo", () => {
-          addPart(job.id, {
-            partName: partData.partName,
-            category: partData.category,
-            quantity: partData.quantity,
-            unitPrice: Number(partData.unitPrice),
-          })
-            .then(() => {
-              onChanged?.();
-              regularToast("job_part_undone");
-            })
-            .catch(() => {
-              regularToast("job_part_undo_failed", "error");
-            });
+        toast(t("job_part_remove_success"), {
+          action: {
+            label: t("undo"),
+            onClick: () => {
+              addPart(job.id, {
+                partName: partData.partName,
+                category: partData.category,
+                quantity: partData.quantity,
+                unitPrice: Number(partData.unitPrice),
+              })
+                .then(() => {
+                  onChanged?.();
+                  toast.success(t("job_part_undone"));
+                })
+                .catch(() => {
+                  toast.error(t("job_part_undo_failed"));
+                });
+            },
+          },
+          duration: 5000,
         });
       } catch {
-        regularToast("job_part_remove_failed", "error");
+        toast.error(t("job_part_remove_failed"));
       }
     },
-    [removePart, addPart, job.id, onChanged, undoToast, regularToast]
+    [removePart, addPart, job.id, onChanged, t]
   );
 
   const parts = job.partsUsed ?? [];

@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient } from "@generated/client";
+import { AppError } from "@shared/errors/app-error.js";
 import type {
   CreateRepairInput,
   ListRepairsQueryInput,
@@ -96,9 +97,7 @@ export async function remove(prisma: PrismaClient, id: string) {
 
   const refCount = await prisma.jobRepair.count({ where: { repairId: id } });
   if (refCount > 0) {
-    throw new Error(
-      `Cannot delete repair "${existing.name}" — referenced by ${refCount} job(s). Deactivate it instead.`
-    );
+    throw new AppError("REPAIR_IN_USE");
   }
 
   return await prisma.repairCatalog.delete({ where: { id } });

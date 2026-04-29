@@ -1,3 +1,4 @@
+import { AppError, isAppError } from "@shared/errors/app-error.js";
 import Fastify from "fastify";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { jobRoutes } from "../routes/jobs.js";
@@ -69,10 +70,9 @@ vi.mock("../services/job-waiting-parts.service.js", () => ({
 }));
 
 vi.mock("../middlewares/rbac.js", () => ({
-  requirePermission: () => async (request: any, reply: any) => {
+  requirePermission: () => async (request: any) => {
     if (!request.user) {
-      await reply.status(401).send({ error: "Authentication required" });
-      return;
+      throw new AppError("UNAUTHORIZED");
     }
     const result = await request.server.auth.api.userHasPermission({
       body: {
@@ -81,14 +81,31 @@ vi.mock("../middlewares/rbac.js", () => ({
       },
     });
     if (!result.success) {
-      await reply.status(403).send({ error: "Insufficient permissions" });
-      return;
+      throw new AppError("FORBIDDEN");
     }
   },
 }));
 
 function buildApp(userId: string | null, role = "OWNER") {
   const app = Fastify();
+
+  app.setErrorHandler((error, _request, reply) => {
+    if (isAppError(error)) {
+      const payload: Record<string, unknown> = {
+        code: error.code,
+        message: error instanceof Error ? error.message : "Internal error",
+      };
+      if (error.details !== undefined) {
+        payload.details = error.details;
+      }
+      reply.status(error.status).send(payload);
+      return;
+    }
+    reply.status(500).send({
+      code: "INTERNAL_ERROR",
+      message: error instanceof Error ? error.message : "Internal error",
+    });
+  });
 
   const mockSession = userId
     ? {
@@ -224,7 +241,7 @@ describe("POST /api/jobs/:id/parts", () => {
 
     expect(res.statusCode).toBe(409);
     const body = JSON.parse(res.body);
-    expect(body.error).toBe("JOB_IN_TERMINAL_STATUS");
+    expect(body.code).toBe("JOB_IN_TERMINAL_STATUS");
   });
 });
 
@@ -262,7 +279,7 @@ describe("DELETE /api/jobs/:id/parts/:partId", () => {
 
     expect(res.statusCode).toBe(404);
     const body = JSON.parse(res.body);
-    expect(body.error).toBe("RESOURCE_NOT_FOUND");
+    expect(body.code).toBe("RESOURCE_NOT_FOUND");
   });
 });
 

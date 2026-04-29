@@ -1,0 +1,114 @@
+export interface ErrorInfo {
+  message: string;
+  status: number;
+}
+
+export const ERRORS = {
+  // ── Auth ───────────────────────────────────────────────────────────────
+  UNAUTHORIZED: { status: 401, message: "errors.unauthorized" },
+  FORBIDDEN: { status: 403, message: "errors.forbidden" },
+  ACCOUNT_DISABLED: { status: 403, message: "errors.account_disabled" },
+  FORBIDDEN_STATUS_TRANSITION: {
+    status: 403,
+    message: "errors.forbidden_status_transition",
+  },
+  CANCEL_WINDOW_EXPIRED: {
+    status: 403,
+    message: "errors.cancel_window_expired",
+  },
+  CANCEL_NOT_CREATOR: { status: 403, message: "errors.cancel_not_creator" },
+  CANNOT_DEACTIVATE_OWN: {
+    status: 400,
+    message: "errors.cannot_deactivate_own",
+  },
+  AVATAR_NOT_OWN: { status: 403, message: "errors.avatar_not_own" },
+  CURRENT_PASSWORD_INCORRECT: {
+    status: 400,
+    message: "errors.current_password_incorrect",
+  },
+  PASSWORD_SAME_AS_OLD: { status: 400, message: "errors.password_same_as_old" },
+  NO_PASSWORD_SET: { status: 400, message: "errors.no_password_set" },
+  CANNOT_END_CURRENT_SESSION: {
+    status: 400,
+    message: "errors.cannot_end_current_session",
+  },
+
+  // ── Validation ─────────────────────────────────────────────────────────
+  VALIDATION_ERROR: { status: 400, message: "errors.validation_error" },
+  INVALID_CUSTOMER_ID: { status: 400, message: "errors.invalid_customer_id" },
+  AT_LEAST_ONE_FIELD: { status: 400, message: "errors.at_least_one_field" },
+  NO_FILE_UPLOADED: { status: 400, message: "errors.no_file_uploaded" },
+  INVALID_FILE_TYPE: { status: 400, message: "errors.invalid_file_type" },
+  INVALID_FILE_CONTENT: {
+    status: 400,
+    message: "errors.invalid_file_content",
+  },
+  FILE_TOO_LARGE: { status: 413, message: "errors.file_too_large" },
+  MISSING_LOOKUP_PARAMS: {
+    status: 400,
+    message: "errors.missing_lookup_params",
+  },
+  INVALID_JOB_CODE: { status: 400, message: "errors.invalid_job_code" },
+  INVALID_PHONE4: { status: 400, message: "errors.invalid_phone4" },
+  INVALID_CURSOR: { status: 400, message: "errors.invalid_cursor" },
+  IS_ACTIVE_BOOLEAN: { status: 400, message: "errors.is_active_boolean" },
+
+  // ── Not Found ──────────────────────────────────────────────────────────
+  NOT_FOUND: { status: 404, message: "errors.not_found" },
+  JOB_NOT_FOUND: { status: 404, message: "errors.job_not_found" },
+  CUSTOMER_NOT_FOUND: { status: 404, message: "errors.customer_not_found" },
+  PART_NOT_FOUND: { status: 404, message: "errors.part_not_found" },
+  REPAIR_NOT_FOUND: { status: 404, message: "errors.repair_not_found" },
+  USER_NOT_FOUND: { status: 404, message: "errors.user_not_found" },
+  TEMPLATE_NOT_FOUND: { status: 404, message: "errors.template_not_found" },
+  SESSION_NOT_FOUND: { status: 404, message: "errors.session_not_found" },
+  RESOURCE_NOT_FOUND: { status: 404, message: "errors.resource_not_found" },
+  CONVERSATION_NOT_FOUND: {
+    status: 404,
+    message: "errors.conversation_not_found",
+  },
+  MESSAGE_NOT_FOUND: { status: 404, message: "errors.message_not_found" },
+  INSTRUCTION_NOT_FOUND: {
+    status: 404,
+    message: "errors.instruction_not_found",
+  },
+  MEMORY_NOT_FOUND: { status: 404, message: "errors.memory_not_found" },
+  AGENT_DEFINITION_NOT_FOUND: {
+    status: 404,
+    message: "errors.agent_definition_not_found",
+  },
+
+  // ── Conflict ───────────────────────────────────────────────────────────
+  CONFLICT: { status: 409, message: "errors.conflict" },
+  DUPLICATE_REPAIR: { status: 409, message: "errors.duplicate_repair" },
+  PART_IN_USE: { status: 409, message: "errors.part_in_use" },
+  REPAIR_IN_USE: { status: 409, message: "errors.repair_in_use" },
+  JOB_IN_TERMINAL_STATUS: {
+    status: 409,
+    message: "errors.job_in_terminal_status",
+  },
+  CONFLICT_STATUS_TRANSITION: {
+    status: 409,
+    message: "errors.conflict_status_transition",
+  },
+  PHOTO_LIMIT_REACHED: { status: 409, message: "errors.photo_limit_reached" },
+
+  // ── Business Logic ─────────────────────────────────────────────────────
+  INVALID_CUSTOMER: { status: 400, message: "errors.invalid_customer" },
+  INVALID_WARRANTY_REFERENCE: {
+    status: 400,
+    message: "errors.invalid_warranty_reference",
+  },
+  INVALID_TECHNICIAN: { status: 400, message: "errors.invalid_technician" },
+  AI_DISABLED: { status: 400, message: "errors.ai_disabled" },
+  NO_SHOP_PHONE: { status: 400, message: "errors.no_shop_phone" },
+  BUILTIN_AGENT_DELETE: {
+    status: 403,
+    message: "errors.builtin_agent_delete",
+  },
+
+  // ── Server ─────────────────────────────────────────────────────────────
+  INTERNAL_ERROR: { status: 500, message: "errors.internal_error" },
+} as const;
+
+export type ErrorCode = keyof typeof ERRORS;

@@ -1,7 +1,7 @@
 import type { PartsCatalog } from "@shared/types";
 import { create } from "zustand";
 import i18n from "@/i18n";
-import api from "@/lib/api";
+import api, { getErrorMessage } from "@/lib/api";
 
 interface PartsCatalogState {
   clearError: () => void;
@@ -56,8 +56,7 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
         isLoading: false,
       });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.fetch_parts");
+      const message = getErrorMessage(err, i18n.t("errors.fetch_parts"));
       set({ isLoading: false, error: message });
     }
   },
@@ -78,8 +77,7 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
         isLoadingMore: false,
       }));
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.fetch_parts");
+      const message = getErrorMessage(err, i18n.t("errors.fetch_parts"));
       set({ isLoadingMore: false, error: message });
     }
   },
@@ -95,8 +93,7 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
       }));
       return newPart;
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.create_part");
+      const message = getErrorMessage(err, i18n.t("errors.create_part"));
       set({ error: message });
       throw new Error(message);
     }
@@ -112,8 +109,7 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
       }));
       return updated;
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.update_part");
+      const message = getErrorMessage(err, i18n.t("errors.update_part"));
       set({ error: message });
       throw new Error(message);
     }
@@ -128,10 +124,7 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
         parts: state.parts.map((p) => (p.id === id ? updated : p)),
       }));
     } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : i18n.t("errors.toggle_part_status");
+      const message = getErrorMessage(err, i18n.t("errors.toggle_part_status"));
       set({ error: message });
       throw new Error(message);
     }
@@ -146,8 +139,7 @@ export const usePartsCatalogStore = create<PartsCatalogState>((set) => ({
         totalCount: state.totalCount - 1,
       }));
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.delete_part");
+      const message = getErrorMessage(err, i18n.t("errors.delete_part"));
       set({ error: message });
       throw new Error(message);
     }

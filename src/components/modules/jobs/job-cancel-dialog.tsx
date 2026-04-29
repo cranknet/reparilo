@@ -2,8 +2,8 @@ import type { JobStatusType } from "@shared/constants";
 import type { Job } from "@shared/types";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { useJobsStore } from "@/stores/jobs";
-import { useToastStore } from "@/stores/toast";
 
 interface JobCancelDialogProps {
   job: Job;
@@ -18,8 +18,6 @@ export default function JobCancelDialog({
 }: JobCancelDialogProps) {
   const { t } = useTranslation();
   const transitionStatus = useJobsStore((s) => s.transitionStatus);
-  const undoToast = useToastStore((s) => s.undoToast);
-  const regularToast = useToastStore((s) => s.toast);
   const jobId = job.id;
   const previousStatus = job.status as JobStatusType;
   const [reason, setReason] = useState("");
@@ -66,18 +64,24 @@ export default function JobCancelDialog({
     try {
       await transitionStatus(jobId, "CANCELLED", reason.trim());
       onClose();
-      undoToast("job_cancel_success", "undo", () => {
-        transitionStatus(jobId, previousStatus)
-          .then(() => {
-            regularToast("job_cancel_undone");
-          })
-          .catch(() => {
-            regularToast("job_cancel_undo_failed", "error");
-          });
+      toast(t("job_cancel_success"), {
+        action: {
+          label: t("undo"),
+          onClick: () => {
+            transitionStatus(jobId, previousStatus)
+              .then(() => {
+                toast.success(t("job_cancel_undone"));
+              })
+              .catch(() => {
+                toast.error(t("job_cancel_undo_failed"));
+              });
+          },
+        },
+        duration: 5000,
       });
     } catch {
       setError(t("job_actions_status_error"));
-      regularToast("job_cancel_failed", "error");
+      toast.error(t("job_cancel_failed"));
     } finally {
       setSubmitting(false);
     }

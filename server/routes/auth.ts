@@ -1,3 +1,4 @@
+import { AppError } from "@shared/errors/app-error.js";
 import { changePasswordSchema } from "@shared/schemas/auth.schema";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { fromNodeHeaders } from "better-auth/node";
@@ -11,14 +12,13 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     const session = await app.auth.api.getSession({ headers });
 
     if (!session?.user) {
-      return reply.status(401).send({ error: "Authentication required" });
+      throw new AppError("UNAUTHORIZED");
     }
 
     const parsed = changePasswordSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.status(400).send({
-        error: "VALIDATION_ERROR",
-        details: resolveZodErrors(
+      throw new AppError("VALIDATION_ERROR", {
+        errors: resolveZodErrors(
           parsed.error.flatten().fieldErrors,
           request.locale
         ),
@@ -28,9 +28,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     const { oldPassword, newPassword } = parsed.data;
 
     if (oldPassword === newPassword) {
-      return reply.status(400).send({
-        error: "New password must be different from current password",
-      });
+      throw new AppError("PASSWORD_SAME_AS_OLD");
     }
 
     const account = await app.prisma.account.findFirst({
@@ -38,9 +36,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       select: { password: true },
     });
     if (!account?.password) {
-      return reply
-        .status(400)
-        .send({ error: "No password set for this account" });
+      throw new AppError("NO_PASSWORD_SET");
     }
 
     const isValid = await verifyPassword({
@@ -48,7 +44,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       password: oldPassword,
     });
     if (!isValid) {
-      return reply.status(400).send({ error: "Current password is incorrect" });
+      throw new AppError("CURRENT_PASSWORD_INCORRECT");
     }
 
     const hashedNewPassword = await hashPassword(newPassword);
@@ -72,7 +68,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
     const session = await app.auth.api.getSession({ headers });
 
     if (!session?.user) {
-      return reply.status(401).send({ error: "Authentication required" });
+      throw new AppError("UNAUTHORIZED");
     }
     return reply.send({
       mustChangePassword: session.user.mustChangePassword,

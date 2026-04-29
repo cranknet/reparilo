@@ -8,6 +8,7 @@ import {
   JOB_STATUS_FLOW,
   Role,
 } from "@shared/constants";
+import { AppError } from "@shared/errors/app-error.js";
 import type {
   CreateJobInput,
   JobListQueryInput,
@@ -245,7 +246,7 @@ export async function create(
         .filter((id): id is string => id != null);
       const uniqueRepairIds = new Set(repairIds);
       if (uniqueRepairIds.size !== repairIds.length) {
-        throw new Error("DUPLICATE_REPAIR");
+        throw new AppError("DUPLICATE_REPAIR");
       }
       await tx.jobRepair.createMany({
         data: input.repairs.map((repair) => ({

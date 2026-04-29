@@ -2,7 +2,7 @@ import type { JobStatusType } from "@shared/constants";
 import type { Job, JobNote, JobPart, JobRepair } from "@shared/types";
 import { create } from "zustand";
 import i18n from "@/i18n";
-import api from "@/lib/api";
+import api, { getErrorMessage } from "@/lib/api";
 
 interface JobMetrics {
   [status: string]: number;
@@ -107,8 +107,7 @@ export const useJobsStore = create<JobsState>((set) => ({
         isLoadingJobs: false,
       });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.fetch_jobs");
+      const message = getErrorMessage(err, i18n.t("errors.fetch_jobs"));
       set({ isLoadingJobs: false, error: message });
     }
   },
@@ -119,8 +118,7 @@ export const useJobsStore = create<JobsState>((set) => ({
       const res = await api.get("/jobs/metrics");
       set({ metrics: res.data, isLoadingMetrics: false });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.fetch_metrics");
+      const message = getErrorMessage(err, i18n.t("errors.fetch_metrics"));
       set({ isLoadingMetrics: false, error: message });
     }
   },
@@ -137,8 +135,7 @@ export const useJobsStore = create<JobsState>((set) => ({
       }));
       return newJob;
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.create_job");
+      const message = getErrorMessage(err, i18n.t("errors.create_job"));
       set({ isCreatingJob: false, error: message });
       throw new Error(message);
     }
@@ -154,8 +151,7 @@ export const useJobsStore = create<JobsState>((set) => ({
       }));
       return updated;
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.update_job");
+      const message = getErrorMessage(err, i18n.t("errors.update_job"));
       set({ error: message });
       throw new Error(message);
     }
@@ -171,8 +167,7 @@ export const useJobsStore = create<JobsState>((set) => ({
       }));
       return updated;
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.transition_status");
+      const message = getErrorMessage(err, i18n.t("errors.transition_status"));
       set({ error: message });
       throw new Error(message);
     }
@@ -192,8 +187,7 @@ export const useJobsStore = create<JobsState>((set) => ({
       }));
       return res.data as JobNote;
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.add_note");
+      const message = getErrorMessage(err, i18n.t("errors.add_note"));
       set({ error: message });
       throw new Error(message);
     }
@@ -212,8 +206,7 @@ export const useJobsStore = create<JobsState>((set) => ({
       }));
       return res.data as JobPart;
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.add_part");
+      const message = getErrorMessage(err, i18n.t("errors.add_part"));
       set({ error: message });
       throw new Error(message);
     }
@@ -234,8 +227,7 @@ export const useJobsStore = create<JobsState>((set) => ({
         ),
       }));
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.remove_part");
+      const message = getErrorMessage(err, i18n.t("errors.remove_part"));
       set({ error: message });
     }
   },
@@ -253,8 +245,7 @@ export const useJobsStore = create<JobsState>((set) => ({
       }));
       return res.data as JobRepair;
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.add_repair");
+      const message = getErrorMessage(err, i18n.t("errors.add_repair"));
       set({ error: message });
       throw new Error(message);
     }
@@ -275,8 +266,7 @@ export const useJobsStore = create<JobsState>((set) => ({
         ),
       }));
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.remove_repair");
+      const message = getErrorMessage(err, i18n.t("errors.remove_repair"));
       set({ error: message });
     }
   },
@@ -298,8 +288,7 @@ export const useJobsStore = create<JobsState>((set) => ({
       });
       return job;
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.fetch_job");
+      const message = getErrorMessage(err, i18n.t("errors.fetch_job"));
       set({ error: message });
       throw new Error(message);
     }

@@ -2,6 +2,7 @@ import type { Customer, Job } from "@shared/types";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
+import { toast } from "sonner";
 import { Can } from "@/components/modules/can";
 import EditCustomerDialog from "@/components/modules/customers/edit-customer-dialog";
 import CostSummary from "@/components/modules/jobs/cost-summary";
@@ -13,7 +14,6 @@ import StatusPopover from "@/components/modules/jobs/status-popover";
 import TechnicianSelect from "@/components/modules/jobs/technician-select";
 import { formatDzd } from "@/lib/format";
 import { useJobsStore } from "@/stores/jobs";
-import { useToastStore } from "@/stores/toast";
 
 function fmt(n: number): string {
   return `${formatDzd(n)} DZD`;
@@ -47,18 +47,16 @@ export default function JobDetailPage() {
     fetchJob();
   }, [fetchJob]);
 
-  const toast = useToastStore((s) => s.toast);
-
   const handleCopyTrackLink = useCallback(() => {
     if (!job?.jobCode) {
       return;
     }
     const url = `${window.location.origin}/tracking/${job.jobCode}`;
     navigator.clipboard.writeText(url).then(
-      () => toast("jobs_detail_track_link_copied"),
+      () => toast.success(t("jobs_detail_track_link_copied")),
       (err) => console.error("Failed to copy tracking link:", err)
     );
-  }, [job?.jobCode, toast]);
+  }, [job?.jobCode, t]);
 
   const handleCustomerSaved = useCallback(
     (updated: Customer) => {

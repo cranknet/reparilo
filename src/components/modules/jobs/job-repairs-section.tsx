@@ -2,10 +2,10 @@ import { INACTIVE_STATUSES } from "@shared/constants";
 import type { Job, JobRepair, RepairCatalog } from "@shared/types";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import RepairServicePicker from "@/components/modules/jobs/repair-service-picker";
 import { formatDzd } from "@/lib/format";
 import { useJobsStore } from "@/stores/jobs";
-import { useToastStore } from "@/stores/toast";
 
 interface JobRepairsSectionProps {
   job: Job;
@@ -19,8 +19,6 @@ export default function JobRepairsSection({
   const { t } = useTranslation();
   const addRepair = useJobsStore((s) => s.addRepair);
   const removeRepair = useJobsStore((s) => s.removeRepair);
-  const undoToast = useToastStore((s) => s.undoToast);
-  const regularToast = useToastStore((s) => s.toast);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -54,7 +52,7 @@ export default function JobRepairsSection({
       setSelectedRepair(null);
       setPrice("");
       setShowForm(false);
-      regularToast("job_repair_success");
+      toast.success(t("job_repair_success"));
       onChanged?.();
     } catch (err: unknown) {
       setFormError(
@@ -62,7 +60,7 @@ export default function JobRepairsSection({
           ? err.message
           : t("jobs_status_change_error_unknown")
       );
-      regularToast("job_repair_failed", "error");
+      toast.error(t("job_repair_failed"));
     } finally {
       setLoading(false);
     }
@@ -73,26 +71,32 @@ export default function JobRepairsSection({
       try {
         await removeRepair(job.id, repairId);
         onChanged?.();
-        undoToast("job_repair_remove_success", "undo", () => {
-          addRepair(job.id, {
-            repairId: repairData.repairId ?? "",
-            repairName: repairData.repairName,
-            category: repairData.category,
-            price: Number(repairData.price),
-          })
-            .then(() => {
-              onChanged?.();
-              regularToast("job_repair_undone");
-            })
-            .catch(() => {
-              regularToast("job_repair_failed", "error");
-            });
+        toast(t("job_repair_remove_success"), {
+          action: {
+            label: t("undo"),
+            onClick: () => {
+              addRepair(job.id, {
+                repairId: repairData.repairId ?? "",
+                repairName: repairData.repairName,
+                category: repairData.category,
+                price: Number(repairData.price),
+              })
+                .then(() => {
+                  onChanged?.();
+                  toast.success(t("job_repair_undone"));
+                })
+                .catch(() => {
+                  toast.error(t("job_repair_failed"));
+                });
+            },
+          },
+          duration: 5000,
         });
       } catch {
-        regularToast("job_repair_remove_failed", "error");
+        toast.error(t("job_repair_remove_failed"));
       }
     },
-    [removeRepair, addRepair, job.id, onChanged, undoToast, regularToast]
+    [removeRepair, addRepair, job.id, onChanged, t]
   );
 
   const repairs = job.repairs ?? [];

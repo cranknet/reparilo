@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient } from "@generated/client";
+import { AppError } from "@shared/errors/app-error.js";
 import type {
   CreatePartInput,
   ListPartsQueryInput,
@@ -98,9 +99,7 @@ export async function remove(prisma: PrismaClient, id: string) {
 
     const refCount = await tx.jobPart.count({ where: { partId: id } });
     if (refCount > 0) {
-      throw new Error(
-        `Cannot delete part "${part.name}" — referenced by ${refCount} job(s). Deactivate it instead.`
-      );
+      throw new AppError("PART_IN_USE");
     }
 
     return tx.partsCatalog.delete({ where: { id } });

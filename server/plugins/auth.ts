@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@generated/client";
+import { AppError } from "@shared/errors/app-error.js";
 import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
@@ -105,11 +106,11 @@ const authPlugin: FastifyPluginAsync = async (app) => {
       reply.send(sanitized ?? null);
     } catch (err) {
       app.log.error(err, "Better Auth handler error");
-      reply.status(500).send({ error: "Internal authentication error" });
+      throw new AppError("INTERNAL_ERROR");
     }
   });
 
-  app.addHook("preHandler", async (request, reply) => {
+  app.addHook("preHandler", async (request, _reply) => {
     const url = request.url;
     const pathname = url.split("?")[0];
 
@@ -129,13 +130,11 @@ const authPlugin: FastifyPluginAsync = async (app) => {
     const session = await getSessionFromRequest(auth, request);
 
     if (!session) {
-      await reply.status(401).send({ error: "Authentication required" });
-      return;
+      throw new AppError("UNAUTHORIZED");
     }
 
     if (!session.isActive) {
-      await reply.status(403).send({ error: "Account is disabled" });
-      return;
+      throw new AppError("ACCOUNT_DISABLED");
     }
 
     request.user = session;

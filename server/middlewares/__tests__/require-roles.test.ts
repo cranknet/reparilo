@@ -1,9 +1,22 @@
+import { isAppError } from "@shared/errors/app-error.js";
 import Fastify from "fastify";
 import { describe, expect, it } from "vitest";
 import { requireRoles } from "../require-roles.js";
 
 function app(userRole: string | null) {
   const a = Fastify();
+  a.setErrorHandler((error, _request, reply) => {
+    if (isAppError(error)) {
+      reply
+        .status(error.status)
+        .send({ code: error.code, message: error.message });
+    } else {
+      reply.status(500).send({
+        code: "INTERNAL_ERROR",
+        message: error instanceof Error ? error.message : "Internal error",
+      });
+    }
+  });
   a.addHook("onRequest", (req, _r, done) => {
     (req as { user: unknown }).user = userRole
       ? { id: "u", role: userRole }

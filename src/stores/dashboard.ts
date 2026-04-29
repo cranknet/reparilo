@@ -4,7 +4,7 @@ import type {
   TechnicianDashboardDTO,
 } from "@shared/types/dashboard";
 import { create } from "zustand";
-import api from "@/lib/api";
+import api, { getErrorMessage } from "@/lib/api";
 
 interface DashboardState {
   data: OwnerDashboardDTO | null;
@@ -30,8 +30,7 @@ export const useDashboardStore = create<DashboardState>((set) => ({
       const res = await api.get("/dashboard/owner");
       set({ data: res.data as OwnerDashboardDTO, isLoading: false });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load dashboard";
+      const message = getErrorMessage(err, "Failed to load dashboard");
       set({ isLoading: false, error: message });
     }
   },

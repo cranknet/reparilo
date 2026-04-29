@@ -1,4 +1,21 @@
 import axios from "axios";
+import i18n from "@/i18n";
+
+export interface ApiError {
+  code: string;
+  details?: unknown;
+  message: string;
+}
+
+export function getErrorMessage(err: unknown, fallback: string): string {
+  if (typeof err === "object" && err !== null && "code" in err) {
+    return (err as ApiError).message || fallback;
+  }
+  if (err instanceof Error) {
+    return err.message;
+  }
+  return fallback;
+}
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || "";
 
@@ -103,6 +120,21 @@ api.interceptors.response.use(
       if (!isAuthEndpoint) {
         window.location.href = "/login";
       }
+    }
+    const apiError = error.response?.data as
+      | { code?: string; message?: string; details?: unknown }
+      | undefined;
+    if (apiError?.code) {
+      const message =
+        apiError.message && typeof apiError.message === "string"
+          ? i18n.t(apiError.message, apiError.message)
+          : i18n.t("errors.generic");
+      const apiErr: ApiError = {
+        code: apiError.code,
+        message,
+        details: apiError.details,
+      };
+      return Promise.reject(apiErr);
     }
     return Promise.reject(error);
   }

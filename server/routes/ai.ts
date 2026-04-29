@@ -1,3 +1,4 @@
+import { AppError } from "@shared/errors/app-error.js";
 import {
   agentDefinitionCreateSchema,
   agentDefinitionUpdateSchema,
@@ -49,23 +50,22 @@ import {
   testAiConnection,
 } from "../services/settings.service.js";
 import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
-import { sendError } from "../utils/send-error.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const aiRoutes: FastifyPluginAsync = async (app) => {
   app.addHook("preHandler", requirePermission({ ai: ["access"] }));
 
-  async function requireAiEnabled(_req: FastifyRequest, reply: FastifyReply) {
+  async function requireAiEnabled(_req: FastifyRequest, _reply: FastifyReply) {
     const settings = await getAiSettings(app.prisma);
     if (!settings?.enabled) {
-      return sendError(reply, 400, "AI_DISABLED", "AI is not enabled");
+      throw new AppError("AI_DISABLED");
     }
   }
 
   app.get("/", async (req, reply) => {
     const parsed = listQuerySchema.safeParse(req.query);
     if (!parsed.success) {
-      return sendError(reply, 400, "VALIDATION_ERROR", "Invalid query", {
+      throw new AppError("VALIDATION_ERROR", {
         errors: resolveZodErrors(
           parsed.error.flatten().fieldErrors,
           req.locale
@@ -83,7 +83,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
   app.post("/", { preHandler: [requireAiEnabled] }, async (req, reply) => {
     const parsed = createConversationSchema.safeParse(req.body);
     if (!parsed.success) {
-      return sendError(reply, 400, "VALIDATION_ERROR", "Invalid request body", {
+      throw new AppError("VALIDATION_ERROR", {
         errors: resolveZodErrors(
           parsed.error.flatten().fieldErrors,
           req.locale
@@ -101,7 +101,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
   app.post("/bulk-delete", async (req, reply) => {
     const parsed = bulkDeleteConversationsSchema.safeParse(req.body);
     if (!parsed.success) {
-      return sendError(reply, 400, "VALIDATION_ERROR", "Invalid request body", {
+      throw new AppError("VALIDATION_ERROR", {
         errors: resolveZodErrors(
           parsed.error.flatten().fieldErrors,
           req.locale
@@ -130,18 +130,12 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const parsed = chatMessageSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const rawSettings = await getRawAiSettings(app.prisma);
       const { conversationId, stream } = await streamChat({
@@ -195,18 +189,12 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const parsed = agentDefinitionCreateSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const definition = await createAgentDefinition(app.prisma, parsed.data);
       return await reply.status(201).send(definition);
@@ -217,7 +205,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     const { defId } = req.params as { defId: string };
     const definition = await getAgentDefinition(app.prisma, defId);
     if (!definition) {
-      return sendError(reply, 404, "NOT_FOUND", "Agent definition not found");
+      throw new AppError("AGENT_DEFINITION_NOT_FOUND");
     }
     return await reply.send(definition);
   });
@@ -229,18 +217,12 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
       const { defId } = req.params as { defId: string };
       const parsed = agentDefinitionUpdateSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const updated = await updateAgentDefinition(
         app.prisma,
@@ -248,7 +230,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
         parsed.data
       );
       if (!updated) {
-        return sendError(reply, 404, "NOT_FOUND", "Agent definition not found");
+        throw new AppError("AGENT_DEFINITION_NOT_FOUND");
       }
       return await reply.send(updated);
     }
@@ -259,28 +241,11 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: [requirePermission({ settings: ["edit"] })] },
     async (req, reply) => {
       const { defId } = req.params as { defId: string };
-      try {
-        const deleted = await deleteAgentDefinition(app.prisma, defId);
-        if (!deleted) {
-          return sendError(
-            reply,
-            404,
-            "NOT_FOUND",
-            "Agent definition not found"
-          );
-        }
-        return await reply.send(deleted);
-      } catch (err) {
-        if (err instanceof Error && err.message.includes("built-in")) {
-          return sendError(
-            reply,
-            403,
-            "FORBIDDEN",
-            "Cannot delete built-in agent definitions"
-          );
-        }
-        throw err;
+      const deleted = await deleteAgentDefinition(app.prisma, defId);
+      if (!deleted) {
+        throw new AppError("AGENT_DEFINITION_NOT_FOUND");
       }
+      return await reply.send(deleted);
     }
   );
 
@@ -295,18 +260,12 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const parsed = aiInstructionSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const instruction = await createInstruction(app.prisma, parsed.data);
       return await reply.status(201).send(instruction);
@@ -320,22 +279,16 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
       const { instId } = req.params as { instId: string };
       const parsed = aiInstructionSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const updated = await updateInstruction(app.prisma, instId, parsed.data);
       if (!updated) {
-        return sendError(reply, 404, "NOT_FOUND", "Instruction not found");
+        throw new AppError("INSTRUCTION_NOT_FOUND");
       }
       return await reply.send(updated);
     }
@@ -348,7 +301,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
       const { instId } = req.params as { instId: string };
       const deleted = await deleteInstruction(app.prisma, instId);
       if (!deleted) {
-        return sendError(reply, 404, "NOT_FOUND", "Instruction not found");
+        throw new AppError("INSTRUCTION_NOT_FOUND");
       }
       return await reply.send(deleted);
     }
@@ -365,18 +318,12 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const parsed = aiMemorySchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const memory = await createMemory(app.prisma, parsed.data);
       return await reply.status(201).send(memory);
@@ -390,22 +337,16 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
       const { memId } = req.params as { memId: string };
       const parsed = aiMemorySchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const updated = await updateMemory(app.prisma, memId, parsed.data);
       if (!updated) {
-        return sendError(reply, 404, "NOT_FOUND", "Memory not found");
+        throw new AppError("MEMORY_NOT_FOUND");
       }
       return await reply.send(updated);
     }
@@ -418,7 +359,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
       const { memId } = req.params as { memId: string };
       const deleted = await deleteMemory(app.prisma, memId);
       if (!deleted) {
-        return sendError(reply, 404, "NOT_FOUND", "Memory not found");
+        throw new AppError("MEMORY_NOT_FOUND");
       }
       return await reply.send(deleted);
     }
@@ -447,7 +388,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     const { id } = req.params as { id: string };
     const conversation = await getConversation(app.prisma, req.user.id, id);
     if (!conversation) {
-      return sendError(reply, 404, "NOT_FOUND", "Conversation not found");
+      throw new AppError("CONVERSATION_NOT_FOUND");
     }
     return await reply.send(conversation);
   });
@@ -456,7 +397,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     const { id } = req.params as { id: string };
     const parsed = updateConversationSchema.safeParse(req.body);
     if (!parsed.success) {
-      return sendError(reply, 400, "VALIDATION_ERROR", "Invalid request body", {
+      throw new AppError("VALIDATION_ERROR", {
         errors: resolveZodErrors(
           parsed.error.flatten().fieldErrors,
           req.locale
@@ -470,7 +411,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
       parsed.data
     );
     if (!updated) {
-      return sendError(reply, 404, "NOT_FOUND", "Conversation not found");
+      throw new AppError("CONVERSATION_NOT_FOUND");
     }
     return await reply.send(updated);
   });
@@ -479,7 +420,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     const { id } = req.params as { id: string };
     const deleted = await deleteConversation(app.prisma, req.user.id, id);
     if (!deleted) {
-      return sendError(reply, 404, "NOT_FOUND", "Conversation not found");
+      throw new AppError("CONVERSATION_NOT_FOUND");
     }
     return await reply.send(deleted);
   });
@@ -488,7 +429,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     const { id } = req.params as { id: string };
     const parsed = exportQuerySchema.safeParse(req.query);
     if (!parsed.success) {
-      return sendError(reply, 400, "VALIDATION_ERROR", "Invalid query", {
+      throw new AppError("VALIDATION_ERROR", {
         errors: resolveZodErrors(
           parsed.error.flatten().fieldErrors,
           req.locale
@@ -497,7 +438,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     }
     const conversation = await exportConversation(app.prisma, req.user.id, id);
     if (!conversation) {
-      return sendError(reply, 404, "NOT_FOUND", "Conversation not found");
+      throw new AppError("CONVERSATION_NOT_FOUND");
     }
     if (parsed.data.format === "json") {
       return await reply.send(conversation);
@@ -510,7 +451,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     const { id } = req.params as { id: string };
     const parsed = messagesQuerySchema.safeParse(req.query);
     if (!parsed.success) {
-      return sendError(reply, 400, "VALIDATION_ERROR", "Invalid query", {
+      throw new AppError("VALIDATION_ERROR", {
         errors: resolveZodErrors(
           parsed.error.flatten().fieldErrors,
           req.locale
@@ -519,7 +460,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     }
     const result = await listMessages(app.prisma, req.user.id, id, parsed.data);
     if (!result) {
-      return sendError(reply, 404, "NOT_FOUND", "Conversation not found");
+      throw new AppError("CONVERSATION_NOT_FOUND");
     }
     return await reply.send(result);
   });
@@ -528,7 +469,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     const { id, messageId } = req.params as { id: string; messageId: string };
     const parsed = updateMessageSchema.safeParse(req.body);
     if (!parsed.success) {
-      return sendError(reply, 400, "VALIDATION_ERROR", "Invalid request body", {
+      throw new AppError("VALIDATION_ERROR", {
         errors: resolveZodErrors(
           parsed.error.flatten().fieldErrors,
           req.locale
@@ -543,7 +484,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
       parsed.data
     );
     if (!updated) {
-      return sendError(reply, 404, "NOT_FOUND", "Message not found");
+      throw new AppError("MESSAGE_NOT_FOUND");
     }
     return await reply.send(updated);
   });
@@ -552,7 +493,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     const { id, messageId } = req.params as { id: string; messageId: string };
     const deleted = await deleteMessage(app.prisma, req.user.id, id, messageId);
     if (!deleted) {
-      return sendError(reply, 404, "NOT_FOUND", "Message not found");
+      throw new AppError("MESSAGE_NOT_FOUND");
     }
     return await reply.send(deleted);
   });

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { useModalEffects } from "@/hooks/use-modal-effects";
+import type { ApiError } from "@/lib/api";
 
 interface AddUserModalProps {
   onClose: () => void;
@@ -79,9 +80,9 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
         role: form.role as RoleType,
       });
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { error?: string } } };
-      const msg = axiosErr.response?.data?.error || "";
-      if (msg.toLowerCase().includes("already")) {
+      const apiErr = err as ApiError;
+      const code = apiErr.code ?? "";
+      if (code === "CONFLICT" || code.toLowerCase().includes("already")) {
         setConflictError(t("add_user_modal_error_conflict"));
       } else {
         setConflictError(t("add_user_modal_error_general"));

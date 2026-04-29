@@ -1,3 +1,4 @@
+import { AppError } from "@shared/errors/app-error.js";
 import type { DashboardRole, Scope } from "@shared/types/dashboard";
 import type { FastifyReply, FastifyRequest } from "fastify";
 
@@ -28,10 +29,12 @@ declare module "fastify" {
   }
 }
 
-export async function dashboardScope(req: FastifyRequest, reply: FastifyReply) {
+export async function dashboardScope(
+  req: FastifyRequest,
+  _reply: FastifyReply
+) {
   if (!req.user) {
-    await reply.status(401).send({ error: "Authentication required" });
-    return;
+    throw new AppError("UNAUTHORIZED");
   }
 
   const shopTz = await getShopTimezone(req);

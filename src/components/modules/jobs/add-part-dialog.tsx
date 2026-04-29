@@ -2,9 +2,10 @@ import { PartCategory } from "@shared/constants";
 import type { PartsCatalog } from "@shared/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import type { ApiError } from "@/lib/api";
 import { useJobsStore } from "@/stores/jobs";
 import { usePartsCatalogStore } from "@/stores/parts-catalog";
-import { useToastStore } from "@/stores/toast";
 
 const PART_CATEGORIES = Object.values(PartCategory);
 
@@ -41,7 +42,6 @@ export default function AddPartDialog({
   onAdded,
 }: AddPartDialogProps) {
   const { t } = useTranslation();
-  const toast = useToastStore((s) => s.toast);
   const [mode, setMode] = useState<Mode>("catalog");
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [catalogSearch, setCatalogSearch] = useState("");
@@ -134,14 +134,13 @@ export default function AddPartDialog({
         quantity,
         ...(form.supplier.trim() ? { supplier: form.supplier.trim() } : {}),
       });
-      toast("job_part_success");
+      toast.success(t("job_part_success"));
       onAdded();
       onClose();
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { error?: string } } };
-      const code = axiosErr.response?.data?.error;
-      toast("job_part_failed", "error");
-      if (code === "JOB_IN_TERMINAL_STATUS") {
+      const apiErr = err as ApiError;
+      toast.error(t("job_part_failed"));
+      if (apiErr.code === "JOB_IN_TERMINAL_STATUS") {
         setSubmitError(t("jobs_parts_terminal_status_error"));
       } else {
         setSubmitError(t("jobs_status_change_error_unknown"));
@@ -149,7 +148,7 @@ export default function AddPartDialog({
     } finally {
       setSubmitting(false);
     }
-  }, [form, jobId, onAdded, onClose, t, toast]);
+  }, [form, jobId, onAdded, onClose, t]);
 
   if (!open) {
     return null;

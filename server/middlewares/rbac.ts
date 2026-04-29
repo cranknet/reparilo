@@ -1,17 +1,12 @@
 import type { RoleType } from "@shared/constants/roles";
+import { AppError } from "@shared/errors/app-error.js";
 import type { PermissionCheck } from "@shared/permissions";
 import type { FastifyReply, FastifyRequest } from "fastify";
 
-/**
- * Verifies the requesting user's role has the given permissions.
- * Uses Better Auth's auth.api.userHasPermission — no DB call, purely
- * evaluates the role map registered with the admin plugin.
- */
 export function requirePermission(permissions: PermissionCheck) {
-  return async (request: FastifyRequest, reply: FastifyReply) => {
+  return async (request: FastifyRequest, _reply: FastifyReply) => {
     if (!request.user) {
-      await reply.status(401).send({ error: "Authentication required" });
-      return;
+      throw new AppError("UNAUTHORIZED");
     }
 
     const result = await request.server.auth.api.userHasPermission({
@@ -22,8 +17,7 @@ export function requirePermission(permissions: PermissionCheck) {
     });
 
     if (!result.success) {
-      await reply.status(403).send({ error: "Insufficient permissions" });
-      return;
+      throw new AppError("FORBIDDEN");
     }
   };
 }

@@ -93,8 +93,7 @@ if (IS_PROD) {
   app.setNotFoundHandler((request, reply) => {
     if (request.url.startsWith("/api/")) {
       reply.status(404).send({
-        statusCode: 404,
-        error: "Not Found",
+        code: "NOT_FOUND",
         message: `Route ${request.method} ${request.url} not found`,
       });
       return;
@@ -108,8 +107,7 @@ if (IS_PROD) {
 } else {
   app.setNotFoundHandler((request, reply) => {
     reply.status(404).send({
-      statusCode: 404,
-      error: "Not Found",
+      code: "NOT_FOUND",
       message: `Route ${request.method} ${request.url} not found`,
     });
   });

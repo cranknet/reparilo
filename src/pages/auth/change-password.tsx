@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import api from "@/lib/api";
+import api, { type ApiError } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth";
 
 export default function ChangePasswordPage() {
@@ -44,13 +44,10 @@ export default function ChangePasswordPage() {
       }));
       navigate("/", { replace: true });
     } catch (err: unknown) {
-      const axiosErr = err as {
-        response?: { data?: { error?: string; message?: string } };
-      };
-      const message =
-        axiosErr.response?.data?.error ||
-        axiosErr.response?.data?.message ||
-        t("auth_change_password_error");
+      const apiErr = err as ApiError;
+      const message = apiErr.code
+        ? apiErr.message
+        : t("auth_change_password_error");
       setError(message);
     } finally {
       setLoading(false);

@@ -1,3 +1,4 @@
+import { AppError, isAppError } from "@shared/errors/app-error.js";
 import Fastify from "fastify";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { jobRoutes } from "../routes/jobs.js";
@@ -54,10 +55,9 @@ vi.mock("../services/job-waiting-parts.service.js", () => ({
 }));
 
 vi.mock("../middlewares/rbac.js", () => ({
-  requirePermission: () => async (request: any, reply: any) => {
+  requirePermission: () => async (request: any) => {
     if (!request.user) {
-      await reply.status(401).send({ error: "Authentication required" });
-      return;
+      throw new AppError("UNAUTHORIZED");
     }
     await request.server.auth.api.userHasPermission({
       body: { role: request.user.role, permissions: { jobs: ["view"] } },
@@ -67,6 +67,25 @@ vi.mock("../middlewares/rbac.js", () => ({
 
 function buildApp() {
   const app = Fastify();
+
+  app.setErrorHandler((error, _request, reply) => {
+    if (isAppError(error)) {
+      const payload: Record<string, unknown> = {
+        code: error.code,
+        message: error instanceof Error ? error.message : "Internal error",
+      };
+      if (error.details !== undefined) {
+        payload.details = error.details;
+      }
+      reply.status(error.status).send(payload);
+      return;
+    }
+    reply.status(500).send({
+      code: "INTERNAL_ERROR",
+      message: error instanceof Error ? error.message : "Internal error",
+    });
+  });
+
   const broadcastCalls: Array<{
     predicate: (client: { role: string }) => boolean;
     payload: Record<string, unknown>;

@@ -1,6 +1,6 @@
 import type { RoleType } from "@shared/constants";
 import { create } from "zustand";
-import api from "@/lib/api";
+import api, { getErrorMessage } from "@/lib/api";
 
 interface UserRow {
   createdAt: string;
@@ -47,8 +47,7 @@ export const useUsersStore = create<UsersState>((set) => ({
         isLoading: false,
       });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to fetch users";
+      const message = getErrorMessage(err, "Failed to fetch users");
       set({ isLoading: false, error: message });
     }
   },
@@ -61,8 +60,7 @@ export const useUsersStore = create<UsersState>((set) => ({
       set((state) => ({ users: [newUser, ...state.users] }));
       return newUser;
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to create user";
+      const message = getErrorMessage(err, "Failed to create user");
       set({ error: message });
       throw new Error(message);
     }
@@ -77,8 +75,7 @@ export const useUsersStore = create<UsersState>((set) => ({
         users: state.users.map((u) => (u.id === id ? updated : u)),
       }));
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to toggle user status";
+      const message = getErrorMessage(err, "Failed to toggle user status");
       set({ error: message });
     }
   },
@@ -88,8 +85,7 @@ export const useUsersStore = create<UsersState>((set) => ({
     try {
       await api.post(`/users/${id}/reset-password`, { password });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to reset password";
+      const message = getErrorMessage(err, "Failed to reset password");
       set({ error: message });
       throw new Error(message);
     }

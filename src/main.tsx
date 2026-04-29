@@ -5,9 +5,9 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { I18nextProvider } from "react-i18next";
 import { BrowserRouter } from "react-router";
+import { Toaster } from "sonner";
 import App from "./app";
 import { ErrorBoundary } from "./components/error-boundary";
-import ToastContainer from "./components/toast-container";
 import i18n from "./i18n";
 import "./app.css";
 
@@ -38,7 +38,7 @@ ReactDOM.createRoot(rootElement).render(
         <I18nextProvider i18n={i18n}>
           <BrowserRouter>
             <App />
-            <ToastContainer />
+            <Toaster closeButton position="bottom-right" richColors />
           </BrowserRouter>
         </I18nextProvider>
       </QueryClientProvider>

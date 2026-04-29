@@ -69,7 +69,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
 
 ## Folder Structure
-
+- Make sure the structure is always updated.
 ```
 reparilo/
 ├── src/                          # React frontend
@@ -129,7 +129,10 @@ reparilo/
 - Explain tasks, errors, and solutions in plain English with minimal jargon
 - When I bring you an issue, your job is not to fix it directly. Instead, open a brief discussion: ask clarifying questions, explore the problem space, and propose industry best-practice solutions. Always lean toward the approach that reflects current standards, and walk me through the reasoning so we decide together.
 - When dealing with Coderabbit CLI it takes long time to review so use longer timeout.
-## Database
+- The  shared/errors/ AppEror is ssot error handler, do not create, invent or throw error , reuse it.
+- The  server/plugins/security.ts is ssot of backend security, reuse or improve if needed when working with api's.
+- When you dispatch "EXPLORE" agent in parallel, make sure to collect all issues found even minors. do not rely on the agent "Explore" recomandation.
+- Do not create, use Barrel files, apply best practise.
 
 - Create Prisma migrations after every schema change
 - Use the Postgres URL from `.env` for DB access

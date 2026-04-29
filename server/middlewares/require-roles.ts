@@ -1,15 +1,15 @@
+import { AppError } from "@shared/errors/app-error.js";
 import type { FastifyReply, FastifyRequest } from "fastify";
 
 export function requireRoles(...allowed: string[]) {
   const set = new Set(allowed);
-  return async (req: FastifyRequest, reply: FastifyReply) => {
+  return (req: FastifyRequest, _reply: FastifyReply): Promise<void> => {
     if (!req.user) {
-      await reply.status(401).send({ error: "Authentication required" });
-      return;
+      throw new AppError("UNAUTHORIZED");
     }
     if (!set.has(req.user.role)) {
-      await reply.status(403).send({ error: "Insufficient permissions" });
-      return;
+      throw new AppError("FORBIDDEN");
     }
+    return Promise.resolve();
   };
 }

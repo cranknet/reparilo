@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { useJobsStore } from "@/stores/jobs";
-import { useToastStore } from "@/stores/toast";
 
 interface JobNoteDialogProps {
   jobId: string;
@@ -16,7 +16,6 @@ export default function JobNoteDialog({
 }: JobNoteDialogProps) {
   const { t } = useTranslation();
   const addNote = useJobsStore((s) => s.addNote);
-  const toast = useToastStore((s) => s.toast);
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,11 +65,11 @@ export default function JobNoteDialog({
     setError(null);
     try {
       await addNote(jobId, note.trim());
-      toast("job_note_success");
+      toast.success(t("job_note_success"));
       onClose();
     } catch {
       setError(t("job_actions_note_error"));
-      toast("job_note_failed", "error");
+      toast.error(t("job_note_failed"));
     } finally {
       setSubmitting(false);
     }

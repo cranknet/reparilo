@@ -1,7 +1,7 @@
 import type { RepairCatalog } from "@shared/types";
 import { create } from "zustand";
 import i18n from "@/i18n";
-import api from "@/lib/api";
+import api, { getErrorMessage } from "@/lib/api";
 
 interface RepairCatalogState {
   clearError: () => void;
@@ -48,8 +48,7 @@ export const useRepairCatalogStore = create<RepairCatalogState>((set) => ({
         isLoading: false,
       });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.fetch_repairs");
+      const message = getErrorMessage(err, i18n.t("errors.fetch_repairs"));
       set({ isLoading: false, error: message });
     }
   },
@@ -65,8 +64,7 @@ export const useRepairCatalogStore = create<RepairCatalogState>((set) => ({
       }));
       return newRepair;
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.create_repair");
+      const message = getErrorMessage(err, i18n.t("errors.create_repair"));
       set({ error: message });
       throw new Error(message);
     }
@@ -82,8 +80,7 @@ export const useRepairCatalogStore = create<RepairCatalogState>((set) => ({
       }));
       return updated;
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.update_repair");
+      const message = getErrorMessage(err, i18n.t("errors.update_repair"));
       set({ error: message });
       throw new Error(message);
     }
@@ -98,10 +95,10 @@ export const useRepairCatalogStore = create<RepairCatalogState>((set) => ({
         repairs: state.repairs.map((r) => (r.id === id ? updated : r)),
       }));
     } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : i18n.t("errors.toggle_repair_status");
+      const message = getErrorMessage(
+        err,
+        i18n.t("errors.toggle_repair_status")
+      );
       set({ error: message });
     }
   },
@@ -115,8 +112,7 @@ export const useRepairCatalogStore = create<RepairCatalogState>((set) => ({
         totalCount: state.totalCount - 1,
       }));
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.delete_repair");
+      const message = getErrorMessage(err, i18n.t("errors.delete_repair"));
       set({ error: message });
       throw new Error(message);
     }

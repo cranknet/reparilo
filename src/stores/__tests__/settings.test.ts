@@ -11,6 +11,15 @@ vi.mock("@/lib/api", () => ({
     post: (...args: unknown[]) => mockPost(...args),
     put: (...args: unknown[]) => mockPut(...args),
   },
+  getErrorMessage: (err: unknown, fallback: string) => {
+    if (typeof err === "object" && err !== null && "code" in err) {
+      return (err as { message?: string }).message || fallback;
+    }
+    if (err instanceof Error) {
+      return err.message;
+    }
+    return fallback;
+  },
 }));
 
 vi.mock("@/i18n", () => ({

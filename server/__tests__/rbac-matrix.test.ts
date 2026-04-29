@@ -1,4 +1,5 @@
 import { Role, type RoleType } from "@shared/constants/roles";
+import { AppError, isAppError } from "@shared/errors/app-error.js";
 import Fastify from "fastify";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { customersRoutes } from "../routes/customers.js";
@@ -120,11 +121,9 @@ vi.mock("../services/avatar.service.js", () => ({
 // Real requirePermission that checks permissions against our defined roles
 vi.mock("../middlewares/rbac.js", () => ({
   requirePermission:
-    (permissions: Record<string, string[]>) =>
-    async (request: any, reply: any) => {
+    (permissions: Record<string, string[]>) => async (request: any) => {
       if (!request.user) {
-        await reply.status(401).send({ error: "Authentication required" });
-        return;
+        throw new AppError("UNAUTHORIZED");
       }
       const result = await request.server.auth.api.userHasPermission({
         body: {
@@ -133,8 +132,7 @@ vi.mock("../middlewares/rbac.js", () => ({
         },
       });
       if (!result.success) {
-        await reply.status(403).send({ error: "Insufficient permissions" });
-        return;
+        throw new AppError("FORBIDDEN");
       }
     },
 }));
@@ -238,6 +236,24 @@ function createMockUser(role: RoleType) {
 
 function buildApp(userId: string | null, role: RoleType | null = null) {
   const app = Fastify();
+
+  app.setErrorHandler((error, _request, reply) => {
+    if (isAppError(error)) {
+      const payload: Record<string, unknown> = {
+        code: error.code,
+        message: error instanceof Error ? error.message : "Internal error",
+      };
+      if (error.details !== undefined) {
+        payload.details = error.details;
+      }
+      reply.status(error.status).send(payload);
+      return;
+    }
+    reply.status(500).send({
+      code: "INTERNAL_ERROR",
+      message: error instanceof Error ? error.message : "Internal error",
+    });
+  });
 
   const mockSession = userId
     ? {

@@ -1,3 +1,4 @@
+import { AppError } from "@shared/errors/app-error.js";
 import { updateNotificationTemplateSchema } from "@shared/schemas";
 import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
@@ -7,7 +8,6 @@ import {
   updateNotificationTemplate,
 } from "../services/settings.service.js";
 import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
-import { sendError } from "../utils/send-error.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const notificationsRoutes: FastifyPluginAsync = async (app) => {
@@ -27,18 +27,12 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string };
       const parsed = updateNotificationTemplateSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const updated = await updateNotificationTemplate(
         app.prisma,
@@ -46,12 +40,7 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
         parsed.data
       );
       if (!updated) {
-        return sendError(
-          reply,
-          404,
-          "TEMPLATE_NOT_FOUND",
-          "Notification template not found"
-        );
+        throw new AppError("TEMPLATE_NOT_FOUND");
       }
       return reply.send(updated);
     }
@@ -75,26 +64,14 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
         where: { id: templateId },
       });
       if (!template) {
-        return sendError(
-          reply,
-          404,
-          "TEMPLATE_NOT_FOUND",
-          "Template not found"
-        );
+        throw new AppError("TEMPLATE_NOT_FOUND");
       }
-      // NOTE: Test sends to the shop's own phone number. This validates the
-      // WhatsApp connection works end-to-end but doesn't prove delivery to a customer.
       const shop = await app.prisma.shopSettings.findUnique({
         where: { id: "default" },
       });
       const phone = shop?.phone;
       if (!phone) {
-        return sendError(
-          reply,
-          400,
-          "NO_SHOP_PHONE",
-          "Shop phone not configured"
-        );
+        throw new AppError("NO_SHOP_PHONE");
       }
       const { queueNotification } = await import(
         "../services/notification-outbox.service.js"

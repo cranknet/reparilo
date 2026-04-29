@@ -3,10 +3,10 @@ import { JOB_STATUS_FLOW } from "@shared/constants";
 import type { Job } from "@shared/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import { useJobsStore } from "@/stores/jobs";
-import { useToastStore } from "@/stores/toast";
 
 const REQUIRES_REASON: JobStatusType[] = ["ON_HOLD", "CANCELLED"];
 
@@ -18,8 +18,6 @@ interface StatusPopoverProps {
 export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
   const { t } = useTranslation();
   const transitionStatus = useJobsStore((s) => s.transitionStatus);
-  const undoToast = useToastStore((s) => s.undoToast);
-  const regularToast = useToastStore((s) => s.toast);
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState<JobStatusType | null>(null);
   const [reason, setReason] = useState("");
@@ -67,15 +65,21 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
         .then(() => {
           setOpen(false);
           onChanged?.();
-          undoToast("job_status_success", "undo", () => {
-            transitionStatus(job.id, previousStatus)
-              .then(() => {
-                onChanged?.();
-                regularToast("job_status_undone");
-              })
-              .catch(() => {
-                regularToast("job_status_undo_failed", "error");
-              });
+          toast("job_status_success", {
+            action: {
+              label: t("undo"),
+              onClick: () => {
+                transitionStatus(job.id, previousStatus)
+                  .then(() => {
+                    onChanged?.();
+                    toast.success(t("job_status_undone"));
+                  })
+                  .catch(() => {
+                    toast.error(t("job_status_undo_failed"));
+                  });
+              },
+            },
+            duration: 5000,
           });
         })
         .catch((err: unknown) => {
@@ -84,19 +88,11 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
               ? err.message
               : t("jobs_status_change_error_unknown")
           );
-          regularToast("job_status_failed", "error");
+          toast.error(t("job_status_failed"));
         })
         .finally(() => setLoading(false));
     },
-    [
-      job.id,
-      job.status,
-      transitionStatus,
-      onChanged,
-      t,
-      undoToast,
-      regularToast,
-    ]
+    [job.id, job.status, transitionStatus, onChanged, t]
   );
 
   const handleConfirmReason = useCallback(async () => {
@@ -112,15 +108,21 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
       setPending(null);
       setReason("");
       onChanged?.();
-      undoToast("job_status_success", "undo", () => {
-        transitionStatus(job.id, previousStatus)
-          .then(() => {
-            onChanged?.();
-            regularToast("job_status_undone");
-          })
-          .catch(() => {
-            regularToast("job_status_undo_failed", "error");
-          });
+      toast("job_status_success", {
+        action: {
+          label: t("undo"),
+          onClick: () => {
+            transitionStatus(job.id, previousStatus)
+              .then(() => {
+                onChanged?.();
+                toast.success(t("job_status_undone"));
+              })
+              .catch(() => {
+                toast.error(t("job_status_undo_failed"));
+              });
+          },
+        },
+        duration: 5000,
       });
     } catch (err: unknown) {
       setError(
@@ -128,21 +130,11 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
           ? err.message
           : t("jobs_status_change_error_unknown")
       );
-      regularToast("job_status_failed", "error");
+      toast.error(t("job_status_failed"));
     } finally {
       setLoading(false);
     }
-  }, [
-    pending,
-    reason,
-    job.id,
-    job.status,
-    transitionStatus,
-    onChanged,
-    t,
-    undoToast,
-    regularToast,
-  ]);
+  }, [pending, reason, job.id, job.status, transitionStatus, onChanged, t]);
 
   const handleCancelReason = useCallback(() => {
     setPending(null);

@@ -1,3 +1,4 @@
+import { isAppError } from "@shared/errors/app-error.js";
 import Fastify from "fastify";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { __resetTzCache } from "../middlewares/dashboard-scope.js";
@@ -43,6 +44,19 @@ vi.mock("../services/dashboard.service.js", () => svc);
 
 function buildApp(user: { id: string; role: string } | null) {
   const app = Fastify();
+  app.setErrorHandler((error, _request, reply) => {
+    if (isAppError(error)) {
+      reply.status(error.status).send({
+        code: error.code,
+        message: error.message,
+      });
+    } else {
+      reply.status(500).send({
+        code: "INTERNAL_ERROR",
+        message: error instanceof Error ? error.message : "Internal error",
+      });
+    }
+  });
   app.decorate("prisma", {
     job: { count: vi.fn().mockResolvedValue(0) },
     shopSettings: { findFirst: vi.fn().mockResolvedValue({ timezone: "UTC" }) },

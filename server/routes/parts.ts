@@ -1,3 +1,4 @@
+import { AppError } from "@shared/errors/app-error.js";
 import {
   createPartSchema,
   listPartsQuerySchema,
@@ -15,7 +16,6 @@ import {
   update as updatePart,
 } from "../services/parts-catalog.service.js";
 import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
-import { sendError } from "../utils/send-error.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const partsRoutes: FastifyPluginAsync = async (app) => {
@@ -24,18 +24,12 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
   app.get("/", async (req, reply) => {
     const parsed = listPartsQuerySchema.safeParse(req.query);
     if (!parsed.success) {
-      return sendError(
-        reply,
-        400,
-        "VALIDATION_ERROR",
-        "Invalid query parameters",
-        {
-          errors: resolveZodErrors(
-            parsed.error.flatten().fieldErrors,
-            req.locale
-          ),
-        }
-      );
+      throw new AppError("VALIDATION_ERROR", {
+        errors: resolveZodErrors(
+          parsed.error.flatten().fieldErrors,
+          req.locale
+        ),
+      });
     }
     const result = await listParts(app.prisma, parsed.data);
     return reply.send(result);
@@ -45,7 +39,7 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
     const { id } = req.params as { id: string };
     const part = await getPartById(app.prisma, id);
     if (!part) {
-      return sendError(reply, 404, "PART_NOT_FOUND", "Part not found");
+      throw new AppError("PART_NOT_FOUND");
     }
     return reply.send(part);
   });
@@ -56,18 +50,12 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const parsed = createPartSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const part = await createPart(app.prisma, parsed.data);
       return reply.status(201).send(part);
@@ -81,22 +69,16 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string };
       const parsed = updatePartSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const result = await updatePart(app.prisma, id, parsed.data);
       if (!result) {
-        return sendError(reply, 404, "PART_NOT_FOUND", "Part not found");
+        throw new AppError("PART_NOT_FOUND");
       }
       return reply.send(result);
     }
@@ -109,22 +91,16 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string };
       const parsed = togglePartStatusSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const result = await toggleActive(app.prisma, id, parsed.data.isActive);
       if (!result) {
-        return sendError(reply, 404, "PART_NOT_FOUND", "Part not found");
+        throw new AppError("PART_NOT_FOUND");
       }
       return reply.send(result);
     }
@@ -135,24 +111,11 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: [requirePermission({ parts: ["manageCatalog"] })] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
-      try {
-        const result = await deletePart(app.prisma, id);
-        if (!result) {
-          return sendError(reply, 404, "PART_NOT_FOUND", "Part not found");
-        }
-        return reply.status(204).send();
-      } catch (err) {
-        if (err instanceof Error && err.message.includes("referenced by")) {
-          return sendError(
-            reply,
-            409,
-            "PART_IN_USE",
-            "Part is referenced by existing jobs. Deactivate it instead."
-          );
-        }
-        req.log.error(err);
-        return sendError(reply, 500, "INTERNAL_ERROR", "Internal server error");
+      const result = await deletePart(app.prisma, id);
+      if (!result) {
+        throw new AppError("PART_NOT_FOUND");
       }
+      return reply.status(204).send();
     }
   );
 };

@@ -1,9 +1,9 @@
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { useCan } from "@/hooks/use-can";
 import { useTechnicians } from "@/hooks/use-technicians";
 import { useJobsStore } from "@/stores/jobs";
-import { useToastStore } from "@/stores/toast";
 
 interface TechnicianSelectProps {
   currentTechnicianId?: string | null;
@@ -24,7 +24,6 @@ export default function TechnicianSelect({
   const canEdit = useCan({ jobs: ["edit"] });
   const { technicians, isLoading } = useTechnicians();
   const updateJob = useJobsStore((s) => s.updateJob);
-  const toast = useToastStore((s) => s.toast);
   const [assigning, setAssigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const selectRef = useRef<HTMLSelectElement>(null);
@@ -36,7 +35,7 @@ export default function TechnicianSelect({
       setError(null);
       try {
         await updateJob(jobId, { technicianId: value });
-        toast(t("jobs_technician_assigned_success"));
+        toast.success(t("jobs_technician_assigned_success"));
         onChanged?.();
       } catch {
         setError(t("jobs_technician_assign_error"));
@@ -47,7 +46,7 @@ export default function TechnicianSelect({
         setAssigning(false);
       }
     },
-    [jobId, updateJob, onChanged, currentTechnicianId, t, toast]
+    [jobId, updateJob, onChanged, currentTechnicianId, t]
   );
 
   if (!canEdit) {

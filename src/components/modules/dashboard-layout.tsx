@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import BottomNav from "@/components/modules/bottom-nav";
 import type { IntakeFormData } from "@/components/modules/jobs/intake-modal";
 import IntakeModal from "@/components/modules/jobs/intake-modal";
@@ -8,7 +9,6 @@ import Sidebar from "@/components/modules/sidebar";
 import TopBar from "@/components/modules/top-bar";
 import api from "@/lib/api";
 import { useJobsStore } from "@/stores/jobs";
-import { useToastStore } from "@/stores/toast";
 import { useUiStore } from "@/stores/ui";
 
 interface DashboardLayoutProps {
@@ -19,7 +19,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const intakeModalOpen = useUiStore((s) => s.intakeModalOpen);
   const closeIntakeModal = useUiStore((s) => s.closeIntakeModal);
   const { createJob, fetchJobs, fetchMetrics } = useJobsStore();
-  const toast = useToastStore((s) => s.toast);
   const { t } = useTranslation();
 
   const handleIntakeSubmit = useCallback(
@@ -41,7 +40,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             ? Number.parseFloat(data.deposit)
             : undefined,
         });
-        toast(t("jobs_created_success", { id: job.jobCode || job.id }));
+        toast.success(t("jobs_created_success", { id: job.jobCode || job.id }));
         window.open(`/api/receipts/${job.id}/label`, "_blank");
         if (data.photos.length > 0) {
           await Promise.allSettled(
@@ -56,10 +55,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         await fetchMetrics();
         closeIntakeModal();
       } catch {
-        toast(t("jobs_create_error"), "error");
+        toast.error(t("jobs_create_error"));
       }
     },
-    [createJob, fetchJobs, fetchMetrics, closeIntakeModal, toast, t]
+    [createJob, fetchJobs, fetchMetrics, closeIntakeModal, t]
   );
 
   return (

@@ -54,7 +54,7 @@ describe("ai-agent.service", () => {
         isBuiltIn: true,
       });
       await expect(deleteAgentDefinition(prisma, "1")).rejects.toThrow(
-        "Cannot delete built-in agent definitions"
+        "errors.builtin_agent_delete"
       );
     });
 

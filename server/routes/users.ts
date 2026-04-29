@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@generated/client";
 import { Prisma } from "@generated/client";
 import type { RoleType } from "@shared/constants/roles";
+import { AppError } from "@shared/errors/app-error.js";
 import {
   activityListQuerySchema,
   createUserSchema,
@@ -18,7 +19,6 @@ import {
   resolveValidationMessage,
   resolveZodErrors,
 } from "../utils/resolve-validation-messages.js";
-import { sendError } from "../utils/send-error.js";
 
 async function checkUniqueFields(
   prisma: PrismaClient,
@@ -141,18 +141,12 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const parsed = userListQuerySchema.safeParse(request.query);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid query parameters",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              request.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            request.locale
+          ),
+        });
       }
       const { cursor, limit, search } = parsed.data;
       const where: Prisma.UserWhereInput = {};
@@ -199,7 +193,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
         select: userSelect,
       });
       if (!user) {
-        return sendError(reply, 404, "NOT_FOUND", "User not found");
+        throw new AppError("USER_NOT_FOUND");
       }
       return reply.send(user);
     }
@@ -213,18 +207,12 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const parsed = createUserSchema.safeParse(request.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              request.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            request.locale
+          ),
+        });
       }
 
       const { username, email, password, role } = parsed.data;
@@ -237,7 +225,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
           existing.username === username
             ? "Username already exists"
             : "Email already exists";
-        return sendError(reply, 409, "CONFLICT", message);
+        throw new AppError("CONFLICT", { message });
       }
 
       const created = await app.auth.api.createUser({
@@ -255,7 +243,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       });
 
       if (!created?.user?.id) {
-        return sendError(reply, 500, "INTERNAL_ERROR", "Failed to create user");
+        throw new AppError("INTERNAL_ERROR");
       }
 
       const user = await app.prisma.user.findUnique({
@@ -293,28 +281,17 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       const { id } = request.params as { id: string };
       const parsed = toggleUserStatusSchema.safeParse(request.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              request.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            request.locale
+          ),
+        });
       }
       const { isActive } = parsed.data;
 
       if (id === request.user?.id && !isActive) {
-        return sendError(
-          reply,
-          400,
-          "BAD_REQUEST",
-          "Cannot deactivate your own account"
-        );
+        throw new AppError("CANNOT_DEACTIVATE_OWN");
       }
 
       const user = await app.prisma.user.update({
@@ -344,23 +321,17 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       const { id } = request.params as { id: string };
       const parsed = resetPasswordSchema.safeParse(request.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              request.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            request.locale
+          ),
+        });
       }
 
       const targetUser = await app.prisma.user.findUnique({ where: { id } });
       if (!targetUser) {
-        return sendError(reply, 404, "NOT_FOUND", "User not found");
+        throw new AppError("USER_NOT_FOUND");
       }
 
       const hashedPassword = await hashPassword(parsed.data.password);
@@ -396,16 +367,16 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     const { id } = request.params as { id: string };
 
     if (!request.user) {
-      return sendError(reply, 401, "UNAUTHORIZED", "Authentication required");
+      throw new AppError("UNAUTHORIZED");
     }
 
     if (!(await canAccessUser(request.user, id, { user: ["update"] }))) {
-      return sendError(reply, 403, "FORBIDDEN", "Insufficient permissions");
+      throw new AppError("FORBIDDEN");
     }
 
     const parsed = updateProfileSchema.safeParse(request.body);
     if (!parsed.success) {
-      return sendError(reply, 400, "VALIDATION_ERROR", "Invalid request body", {
+      throw new AppError("VALIDATION_ERROR", {
         errors: resolveZodErrors(
           parsed.error.flatten().fieldErrors,
           request.locale
@@ -418,12 +389,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     const data = buildUpdateData({ name, email, username });
 
     if (Object.keys(data).length === 0) {
-      return sendError(
-        reply,
-        400,
-        "BAD_REQUEST",
-        "At least one field is required"
-      );
+      throw new AppError("AT_LEAST_ONE_FIELD");
     }
 
     const conflict = await checkProfileUniqueness(
@@ -433,7 +399,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       username
     );
     if (conflict) {
-      return sendError(reply, 409, "CONFLICT", conflict);
+      throw new AppError("CONFLICT", { message: conflict });
     }
 
     try {
@@ -442,7 +408,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     } catch (err) {
       const conflictMsg = isUniqueViolation(err);
       if (conflictMsg) {
-        return sendError(reply, 409, "CONFLICT", conflictMsg);
+        throw new AppError("CONFLICT", { message: conflictMsg });
       }
       throw err;
     }
@@ -453,8 +419,8 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       (request.params as { id: string }).id
     );
     if (!paramParsed.success) {
-      return sendError(reply, 400, "VALIDATION_ERROR", "Invalid user ID", {
-        id: paramParsed.error
+      throw new AppError("VALIDATION_ERROR", {
+        errors: paramParsed.error
           .flatten()
           .formErrors.map((m) => resolveValidationMessage(m, request.locale)),
       });
@@ -462,28 +428,22 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     const id = paramParsed.data;
     const queryParsed = activityListQuerySchema.safeParse(request.query);
     if (!queryParsed.success) {
-      return sendError(
-        reply,
-        400,
-        "VALIDATION_ERROR",
-        "Invalid query parameters",
-        {
-          errors: resolveZodErrors(
-            queryParsed.error.flatten().fieldErrors,
-            request.locale
-          ),
-        }
-      );
+      throw new AppError("VALIDATION_ERROR", {
+        errors: resolveZodErrors(
+          queryParsed.error.flatten().fieldErrors,
+          request.locale
+        ),
+      });
     }
     const take = queryParsed.data.limit;
     const cursor = queryParsed.data.cursor;
 
     if (!request.user) {
-      return sendError(reply, 401, "UNAUTHORIZED", "Authentication required");
+      throw new AppError("UNAUTHORIZED");
     }
 
     if (!(await canAccessUser(request.user, id, { user: ["list"] }))) {
-      return sendError(reply, 403, "FORBIDDEN", "Insufficient permissions");
+      throw new AppError("FORBIDDEN");
     }
 
     let cursorFilter = {};
@@ -493,7 +453,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
         select: { createdAt: true },
       });
       if (!cursorLog) {
-        return sendError(reply, 400, "BAD_REQUEST", "Invalid cursor");
+        throw new AppError("INVALID_CURSOR");
       }
       cursorFilter = {
         OR: [
@@ -529,11 +489,11 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     const { id } = request.params as { id: string };
 
     if (!request.user) {
-      return sendError(reply, 401, "UNAUTHORIZED", "Authentication required");
+      throw new AppError("UNAUTHORIZED");
     }
 
     if (!(await canAccessUser(request.user, id, { user: ["list"] }))) {
-      return sendError(reply, 403, "FORBIDDEN", "Insufficient permissions");
+      throw new AppError("FORBIDDEN");
     }
 
     const now = new Date();
@@ -562,11 +522,11 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     const { id } = request.params as { id: string };
 
     if (!request.user) {
-      return sendError(reply, 401, "UNAUTHORIZED", "Authentication required");
+      throw new AppError("UNAUTHORIZED");
     }
 
     if (!(await canAccessUser(request.user, id, { session: ["list"] }))) {
-      return sendError(reply, 403, "FORBIDDEN", "Insufficient permissions");
+      throw new AppError("FORBIDDEN");
     }
 
     const currentSessionId = request.user.sessionId;
@@ -602,11 +562,11 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     };
 
     if (!request.user) {
-      return sendError(reply, 401, "UNAUTHORIZED", "Authentication required");
+      throw new AppError("UNAUTHORIZED");
     }
 
     if (!(await canAccessUser(request.user, id, { session: ["revoke"] }))) {
-      return sendError(reply, 403, "FORBIDDEN", "Insufficient permissions");
+      throw new AppError("FORBIDDEN");
     }
 
     const session = await app.prisma.session.findUnique({
@@ -615,11 +575,11 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     });
 
     if (!session || session.userId !== id) {
-      return sendError(reply, 404, "NOT_FOUND", "Session not found");
+      throw new AppError("SESSION_NOT_FOUND");
     }
 
     if (sessionId === request.user.sessionId) {
-      return sendError(reply, 400, "BAD_REQUEST", "Cannot end current session");
+      throw new AppError("CANNOT_END_CURRENT_SESSION");
     }
 
     await app.prisma.session.delete({ where: { id: sessionId } });
@@ -631,25 +591,24 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     const { id } = request.params as { id: string };
 
     if (!request.user) {
-      return sendError(reply, 401, "UNAUTHORIZED", "Authentication required");
+      throw new AppError("UNAUTHORIZED");
     }
 
     if (request.user.id !== id) {
-      return sendError(reply, 403, "FORBIDDEN", "Can only update own avatar");
+      throw new AppError("AVATAR_NOT_OWN");
     }
 
     const data = await request.file();
     if (!data) {
-      return sendError(reply, 400, "BAD_REQUEST", "No file provided");
+      throw new AppError("NO_FILE_UPLOADED");
     }
 
     const result = await uploadAvatar(app.prisma, id, data);
     if (!result) {
-      return sendError(reply, 404, "NOT_FOUND", "User not found");
+      throw new AppError("USER_NOT_FOUND");
     }
-    if ("error" in result) {
-      const status = result.error === "FILE_TOO_LARGE" ? 413 : 400;
-      return sendError(reply, status, result.error, result.error);
+    if ("error" in result && result.error) {
+      throw new AppError(result.error);
     }
 
     return reply.send(result);
@@ -659,16 +618,16 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     const { id } = request.params as { id: string };
 
     if (!request.user) {
-      return sendError(reply, 401, "UNAUTHORIZED", "Authentication required");
+      throw new AppError("UNAUTHORIZED");
     }
 
     if (request.user.id !== id) {
-      return sendError(reply, 403, "FORBIDDEN", "Can only delete own avatar");
+      throw new AppError("AVATAR_NOT_OWN");
     }
 
     const result = await deleteAvatar(app.prisma, id);
     if (!result) {
-      return sendError(reply, 404, "NOT_FOUND", "User not found");
+      throw new AppError("USER_NOT_FOUND");
     }
 
     return reply.send(result);

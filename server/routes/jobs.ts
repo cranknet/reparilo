@@ -1,4 +1,5 @@
 import type { RoleType } from "@shared/constants/roles";
+import { AppError } from "@shared/errors/app-error.js";
 import {
   addJobNoteSchema,
   addJobPartSchema,
@@ -9,7 +10,7 @@ import {
   transitionStatusSchema,
   updateJobSchema,
 } from "@shared/schemas";
-import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 import type { DashboardTarget } from "../lib/dashboard-events.js";
 import { emitDashboardChanged } from "../lib/dashboard-events.js";
 import { requirePermission } from "../middlewares/rbac.js";
@@ -45,7 +46,6 @@ import {
   remove as removeWaitingPart,
 } from "../services/job-waiting-parts.service.js";
 import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
-import { sendError } from "../utils/send-error.js";
 
 const JOB_CODE_RE = /^[A-Za-z0-9-]+$/;
 const PHONE4_RE = /^\d{4}$/;
@@ -53,39 +53,6 @@ const PHONE4_RE = /^\d{4}$/;
 interface LockoutEntry {
   failures: number;
   lockedUntil: number;
-}
-
-function sendNotFound(reply: FastifyReply) {
-  return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
-}
-
-function validateLookupParams(
-  code: string | undefined,
-  phone4: string | undefined
-): ((reply: FastifyReply) => unknown) | null {
-  if (!(code && phone4)) {
-    return (reply) =>
-      sendError(
-        reply,
-        400,
-        "MISSING_CODE",
-        "code and phone4 query parameters are required"
-      );
-  }
-  if (code.length > 50 || !JOB_CODE_RE.test(code)) {
-    return (reply) =>
-      sendError(reply, 400, "INVALID_CODE", "Invalid job code format");
-  }
-  if (!PHONE4_RE.test(phone4)) {
-    return (reply) =>
-      sendError(
-        reply,
-        400,
-        "INVALID_PHONE4",
-        "phone4 must be exactly 4 digits"
-      );
-  }
-  return null;
 }
 
 function trackFailedAttempt(lockouts: Map<string, LockoutEntry>, code: string) {
@@ -100,7 +67,7 @@ function trackFailedAttempt(lockouts: Map<string, LockoutEntry>, code: string) {
 function getUserId(req: FastifyRequest): string {
   const user = req.user;
   if (!user) {
-    throw new Error("Unauthorized");
+    throw new AppError("UNAUTHORIZED");
   }
   return user.id;
 }
@@ -161,20 +128,25 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         code?: string;
         phone4?: string;
       };
-      const validation = validateLookupParams(code, phone4);
-      if (validation) {
-        return validation(reply);
+      if (!(code && phone4)) {
+        throw new AppError("MISSING_LOOKUP_PARAMS");
+      }
+      if (code.length > 50 || !JOB_CODE_RE.test(code)) {
+        throw new AppError("INVALID_JOB_CODE");
+      }
+      if (!PHONE4_RE.test(phone4)) {
+        throw new AppError("INVALID_PHONE4");
       }
 
       // After validation, code and phone4 are guaranteed to exist
-      // biome-ignore lint/style/noNonNullAssertion: validated by validateLookupParams above
+      // biome-ignore lint/style/noNonNullAssertion: validated above
       const codeStr = code!;
-      // biome-ignore lint/style/noNonNullAssertion: validated by validateLookupParams above
+      // biome-ignore lint/style/noNonNullAssertion: validated above
       const phone4Str = phone4!;
 
       const lockout = codeLockouts.get(codeStr);
       if (lockout && lockout.lockedUntil > Date.now()) {
-        return sendNotFound(reply);
+        throw new AppError("JOB_NOT_FOUND");
       }
       if (lockout?.lockedUntil && lockout.lockedUntil <= Date.now()) {
         codeLockouts.delete(codeStr);
@@ -182,11 +154,11 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
       const result = await lookupByCode(app.prisma, codeStr, phone4Str);
       if (!result.jobExists) {
-        return sendNotFound(reply);
+        throw new AppError("JOB_NOT_FOUND");
       }
       if (!result.job) {
         trackFailedAttempt(codeLockouts, codeStr);
-        return sendNotFound(reply);
+        throw new AppError("JOB_NOT_FOUND");
       }
 
       codeLockouts.delete(codeStr);
@@ -201,7 +173,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const { jobCode } = req.params as { jobCode: string };
       const job = await lookupByCodeAuth(app.prisma, jobCode);
       if (!job) {
-        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+        throw new AppError("JOB_NOT_FOUND");
       }
       return reply.send(job);
     }
@@ -215,18 +187,12 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
   app.get("/", async (req, reply) => {
     const parsed = jobListQuerySchema.safeParse(req.query);
     if (!parsed.success) {
-      return sendError(
-        reply,
-        400,
-        "VALIDATION_ERROR",
-        "Invalid query parameters",
-        {
-          errors: resolveZodErrors(
-            parsed.error.flatten().fieldErrors,
-            req.locale
-          ),
-        }
-      );
+      throw new AppError("VALIDATION_ERROR", {
+        errors: resolveZodErrors(
+          parsed.error.flatten().fieldErrors,
+          req.locale
+        ),
+      });
     }
     const result = await listJobs(app.prisma, parsed.data);
     return reply.send(result);
@@ -236,7 +202,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
     const { id } = req.params as { id: string };
     const job = await getJobById(app.prisma, id);
     if (!job) {
-      return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+      throw new AppError("JOB_NOT_FOUND");
     }
     const marginResult = await req.server.auth.api.userHasPermission({
       body: {
@@ -255,7 +221,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
     const { id } = req.params as { id: string };
     const job = await getJobById(app.prisma, id);
     if (!job) {
-      return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+      throw new AppError("JOB_NOT_FOUND");
     }
     const entries = await app.prisma.auditLog.findMany({
       where: { jobId: id },
@@ -271,52 +237,23 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const parsed = createJobSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const userId = getUserId(req);
-      let result: Awaited<ReturnType<typeof createJob>>;
-      try {
-        result = await createJob(app.prisma, parsed.data, userId);
-      } catch (err: unknown) {
-        if (err instanceof Error && err.message === "DUPLICATE_REPAIR") {
-          return sendError(
-            reply,
-            409,
-            "DUPLICATE_REPAIR",
-            "Duplicate repair in request"
-          );
-        }
-        throw err;
-      }
+      const result = await createJob(app.prisma, parsed.data, userId);
       if ("error" in result && result.error === "INVALID_CUSTOMER") {
-        return sendError(reply, 400, "INVALID_CUSTOMER", "Customer not found");
+        throw new AppError("INVALID_CUSTOMER");
       }
       if ("error" in result && result.error === "INVALID_WARRANTY_REFERENCE") {
-        return sendError(
-          reply,
-          400,
-          "INVALID_WARRANTY_REFERENCE",
-          "Warranty reference must be a completed job for the same customer"
-        );
+        throw new AppError("INVALID_WARRANTY_REFERENCE");
       }
       if ("error" in result && result.error === "DUPLICATE_REPAIR") {
-        return sendError(
-          reply,
-          409,
-          "DUPLICATE_REPAIR",
-          "Duplicate repair in request"
-        );
+        throw new AppError("DUPLICATE_REPAIR");
       }
 
       if (result.isWarrantyReturn && "jobCode" in result) {
@@ -342,18 +279,12 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string };
       const parsed = updateJobSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const userId = getUserId(req);
       const prev = await app.prisma.job.findUnique({
@@ -362,23 +293,13 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       });
       const result = await updateJob(app.prisma, id, parsed.data, userId);
       if (!result) {
-        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+        throw new AppError("JOB_NOT_FOUND");
       }
       if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
-        return sendError(
-          reply,
-          409,
-          "JOB_IN_TERMINAL_STATUS",
-          "Cannot update a job in terminal status"
-        );
+        throw new AppError("JOB_IN_TERMINAL_STATUS");
       }
       if ("error" in result && result.error === "INVALID_TECHNICIAN") {
-        return sendError(
-          reply,
-          400,
-          "INVALID_TECHNICIAN",
-          "Assigned user is not a valid technician"
-        );
+        throw new AppError("INVALID_TECHNICIAN");
       }
       const targets: DashboardTarget[] = ["OWNER", "FRONT_DESK"];
       if (prev?.technicianId) {
@@ -396,7 +317,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
     const { id } = req.params as { id: string };
     const parsed = transitionStatusSchema.safeParse(req.body);
     if (!parsed.success) {
-      return sendError(reply, 400, "VALIDATION_ERROR", "Invalid request body", {
+      throw new AppError("VALIDATION_ERROR", {
         errors: resolveZodErrors(
           parsed.error.flatten().fieldErrors,
           req.locale
@@ -405,7 +326,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
     }
 
     if (!req.user) {
-      return sendError(reply, 401, "UNAUTHORIZED", "Authentication required");
+      throw new AppError("UNAUTHORIZED");
     }
 
     const permCheck = await app.auth.api.userHasPermission({
@@ -415,12 +336,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       },
     });
     if (!permCheck.success) {
-      return sendError(
-        reply,
-        403,
-        "FORBIDDEN_STATUS_TRANSITION",
-        `Role ${req.user.role} cannot transition to ${parsed.data.status}`
-      );
+      throw new AppError("FORBIDDEN_STATUS_TRANSITION");
     }
 
     const userId = getUserId(req);
@@ -435,35 +351,19 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       }
     );
     if (!result) {
-      return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+      throw new AppError("JOB_NOT_FOUND");
     }
     if ("error" in result && result.error === "CONFLICT_STATUS_TRANSITION") {
-      return sendError(
-        reply,
-        409,
-        "CONFLICT_STATUS_TRANSITION",
-        "Invalid status transition",
-        {
-          allowedTransitions: result.allowedTransitions,
-          currentStatus: result.currentStatus,
-        }
-      );
+      throw new AppError("CONFLICT_STATUS_TRANSITION", {
+        allowedTransitions: result.allowedTransitions,
+        currentStatus: result.currentStatus,
+      });
     }
     if ("error" in result && result.error === "CANCEL_WINDOW_EXPIRED") {
-      return sendError(
-        reply,
-        403,
-        "CANCEL_WINDOW_EXPIRED",
-        "Cancellation window has expired"
-      );
+      throw new AppError("CANCEL_WINDOW_EXPIRED");
     }
     if ("error" in result && result.error === "CANCEL_NOT_CREATOR") {
-      return sendError(
-        reply,
-        403,
-        "CANCEL_NOT_CREATOR",
-        "Only the job creator can cancel"
-      );
+      throw new AppError("CANCEL_NOT_CREATOR");
     }
     if (!("error" in result)) {
       emitDashboardChanged(app, jobDashboardTargets(result));
@@ -475,7 +375,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
     const { id } = req.params as { id: string };
     const notes = await listNotes(app.prisma, id);
     if (!notes) {
-      return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+      throw new AppError("JOB_NOT_FOUND");
     }
     return reply.send(notes);
   });
@@ -487,31 +387,20 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string };
       const parsed = addJobNoteSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const userId = getUserId(req);
       const note = await addNote(app.prisma, id, parsed.data, userId);
       if (!note) {
-        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+        throw new AppError("JOB_NOT_FOUND");
       }
       if ("error" in note && note.error === "JOB_IN_TERMINAL_STATUS") {
-        return sendError(
-          reply,
-          409,
-          "JOB_IN_TERMINAL_STATUS",
-          "Cannot add notes to a job in terminal status"
-        );
+        throw new AppError("JOB_IN_TERMINAL_STATUS");
       }
       return reply.status(201).send(note);
     }
@@ -524,31 +413,20 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string };
       const parsed = addJobPartSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const userId = getUserId(req);
       const result = await addPart(app.prisma, id, parsed.data, userId);
       if (!result) {
-        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+        throw new AppError("JOB_NOT_FOUND");
       }
       if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
-        return sendError(
-          reply,
-          409,
-          "JOB_IN_TERMINAL_STATUS",
-          "Cannot add parts to a job in terminal status"
-        );
+        throw new AppError("JOB_IN_TERMINAL_STATUS");
       }
       return reply.status(201).send(result);
     }
@@ -562,7 +440,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const userId = getUserId(req);
       const removed = await removePart(app.prisma, id, partId, userId);
       if (!removed) {
-        return sendError(reply, 404, "RESOURCE_NOT_FOUND", "Part not found");
+        throw new AppError("RESOURCE_NOT_FOUND");
       }
       return reply.status(204).send();
     }
@@ -575,39 +453,23 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string };
       const parsed = addJobRepairSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const userId = getUserId(req);
       const result = await addRepair(app.prisma, id, parsed.data, userId);
       if (!result) {
-        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+        throw new AppError("JOB_NOT_FOUND");
       }
       if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
-        return sendError(
-          reply,
-          409,
-          "JOB_IN_TERMINAL_STATUS",
-          "Cannot add repairs to a job in terminal status"
-        );
+        throw new AppError("JOB_IN_TERMINAL_STATUS");
       }
       if ("error" in result && result.error === "DUPLICATE_REPAIR") {
-        return sendError(
-          reply,
-          409,
-          "DUPLICATE_REPAIR",
-          "This repair has already been added to the job"
-        );
+        throw new AppError("DUPLICATE_REPAIR");
       }
       return reply.status(201).send(result);
     }
@@ -621,7 +483,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const userId = getUserId(req);
       const removed = await removeRepair(app.prisma, id, repairId, userId);
       if (!removed) {
-        return sendError(reply, 404, "RESOURCE_NOT_FOUND", "Repair not found");
+        throw new AppError("RESOURCE_NOT_FOUND");
       }
       return reply.status(204).send();
     }
@@ -634,44 +496,24 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string };
       const data = await req.file();
       if (!data) {
-        return sendError(reply, 400, "VALIDATION_ERROR", "No file uploaded");
+        throw new AppError("NO_FILE_UPLOADED");
       }
       const userId = getUserId(req);
       const result = await uploadPhoto(app.prisma, id, data, userId);
       if (!result) {
-        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+        throw new AppError("JOB_NOT_FOUND");
       }
       if ("error" in result && result.error === "PHOTO_LIMIT_REACHED") {
-        return sendError(
-          reply,
-          409,
-          "PHOTO_LIMIT_REACHED",
-          "Maximum number of photos reached"
-        );
+        throw new AppError("PHOTO_LIMIT_REACHED");
       }
       if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
-        return sendError(
-          reply,
-          409,
-          "JOB_IN_TERMINAL_STATUS",
-          "Cannot upload photos to a job in terminal status"
-        );
+        throw new AppError("JOB_IN_TERMINAL_STATUS");
       }
       if ("error" in result && result.error === "INVALID_FILE_TYPE") {
-        return sendError(
-          reply,
-          400,
-          "INVALID_FILE_TYPE",
-          "Invalid file type. Allowed: JPEG, PNG, WebP"
-        );
+        throw new AppError("INVALID_FILE_TYPE");
       }
       if ("error" in result && result.error === "INVALID_FILE_CONTENT") {
-        return sendError(
-          reply,
-          400,
-          "INVALID_FILE_CONTENT",
-          "File content does not match the declared file type"
-        );
+        throw new AppError("INVALID_FILE_CONTENT");
       }
       return reply.status(201).send(result);
     }
@@ -685,7 +527,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const userId = getUserId(req);
       const removed = await removePhoto(app.prisma, id, photoId, userId);
       if (!removed) {
-        return sendError(reply, 404, "RESOURCE_NOT_FOUND", "Photo not found");
+        throw new AppError("RESOURCE_NOT_FOUND");
       }
       return reply.status(204).send();
     }
@@ -698,31 +540,20 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string };
       const parsed = addWaitingPartSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const userId = getUserId(req);
       const result = await addWaitingPart(app.prisma, id, parsed.data, userId);
       if (!result) {
-        return sendError(reply, 404, "JOB_NOT_FOUND", "Job not found");
+        throw new AppError("JOB_NOT_FOUND");
       }
       if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
-        return sendError(
-          reply,
-          409,
-          "JOB_IN_TERMINAL_STATUS",
-          "Cannot add waiting parts to a job in terminal status"
-        );
+        throw new AppError("JOB_IN_TERMINAL_STATUS");
       }
       return reply.status(201).send(result);
     }
@@ -741,12 +572,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         userId
       );
       if (!removed) {
-        return sendError(
-          reply,
-          404,
-          "RESOURCE_NOT_FOUND",
-          "Waiting part not found"
-        );
+        throw new AppError("RESOURCE_NOT_FOUND");
       }
       return reply.status(204).send();
     }

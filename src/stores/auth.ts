@@ -1,7 +1,7 @@
 import type { RoleType } from "@shared/constants";
 import { create } from "zustand";
 import i18n from "@/i18n";
-import api from "@/lib/api";
+import api, { getErrorMessage } from "@/lib/api";
 
 interface AuthUser {
   email: string;
@@ -89,13 +89,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         error: null,
       });
     } catch (err: unknown) {
-      const axiosErr = err as {
-        response?: { data?: { message?: string; error?: string } };
-      };
-      const message =
-        axiosErr.response?.data?.message ||
-        axiosErr.response?.data?.error ||
-        "Login failed";
+      const message = getErrorMessage(err, "Login failed");
       set({ isLoading: false, error: message });
       throw new Error(message);
     }

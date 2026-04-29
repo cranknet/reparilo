@@ -2,8 +2,8 @@ import { INACTIVE_STATUSES } from "@shared/constants";
 import type { Job } from "@shared/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import api from "@/lib/api";
-import { useToastStore } from "@/stores/toast";
 
 interface JobPhotosSectionProps {
   job: Job;
@@ -15,7 +15,6 @@ export default function JobPhotosSection({
   onChanged,
 }: JobPhotosSectionProps) {
   const { t } = useTranslation();
-  const toast = useToastStore((s) => s.toast);
   const [deleting, setDeleting] = useState<Set<string>>(new Set());
   const [uploading, setUploading] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
@@ -46,11 +45,11 @@ export default function JobPhotosSection({
       );
       setUploading(false);
       if (uploaded > 0) {
-        toast("job_photo_upload_success");
+        toast.success(t("job_photo_upload_success"));
         onChanged?.();
       }
     },
-    [job.id, onChanged, toast]
+    [job.id, onChanged, t]
   );
 
   const photoUrl = (path: string) => `${api.defaults.baseURL}/uploads/${path}`;
@@ -65,10 +64,10 @@ export default function JobPhotosSection({
       setConfirmDelete(null);
       try {
         await api.delete(`/jobs/${job.id}/photos/${photoId}`);
-        toast("job_photo_remove_success");
+        toast.success(t("job_photo_remove_success"));
         onChanged?.();
       } catch {
-        toast("job_photo_remove_failed", "error");
+        toast.error(t("job_photo_remove_failed"));
       } finally {
         setDeleting((prev) => {
           const next = new Set(prev);
@@ -77,7 +76,7 @@ export default function JobPhotosSection({
         });
       }
     },
-    [confirmDelete, job.id, onChanged, toast]
+    [confirmDelete, job.id, onChanged, t]
   );
 
   if (photos.length === 0) {

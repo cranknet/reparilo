@@ -1,3 +1,4 @@
+import { AppError } from "@shared/errors/app-error.js";
 import {
   createRepairSchema,
   listRepairsQuerySchema,
@@ -14,7 +15,6 @@ import {
   update as updateRepair,
 } from "../services/repair-catalog.service.js";
 import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
-import { sendError } from "../utils/send-error.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
@@ -23,18 +23,12 @@ export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
   app.get("/", async (req, reply) => {
     const parsed = listRepairsQuerySchema.safeParse(req.query);
     if (!parsed.success) {
-      return sendError(
-        reply,
-        400,
-        "VALIDATION_ERROR",
-        "Invalid query parameters",
-        {
-          errors: resolveZodErrors(
-            parsed.error.flatten().fieldErrors,
-            req.locale
-          ),
-        }
-      );
+      throw new AppError("VALIDATION_ERROR", {
+        errors: resolveZodErrors(
+          parsed.error.flatten().fieldErrors,
+          req.locale
+        ),
+      });
     }
     const result = await listRepairs(app.prisma, parsed.data);
     return reply.send(result);
@@ -44,7 +38,7 @@ export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
     const { id } = req.params as { id: string };
     const repair = await getRepairById(app.prisma, id);
     if (!repair) {
-      return sendError(reply, 404, "REPAIR_NOT_FOUND", "Repair not found");
+      throw new AppError("REPAIR_NOT_FOUND");
     }
     return reply.send(repair);
   });
@@ -55,18 +49,12 @@ export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const parsed = createRepairSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const repair = await createRepair(app.prisma, parsed.data);
       return reply.status(201).send(repair);
@@ -80,22 +68,16 @@ export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string };
       const parsed = updateRepairSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const result = await updateRepair(app.prisma, id, parsed.data);
       if (!result) {
-        return sendError(reply, 404, "REPAIR_NOT_FOUND", "Repair not found");
+        throw new AppError("REPAIR_NOT_FOUND");
       }
       return reply.send(result);
     }
@@ -108,16 +90,11 @@ export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string };
       const { isActive } = req.body as { isActive: boolean };
       if (typeof isActive !== "boolean") {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "isActive must be a boolean"
-        );
+        throw new AppError("VALIDATION_ERROR");
       }
       const result = await toggleActive(app.prisma, id, isActive);
       if (!result) {
-        return sendError(reply, 404, "REPAIR_NOT_FOUND", "Repair not found");
+        throw new AppError("REPAIR_NOT_FOUND");
       }
       return reply.send(result);
     }
@@ -128,24 +105,11 @@ export const repairCatalogRoutes: FastifyPluginAsync = async (app) => {
     { preHandler: [requirePermission({ repairs: ["manageCatalog"] })] },
     async (req, reply) => {
       const { id } = req.params as { id: string };
-      try {
-        const result = await deleteRepair(app.prisma, id);
-        if (!result) {
-          return sendError(reply, 404, "REPAIR_NOT_FOUND", "Repair not found");
-        }
-        return reply.status(204).send();
-      } catch (err) {
-        if (err instanceof Error && err.message.includes("referenced by")) {
-          return sendError(
-            reply,
-            409,
-            "REPAIR_IN_USE",
-            "Repair is referenced by existing jobs. Deactivate it instead."
-          );
-        }
-        req.log.error(err);
-        return sendError(reply, 500, "INTERNAL_ERROR", "Internal server error");
+      const result = await deleteRepair(app.prisma, id);
+      if (!result) {
+        throw new AppError("REPAIR_NOT_FOUND");
       }
+      return reply.status(204).send();
     }
   );
 };

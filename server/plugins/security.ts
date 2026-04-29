@@ -3,12 +3,14 @@ import cors from "@fastify/cors";
 import csrf from "@fastify/csrf-protection";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
+import { isAppError } from "@shared/errors/app-error.js";
 import type {
   FastifyError,
   FastifyInstance,
   FastifyPluginAsync,
 } from "fastify";
 import fp from "fastify-plugin";
+import { ZodError } from "zod";
 import { loadEnv, resolveUrls } from "../config/env.js";
 import {
   DEFAULT_SECURITY,
@@ -232,36 +234,50 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
     done();
   });
 
-  // ── Layer 7: Error Obfuscation ─────────────────────────────────────────
-  app.setErrorHandler((error: FastifyError, _request, reply) => {
-    if (error.validation) {
-      reply.status(error.statusCode ?? 400).send({
-        statusCode: error.statusCode ?? 400,
-        error: "Validation Error",
+  // ── Layer 7: Global Error Handler ──────────────────────────────────────
+  app.setErrorHandler((error: FastifyError | Error, _request, reply) => {
+    if (isAppError(error)) {
+      const payload: Record<string, unknown> = {
+        code: error.code,
         message: error.message,
+      };
+      if (error.details !== undefined) {
+        payload.details = error.details;
+      }
+      reply.status(error.status).send(payload);
+      return;
+    }
+
+    if (error instanceof ZodError) {
+      reply.status(400).send({
+        code: "VALIDATION_ERROR",
+        message: "Validation failed",
+        details: { errors: error.flatten().fieldErrors },
       });
       return;
     }
 
-    const statusCode = error.statusCode ?? 500;
+    const fastifyErr = error as FastifyError;
+    if (fastifyErr.validation) {
+      reply.status(fastifyErr.statusCode ?? 400).send({
+        code: "VALIDATION_ERROR",
+        message: "errors.validation_error",
+      });
+      return;
+    }
+
+    const statusCode = fastifyErr.statusCode ?? 500;
     const isServerError = statusCode >= 500;
 
-    let message: string;
-    if (IS_PROD) {
-      message = isServerError
-        ? "An unexpected error occurred"
-        : (error.message ?? "Request failed");
-    } else {
-      message = error.message ?? "Unknown error";
+    if (isServerError) {
+      _request.log.error({ err: error }, "Unhandled server error");
     }
 
     const payload: Record<string, unknown> = {
-      statusCode,
-      error:
-        IS_PROD && isServerError
-          ? "Internal Server Error"
-          : (error.name ?? "Error"),
-      message,
+      code: "INTERNAL_ERROR",
+      message: IS_PROD
+        ? "An unexpected error occurred"
+        : (error.message ?? "Unknown error"),
     };
 
     if (!IS_PROD) {

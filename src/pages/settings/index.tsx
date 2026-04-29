@@ -4,6 +4,7 @@ import type { KeyboardEvent } from "react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
+import { toast } from "sonner";
 import AddUserModal from "@/components/modules/settings/add-user-modal";
 import ResetPasswordModal from "@/components/modules/settings/reset-password-modal";
 import SettingsAgentsTab from "@/components/modules/settings/settings-agents-tab";
@@ -18,7 +19,6 @@ import UnsavedChangesBar from "@/components/modules/settings/unsaved-changes-bar
 import ConfirmDiscardDialog from "@/components/ui/confirm-discard-dialog";
 import { useDirtyState } from "@/hooks/use-dirty-state";
 import { useModalEffects } from "@/hooks/use-modal-effects";
-import { useToast } from "@/hooks/use-toast";
 import { useSettingsStore } from "@/stores/settings";
 import { useUsersStore } from "@/stores/users";
 
@@ -72,7 +72,6 @@ export default function SettingsPage() {
   const { notificationTemplates, fetchNotificationTemplates } =
     useSettingsStore();
   const navigate = useNavigate();
-  const { toast, show: showToast, dismiss: dismissToast } = useToast();
   const { markDirty, isDirty } = useDirtyState();
 
   useModalEffects(pendingTab !== null, () => setPendingTab(null), dialogRef);
@@ -251,7 +250,9 @@ export default function SettingsPage() {
               <SettingsAiTab
                 onDirtyChange={(d) => markDirty("ai", d)}
                 onSavingChange={setSaving}
-                onToast={(msg, type) => showToast(msg, type)}
+                onToast={(msg, type) =>
+                  type === "error" ? toast.error(msg) : toast.success(msg)
+                }
                 ref={aiTabRef}
               />
             )}
@@ -259,7 +260,9 @@ export default function SettingsPage() {
               <SettingsShopTab
                 onDirtyChange={(d) => markDirty("shop", d)}
                 onSavingChange={setSaving}
-                onToast={(msg, type) => showToast(msg, type)}
+                onToast={(msg, type) =>
+                  type === "error" ? toast.error(msg) : toast.success(msg)
+                }
                 ref={shopTabRef}
               />
             )}
@@ -294,31 +297,6 @@ export default function SettingsPage() {
           />
         </div>
       </div>
-
-      {toast && (
-        <div
-          aria-live="polite"
-          className={`fixed start-4 end-4 bottom-4 z-50 flex items-center gap-2 rounded-2xl px-5 py-3 font-semibold text-sm shadow-lg transition-all sm:start-auto sm:end-6 sm:bottom-6 ${
-            toast.type === "success"
-              ? "bg-success text-on-success"
-              : "bg-error text-on-error"
-          }`}
-          role="status"
-        >
-          <span className="material-symbols-outlined text-[18px]">
-            {toast.type === "success" ? "check_circle" : "error"}
-          </span>
-          <span className="min-w-0 flex-1 truncate">{toast.message}</span>
-          <button
-            aria-label={t("cancel")}
-            className="ms-2 shrink-0 rounded-md p-1 opacity-70 transition-opacity hover:opacity-100"
-            onClick={dismissToast}
-            type="button"
-          >
-            <span className="material-symbols-outlined text-[16px]">close</span>
-          </button>
-        </div>
-      )}
 
       {pendingTab && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-on-surface/40">

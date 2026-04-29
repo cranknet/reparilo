@@ -9,8 +9,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { useJobsStore } from "@/stores/jobs";
-import { useToastStore } from "@/stores/toast";
 import JobCancelDialog from "./job-cancel-dialog";
 import JobNoteDialog from "./job-note-dialog";
 import type { JobRow } from "./jobs-shared";
@@ -75,24 +75,22 @@ export default function JobActionsMenu({ job }: JobActionsMenuProps) {
     };
   }, [open, close]);
 
-  const toast = useToastStore((s) => s.toast);
-
   const handleStatusChange = useCallback(
     async (status: JobStatusType) => {
       setLoading(true);
       setError(null);
       try {
         await transitionStatus(job.rawJob?.id ?? job.id, status);
-        toast("job_status_success");
+        toast.success(t("job_status_success"));
         close();
       } catch {
         setError(t("job_actions_status_error"));
-        toast("job_status_failed", "error");
+        toast.error(t("job_status_failed"));
       } finally {
         setLoading(false);
       }
     },
-    [job.rawJob?.id, job.id, transitionStatus, toast, close, t]
+    [job.rawJob?.id, job.id, transitionStatus, close, t]
   );
 
   const handleNoteOpen = useCallback(() => {

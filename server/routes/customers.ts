@@ -1,3 +1,4 @@
+import { AppError } from "@shared/errors/app-error.js";
 import {
   createCustomerSchema,
   customerIdParamSchema,
@@ -15,7 +16,6 @@ import {
   update as updateCustomer,
 } from "../services/customers.service.js";
 import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
-import { sendError } from "../utils/send-error.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const customersRoutes: FastifyPluginAsync = async (app) => {
@@ -27,30 +27,15 @@ export const customersRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const parsed = createCustomerSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid customer data",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
-      try {
-        const customer = await createCustomer(app.prisma, parsed.data);
-        return reply.status(201).send(customer);
-      } catch {
-        return sendError(
-          reply,
-          500,
-          "INTERNAL_ERROR",
-          "Failed to create customer"
-        );
-      }
+      const customer = await createCustomer(app.prisma, parsed.data);
+      return reply.status(201).send(customer);
     }
   );
 
@@ -60,28 +45,17 @@ export const customersRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const parsed = updateCustomerSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid customer data",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const { id } = req.params as { id: string };
       const updated = await updateCustomer(app.prisma, id, parsed.data);
       if (!updated) {
-        return sendError(
-          reply,
-          404,
-          "CUSTOMER_NOT_FOUND",
-          "Customer not found"
-        );
+        throw new AppError("CUSTOMER_NOT_FOUND");
       }
       return reply.send(updated);
     }
@@ -90,18 +64,12 @@ export const customersRoutes: FastifyPluginAsync = async (app) => {
   app.get("/search", async (req, reply) => {
     const parsed = customerSearchQuerySchema.safeParse(req.query);
     if (!parsed.success) {
-      return sendError(
-        reply,
-        400,
-        "VALIDATION_ERROR",
-        "Invalid query parameters",
-        {
-          errors: resolveZodErrors(
-            parsed.error.flatten().fieldErrors,
-            req.locale
-          ),
-        }
-      );
+      throw new AppError("VALIDATION_ERROR", {
+        errors: resolveZodErrors(
+          parsed.error.flatten().fieldErrors,
+          req.locale
+        ),
+      });
     }
     const results = await searchCustomers(app.prisma, parsed.data);
     return reply.send(results);
@@ -111,11 +79,11 @@ export const customersRoutes: FastifyPluginAsync = async (app) => {
     const { id } = req.params as { id: string };
     const parsed = customerIdParamSchema.safeParse(id);
     if (!parsed.success) {
-      return sendError(reply, 400, "VALIDATION_ERROR", "Invalid customer ID");
+      throw new AppError("INVALID_CUSTOMER_ID");
     }
     const customer = await getById(app.prisma, id);
     if (!customer) {
-      return sendError(reply, 404, "CUSTOMER_NOT_FOUND", "Customer not found");
+      throw new AppError("CUSTOMER_NOT_FOUND");
     }
     return reply.send(customer);
   });
@@ -123,18 +91,12 @@ export const customersRoutes: FastifyPluginAsync = async (app) => {
   app.get("/", async (req, reply) => {
     const parsed = customerListQuerySchema.safeParse(req.query);
     if (!parsed.success) {
-      return sendError(
-        reply,
-        400,
-        "VALIDATION_ERROR",
-        "Invalid query parameters",
-        {
-          errors: resolveZodErrors(
-            parsed.error.flatten().fieldErrors,
-            req.locale
-          ),
-        }
-      );
+      throw new AppError("VALIDATION_ERROR", {
+        errors: resolveZodErrors(
+          parsed.error.flatten().fieldErrors,
+          req.locale
+        ),
+      });
     }
     const result = await listCustomers(app.prisma, parsed.data);
     return reply.send(result);

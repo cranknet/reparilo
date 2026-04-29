@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 import { useAlertsStore } from "@/stores/alerts";
 import { useSettingsStore } from "@/stores/settings";
-import { useToastStore } from "@/stores/toast";
 
 type FilterType = "all" | "unread" | "read";
 
@@ -195,7 +195,6 @@ export default function NotificationsPage() {
   const markRead = useAlertsStore((s) => s.markRead);
   const markAllRead = useAlertsStore((s) => s.markAllRead);
   const dismissAlert = useAlertsStore((s) => s.dismissAlert);
-  const undoToast = useToastStore((s) => s.undoToast);
   const {
     whatsAppSettings,
     outboxLogs,
@@ -271,9 +270,7 @@ export default function NotificationsPage() {
       setTestSendingId(templateId);
       const result = await sendTestNotification(templateId);
       if (result.success) {
-        useToastStore.getState().undoToast(t("notification_queued"), "", () => {
-          /* no undo */
-        });
+        toast(t("notification_queued"), { duration: 5000 });
         await fetchOutboxLogs();
       }
       setTestSendingId(null);
@@ -317,8 +314,11 @@ export default function NotificationsPage() {
       });
       useAlertsStore.setState({ alerts: restored });
     };
-    undoToast(t("noti_all_read_toast"), t("noti_undo_mark_all"), undoAction);
-  }, [alerts, markAllRead, undoToast, t]);
+    toast(t("noti_all_read_toast"), {
+      action: { label: t("noti_undo_mark_all"), onClick: undoAction },
+      duration: 5000,
+    });
+  }, [alerts, markAllRead, t]);
 
   const handleNavigate = useCallback(
     (jobId: string) => {

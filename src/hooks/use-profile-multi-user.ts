@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
-import api from "@/lib/api";
+import api, { type ApiError } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth";
 
 interface DisplayUser {
@@ -94,13 +94,12 @@ export function useProfileMultiUser(role: string) {
         blobUrlRef.current = null;
       }
       setLocalImage(null);
-      const axiosErr = err as { response?: { data?: { error?: string } } };
-      const errorMsg = axiosErr.response?.data?.error;
-      if (errorMsg === "FILE_TOO_LARGE") {
+      const apiErr = err as ApiError;
+      if (apiErr.code === "FILE_TOO_LARGE") {
         onError("profile_avatar_too_large");
       } else if (
-        errorMsg === "INVALID_FILE_TYPE" ||
-        errorMsg === "INVALID_FILE_CONTENT"
+        apiErr.code === "INVALID_FILE_TYPE" ||
+        apiErr.code === "INVALID_FILE_CONTENT"
       ) {
         onError("profile_avatar_invalid_type");
       } else {

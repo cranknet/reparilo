@@ -5,7 +5,7 @@ import type {
 } from "@shared/types";
 import { create } from "zustand";
 import i18n from "@/i18n";
-import api from "@/lib/api";
+import api, { getErrorMessage } from "@/lib/api";
 
 interface OutboxLog {
   channel: string;
@@ -96,8 +96,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
         isLoading: false,
       });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.fetch_settings");
+      const message = getErrorMessage(err, i18n.t("errors.fetch_settings"));
       set({ isLoading: false, error: message });
     }
   },
@@ -108,8 +107,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       const res = await api.get("/settings/ai");
       set({ aiSettings: res.data, isLoading: false });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.fetch_ai_settings");
+      const message = getErrorMessage(err, i18n.t("errors.fetch_ai_settings"));
       set({ isLoading: false, error: message });
     }
   },
@@ -122,8 +120,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       set({ aiSettings: updated });
       return updated;
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.save_ai_settings");
+      const message = getErrorMessage(err, i18n.t("errors.save_ai_settings"));
       set({ error: message });
       throw new Error(message);
     }
@@ -135,10 +132,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       const res = await api.post("/settings/ai/test");
       return res.data as { success: boolean; message: string };
     } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : i18n.t("errors.test_ai_connection");
+      const message = getErrorMessage(err, i18n.t("errors.test_ai_connection"));
       set({ error: message });
       return { success: false, message };
     }
@@ -150,10 +144,10 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       const res = await api.get("/settings/shop");
       set({ shopSettings: res.data, isLoading: false });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : i18n.t("errors.fetch_shop_settings");
+      const message = getErrorMessage(
+        err,
+        i18n.t("errors.fetch_shop_settings")
+      );
       set({ isLoading: false, error: message });
     }
   },
@@ -166,10 +160,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       set({ shopSettings: updated });
       return updated;
     } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : i18n.t("errors.save_shop_settings");
+      const message = getErrorMessage(err, i18n.t("errors.save_shop_settings"));
       set({ error: message });
       throw new Error(message);
     }
@@ -181,10 +172,10 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       const res = await api.get("/settings/notifications/templates");
       set({ notificationTemplates: res.data, isLoading: false });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : i18n.t("errors.fetch_notifications");
+      const message = getErrorMessage(
+        err,
+        i18n.t("errors.fetch_notifications")
+      );
       set({ isLoading: false, error: message });
     }
   },
@@ -204,10 +195,10 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       }));
       return updated;
     } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : i18n.t("errors.update_notification_template");
+      const message = getErrorMessage(
+        err,
+        i18n.t("errors.update_notification_template")
+      );
       set({ error: message });
       throw new Error(message);
     }
@@ -219,8 +210,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       const res = await api.get("/settings/whatsapp");
       set({ whatsAppSettings: res.data, isLoading: false });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.fetch_settings");
+      const message = getErrorMessage(err, i18n.t("errors.fetch_settings"));
       set({ isLoading: false, error: message });
     }
   },
@@ -231,10 +221,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       await api.put("/settings/whatsapp", data);
       await useSettingsStore.getState().fetchWhatsAppSettings();
     } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : i18n.t("errors.save_shop_settings");
+      const message = getErrorMessage(err, i18n.t("errors.save_shop_settings"));
       set({ error: message });
       throw new Error(message);
     }
@@ -245,8 +232,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       const res = await api.post(`/notifications/test/${templateId}`);
       return res.data as { message: string; success: boolean };
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.fetch_settings");
+      const message = getErrorMessage(err, i18n.t("errors.fetch_settings"));
       return { success: false, message };
     }
   },
@@ -256,8 +242,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       const res = await api.get("/notifications/outbox");
       set({ outboxLogs: res.data });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : i18n.t("errors.fetch_settings");
+      const message = getErrorMessage(err, i18n.t("errors.fetch_settings"));
       set({ error: message });
     }
   },

@@ -1,7 +1,7 @@
 import type { Customer } from "@shared/types";
 import { create } from "zustand";
 import i18n from "@/i18n";
-import api from "@/lib/api";
+import api, { getErrorMessage } from "@/lib/api";
 
 interface CustomerJob {
   createdAt: string;
@@ -105,8 +105,7 @@ export const useCustomersStore = create<CustomersState>((set) => ({
         isLoadingCustomer: false,
       });
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load customer";
+      const message = getErrorMessage(err, "Failed to load customer");
       set({ isLoadingCustomer: false, error: message });
     }
   },
@@ -117,14 +116,7 @@ export const useCustomersStore = create<CustomersState>((set) => ({
       const res = await api.patch(`/customers/${id}`, data);
       return res.data as Customer;
     } catch (err: unknown) {
-      let message = i18n.t("errors.update_customer");
-      if (err && typeof err === "object" && "response" in err) {
-        const resp = (err as { response?: { data?: { message?: string } } })
-          .response;
-        if (resp?.data?.message) {
-          message = resp.data.message;
-        }
-      }
+      const message = getErrorMessage(err, i18n.t("errors.update_customer"));
       set({ error: message, isUpdating: false });
       throw new Error(message);
     } finally {

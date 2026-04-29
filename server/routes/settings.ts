@@ -1,3 +1,4 @@
+import { AppError } from "@shared/errors/app-error.js";
 import {
   updateAiSettingsSchema,
   updateNotificationTemplateSchema,
@@ -21,7 +22,6 @@ import {
   resolveZodErrors,
   resolveZodResult,
 } from "../utils/resolve-validation-messages.js";
-import { sendError } from "../utils/send-error.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const settingsRoutes: FastifyPluginAsync = async (app) => {
@@ -46,18 +46,12 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const parsed = updateAiSettingsSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const updated = await upsertAiSettings(app.prisma, parsed.data);
       return reply.send(updated);
@@ -84,18 +78,12 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const parsed = updateShopSettingsSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const updated = await upsertShopSettings(app.prisma, parsed.data);
       return reply.send(updated);
@@ -114,18 +102,12 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
       const { id } = req.params as { id: string };
       const parsed = updateNotificationTemplateSchema.safeParse(req.body);
       if (!parsed.success) {
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: resolveZodErrors(
-              parsed.error.flatten().fieldErrors,
-              req.locale
-            ),
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
       }
       const updated = await updateNotificationTemplate(
         app.prisma,
@@ -133,12 +115,7 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
         parsed.data
       );
       if (!updated) {
-        return sendError(
-          reply,
-          404,
-          "TEMPLATE_NOT_FOUND",
-          "Notification template not found"
-        );
+        throw new AppError("TEMPLATE_NOT_FOUND");
       }
       return reply.send(updated);
     }
@@ -159,18 +136,12 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
           parsed.error,
           req.locale
         );
-        return sendError(
-          reply,
-          400,
-          "VALIDATION_ERROR",
-          "Invalid request body",
-          {
-            errors: {
-              ...fieldErrors,
-              ...(formErrors.length ? { _form: formErrors } : {}),
-            },
-          }
-        );
+        throw new AppError("VALIDATION_ERROR", {
+          errors: {
+            ...fieldErrors,
+            ...(formErrors.length ? { _form: formErrors } : {}),
+          },
+        });
       }
       const updated = await upsertWhatsAppSettings(app.prisma, parsed.data);
       return reply.send(updated);

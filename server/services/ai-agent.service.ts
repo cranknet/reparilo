@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@generated/client";
+import { AppError } from "@shared/errors/app-error.js";
 import type {
   AgentDefinitionCreateInput,
   AgentDefinitionUpdateInput,
@@ -50,7 +51,7 @@ export async function deleteAgentDefinition(prisma: PrismaClient, id: string) {
     return null;
   }
   if (existing.isBuiltIn) {
-    throw new Error("Cannot delete built-in agent definitions");
+    throw new AppError("BUILTIN_AGENT_DELETE");
   }
   return await prisma.aiAgentDefinition.delete({ where: { id } });
 }

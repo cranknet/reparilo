@@ -2,10 +2,10 @@ import type { JobStatusType } from "@shared/constants";
 import { JOB_STATUS_FLOW } from "@shared/constants";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import { useTechnicians } from "@/hooks/use-technicians";
 import { useJobsStore } from "@/stores/jobs";
-import { useToastStore } from "@/stores/toast";
 
 interface BatchActionBarProps {
   onClear: () => void;
@@ -21,7 +21,6 @@ export default function BatchActionBar({
   const { t } = useTranslation();
   const transitionStatus = useJobsStore((s) => s.transitionStatus);
   const updateJob = useJobsStore((s) => s.updateJob);
-  const { toast, undoToast } = useToastStore();
   const { technicians, isLoading: techsLoading } = useTechnicians();
   const [loading, setLoading] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
@@ -82,50 +81,51 @@ export default function BatchActionBar({
       setStatusOpen(false);
 
       if (succeeded === selectedJobs.length) {
-        undoToast(
-          t("batch_status_success", { count: succeeded }),
-          t("undo"),
-          async () => {
-            let undoOk = 0;
-            let undoFail = 0;
-            await Promise.allSettled(
-              selectedJobs.map(async (job) => {
-                const prev = previousStatuses.get(job.id);
-                if (prev) {
-                  try {
-                    await transitionStatus(job.id, prev);
-                    undoOk++;
-                  } catch {
-                    undoFail++;
+        toast(t("batch_status_success", { count: succeeded }), {
+          action: {
+            label: t("undo"),
+            onClick: async () => {
+              let undoOk = 0;
+              let undoFail = 0;
+              await Promise.allSettled(
+                selectedJobs.map(async (job) => {
+                  const prev = previousStatuses.get(job.id);
+                  if (prev) {
+                    try {
+                      await transitionStatus(job.id, prev);
+                      undoOk++;
+                    } catch {
+                      undoFail++;
+                    }
                   }
-                }
-              })
-            );
-            if (undoFail > 0) {
-              toast(
-                t("batch_undo_partial", {
-                  ok: undoOk,
-                  fail: undoFail,
-                }),
-                "error"
+                })
               );
-            }
-          }
-        );
+              if (undoFail > 0) {
+                toast.error(
+                  t("batch_undo_partial", {
+                    ok: undoOk,
+                    fail: undoFail,
+                  })
+                );
+              }
+            },
+          },
+          duration: 5000,
+        });
       } else if (succeeded > 0) {
-        toast(
+        toast.success(
           t("batch_status_partial", {
             count: succeeded,
             total: selectedJobs.length,
           })
         );
       } else {
-        toast(t("batch_status_failed"), "error");
+        toast.error(t("batch_status_failed"));
       }
 
       onClear();
     },
-    [selectedJobs, transitionStatus, undoToast, toast, t, onClear]
+    [selectedJobs, transitionStatus, t, onClear]
   );
 
   const handleAssignTechnician = useCallback(
@@ -148,21 +148,21 @@ export default function BatchActionBar({
       setTechOpen(false);
 
       if (succeeded === selectedJobs.length) {
-        toast(t("batch_assign_success", { count: succeeded }));
+        toast.success(t("batch_assign_success", { count: succeeded }));
       } else if (succeeded > 0) {
-        toast(
+        toast.success(
           t("batch_assign_partial", {
             count: succeeded,
             total: selectedJobs.length,
           })
         );
       } else {
-        toast(t("batch_assign_failed"), "error");
+        toast.error(t("batch_assign_failed"));
       }
 
       onClear();
     },
-    [selectedJobs, updateJob, toast, t, onClear]
+    [selectedJobs, updateJob, t, onClear]
   );
 
   if (selectedIds.size === 0) {
