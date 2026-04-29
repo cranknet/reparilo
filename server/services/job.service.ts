@@ -1,6 +1,5 @@
 import type { Job, Prisma, PrismaClient } from "@generated/client";
 import { AuditAction, type RepairCategory } from "@generated/client";
-import type { JobStatusType, RoleType } from "@shared/constants";
 import {
   ACTIVE_STATUSES,
   COMPLETED_STATUSES,
@@ -8,17 +7,18 @@ import {
   JOB_STATUS_FLOW,
   Role,
 } from "@shared/constants";
+import type { JobStatusType, RoleType } from "@shared/constants/roles";
 import { AppError } from "@shared/errors/app-error.js";
 import type {
   CreateJobInput,
   JobListQueryInput,
   UpdateJobInput,
 } from "@shared/schemas";
+import type { FastifyInstance } from "fastify";
 import { generateJobCode } from "../utils/job-code.js";
 import { assertJobMutable } from "../utils/job-mutations.js";
-import { logger } from "../utils/logger.js";
 import { createAuditLog } from "./audit.service.js";
-import { findTemplate } from "./notification-outbox.service.js";
+import { notify } from "./notification-dispatch.js";
 
 export function computeMargin(job: {
   finalCost: number | { toNumber: () => number };
@@ -159,10 +159,11 @@ export async function getMetrics(prisma: PrismaClient) {
 }
 
 export async function create(
-  prisma: PrismaClient,
+  app: FastifyInstance,
   input: CreateJobInput,
   userId: string
 ) {
+  const prisma = app.prisma;
   if (input.warrantyForJobId) {
     const warrantyJob = await prisma.job.findUnique({
       where: { id: input.warrantyForJobId },
@@ -280,14 +281,15 @@ export async function create(
   });
 
   // Fire-and-forget notification for job creation
-  triggerNotification(prisma, {
-    customerPhone: customer.phone,
-    jobId: job.id,
-    templateName: "job_created",
-    templateVars: {
-      jobCode: job.jobCode,
+  notify(app, {
+    context: {
       customerName: customer.name,
+      jobCode: job.jobCode,
+      recipientPhone: customer.phone,
     },
+    eventName: "job_created",
+    jobId: job.id,
+    recipients: { role: "OWNER" },
   }).catch(() => {
     /* fire-and-forget */
   });
@@ -399,12 +401,13 @@ function canFrontDeskCancel(
 }
 
 export async function transitionStatus(
-  prisma: PrismaClient,
+  app: FastifyInstance,
   id: string,
   newStatus: JobStatusType,
   userId: string,
   options?: { reason?: string; requestingRole: RoleType }
 ) {
+  const prisma = app.prisma;
   const job = await prisma.job.findUnique({ where: { id } });
   if (!job) {
     return null;
@@ -448,15 +451,16 @@ export async function transitionStatus(
   // Fire-and-forget notification for status transitions
   const templateName = STATUS_TEMPLATE_MAP[newStatus];
   if (templateName && updated.customer?.phone) {
-    triggerNotification(prisma, {
-      customerPhone: updated.customer.phone,
-      jobId: id,
-      templateName,
-      templateVars: {
-        jobCode: updated.jobCode,
+    notify(app, {
+      context: {
         customerName: updated.customer.name,
+        jobCode: updated.jobCode,
         newStatus,
+        recipientPhone: updated.customer.phone,
       },
+      eventName: templateName,
+      jobId: id,
+      recipients: { role: "OWNER" },
     }).catch(() => {
       /* fire-and-forget */
     });
@@ -619,32 +623,3 @@ const STATUS_TEMPLATE_MAP: Record<string, string> = {
   DONE: "job_done",
   DELIVERED: "job_delivered",
 };
-
-async function triggerNotification(
-  prisma: PrismaClient,
-  options: {
-    jobId?: string;
-    templateName: string;
-    customerPhone: string;
-    templateVars: Record<string, string>;
-  }
-): Promise<void> {
-  const template = await findTemplate(prisma, options.templateName, "WHATSAPP");
-  if (!template) {
-    logger.warn(
-      `[notifications] Template "${options.templateName}" not found — skipping notification for job ${options.jobId ?? "unknown"}`
-    );
-    return;
-  }
-  const { queueNotification } = await import(
-    "./notification-outbox.service.js"
-  );
-  await queueNotification(prisma, {
-    jobId: options.jobId,
-    templateName: options.templateName,
-    channel: "WHATSAPP",
-    recipientPhone: options.customerPhone,
-    templateBody: template.body,
-    templateVars: options.templateVars,
-  });
-}

@@ -1,6 +1,6 @@
 import { INACTIVE_STATUSES } from "@shared/constants";
 import type { FastifyInstance } from "fastify";
-import { emitDashboardChanged } from "../lib/dashboard-events.js";
+import { notify } from "../services/notification-dispatch.js";
 
 const alerted = new Set<string>();
 const MAX_ALERTED = 10_000;
@@ -34,20 +34,19 @@ async function processOverdueJobs(app: FastifyInstance): Promise<void> {
     }
   }
 
-  let hasNewAlerts = false;
   for (const job of overdue) {
     if (alerted.has(job.id)) {
       continue;
     }
     alerted.add(job.id);
-    hasNewAlerts = true;
-    app.wsBroadcast?.((c) => c.role === "OWNER", {
-      type: "JOB_OVERDUE",
-      job: { id: job.id, jobCode: job.jobCode },
+    notify(app, {
+      context: { jobCode: job.jobCode },
+      eventName: "job_overdue",
+      jobId: job.id,
+      recipients: { role: "OWNER" },
+    }).catch(() => {
+      /* fire-and-forget */
     });
-  }
-  if (hasNewAlerts) {
-    emitDashboardChanged(app, ["OWNER", "FRONT_DESK"]);
   }
 }
 

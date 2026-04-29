@@ -56,7 +56,7 @@ enum RepairCategory {
 
 enum NotifyChannel {
   WHATSAPP
-  SMS
+  IN_APP
 }
 
 enum OutboxStatus {
@@ -131,9 +131,10 @@ model User {
   auditLogs      AuditLog[]
   chatHistory    AiChatHistory[]
   conversations  AiConversation[]
-  sessions       Session[]
+   sessions       Session[]
   accounts       Account[]
   verifications  Verification[]
+  inAppNotifications InAppNotification[]
 
   @@map("users")
 }
@@ -263,6 +264,7 @@ model Job {
   repairs         JobRepair[]
   auditLogs       AuditLog[]
   notifications   NotificationOutbox[]
+  inAppNotifications InAppNotification[]
 
   @@index([customerId])
   @@index([deviceId])
@@ -383,7 +385,7 @@ model JobPart {
 
 model RepairCatalog {
   id           String         @id @default(cuid())
-  name         String
+  name         String         @unique
   category     RepairCategory
   defaultPrice Decimal        @db.Decimal(10, 2)
   isActive     Boolean        @default(true)
@@ -392,7 +394,6 @@ model RepairCatalog {
 
   jobRepairs   JobRepair[]
 
-  @@index([name])
   @@map("repair_catalog")
 }
 
@@ -487,6 +488,26 @@ model NotificationOutbox {
 
   @@index([status, createdAt])
   @@map("notification_outbox")
+}
+
+// ─────────────────────────────────────────────
+// IN-APP NOTIFICATIONS
+// ─────────────────────────────────────────────
+
+model InAppNotification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId     String?
+  job       Job?      @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  type      String
+  message   String    @db.Text
+  readAt    DateTime? @db.Timestamptz
+  createdAt DateTime  @default(now()) @db.Timestamptz
+
+  @@index([userId, readAt])
+  @@index([readAt, createdAt])
+  @@map("in_app_notifications")
 }
 
 // ─────────────────────────────────────────────

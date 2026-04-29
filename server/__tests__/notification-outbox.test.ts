@@ -176,37 +176,6 @@ describe("processOutbox", () => {
     });
   });
 
-  it("marks SMS entries as FAILED (not implemented)", async () => {
-    mocks.outboxFindMany.mockResolvedValue([
-      {
-        id: "out-3",
-        channel: "SMS",
-        recipientPhone: "05551234567",
-        renderedBody: "Hello",
-      },
-    ]);
-    mocks.shopSettingsFindUnique.mockResolvedValue({
-      whatsappApiTokenEncrypted: "enc-token",
-      whatsappBusinessId: "biz-1",
-      whatsappPhoneNumberId: "phone-1",
-    });
-    mocks.decryptWhatsAppConfig.mockReturnValue({
-      apiToken: "decrypted-token",
-      businessId: "biz-1",
-      phoneNumberId: "phone-1",
-    });
-
-    await processOutbox(prisma);
-
-    expect(mocks.outboxUpdate).toHaveBeenCalledWith({
-      where: { id: "out-3" },
-      data: {
-        error: "SMS not yet implemented",
-        status: OutboxStatus.FAILED,
-      },
-    });
-  });
-
   it("does nothing when no pending entries exist", async () => {
     mocks.outboxFindMany.mockResolvedValue([]);
 

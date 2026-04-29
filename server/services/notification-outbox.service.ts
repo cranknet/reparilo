@@ -28,7 +28,7 @@ let isProcessing = false;
 export async function findTemplate(
   prisma: PrismaClient,
   name: string,
-  channel: "WHATSAPP" | "SMS"
+  channel: "WHATSAPP"
 ) {
   return await prisma.notificationTemplate.findFirst({
     where: { name, channel },
@@ -40,7 +40,7 @@ export async function queueNotification(
   data: {
     jobId?: string;
     templateName: string;
-    channel: "WHATSAPP" | "SMS";
+    channel: "WHATSAPP";
     recipientPhone: string;
     templateVars: Record<string, string>;
     templateBody: string;
@@ -93,14 +93,6 @@ export async function processOutbox(prisma: PrismaClient): Promise<void> {
             error: result.error,
             sentAt: result.success ? new Date() : null,
             status: result.success ? OutboxStatus.SENT : OutboxStatus.FAILED,
-          },
-        });
-      } else {
-        await prisma.notificationOutbox.update({
-          where: { id: entry.id },
-          data: {
-            error: "SMS not yet implemented",
-            status: OutboxStatus.FAILED,
           },
         });
       }

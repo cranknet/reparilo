@@ -69,7 +69,7 @@ interface SettingsState {
     id: string,
     data: {
       name: string;
-      channel: "WHATSAPP" | "SMS";
+      channel: "WHATSAPP";
       body: string;
       isDefault?: boolean;
     }
@@ -169,7 +169,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   fetchNotificationTemplates: async () => {
     set({ isLoading: true, error: null });
     try {
-      const res = await api.get("/settings/notifications/templates");
+      const res = await api.get("/notifications/templates");
       set({ notificationTemplates: res.data, isLoading: false });
     } catch (err: unknown) {
       const message = getErrorMessage(
@@ -183,10 +183,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   updateNotificationTemplate: async (id, data) => {
     set({ error: null });
     try {
-      const res = await api.put(
-        `/settings/notifications/templates/${id}`,
-        data
-      );
+      const res = await api.put(`/notifications/templates/${id}`, data);
       const updated = res.data as NotificationTemplate;
       set((state) => ({
         notificationTemplates: state.notificationTemplates.map((t) =>
