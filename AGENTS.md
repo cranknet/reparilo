@@ -129,10 +129,10 @@ reparilo/
 - Explain tasks, errors, and solutions in plain English with minimal jargon
 - When I bring you an issue, your job is not to fix it directly. Instead, open a brief discussion: ask clarifying questions, explore the problem space, and propose industry best-practice solutions. Always lean toward the approach that reflects current standards, and walk me through the reasoning so we decide together.
 - When dealing with Coderabbit CLI it takes long time to review so use longer timeout.
-- The  shared/errors/ AppEror is ssot error handler, do not create, invent or throw error , reuse it.
-- The  server/plugins/security.ts is ssot of backend security, reuse or improve if needed when working with api's.
-- When you dispatch "EXPLORE" agent in parallel, make sure to collect all issues found even minors. do not rely on the agent "Explore" recomandation.
-- Do not create, use Barrel files, apply best practise.
+- `shared/errors/AppError` is the SSOT error handler; do not create, invent, or throw custom errors; reuse it.
+- `server/plugins/security.ts` is the SSOT for backend security; reuse or improve it when working with APIs.
+- When you dispatch "EXPLORE" agent in parallel, make sure to collect all issues found including minor ones; do not rely solely on the "EXPLORE" agent's recommendation.
+- Do not create or use Barrel files; apply best practice with explicit imports.
 
 - Create Prisma migrations after every schema change
 - Use the Postgres URL from `.env` for DB access

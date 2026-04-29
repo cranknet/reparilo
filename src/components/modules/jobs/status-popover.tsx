@@ -65,7 +65,7 @@ export default function StatusPopover({ job, onChanged }: StatusPopoverProps) {
         .then(() => {
           setOpen(false);
           onChanged?.();
-          toast("job_status_success", {
+          toast(t("job_status_success"), {
             action: {
               label: t("undo"),
               onClick: () => {

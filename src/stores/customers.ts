@@ -108,7 +108,7 @@ export const useCustomersStore = create<CustomersState>((set) => ({
         isLoadingCustomer: false,
       });
     } catch (err: unknown) {
-      const message = getErrorMessage(err, "Failed to load customer");
+      const message = getErrorMessage(err, i18n.t("errors.fetch_customer"));
       set({ isLoadingCustomer: false, error: message });
     }
   },
