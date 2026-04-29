@@ -2,19 +2,31 @@ import { useTranslation } from "react-i18next";
 import type { InAppAlert } from "@/stores/alerts";
 
 const TYPE_CONFIG: Record<string, { icon: string; labelKey: string }> = {
-  JOB_CREATED: {
+  job_created: {
     icon: "add_circle",
     labelKey: "noti_type_job_created",
   },
-  JOB_OVERDUE: {
+  job_overdue: {
     icon: "schedule",
     labelKey: "noti_type_job_overdue",
   },
-  JOB_STATUS_CHANGED: {
+  job_done: {
     icon: "swap_horiz",
     labelKey: "noti_type_job_status_changed",
   },
-  WARRANTY_RETURN_CREATED: {
+  job_in_repair: {
+    icon: "swap_horiz",
+    labelKey: "noti_type_job_status_changed",
+  },
+  job_waiting_parts: {
+    icon: "swap_horiz",
+    labelKey: "noti_type_job_status_changed",
+  },
+  job_delivered: {
+    icon: "swap_horiz",
+    labelKey: "noti_type_job_status_changed",
+  },
+  warranty_return_created: {
     icon: "autorenew",
     labelKey: "noti_type_warranty_return",
   },

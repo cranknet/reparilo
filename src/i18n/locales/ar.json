@@ -447,6 +447,7 @@
     "warranty_phantom_touch": "يقوم العميل بالإبلاغ عن جهاز التحويل الرقمي Phantom Touch بعد 3 أيام.",
     "warranty_charging_port": "منفذ الشحن فضفاض."
   },
+  "date": "تاريخ",
   "date_short": "{{val, date}}",
   "deactivate_part": "إلغاء التنشيط",
   "deactivate_repair": "إلغاء التنشيط",

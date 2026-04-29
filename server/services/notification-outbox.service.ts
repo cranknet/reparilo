@@ -25,16 +25,6 @@ let intervalRef: ReturnType<typeof setInterval> | null = null;
 // TODO: Add DB-level advisory lock for multi-instance support.
 let isProcessing = false;
 
-export async function findTemplate(
-  prisma: PrismaClient,
-  name: string,
-  channel: "WHATSAPP"
-) {
-  return await prisma.notificationTemplate.findFirst({
-    where: { name, channel },
-  });
-}
-
 export async function queueNotification(
   prisma: PrismaClient,
   data: {

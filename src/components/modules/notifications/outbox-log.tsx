@@ -62,14 +62,14 @@ export default function OutboxLog({ notificationTemplates }: OutboxLogProps) {
             </p>
           </div>
         ) : (
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-start text-sm">
             <thead>
               <tr className="border-outline-variant/50 border-b">
                 <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
                   {t("template_name")}
                 </th>
                 <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
-                  {t("customer_phone") ?? "Phone"}
+                  {t("customer_phone")}
                 </th>
                 <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
                   {t("status_label")}
@@ -81,7 +81,7 @@ export default function OutboxLog({ notificationTemplates }: OutboxLogProps) {
                   {t("details")}
                 </th>
                 <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
-                  {t("date_short", { val: new Date() })}
+                  {t("date")}
                 </th>
               </tr>
             </thead>

@@ -447,6 +447,7 @@
     "warranty_phantom_touch": "Customer reporting digitizer phantom touch after 3 days.",
     "warranty_charging_port": "Charging port loose."
   },
+  "date": "Date",
   "date_short": "{{val, date}}",
   "deactivate_part": "Deactivate",
   "deactivate_repair": "Deactivate",

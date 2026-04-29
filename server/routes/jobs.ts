@@ -337,16 +337,6 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
     if ("error" in result && result.error === "CANCEL_NOT_CREATOR") {
       throw new AppError("CANCEL_NOT_CREATOR");
     }
-    if (!("error" in result)) {
-      notify(app, {
-        context: {},
-        eventName: "job_status_changed",
-        jobId: id,
-        recipients: { role: "OWNER" },
-      }).catch(() => {
-        /* fire-and-forget */
-      });
-    }
     return reply.send(result);
   });
 

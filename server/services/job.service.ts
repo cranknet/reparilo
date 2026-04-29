@@ -450,13 +450,13 @@ export async function transitionStatus(
 
   // Fire-and-forget notification for status transitions
   const templateName = STATUS_TEMPLATE_MAP[newStatus];
-  if (templateName && updated.customer?.phone) {
+  if (templateName) {
     notify(app, {
       context: {
-        customerName: updated.customer.name,
+        customerName: updated.customer?.name,
         jobCode: updated.jobCode,
         newStatus,
-        recipientPhone: updated.customer.phone,
+        recipientPhone: updated.customer?.phone,
       },
       eventName: templateName,
       jobId: id,

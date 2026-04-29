@@ -447,6 +447,7 @@
     "warranty_phantom_touch": "Signalement client du numériseur Phantom Touch après 3 jours.",
     "warranty_charging_port": "Port de chargement desserré."
   },
+  "date": "Date",
   "date_short": "{{val, date}}",
   "deactivate_part": "Désactiver",
   "deactivate_repair": "Désactiver",

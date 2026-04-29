@@ -45,15 +45,20 @@ const inAppHandler: ChannelHandler = {
     let resolved: string[];
     if (userIds?.length) {
       resolved = userIds;
-    } else {
+    } else if (event.recipients.role) {
       const users = await prisma.user.findMany({
         select: { id: true },
-        where: { isActive: true, role: event.recipients.role ?? undefined },
+        where: { isActive: true, role: event.recipients.role },
       });
       resolved = users.map((u) => u.id);
       if (resolved.length === 0) {
         return;
       }
+    } else {
+      logger.warn(
+        `[notify] IN_APP handler: no userIds or role for event ${event.eventName} — skipping`
+      );
+      return;
     }
 
     const message = renderTemplate(context.templateBody, context.templateVars);
