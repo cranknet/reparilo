@@ -5,7 +5,7 @@ import type {
   MessagesQueryInput,
   UpdateConversationInput,
   UpdateMessageInput,
-} from "@shared/schemas";
+} from "@shared/schemas/ai.schema";
 
 export async function listConversations(
   prisma: PrismaClient,

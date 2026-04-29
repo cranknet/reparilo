@@ -5,7 +5,7 @@ import {
   customerListQuerySchema,
   customerSearchQuerySchema,
   updateCustomerSchema,
-} from "@shared/schemas";
+} from "@shared/schemas/customer.schema";
 import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
 import {

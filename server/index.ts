@@ -34,7 +34,7 @@ const IS_PROD = env.NODE_ENV === "production";
 const app = Fastify({
   logger: { level: env.LOG_LEVEL },
   trustProxy: env.TRUST_PROXY ?? IS_PROD,
-  requestIdHeader: "x-request-id",
+  requestIdHeader: false,
   requestIdLogLabel: "reqId",
   genReqId: () =>
     globalThis.crypto?.randomUUID?.() ??
@@ -71,8 +71,8 @@ const cleanupHandle = setInterval(() => {
 if (cleanupHandle.unref) {
   cleanupHandle.unref();
 }
-cleanupReadNotifications(app.prisma).catch(() => {
-  /* initial cleanup — ignore errors */
+cleanupReadNotifications(app.prisma).catch((err) => {
+  app.log.warn(err, "Initial notification cleanup skipped");
 });
 
 app.addHook("onReady", async () => {

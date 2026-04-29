@@ -3,7 +3,7 @@ import {
   updateAiSettingsSchema,
   updateShopSettingsSchema,
   updateWhatsAppSettingsSchema,
-} from "@shared/schemas";
+} from "@shared/schemas/settings.schema";
 import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
 import {
@@ -15,10 +15,7 @@ import {
   upsertShopSettings,
   upsertWhatsAppSettings,
 } from "../services/settings.service.js";
-import {
-  resolveZodErrors,
-  resolveZodResult,
-} from "../utils/resolve-validation-messages.js";
+import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const settingsRoutes: FastifyPluginAsync = async (app) => {
@@ -98,15 +95,11 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const parsed = updateWhatsAppSettingsSchema.safeParse(req.body);
       if (!parsed.success) {
-        const { fieldErrors, formErrors } = resolveZodResult(
-          parsed.error,
-          req.locale
-        );
         throw new AppError("VALIDATION_ERROR", {
-          errors: {
-            ...fieldErrors,
-            ...(formErrors.length ? { _form: formErrors } : {}),
-          },
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
         });
       }
       const updated = await upsertWhatsAppSettings(app.prisma, parsed.data);

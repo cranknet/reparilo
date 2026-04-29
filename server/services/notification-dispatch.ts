@@ -158,12 +158,15 @@ export async function notify(
   });
 
   const templateVars = buildTemplateVars(event.context);
+  const hasInAppTemplate = templates.some((t) => t.channel === "IN_APP");
 
-  await HANDLERS.IN_APP.handle(app.prisma, app, event, {
-    jobId: event.jobId,
-    templateBody: resolveInAppBody(templates),
-    templateVars,
-  });
+  if (hasInAppTemplate) {
+    await HANDLERS.IN_APP.handle(app.prisma, app, event, {
+      jobId: event.jobId,
+      templateBody: resolveInAppBody(templates),
+      templateVars,
+    });
+  }
 
   for (const template of templates) {
     if (template.channel === "IN_APP") {

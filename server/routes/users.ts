@@ -257,7 +257,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       await app.prisma.auditLog.create({
         data: {
           jobId: null,
-          userId: request.user?.id ?? "unknown",
+          userId: request.user.id,
           action: "USER_CREATED",
           toValue: `${username} (${role})`,
         },
@@ -348,7 +348,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       await app.prisma.auditLog.create({
         data: {
           jobId: null,
-          userId: request.user?.id ?? "unknown",
+          userId: request.user.id,
           action: "PASSWORD_RESET",
           toValue: `Password reset for ${targetUser.username}`,
         },

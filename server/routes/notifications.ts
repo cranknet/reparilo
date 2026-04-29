@@ -2,8 +2,8 @@ import { AppError } from "@shared/errors/app-error.js";
 import {
   listInAppQuerySchema,
   markReadParamSchema,
-  updateNotificationTemplateSchema,
-} from "@shared/schemas";
+} from "@shared/schemas/notification.schema";
+import { updateNotificationTemplateSchema } from "@shared/schemas/settings.schema";
 import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
 import {

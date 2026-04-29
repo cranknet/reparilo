@@ -1,4 +1,4 @@
-import { INACTIVE_STATUSES } from "@shared/constants";
+import { INACTIVE_STATUSES } from "@shared/constants/job-statuses";
 import type { FastifyInstance } from "fastify";
 import { notify } from "../services/notification-dispatch.js";
 

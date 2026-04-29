@@ -5,7 +5,7 @@ import type {
   AgentDefinitionUpdateInput,
   AiInstructionInput,
   AiMemoryInput,
-} from "@shared/schemas";
+} from "@shared/schemas/ai.schema";
 
 export async function listAgentDefinitions(prisma: PrismaClient) {
   return await prisma.aiAgentDefinition.findMany({

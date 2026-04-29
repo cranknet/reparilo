@@ -92,7 +92,6 @@ export const ERRORS = {
     message: "errors.conflict_status_transition",
   },
   PHOTO_LIMIT_REACHED: { status: 409, message: "errors.photo_limit_reached" },
-  RATE_LIMITED: { status: 429, message: "errors.rate_limited" },
   USERNAME_EXISTS: { status: 409, message: "errors.username_exists" },
   EMAIL_EXISTS: { status: 409, message: "errors.email_exists" },
 

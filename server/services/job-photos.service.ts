@@ -3,11 +3,13 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { PrismaClient } from "@generated/client";
 import { AuditAction } from "@generated/client";
+import { loadEnv } from "../config/env.js";
 import { validateMagicBytes } from "../utils/file-validation.js";
 import { assertJobMutable } from "../utils/job-mutations.js";
 import { createAuditLog } from "./audit.service.js";
 
-const UPLOAD_DIR = path.resolve("uploads/job-photos");
+const UPLOAD_BASE = path.resolve(loadEnv().UPLOAD_DIR);
+const PHOTO_SUBDIR = "job-photos";
 const MAX_PHOTOS = 5;
 const ALLOWED_MIMES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -52,7 +54,7 @@ export async function upload(
 
   const ext = extFromMime(file.mimetype);
   const filename = `${crypto.randomUUID()}.${ext}`;
-  const jobDir = path.join(UPLOAD_DIR, jobId);
+  const jobDir = path.join(UPLOAD_BASE, PHOTO_SUBDIR, jobId);
   const filePath = path.join(jobDir, filename);
 
   await fs.mkdir(jobDir, { recursive: true });
@@ -94,7 +96,7 @@ export async function remove(
     return null;
   }
 
-  const fullPath = path.resolve("uploads", photo.path);
+  const fullPath = path.join(UPLOAD_BASE, photo.path);
   try {
     await fs.unlink(fullPath);
   } catch {

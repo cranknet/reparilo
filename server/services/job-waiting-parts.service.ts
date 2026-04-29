@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@generated/client";
 import { AuditAction } from "@generated/client";
-import type { AddWaitingPartInput } from "@shared/schemas";
+import type { AddWaitingPartInput } from "@shared/schemas/job.schema";
 import { assertJobMutable } from "../utils/job-mutations.js";
 import { createAuditLog } from "./audit.service.js";
 

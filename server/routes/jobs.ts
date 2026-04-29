@@ -1,5 +1,5 @@
 import type { RoleType } from "@shared/constants/roles";
-import { AppError } from "@shared/errors/app-error.js";
+import { AppError, throwIfError } from "@shared/errors/app-error.js";
 import {
   addJobNoteSchema,
   addJobPartSchema,
@@ -9,7 +9,7 @@ import {
   jobListQuerySchema,
   transitionStatusSchema,
   updateJobSchema,
-} from "@shared/schemas";
+} from "@shared/schemas/job.schema";
 import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
 import {
@@ -64,7 +64,11 @@ function trackFailedAttempt(lockouts: Map<string, LockoutEntry>, code: string) {
 }
 
 function getUserId(req: FastifyRequest): string {
-  return (req.user as { id: string }).id;
+  const id = req.user?.id;
+  if (!id) {
+    throw new AppError("UNAUTHORIZED");
+  }
+  return id;
 }
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
@@ -231,17 +235,13 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       }
       const userId = getUserId(req);
       const result = await createJob(app, parsed.data, userId);
-      if ("error" in result && result.error === "INVALID_CUSTOMER") {
-        throw new AppError("INVALID_CUSTOMER");
-      }
-      if ("error" in result && result.error === "INVALID_WARRANTY_REFERENCE") {
-        throw new AppError("INVALID_WARRANTY_REFERENCE");
-      }
-      if ("error" in result && result.error === "DUPLICATE_REPAIR") {
-        throw new AppError("DUPLICATE_REPAIR");
-      }
+      throwIfError(result);
 
-      if (result.isWarrantyReturn && "jobCode" in result) {
+      if (
+        "isWarrantyReturn" in result &&
+        result.isWarrantyReturn &&
+        "jobCode" in result
+      ) {
         notify(app, {
           context: {
             jobCode: (result as Record<string, unknown>).jobCode as string,
@@ -277,12 +277,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       if (!result) {
         throw new AppError("JOB_NOT_FOUND");
       }
-      if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
-        throw new AppError("JOB_IN_TERMINAL_STATUS");
-      }
-      if ("error" in result && result.error === "INVALID_TECHNICIAN") {
-        throw new AppError("INVALID_TECHNICIAN");
-      }
+      throwIfError(result);
       return reply.send(result);
     }
   );
@@ -323,12 +318,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         currentStatus: result.currentStatus,
       });
     }
-    if ("error" in result && result.error === "CANCEL_WINDOW_EXPIRED") {
-      throw new AppError("CANCEL_WINDOW_EXPIRED");
-    }
-    if ("error" in result && result.error === "CANCEL_NOT_CREATOR") {
-      throw new AppError("CANCEL_NOT_CREATOR");
-    }
+    throwIfError(result);
     return reply.send(result);
   });
 
@@ -360,9 +350,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       if (!note) {
         throw new AppError("JOB_NOT_FOUND");
       }
-      if ("error" in note && note.error === "JOB_IN_TERMINAL_STATUS") {
-        throw new AppError("JOB_IN_TERMINAL_STATUS");
-      }
+      throwIfError(note);
       return reply.status(201).send(note);
     }
   );
@@ -386,9 +374,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       if (!result) {
         throw new AppError("JOB_NOT_FOUND");
       }
-      if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
-        throw new AppError("JOB_IN_TERMINAL_STATUS");
-      }
+      throwIfError(result);
       return reply.status(201).send(result);
     }
   );
@@ -426,12 +412,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       if (!result) {
         throw new AppError("JOB_NOT_FOUND");
       }
-      if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
-        throw new AppError("JOB_IN_TERMINAL_STATUS");
-      }
-      if ("error" in result && result.error === "DUPLICATE_REPAIR") {
-        throw new AppError("DUPLICATE_REPAIR");
-      }
+      throwIfError(result);
       return reply.status(201).send(result);
     }
   );
@@ -464,18 +445,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       if (!result) {
         throw new AppError("JOB_NOT_FOUND");
       }
-      if ("error" in result && result.error === "PHOTO_LIMIT_REACHED") {
-        throw new AppError("PHOTO_LIMIT_REACHED");
-      }
-      if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
-        throw new AppError("JOB_IN_TERMINAL_STATUS");
-      }
-      if ("error" in result && result.error === "INVALID_FILE_TYPE") {
-        throw new AppError("INVALID_FILE_TYPE");
-      }
-      if ("error" in result && result.error === "INVALID_FILE_CONTENT") {
-        throw new AppError("INVALID_FILE_CONTENT");
-      }
+      throwIfError(result);
       return reply.status(201).send(result);
     }
   );
@@ -513,9 +483,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       if (!result) {
         throw new AppError("JOB_NOT_FOUND");
       }
-      if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
-        throw new AppError("JOB_IN_TERMINAL_STATUS");
-      }
+      throwIfError(result);
       return reply.status(201).send(result);
     }
   );

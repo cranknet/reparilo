@@ -1,5 +1,5 @@
 import { AppError } from "@shared/errors/app-error.js";
-import { jobIdParamSchema } from "@shared/schemas";
+import { jobIdParamSchema } from "@shared/schemas/receipt.schema";
 import type { FastifyPluginAsync } from "fastify";
 import { resolveUrls } from "../config/env.js";
 import { requirePermission } from "../middlewares/rbac.js";

@@ -1,19 +1,20 @@
 import type { Job, Prisma, PrismaClient } from "@generated/client";
 import { AuditAction, type RepairCategory } from "@generated/client";
+import type { JobStatusType } from "@shared/constants/job-statuses";
 import {
   ACTIVE_STATUSES,
   COMPLETED_STATUSES,
   INACTIVE_STATUSES,
   JOB_STATUS_FLOW,
-  Role,
-} from "@shared/constants";
-import type { JobStatusType, RoleType } from "@shared/constants/roles";
+} from "@shared/constants/job-statuses";
+import type { RoleType } from "@shared/constants/roles";
+import { Role } from "@shared/constants/roles";
 import { AppError } from "@shared/errors/app-error.js";
 import type {
   CreateJobInput,
   JobListQueryInput,
   UpdateJobInput,
-} from "@shared/schemas";
+} from "@shared/schemas/job.schema";
 import type { FastifyInstance } from "fastify";
 import { generateJobCode } from "../utils/job-code.js";
 import { assertJobMutable } from "../utils/job-mutations.js";
@@ -469,6 +470,88 @@ export async function transitionStatus(
   return { ...updated, finalCost: computeFinalCost(updated) };
 }
 
+const LOOKUP_INCLUDE_PUBLIC = {
+  customer: { select: { name: true, phone: true } },
+  device: { select: { brand: true, model: true } },
+  repairs: { select: { repairName: true, price: true } },
+  partsUsed: { select: { partName: true, totalCost: true } },
+  notes: {
+    where: { isCustomerVisible: true },
+    select: { content: true, createdAt: true },
+    orderBy: { createdAt: "desc" as const },
+  },
+} as const;
+
+const LOOKUP_INCLUDE_AUTH = {
+  customer: { select: { name: true } },
+  device: { select: { brand: true, model: true } },
+  repairs: { select: { repairName: true, price: true } },
+  partsUsed: { select: { partName: true, totalCost: true } },
+  notes: {
+    where: { isCustomerVisible: true },
+    select: { content: true, createdAt: true },
+    orderBy: { createdAt: "desc" as const },
+  },
+} as const;
+
+async function buildJobLookupPayload(
+  prisma: PrismaClient,
+  jobId: string,
+  job: {
+    jobCode: string;
+    status: string;
+    reportedProblem: string;
+    estimatedDate: Date | null;
+    createdAt: Date;
+    customer: { name: string };
+    device: { brand: string; model: string };
+    notes: Array<{ content: string; createdAt: Date }>;
+    repairs: Array<{ repairName: string; price: { toNumber: () => number } }>;
+  }
+) {
+  const [statusTransitions, shopSettings] = await Promise.all([
+    prisma.auditLog.findMany({
+      where: { jobId, action: "STATUS_CHANGED" },
+      select: { fromValue: true, toValue: true, createdAt: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.shopSettings.findUnique({
+      where: { id: "default" },
+      select: { shopName: true, phone: true, address: true },
+    }),
+  ]);
+
+  return {
+    createdAt: job.createdAt,
+    customer: { name: job.customer.name },
+    device: `${job.device.brand} ${job.device.model}`,
+    estimatedDate: job.estimatedDate,
+    jobCode: job.jobCode,
+    notes: job.notes.map((n) => ({
+      content: n.content,
+      createdAt: n.createdAt,
+    })),
+    reportedProblem: job.reportedProblem,
+    repairs: job.repairs.map((r) => ({
+      name: r.repairName,
+      price: r.price.toNumber(),
+    })),
+    shop: shopSettings
+      ? {
+          address: shopSettings.address,
+          name: shopSettings.shopName,
+          phone: shopSettings.phone,
+        }
+      : null,
+    status: job.status,
+    statusTransitions: statusTransitions.map((t) => ({
+      date: t.createdAt,
+      from: t.fromValue,
+      to: t.toValue,
+    })),
+  };
+}
+
 export async function lookupByCode(
   prisma: PrismaClient,
   jobCode: string,
@@ -476,18 +559,7 @@ export async function lookupByCode(
 ): Promise<{ job: Record<string, unknown> | null; jobExists: boolean }> {
   const job = await prisma.job.findFirst({
     where: { jobCode },
-    include: {
-      // phone is fetched for comparison only — never included in the response
-      customer: { select: { name: true, phone: true } },
-      device: { select: { brand: true, model: true } },
-      repairs: { select: { repairName: true, price: true } },
-      partsUsed: { select: { partName: true, totalCost: true } },
-      notes: {
-        where: { isCustomerVisible: true },
-        select: { content: true, createdAt: true },
-        orderBy: { createdAt: "desc" as const },
-      },
-    },
+    include: LOOKUP_INCLUDE_PUBLIC,
   });
   if (!job) {
     return { job: null, jobExists: false };
@@ -502,52 +574,8 @@ export async function lookupByCode(
     return { job: null, jobExists: true };
   }
 
-  const shopSettings = await prisma.shopSettings.findUnique({
-    where: { id: "default" },
-    select: { shopName: true, phone: true, address: true },
-  });
-
-  const statusTransitions = await prisma.auditLog.findMany({
-    where: {
-      jobId: job.id,
-      action: "STATUS_CHANGED",
-    },
-    select: { fromValue: true, toValue: true, createdAt: true },
-    orderBy: { createdAt: "asc" },
-  });
-
-  return {
-    jobExists: true,
-    job: {
-      jobCode: job.jobCode,
-      status: job.status,
-      device: `${job.device.brand} ${job.device.model}`,
-      reportedProblem: job.reportedProblem,
-      estimatedDate: job.estimatedDate,
-      createdAt: job.createdAt,
-      customer: { name: job.customer.name },
-      notes: job.notes.map((n) => ({
-        content: n.content,
-        createdAt: n.createdAt,
-      })),
-      repairs: job.repairs.map((r) => ({
-        name: r.repairName,
-        price: r.price.toNumber(),
-      })),
-      statusTransitions: statusTransitions.map((t) => ({
-        from: t.fromValue,
-        to: t.toValue,
-        date: t.createdAt,
-      })),
-      shop: shopSettings
-        ? {
-            name: shopSettings.shopName,
-            phone: shopSettings.phone,
-            address: shopSettings.address,
-          }
-        : null,
-    },
-  };
+  const payload = await buildJobLookupPayload(prisma, job.id, job);
+  return { jobExists: true, job: payload };
 }
 
 export async function lookupByCodeAuth(
@@ -556,65 +584,13 @@ export async function lookupByCodeAuth(
 ): Promise<Record<string, unknown> | null> {
   const job = await prisma.job.findFirst({
     where: { jobCode },
-    include: {
-      customer: { select: { name: true } },
-      device: { select: { brand: true, model: true } },
-      repairs: { select: { repairName: true, price: true } },
-      partsUsed: { select: { partName: true, totalCost: true } },
-      notes: {
-        where: { isCustomerVisible: true },
-        select: { content: true, createdAt: true },
-        orderBy: { createdAt: "desc" as const },
-      },
-    },
+    include: LOOKUP_INCLUDE_AUTH,
   });
   if (!job) {
     return null;
   }
 
-  const statusTransitions = await prisma.auditLog.findMany({
-    where: {
-      jobId: job.id,
-      action: "STATUS_CHANGED",
-    },
-    select: { fromValue: true, toValue: true, createdAt: true },
-    orderBy: { createdAt: "asc" },
-  });
-
-  const shopSettings = await prisma.shopSettings.findUnique({
-    where: { id: "default" },
-    select: { shopName: true, phone: true, address: true },
-  });
-
-  return {
-    jobCode: job.jobCode,
-    status: job.status,
-    device: `${job.device.brand} ${job.device.model}`,
-    reportedProblem: job.reportedProblem,
-    estimatedDate: job.estimatedDate,
-    createdAt: job.createdAt,
-    customer: { name: job.customer.name },
-    notes: job.notes.map((n) => ({
-      content: n.content,
-      createdAt: n.createdAt,
-    })),
-    repairs: job.repairs.map((r) => ({
-      name: r.repairName,
-      price: r.price.toNumber(),
-    })),
-    statusTransitions: statusTransitions.map((t) => ({
-      from: t.fromValue,
-      to: t.toValue,
-      date: t.createdAt,
-    })),
-    shop: shopSettings
-      ? {
-          name: shopSettings.shopName,
-          phone: shopSettings.phone,
-          address: shopSettings.address,
-        }
-      : null,
-  };
+  return buildJobLookupPayload(prisma, job.id, job);
 }
 
 const STATUS_TEMPLATE_MAP: Record<string, string> = {

@@ -4,7 +4,7 @@ import type {
   CustomerListQueryInput,
   CustomerSearchQueryInput,
   UpdateCustomerInput,
-} from "@shared/schemas";
+} from "@shared/schemas/customer.schema";
 
 export async function create(prisma: PrismaClient, input: CreateCustomerInput) {
   const email = input.email?.trim() || null;

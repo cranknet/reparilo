@@ -12,7 +12,7 @@ import {
   messagesQuerySchema,
   updateConversationSchema,
   updateMessageSchema,
-} from "@shared/schemas";
+} from "@shared/schemas/ai.schema";
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import { getToolDefinitions } from "../ai/context.js";
 import { streamChat } from "../ai/stream.js";
@@ -47,7 +47,6 @@ import {
 import {
   getAiSettings,
   getRawAiSettings,
-  testAiConnection,
 } from "../services/settings.service.js";
 import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 
@@ -369,15 +368,6 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     const aiSettings = await getAiSettings(app.prisma);
     return await reply.send(aiSettings);
   });
-
-  app.post(
-    "/settings/test",
-    { preHandler: [requirePermission({ settings: ["edit"] })] },
-    async (_req, reply) => {
-      const result = await testAiConnection(app.prisma);
-      return await reply.send(result);
-    }
-  );
 
   app.get("/tools/available", async (_req, reply) => {
     const tools = getToolDefinitions();
