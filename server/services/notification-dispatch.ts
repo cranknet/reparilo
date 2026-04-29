@@ -121,6 +121,9 @@ const HANDLERS: Record<NotifyChannel, ChannelHandler> = {
   WHATSAPP: whatsAppHandler,
 };
 
+const DEFAULT_IN_APP_BODY =
+  "{{eventName}}{{if jobCode}} — Job {{jobCode}}{{endif}}";
+
 function buildTemplateVars(
   context: NotifyEvent["context"]
 ): Record<string, string> {
@@ -131,6 +134,13 @@ function buildTemplateVars(
     }
   }
   return vars;
+}
+
+function resolveInAppBody(
+  templates: { body: string; channel: NotifyChannel }[]
+): string {
+  const inAppTemplate = templates.find((t) => t.channel === "IN_APP");
+  return inAppTemplate?.body ?? DEFAULT_IN_APP_BODY;
 }
 
 export async function notify(
@@ -149,19 +159,16 @@ export async function notify(
 
   const templateVars = buildTemplateVars(event.context);
 
-  if (templates.length === 0) {
-    logger.debug(
-      `[notify] No templates for event "${event.eventName}" — sending to IN_APP only`
-    );
-    await HANDLERS.IN_APP.handle(app.prisma, app, event, {
-      jobId: event.jobId,
-      templateBody: event.eventName,
-      templateVars,
-    });
-    return;
-  }
+  await HANDLERS.IN_APP.handle(app.prisma, app, event, {
+    jobId: event.jobId,
+    templateBody: resolveInAppBody(templates),
+    templateVars,
+  });
 
   for (const template of templates) {
+    if (template.channel === "IN_APP") {
+      continue;
+    }
     const handler = HANDLERS[template.channel];
     if (!handler) {
       logger.warn(

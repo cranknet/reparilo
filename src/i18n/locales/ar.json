@@ -1133,6 +1133,7 @@
   "settings_page": "الإعدادات",
   "settings_page_desc": "إعدادات المتجر والذكاء الاصطناعي والإشعارات",
   "settings_save_error": "تعذر الحفظ. ",
+  "settings_fetch_failed": "فشل تحميل الإعدادات. ",
   "settings_saving": "توفير...",
   "shop_address": "العنوان",
   "shop_ai_assistant": "مساعد الذكاء الاصطناعي للورشة",

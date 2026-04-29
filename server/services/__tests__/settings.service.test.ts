@@ -188,14 +188,14 @@ describe("getNotificationTemplates", () => {
     const mockTemplates = [
       {
         body: "Template 1",
-        channel: "SMS",
+        channel: "WHATSAPP",
         createdAt: new Date(),
         id: "1",
         name: "Welcome",
       },
       {
         body: "Template 2",
-        channel: "EMAIL",
+        channel: "IN_APP",
         createdAt: new Date(),
         id: "2",
         name: "Reminder",
@@ -229,7 +229,7 @@ describe("updateNotificationTemplate", () => {
 
     const result = await updateNotificationTemplate(prisma, "non-existent", {
       body: "New body",
-      channel: "SMS",
+      channel: "WHATSAPP",
       isDefault: true,
       name: "Test",
     });
@@ -248,7 +248,7 @@ describe("updateNotificationTemplate", () => {
       prisma.notificationTemplate.update as ReturnType<typeof vi.fn>
     ).mockResolvedValue({
       body: "Updated body",
-      channel: "SMS",
+      channel: "WHATSAPP",
       id: "template-1",
       isDefault: true,
       name: "Updated Name",
@@ -256,7 +256,7 @@ describe("updateNotificationTemplate", () => {
 
     const result = await updateNotificationTemplate(prisma, "template-1", {
       body: "Updated body",
-      channel: "SMS",
+      channel: "WHATSAPP",
       isDefault: true,
       name: "Updated Name",
     });

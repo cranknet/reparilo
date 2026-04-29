@@ -29,15 +29,19 @@ export default function ChannelSettings({
   });
   const [whatsAppSaving, setWhatsAppSaving] = useState(false);
   const [whatsAppLoaded, setWhatsAppLoaded] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!whatsAppLoaded) {
-      onFetchWhatsAppSettings().catch(() => {
-        /* intentionally swallowed */
-      });
-      setWhatsAppLoaded(true);
+      onFetchWhatsAppSettings()
+        .catch(() => {
+          setFetchError(t("settings_fetch_failed"));
+        })
+        .finally(() => {
+          setWhatsAppLoaded(true);
+        });
     }
-  }, [whatsAppLoaded, onFetchWhatsAppSettings]);
+  }, [whatsAppLoaded, onFetchWhatsAppSettings, t]);
 
   useEffect(() => {
     if (whatsAppSettings && !whatsAppSaving) {
@@ -71,6 +75,7 @@ export default function ChannelSettings({
       <h3 className="font-extrabold font-headline text-lg text-on-surface tracking-tight">
         {t("whatsapp_settings")}
       </h3>
+      {fetchError && <p className="mt-2 text-error text-sm">{fetchError}</p>}
       <div className="mt-4 rounded-2xl bg-surface-container-low p-5">
         <label className="flex cursor-pointer select-none items-center gap-3">
           <input

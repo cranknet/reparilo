@@ -1,7 +1,6 @@
 import { AppError } from "@shared/errors/app-error.js";
 import {
   listInAppQuerySchema,
-  markReadAllSchema,
   markReadParamSchema,
   updateNotificationTemplateSchema,
 } from "@shared/schemas";
@@ -118,15 +117,6 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
     "/in-app/read-all",
     { preHandler: [requirePermission({ notifications: ["read"] })] },
     async (req, reply) => {
-      const parsed = markReadAllSchema.safeParse({});
-      if (!parsed.success) {
-        throw new AppError("VALIDATION_ERROR", {
-          errors: resolveZodErrors(
-            parsed.error.flatten().fieldErrors,
-            req.locale
-          ),
-        });
-      }
       if (!req.user) {
         throw new AppError("UNAUTHORIZED");
       }

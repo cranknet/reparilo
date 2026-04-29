@@ -1139,6 +1139,7 @@
   "settings_page": "Settings",
   "settings_page_desc": "Shop settings, AI, and notification preferences",
   "settings_save_error": "Couldn't save. Try again.",
+  "settings_fetch_failed": "Failed to load settings. Please refresh.",
   "settings_saving": "Saving...",
   "shop_address": "Address",
   "shop_ai_assistant": "Shop AI Assistant",

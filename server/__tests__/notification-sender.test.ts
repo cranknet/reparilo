@@ -196,13 +196,3 @@ describe("decryptWhatsAppConfig", () => {
     expect(result).toBeNull();
   });
 });
-
-describe("SMS channel", () => {
-  it("SMS send is not yet implemented — outbox marks it failed", () => {
-    // notification-sender.ts does not export sendSMS.
-    // notification-outbox.service.ts handles SMS by setting
-    // error: "SMS not yet implemented" and status: FAILED.
-    // This test documents that until a real sendSMS is added.
-    expect(true).toBe(true);
-  });
-});

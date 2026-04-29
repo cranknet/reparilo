@@ -1133,6 +1133,7 @@
   "settings_page": "Paramètres",
   "settings_page_desc": "Paramètres atelier, IA et notifications",
   "settings_save_error": "Impossible d'enregistrer. ",
+  "settings_fetch_failed": "Échec du chargement des paramètres. ",
   "settings_saving": "Enregistrement...",
   "shop_address": "Adresse",
   "shop_ai_assistant": "Assistant IA de l'atelier",

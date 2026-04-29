@@ -73,7 +73,7 @@ describe("queueNotification", () => {
     await queueNotification(prisma, {
       jobId: "job-42",
       templateName: "job-ready",
-      channel: "SMS",
+      channel: "WHATSAPP",
       recipientPhone: "05551234567",
       templateVars: {},
       templateBody: "Your repair is done.",
@@ -248,9 +248,9 @@ describe("getOutboxLogs", () => {
       },
       {
         id: "out-1",
-        channel: "SMS",
+        channel: "WHATSAPP",
         createdAt: earlier,
-        error: "SMS not yet implemented",
+        error: "Send failed: rate limited",
         jobId: null,
         recipientPhone: "05550000000",
         renderedBody: "Older",
@@ -278,9 +278,9 @@ describe("getOutboxLogs", () => {
       templateName: "job-ready",
     });
     expect(logs[1]).toEqual({
-      channel: "SMS",
+      channel: "WHATSAPP",
       createdAt: earlier,
-      error: "SMS not yet implemented",
+      error: "Send failed: rate limited",
       id: "out-1",
       jobId: null,
       renderedBody: "Older",
