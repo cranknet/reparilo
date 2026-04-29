@@ -64,11 +64,7 @@ function trackFailedAttempt(lockouts: Map<string, LockoutEntry>, code: string) {
 }
 
 function getUserId(req: FastifyRequest): string {
-  const user = req.user;
-  if (!user) {
-    throw new AppError("UNAUTHORIZED");
-  }
-  return user.id;
+  return (req.user as { id: string }).id;
 }
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
@@ -301,10 +297,6 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
           req.locale
         ),
       });
-    }
-
-    if (!req.user) {
-      throw new AppError("UNAUTHORIZED");
     }
 
     const permCheck = await app.auth.api.userHasPermission({

@@ -68,9 +68,6 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
           ),
         });
       }
-      if (!req.user) {
-        throw new AppError("UNAUTHORIZED");
-      }
       const result = await getInAppNotifications(
         app.prisma,
         req.user.id,
@@ -98,9 +95,6 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
           ),
         });
       }
-      if (!req.user) {
-        throw new AppError("UNAUTHORIZED");
-      }
       const notification = await markNotificationRead(
         app.prisma,
         parsed.data.id,
@@ -117,9 +111,6 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
     "/in-app/read-all",
     { preHandler: [requirePermission({ notifications: ["read"] })] },
     async (req, reply) => {
-      if (!req.user) {
-        throw new AppError("UNAUTHORIZED");
-      }
       const result = await markAllNotificationsRead(app.prisma, req.user.id);
       return reply.send({ count: result.count });
     }
