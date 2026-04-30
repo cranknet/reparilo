@@ -85,8 +85,15 @@ export {
   transitionStatusSchema,
   updateJobSchema,
 } from "./job.schema";
-export type { TemplateIdParamInput } from "./notification.schema";
-export { templateIdParamSchema } from "./notification.schema";
+export type {
+  ListInAppQueryInput,
+  MarkReadParamInput,
+} from "./notification.schema";
+export {
+  listInAppQuerySchema,
+  markReadAllSchema,
+  markReadParamSchema,
+} from "./notification.schema";
 export type {
   CreatePartInput,
   ListPartsQueryInput,

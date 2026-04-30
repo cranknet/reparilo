@@ -1,27 +1,21 @@
 import { AppError } from "@shared/errors/app-error.js";
 import {
   updateAiSettingsSchema,
-  updateNotificationTemplateSchema,
   updateShopSettingsSchema,
   updateWhatsAppSettingsSchema,
-} from "@shared/schemas";
+} from "@shared/schemas/settings.schema";
 import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
 import {
   getAiSettings,
-  getNotificationTemplates,
   getShopSettings,
   getWhatsAppSettings,
   testAiConnection,
-  updateNotificationTemplate,
   upsertAiSettings,
   upsertShopSettings,
   upsertWhatsAppSettings,
 } from "../services/settings.service.js";
-import {
-  resolveZodErrors,
-  resolveZodResult,
-} from "../utils/resolve-validation-messages.js";
+import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const settingsRoutes: FastifyPluginAsync = async (app) => {
@@ -90,37 +84,6 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
     }
   );
 
-  app.get("/notifications/templates", async (_req, reply) => {
-    const templates = await getNotificationTemplates(app.prisma);
-    return reply.send(templates);
-  });
-
-  app.put(
-    "/notifications/templates/:id",
-    { preHandler: [requirePermission({ notifications: ["manage"] })] },
-    async (req, reply) => {
-      const { id } = req.params as { id: string };
-      const parsed = updateNotificationTemplateSchema.safeParse(req.body);
-      if (!parsed.success) {
-        throw new AppError("VALIDATION_ERROR", {
-          errors: resolveZodErrors(
-            parsed.error.flatten().fieldErrors,
-            req.locale
-          ),
-        });
-      }
-      const updated = await updateNotificationTemplate(
-        app.prisma,
-        id,
-        parsed.data
-      );
-      if (!updated) {
-        throw new AppError("TEMPLATE_NOT_FOUND");
-      }
-      return reply.send(updated);
-    }
-  );
-
   app.get("/whatsapp", async (_req, reply) => {
     const settings = await getWhatsAppSettings(app.prisma);
     return reply.send(settings);
@@ -132,15 +95,11 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
     async (req, reply) => {
       const parsed = updateWhatsAppSettingsSchema.safeParse(req.body);
       if (!parsed.success) {
-        const { fieldErrors, formErrors } = resolveZodResult(
-          parsed.error,
-          req.locale
-        );
         throw new AppError("VALIDATION_ERROR", {
-          errors: {
-            ...fieldErrors,
-            ...(formErrors.length ? { _form: formErrors } : {}),
-          },
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
         });
       }
       const updated = await upsertWhatsAppSettings(app.prisma, parsed.data);

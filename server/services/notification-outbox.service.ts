@@ -25,22 +25,12 @@ let intervalRef: ReturnType<typeof setInterval> | null = null;
 // TODO: Add DB-level advisory lock for multi-instance support.
 let isProcessing = false;
 
-export async function findTemplate(
-  prisma: PrismaClient,
-  name: string,
-  channel: "WHATSAPP" | "SMS"
-) {
-  return await prisma.notificationTemplate.findFirst({
-    where: { name, channel },
-  });
-}
-
 export async function queueNotification(
   prisma: PrismaClient,
   data: {
     jobId?: string;
     templateName: string;
-    channel: "WHATSAPP" | "SMS";
+    channel: "WHATSAPP";
     recipientPhone: string;
     templateVars: Record<string, string>;
     templateBody: string;
@@ -96,10 +86,13 @@ export async function processOutbox(prisma: PrismaClient): Promise<void> {
           },
         });
       } else {
+        logger.warn(
+          `Outbox: unexpected channel "${entry.channel}" for entry ${entry.id} — marking FAILED`
+        );
         await prisma.notificationOutbox.update({
           where: { id: entry.id },
           data: {
-            error: "SMS not yet implemented",
+            error: `Unsupported channel: ${entry.channel}`,
             status: OutboxStatus.FAILED,
           },
         });

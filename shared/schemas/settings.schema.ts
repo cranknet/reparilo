@@ -46,7 +46,7 @@ export const updateShopSettingsSchema = z
 
 export const updateNotificationTemplateSchema = z.object({
   name: z.string().min(1),
-  channel: z.enum(["WHATSAPP", "SMS"]),
+  channel: z.enum(["WHATSAPP"]),
   body: z.string().min(1),
   isDefault: z.boolean().optional(),
 });

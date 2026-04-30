@@ -10,7 +10,6 @@ import type {
   FastifyPluginAsync,
 } from "fastify";
 import fp from "fastify-plugin";
-import { ZodError } from "zod";
 import { loadEnv, resolveUrls } from "../config/env.js";
 import {
   DEFAULT_SECURITY,
@@ -244,15 +243,6 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
         payload.details = error.details;
       }
       reply.status(error.status).send(payload);
-      return;
-    }
-
-    if (error instanceof ZodError) {
-      reply.status(400).send({
-        code: "VALIDATION_ERROR",
-        message: "errors.validation_error",
-        details: { errors: error.flatten().fieldErrors },
-      });
       return;
     }
 

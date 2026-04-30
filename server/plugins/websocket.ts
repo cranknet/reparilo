@@ -39,6 +39,10 @@ export const websocketPlugin: FastifyPluginAsync = async (app) => {
 
   app.addHook("onClose", () => {
     clearInterval(sweepInterval);
+    for (const client of connections) {
+      client.socket.terminate();
+    }
+    connections.clear();
   });
 
   app.get("/ws", { websocket: true }, async (socket, req) => {

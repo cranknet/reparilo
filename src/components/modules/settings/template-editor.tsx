@@ -5,10 +5,10 @@ import { useModalEffects } from "@/hooks/use-modal-effects";
 import { useSettingsStore } from "@/stores/settings";
 
 const TEMPLATE_VARIABLES = [
-  "{customerName}",
-  "{jobCode}",
-  "{status}",
-  "{estimatedDate}",
+  "{{customerName}}",
+  "{{jobCode}}",
+  "{{status}}",
+  "{{estimatedDate}}",
 ];
 
 interface TemplateEditorProps {
@@ -27,7 +27,7 @@ export default function TemplateEditor({
   const { t } = useTranslation();
   const updateTemplate = useSettingsStore((s) => s.updateNotificationTemplate);
   const [name, setName] = useState("");
-  const [channel, setChannel] = useState<"SMS" | "WHATSAPP">("WHATSAPP");
+  const [channel, setChannel] = useState<"WHATSAPP">("WHATSAPP");
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +41,7 @@ export default function TemplateEditor({
       return;
     }
     setName(template.name);
-    setChannel(template.channel as "SMS" | "WHATSAPP");
+    setChannel(template.channel as "WHATSAPP");
     setBody(template.body);
     setError(null);
   }, [open, template]);
@@ -150,13 +150,10 @@ export default function TemplateEditor({
               <select
                 className="h-12 w-full appearance-none rounded-xl bg-surface-container-highest px-4 text-on-surface focus:ring-2 focus:ring-primary"
                 id="tpl-channel"
-                onChange={(e) =>
-                  setChannel(e.target.value as "SMS" | "WHATSAPP")
-                }
+                onChange={(e) => setChannel(e.target.value as "WHATSAPP")}
                 value={channel}
               >
                 <option value="WHATSAPP">WhatsApp</option>
-                <option value="SMS">SMS</option>
               </select>
             </div>
 

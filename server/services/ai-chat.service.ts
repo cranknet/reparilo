@@ -5,7 +5,7 @@ import type {
   MessagesQueryInput,
   UpdateConversationInput,
   UpdateMessageInput,
-} from "@shared/schemas";
+} from "@shared/schemas/ai.schema";
 
 export async function listConversations(
   prisma: PrismaClient,
@@ -51,7 +51,7 @@ export async function listConversations(
     Array<{ conversationId: string; agentName: string | null }>
   >`
     SELECT DISTINCT ON ("conversationId") "conversationId", "agentName"
-    FROM "AiMessage"
+    FROM "ai_messages"
     WHERE "conversationId" = ANY(${ids}::text[])
       AND role = 'ASSISTANT'
       AND "agentName" IS NOT NULL

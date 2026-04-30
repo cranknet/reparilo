@@ -24,6 +24,7 @@ import { receiptRoutes } from "./routes/receipts.js";
 import { repairCatalogRoutes } from "./routes/repairs.js";
 import { settingsRoutes } from "./routes/settings.js";
 import { usersRoutes } from "./routes/users.js";
+import { cleanupReadNotifications } from "./services/notification-inapp.service.js";
 import { startOutboxWorker } from "./services/notification-outbox.service.js";
 import { initValidationI18n } from "./utils/resolve-validation-messages.js";
 
@@ -33,7 +34,7 @@ const IS_PROD = env.NODE_ENV === "production";
 const app = Fastify({
   logger: { level: env.LOG_LEVEL },
   trustProxy: env.TRUST_PROXY ?? IS_PROD,
-  requestIdHeader: "x-request-id",
+  requestIdHeader: false,
   requestIdLogLabel: "reqId",
   genReqId: () =>
     globalThis.crypto?.randomUUID?.() ??
@@ -61,6 +62,18 @@ await app.register(websocketPlugin);
 
 const stopOverdue = startOverdueScheduler(app);
 const stopOutboxWorker = startOutboxWorker(app.prisma);
+const CLEANUP_INTERVAL_MS = 15 * 60 * 1000;
+const cleanupHandle = setInterval(() => {
+  cleanupReadNotifications(app.prisma).catch((err) => {
+    app.log.error(err, "Notification cleanup error");
+  });
+}, CLEANUP_INTERVAL_MS);
+if (cleanupHandle.unref) {
+  cleanupHandle.unref();
+}
+cleanupReadNotifications(app.prisma).catch((err) => {
+  app.log.warn(err, "Initial notification cleanup skipped");
+});
 
 app.addHook("onReady", async () => {
   await initValidationI18n();
@@ -137,6 +150,7 @@ for (const signal of ["SIGINT", "SIGTERM"]) {
     app.log.info(`Received ${signal}, shutting down...`);
     stopOverdue();
     stopOutboxWorker();
+    clearInterval(cleanupHandle);
     await app.close();
     process.exit(0);
   });

@@ -102,13 +102,10 @@ function isUniqueViolation(err: unknown): string | null {
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const usersRoutes: FastifyPluginAsync = async (app) => {
   async function canAccessUser(
-    requestingUser: { id: string; role: string } | undefined,
+    requestingUser: { id: string; role: string },
     targetId: string,
     permission: Record<string, string[]>
   ): Promise<boolean> {
-    if (!requestingUser) {
-      return false;
-    }
     if (requestingUser.id === targetId) {
       return true;
     }
@@ -260,7 +257,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       await app.prisma.auditLog.create({
         data: {
           jobId: null,
-          userId: request.user?.id ?? "unknown",
+          userId: request.user.id,
           action: "USER_CREATED",
           toValue: `${username} (${role})`,
         },
@@ -351,7 +348,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       await app.prisma.auditLog.create({
         data: {
           jobId: null,
-          userId: request.user?.id ?? "unknown",
+          userId: request.user.id,
           action: "PASSWORD_RESET",
           toValue: `Password reset for ${targetUser.username}`,
         },
@@ -363,10 +360,6 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
   app.patch("/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
-
-    if (!request.user) {
-      throw new AppError("UNAUTHORIZED");
-    }
 
     if (!(await canAccessUser(request.user, id, { user: ["update"] }))) {
       throw new AppError("FORBIDDEN");
@@ -436,10 +429,6 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     const take = queryParsed.data.limit;
     const cursor = queryParsed.data.cursor;
 
-    if (!request.user) {
-      throw new AppError("UNAUTHORIZED");
-    }
-
     if (!(await canAccessUser(request.user, id, { user: ["list"] }))) {
       throw new AppError("FORBIDDEN");
     }
@@ -486,10 +475,6 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.get("/:id/stats", async (request, reply) => {
     const { id } = request.params as { id: string };
 
-    if (!request.user) {
-      throw new AppError("UNAUTHORIZED");
-    }
-
     if (!(await canAccessUser(request.user, id, { user: ["list"] }))) {
       throw new AppError("FORBIDDEN");
     }
@@ -518,10 +503,6 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
   app.get("/:id/sessions", async (request, reply) => {
     const { id } = request.params as { id: string };
-
-    if (!request.user) {
-      throw new AppError("UNAUTHORIZED");
-    }
 
     if (!(await canAccessUser(request.user, id, { session: ["list"] }))) {
       throw new AppError("FORBIDDEN");
@@ -559,10 +540,6 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       sessionId: string;
     };
 
-    if (!request.user) {
-      throw new AppError("UNAUTHORIZED");
-    }
-
     if (!(await canAccessUser(request.user, id, { session: ["revoke"] }))) {
       throw new AppError("FORBIDDEN");
     }
@@ -588,10 +565,6 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.post("/:id/avatar", async (request, reply) => {
     const { id } = request.params as { id: string };
 
-    if (!request.user) {
-      throw new AppError("UNAUTHORIZED");
-    }
-
     if (request.user.id !== id) {
       throw new AppError("AVATAR_NOT_OWN");
     }
@@ -614,10 +587,6 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete("/:id/avatar", async (request, reply) => {
     const { id } = request.params as { id: string };
-
-    if (!request.user) {
-      throw new AppError("UNAUTHORIZED");
-    }
 
     if (request.user.id !== id) {
       throw new AppError("AVATAR_NOT_OWN");

@@ -1,27 +1,27 @@
 import type { Transporter } from "nodemailer";
 import nodemailer from "nodemailer";
+import { loadEnv } from "../config/env.js";
 import { logger } from "../utils/logger.js";
 
 let _transporter: Transporter | null = null;
 
 function isConfigured(): boolean {
+  const env = loadEnv();
   return Boolean(
-    process.env.SMTP_HOST &&
-      process.env.SMTP_PORT &&
-      process.env.SMTP_USER &&
-      process.env.SMTP_PASS
+    env.SMTP_HOST && env.SMTP_PORT && env.SMTP_USER && env.SMTP_PASS
   );
 }
 
 function getTransporter(): Transporter {
   if (!_transporter) {
+    const env = loadEnv();
     _transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: Number(process.env.SMTP_PORT) === 465,
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT ?? 587,
+      secure: env.SMTP_PORT === 465,
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASS,
       },
     });
   }
@@ -46,7 +46,8 @@ export async function sendEmail({
     return;
   }
 
-  const from = process.env.EMAIL_FROM || `"Reparilo" <noreply@reparilo.com>`;
+  const env = loadEnv();
+  const from = env.EMAIL_FROM || `"Reparilo" <noreply@reparilo.com>`;
 
   await getTransporter().sendMail({ from, to, subject, text, html });
 }

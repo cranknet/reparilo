@@ -15,24 +15,20 @@ export default function TopBar() {
   const alerts = useAlertsStore((s) => s.alerts);
   const addAlert = useAlertsStore((s) => s.addAlert);
   const markRead = useAlertsStore((s) => s.markRead);
-  const unreadCount = useAlertsStore(
-    (s) => s.alerts.filter((a) => !a.read).length
-  );
+  const unreadCount = useAlertsStore((s) => s.unreadCount);
+  const fetchAlerts = useAlertsStore((s) => s.fetchAlerts);
+  const initialized = useAlertsStore((s) => s.initialized);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (!initialized) {
+      fetchAlerts();
+    }
+  }, [initialized, fetchAlerts]);
+
   useWs((msg) => {
-    if (msg.type === "WARRANTY_RETURN_CREATED" && msg.job) {
-      addAlert({
-        type: msg.type,
-        job: msg.job,
-        message: t("alert_warranty_return", { jobCode: msg.job.jobCode }),
-      });
-    } else if (msg.type === "JOB_OVERDUE" && msg.job) {
-      addAlert({
-        type: msg.type,
-        job: msg.job,
-        message: t("alert_job_overdue", { jobCode: msg.job.jobCode }),
-      });
+    if (msg.type === "NOTIFICATION" && msg.notification) {
+      addAlert(msg.notification);
     }
   });
 
@@ -122,7 +118,7 @@ export default function TopBar() {
                       type="button"
                     >
                       <span
-                        className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${alert.read ? "bg-outline" : "bg-primary"}`}
+                        className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${alert.readAt ? "bg-outline" : "bg-primary"}`}
                       />
                       <div className="min-w-0 flex-1">
                         <p className="font-body text-on-surface text-sm">

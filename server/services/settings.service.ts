@@ -4,7 +4,7 @@ import type {
   UpdateNotificationTemplateInput,
   UpdateShopSettingsInput,
   UpdateWhatsAppSettingsInput,
-} from "@shared/schemas";
+} from "@shared/schemas/settings.schema";
 import { decryptSecret, encryptSecret, isEncrypted } from "../lib/crypto.js";
 
 function publicAiSettings<

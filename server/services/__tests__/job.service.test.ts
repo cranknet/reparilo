@@ -636,7 +636,7 @@ describe("create", () => {
     (prisma.job.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null);
 
     const result = await create(
-      prisma,
+      { prisma } as any,
       {
         color: undefined,
         conditionNotes: undefined,
@@ -667,7 +667,7 @@ describe("create", () => {
     });
 
     const result = await create(
-      prisma,
+      { prisma } as any,
       {
         color: undefined,
         conditionNotes: undefined,
@@ -698,7 +698,7 @@ describe("create", () => {
     });
 
     const result = await create(
-      prisma,
+      { prisma } as any,
       {
         color: undefined,
         conditionNotes: undefined,
@@ -728,7 +728,7 @@ describe("create", () => {
     );
 
     const result = await create(
-      prisma,
+      { prisma } as any,
       {
         color: undefined,
         conditionNotes: undefined,
@@ -764,7 +764,7 @@ describe("transitionStatus", () => {
     (prisma.job.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null);
 
     const result = await transitionStatus(
-      prisma,
+      { prisma } as any,
       "non-existent",
       "IN_REPAIR",
       "user-1"
@@ -780,7 +780,7 @@ describe("transitionStatus", () => {
     });
 
     const result = await transitionStatus(
-      prisma,
+      { prisma } as any,
       "job-1",
       "INTAKE" as unknown as import("@shared/constants").JobStatusType,
       "user-1"
@@ -806,7 +806,7 @@ describe("transitionStatus", () => {
     });
 
     const result = await transitionStatus(
-      prisma,
+      { prisma } as any,
       "job-1",
       "IN_REPAIR",
       "user-1"
@@ -825,7 +825,7 @@ describe("transitionStatus", () => {
     });
 
     const result = await transitionStatus(
-      prisma,
+      { prisma } as any,
       "job-1",
       "CANCELLED",
       "user-1",
@@ -844,7 +844,7 @@ describe("transitionStatus", () => {
     });
 
     const result = await transitionStatus(
-      prisma,
+      { prisma } as any,
       "job-1",
       "CANCELLED",
       "user-1",
@@ -871,7 +871,7 @@ describe("transitionStatus", () => {
     });
 
     const result = await transitionStatus(
-      prisma,
+      { prisma } as any,
       "job-1",
       "CANCELLED",
       "user-1",

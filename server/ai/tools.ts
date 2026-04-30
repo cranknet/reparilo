@@ -19,10 +19,14 @@ const ALLOWED_TABLES = new Set([
   "parts_catalog",
   "audit_logs",
   "users",
-  "shop_settings",
 ]);
 
-const BLOCKED_TABLES = new Set(["accounts", "sessions", "verifications"]);
+const BLOCKED_TABLES = new Set([
+  "accounts",
+  "sessions",
+  "verifications",
+  "shop_settings",
+]);
 
 const BLOCKED_COLUMNS: Record<string, Set<string>> = {
   users: new Set(["password"]),
@@ -89,7 +93,15 @@ const BLOCKED_PATTERNS = [
   /\bdblink\b/i,
   /\blo_import\b/i,
   /\blo_export\b/i,
+  /\bUNION\b/i,
+  /\bWITH\s/i,
+  /\binformation_schema\b/i,
+  /\bpg_sleep\b/i,
+  /\bwaitfor\b/i,
+  /\bbenchmark\b/i,
 ];
+
+const MAX_QUERY_LENGTH = 2000;
 
 const SELECT_ONLY_REGEX = /^\s*SELECT\s/i;
 const SELECT_COLUMNS_RE = /\bSELECT\s+(.+?)\s+FROM/i;
@@ -140,12 +152,29 @@ export async function executeQueryDatabase(
 ): Promise<ToolResult> {
   const trimmed = sql.trim();
 
+  if (trimmed.length > MAX_QUERY_LENGTH) {
+    return { success: false, data: "Query exceeds maximum allowed length" };
+  }
+
   if (trimmed.includes(";")) {
     return { success: false, data: "Only single statements are allowed" };
   }
 
   if (!SELECT_ONLY_REGEX.test(trimmed)) {
     return { success: false, data: "Only SELECT queries are allowed" };
+  }
+
+  const parenDepth = [...trimmed].reduce((acc, ch) => {
+    if (ch === "(") {
+      return acc + 1;
+    }
+    if (ch === ")") {
+      return acc - 1;
+    }
+    return acc;
+  }, 0);
+  if (parenDepth !== 0) {
+    return { success: false, data: "Unbalanced parentheses in query" };
   }
 
   for (const pattern of BLOCKED_PATTERNS) {

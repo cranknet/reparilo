@@ -1,5 +1,5 @@
 import type { RoleType } from "@shared/constants/roles";
-import { AppError } from "@shared/errors/app-error.js";
+import { AppError, throwIfError } from "@shared/errors/app-error.js";
 import {
   addJobNoteSchema,
   addJobPartSchema,
@@ -9,10 +9,8 @@ import {
   jobListQuerySchema,
   transitionStatusSchema,
   updateJobSchema,
-} from "@shared/schemas";
+} from "@shared/schemas/job.schema";
 import type { FastifyPluginAsync, FastifyRequest } from "fastify";
-import type { DashboardTarget } from "../lib/dashboard-events.js";
-import { emitDashboardChanged } from "../lib/dashboard-events.js";
 import { requirePermission } from "../middlewares/rbac.js";
 import {
   computeMargin,
@@ -45,6 +43,7 @@ import {
   add as addWaitingPart,
   remove as removeWaitingPart,
 } from "../services/job-waiting-parts.service.js";
+import { notify } from "../services/notification-dispatch.js";
 import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 
 const JOB_CODE_RE = /^[A-Za-z0-9-]+$/;
@@ -65,21 +64,11 @@ function trackFailedAttempt(lockouts: Map<string, LockoutEntry>, code: string) {
 }
 
 function getUserId(req: FastifyRequest): string {
-  const user = req.user;
-  if (!user) {
+  const id = req.user?.id;
+  if (!id) {
     throw new AppError("UNAUTHORIZED");
   }
-  return user.id;
-}
-
-function jobDashboardTargets(result: {
-  technicianId?: string | null;
-}): DashboardTarget[] {
-  const targets: DashboardTarget[] = ["OWNER", "FRONT_DESK"];
-  if (result.technicianId) {
-    targets.push({ technicianId: result.technicianId });
-  }
-  return targets;
+  return id;
 }
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
@@ -245,28 +234,25 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         });
       }
       const userId = getUserId(req);
-      const result = await createJob(app.prisma, parsed.data, userId);
-      if ("error" in result && result.error === "INVALID_CUSTOMER") {
-        throw new AppError("INVALID_CUSTOMER");
-      }
-      if ("error" in result && result.error === "INVALID_WARRANTY_REFERENCE") {
-        throw new AppError("INVALID_WARRANTY_REFERENCE");
-      }
-      if ("error" in result && result.error === "DUPLICATE_REPAIR") {
-        throw new AppError("DUPLICATE_REPAIR");
-      }
+      const result = await createJob(app, parsed.data, userId);
+      throwIfError(result);
 
-      if (result.isWarrantyReturn && "jobCode" in result) {
-        app.wsBroadcast?.((c) => c.role === "OWNER", {
-          type: "WARRANTY_RETURN_CREATED",
-          job: {
-            id: result.id,
+      if (
+        "isWarrantyReturn" in result &&
+        result.isWarrantyReturn &&
+        "jobCode" in result
+      ) {
+        notify(app, {
+          context: {
             jobCode: (result as Record<string, unknown>).jobCode as string,
           },
+          eventName: "warranty_return_created",
+          jobId: result.id,
+          recipients: { role: "OWNER" },
+        }).catch(() => {
+          /* fire-and-forget */
         });
       }
-
-      emitDashboardChanged(app, jobDashboardTargets(result));
 
       return reply.status(201).send(result);
     }
@@ -287,28 +273,11 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         });
       }
       const userId = getUserId(req);
-      const prev = await app.prisma.job.findUnique({
-        where: { id },
-        select: { technicianId: true },
-      });
       const result = await updateJob(app.prisma, id, parsed.data, userId);
       if (!result) {
         throw new AppError("JOB_NOT_FOUND");
       }
-      if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
-        throw new AppError("JOB_IN_TERMINAL_STATUS");
-      }
-      if ("error" in result && result.error === "INVALID_TECHNICIAN") {
-        throw new AppError("INVALID_TECHNICIAN");
-      }
-      const targets: DashboardTarget[] = ["OWNER", "FRONT_DESK"];
-      if (prev?.technicianId) {
-        targets.push({ technicianId: prev.technicianId });
-      }
-      if (result.technicianId && result.technicianId !== prev?.technicianId) {
-        targets.push({ technicianId: result.technicianId });
-      }
-      emitDashboardChanged(app, targets);
+      throwIfError(result);
       return reply.send(result);
     }
   );
@@ -325,10 +294,6 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       });
     }
 
-    if (!req.user) {
-      throw new AppError("UNAUTHORIZED");
-    }
-
     const permCheck = await app.auth.api.userHasPermission({
       body: {
         role: req.user.role as RoleType,
@@ -340,16 +305,10 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
     }
 
     const userId = getUserId(req);
-    const result = await transitionStatus(
-      app.prisma,
-      id,
-      parsed.data.status,
-      userId,
-      {
-        requestingRole: req.user.role as RoleType,
-        reason: parsed.data.reason,
-      }
-    );
+    const result = await transitionStatus(app, id, parsed.data.status, userId, {
+      requestingRole: req.user.role as RoleType,
+      reason: parsed.data.reason,
+    });
     if (!result) {
       throw new AppError("JOB_NOT_FOUND");
     }
@@ -359,15 +318,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         currentStatus: result.currentStatus,
       });
     }
-    if ("error" in result && result.error === "CANCEL_WINDOW_EXPIRED") {
-      throw new AppError("CANCEL_WINDOW_EXPIRED");
-    }
-    if ("error" in result && result.error === "CANCEL_NOT_CREATOR") {
-      throw new AppError("CANCEL_NOT_CREATOR");
-    }
-    if (!("error" in result)) {
-      emitDashboardChanged(app, jobDashboardTargets(result));
-    }
+    throwIfError(result);
     return reply.send(result);
   });
 
@@ -399,9 +350,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       if (!note) {
         throw new AppError("JOB_NOT_FOUND");
       }
-      if ("error" in note && note.error === "JOB_IN_TERMINAL_STATUS") {
-        throw new AppError("JOB_IN_TERMINAL_STATUS");
-      }
+      throwIfError(note);
       return reply.status(201).send(note);
     }
   );
@@ -425,9 +374,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       if (!result) {
         throw new AppError("JOB_NOT_FOUND");
       }
-      if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
-        throw new AppError("JOB_IN_TERMINAL_STATUS");
-      }
+      throwIfError(result);
       return reply.status(201).send(result);
     }
   );
@@ -465,12 +412,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       if (!result) {
         throw new AppError("JOB_NOT_FOUND");
       }
-      if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
-        throw new AppError("JOB_IN_TERMINAL_STATUS");
-      }
-      if ("error" in result && result.error === "DUPLICATE_REPAIR") {
-        throw new AppError("DUPLICATE_REPAIR");
-      }
+      throwIfError(result);
       return reply.status(201).send(result);
     }
   );
@@ -503,18 +445,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       if (!result) {
         throw new AppError("JOB_NOT_FOUND");
       }
-      if ("error" in result && result.error === "PHOTO_LIMIT_REACHED") {
-        throw new AppError("PHOTO_LIMIT_REACHED");
-      }
-      if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
-        throw new AppError("JOB_IN_TERMINAL_STATUS");
-      }
-      if ("error" in result && result.error === "INVALID_FILE_TYPE") {
-        throw new AppError("INVALID_FILE_TYPE");
-      }
-      if ("error" in result && result.error === "INVALID_FILE_CONTENT") {
-        throw new AppError("INVALID_FILE_CONTENT");
-      }
+      throwIfError(result);
       return reply.status(201).send(result);
     }
   );
@@ -552,9 +483,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       if (!result) {
         throw new AppError("JOB_NOT_FOUND");
       }
-      if ("error" in result && result.error === "JOB_IN_TERMINAL_STATUS") {
-        throw new AppError("JOB_IN_TERMINAL_STATUS");
-      }
+      throwIfError(result);
       return reply.status(201).send(result);
     }
   );

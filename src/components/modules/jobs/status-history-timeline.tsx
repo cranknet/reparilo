@@ -1,4 +1,5 @@
 import { JobStatus } from "@shared/constants";
+import { ACTION_ICONS } from "@shared/constants/action-icons";
 import type { TFunction } from "i18next";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,28 +18,6 @@ interface HistoryEntry {
 interface StatusHistoryTimelineProps {
   jobId: string;
 }
-
-const ACTION_ICONS: Record<string, string> = {
-  JOB_CREATED: "add_circle",
-  STATUS_CHANGED: "swap_horiz",
-  TECHNICIAN_ASSIGNED: "person_add",
-  COST_UPDATED: "payments",
-  PART_ADDED: "inventory_2",
-  PART_REMOVED: "remove_circle",
-  REPAIR_ADDED: "build",
-  REPAIR_REMOVED: "remove_circle",
-  NOTE_ADDED: "sticky_note_2",
-  PHOTO_ADDED: "photo_camera",
-  PHOTO_REMOVED: "hide_image",
-  JOB_UPDATED: "edit",
-  WARRANTY_RETURN_CREATED: "autorenew",
-  NOTIFICATION_SENT: "notifications",
-  USER_SIGN_IN: "login",
-  USER_SIGN_OUT: "power_settings_new",
-  USER_CREATED: "person_add",
-  PASSWORD_RESET: "key",
-  API_MUTATION: "api",
-};
 
 const STATUS_SET = new Set<string>(Object.values(JobStatus));
 

@@ -134,7 +134,7 @@ reparilo/
 - When you dispatch "EXPLORE" agent in parallel, make sure to collect all issues found including minor ones; do not rely solely on the "EXPLORE" agent's recommendation.
 - Do not create or use Barrel files; apply best practice with explicit imports.
 
-- Create Prisma migrations after every schema change
+- Create Prisma manual migrations after every schema change
 - Use the Postgres URL from `.env` for DB access
 
 ## QA & Dev
@@ -153,3 +153,9 @@ reparilo/
 - When you generate new screen, get HTML & Image then convert it to React components.
 - After using generate from text tool, wait for 1 min to let the stitch generate the screen.
 - Do not try to create if Stitch somehow fails, wait, check update time.
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan:
+specs/001-notification-ssot/plan.md
+<!-- SPECKIT END -->

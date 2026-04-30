@@ -196,7 +196,9 @@ describe("PATCH /api/jobs/:id/status", () => {
     expect(res.statusCode).toBe(200);
     expect(mocks.transitionStatus).toHaveBeenCalledWith(
       expect.objectContaining({
-        auditLog: { findMany: mocks.auditLogFindMany },
+        prisma: expect.objectContaining({
+          auditLog: { findMany: mocks.auditLogFindMany },
+        }),
       }),
       "job-1",
       "CANCELLED",
@@ -220,7 +222,9 @@ describe("PATCH /api/jobs/:id/status", () => {
     expect(res.statusCode).toBe(200);
     expect(mocks.transitionStatus).toHaveBeenCalledWith(
       expect.objectContaining({
-        auditLog: { findMany: mocks.auditLogFindMany },
+        prisma: expect.objectContaining({
+          auditLog: { findMany: mocks.auditLogFindMany },
+        }),
       }),
       "job-1",
       "IN_REPAIR",

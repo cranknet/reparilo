@@ -73,7 +73,7 @@ describe("queueNotification", () => {
     await queueNotification(prisma, {
       jobId: "job-42",
       templateName: "job-ready",
-      channel: "SMS",
+      channel: "WHATSAPP",
       recipientPhone: "05551234567",
       templateVars: {},
       templateBody: "Your repair is done.",
@@ -176,37 +176,6 @@ describe("processOutbox", () => {
     });
   });
 
-  it("marks SMS entries as FAILED (not implemented)", async () => {
-    mocks.outboxFindMany.mockResolvedValue([
-      {
-        id: "out-3",
-        channel: "SMS",
-        recipientPhone: "05551234567",
-        renderedBody: "Hello",
-      },
-    ]);
-    mocks.shopSettingsFindUnique.mockResolvedValue({
-      whatsappApiTokenEncrypted: "enc-token",
-      whatsappBusinessId: "biz-1",
-      whatsappPhoneNumberId: "phone-1",
-    });
-    mocks.decryptWhatsAppConfig.mockReturnValue({
-      apiToken: "decrypted-token",
-      businessId: "biz-1",
-      phoneNumberId: "phone-1",
-    });
-
-    await processOutbox(prisma);
-
-    expect(mocks.outboxUpdate).toHaveBeenCalledWith({
-      where: { id: "out-3" },
-      data: {
-        error: "SMS not yet implemented",
-        status: OutboxStatus.FAILED,
-      },
-    });
-  });
-
   it("does nothing when no pending entries exist", async () => {
     mocks.outboxFindMany.mockResolvedValue([]);
 
@@ -279,9 +248,9 @@ describe("getOutboxLogs", () => {
       },
       {
         id: "out-1",
-        channel: "SMS",
+        channel: "WHATSAPP",
         createdAt: earlier,
-        error: "SMS not yet implemented",
+        error: "Send failed: rate limited",
         jobId: null,
         recipientPhone: "05550000000",
         renderedBody: "Older",
@@ -309,9 +278,9 @@ describe("getOutboxLogs", () => {
       templateName: "job-ready",
     });
     expect(logs[1]).toEqual({
-      channel: "SMS",
+      channel: "WHATSAPP",
       createdAt: earlier,
-      error: "SMS not yet implemented",
+      error: "Send failed: rate limited",
       id: "out-1",
       jobId: null,
       renderedBody: "Older",

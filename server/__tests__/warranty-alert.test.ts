@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   userHasPermission: vi.fn(),
   createJob: vi.fn(),
+  notify: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("better-auth/node", () => ({
@@ -27,6 +28,10 @@ vi.mock("../services/job.service.js", () => ({
   lookupByCode: vi.fn(),
   update: vi.fn(),
   computeMargin: vi.fn().mockReturnValue(0),
+}));
+
+vi.mock("../services/notification-dispatch.js", () => ({
+  notify: mocks.notify,
 }));
 
 vi.mock("../services/job-notes.service.js", () => ({
@@ -86,11 +91,6 @@ function buildApp() {
     });
   });
 
-  const broadcastCalls: Array<{
-    predicate: (client: { role: string }) => boolean;
-    payload: Record<string, unknown>;
-  }> = [];
-
   mocks.getSession.mockResolvedValue({
     user: {
       id: "u1",
@@ -111,16 +111,6 @@ function buildApp() {
     },
   });
 
-  (app.decorate as (name: string, value: unknown) => void)(
-    "wsBroadcast",
-    (
-      predicate: (client: { role: string }) => boolean,
-      payload: Record<string, unknown>
-    ) => {
-      broadcastCalls.push({ payload, predicate });
-    }
-  );
-
   (app.decorate as (name: string, value: unknown) => void)("prisma", {});
 
   app.addHook("preHandler", async (request: any) => {
@@ -130,22 +120,22 @@ function buildApp() {
 
   app.register(jobRoutes, { prefix: "/api/jobs" });
 
-  return { app, broadcastCalls };
+  return { app };
 }
 
-describe("Warranty return broadcast", () => {
+describe("Warranty return notification", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("broadcasts WARRANTY_RETURN_CREATED when warranty return is created", async () => {
+  it("calls notify when warranty return is created", async () => {
     mocks.createJob.mockResolvedValue({
       id: "job-1",
       isWarrantyReturn: true,
       jobCode: "RPR-001",
     });
 
-    const { app, broadcastCalls } = await buildApp();
+    const { app } = buildApp();
     const res = await app.inject({
       method: "POST",
       url: "/api/jobs",
@@ -162,34 +152,25 @@ describe("Warranty return broadcast", () => {
     });
 
     expect(res.statusCode).toBe(201);
-    const warrantyCalls = broadcastCalls.filter(
-      (c) => c.payload.type === "WARRANTY_RETURN_CREATED"
+    expect(mocks.notify).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        context: { jobCode: "RPR-001" },
+        eventName: "warranty_return_created",
+        jobId: "job-1",
+        recipients: { role: "OWNER" },
+      })
     );
-    const dashboardCalls = broadcastCalls.filter(
-      (c) => c.payload.type === "dashboard:invalidate"
-    );
-    expect(warrantyCalls).toHaveLength(1);
-    expect(warrantyCalls[0].payload.job).toEqual({
-      id: "job-1",
-      jobCode: "RPR-001",
-    });
-
-    const ownerClient = { role: "OWNER" };
-    const techClient = { role: "TECHNICIAN" };
-    expect(warrantyCalls[0].predicate(ownerClient)).toBe(true);
-    expect(warrantyCalls[0].predicate(techClient)).toBe(false);
-
-    expect(dashboardCalls.length).toBe(2);
   });
 
-  it("does not broadcast when job is not a warranty return", async () => {
+  it("does not call notify when job is not a warranty return", async () => {
     mocks.createJob.mockResolvedValue({
       id: "job-2",
       isWarrantyReturn: false,
       jobCode: "RPR-002",
     });
 
-    const { app, broadcastCalls } = await buildApp();
+    const { app } = buildApp();
     const res = await app.inject({
       method: "POST",
       url: "/api/jobs",
@@ -204,13 +185,11 @@ describe("Warranty return broadcast", () => {
     });
 
     expect(res.statusCode).toBe(201);
-    const warrantyCalls = broadcastCalls.filter(
-      (c) => c.payload.type === "WARRANTY_RETURN_CREATED"
+    expect(mocks.notify).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        eventName: "warranty_return_created",
+      })
     );
-    const dashboardCalls = broadcastCalls.filter(
-      (c) => c.payload.type === "dashboard:invalidate"
-    );
-    expect(warrantyCalls).toHaveLength(0);
-    expect(dashboardCalls.length).toBe(2);
   });
 });

@@ -1,5 +1,3 @@
-export type DeviceCategory = "phone" | "tablet" | "laptop" | "watch";
-
 export interface PhotoPreview {
   file: File;
   url: string;
@@ -21,7 +19,6 @@ export interface IntakeFormData {
   customerName: string;
   customerPhone: string;
   deposit: string;
-  deviceCategory: DeviceCategory;
   estimatedCost: string;
   estimatedDelivery: string;
   isWarrantyReturn: boolean;
@@ -42,7 +39,6 @@ export const INITIAL_FORM: IntakeFormData = {
   customerName: "",
   customerPhone: "",
   deposit: "",
-  deviceCategory: "phone",
   estimatedCost: "",
   estimatedDelivery: new Date().toISOString().split("T")[0],
   isWarrantyReturn: false,
@@ -57,17 +53,6 @@ export interface IntakeModalProps {
   onSubmit: (data: IntakeFormData) => Promise<void>;
   open: boolean;
 }
-
-export const DEVICE_CATEGORIES: {
-  icon: string;
-  key: DeviceCategory;
-  labelKey: string;
-}[] = [
-  { icon: "smartphone", key: "phone", labelKey: "intake.category_phone" },
-  { icon: "tablet_mac", key: "tablet", labelKey: "intake.category_tablet" },
-  { icon: "laptop_mac", key: "laptop", labelKey: "intake.category_laptop" },
-  { icon: "watch", key: "watch", labelKey: "intake.category_watch" },
-];
 
 export const BRANDS = [
   "Apple iPhone",

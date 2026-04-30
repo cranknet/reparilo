@@ -1,29 +1,8 @@
+import { ACTION_ICONS } from "@shared/constants/action-icons";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import type { ActivityItem } from "@/components/modules/profile/shared";
 import { Icon } from "@/components/ui/icon";
-
-const ACTION_ICONS: Record<string, string> = {
-  JOB_CREATED: "add_circle",
-  STATUS_CHANGED: "edit_square",
-  TECHNICIAN_ASSIGNED: "person_add",
-  COST_UPDATED: "payments",
-  PART_ADDED: "inventory_2",
-  PART_REMOVED: "remove_circle",
-  REPAIR_ADDED: "build",
-  REPAIR_REMOVED: "remove_circle",
-  NOTE_ADDED: "note_add",
-  PHOTO_ADDED: "photo_camera",
-  PHOTO_REMOVED: "remove_circle",
-  JOB_UPDATED: "edit_square",
-  WARRANTY_RETURN_CREATED: "replay",
-  NOTIFICATION_SENT: "notifications",
-  USER_SIGN_IN: "login",
-  USER_SIGN_OUT: "power_settings_new",
-  USER_CREATED: "person_add",
-  PASSWORD_RESET: "lock_reset",
-  API_MUTATION: "api",
-};
 
 function formatAction(action: string): string {
   return `profile_activity_${action.toLowerCase()}`;
@@ -93,6 +72,3 @@ export const ActivityItemRow = memo(function ActivityItemRow({
     </div>
   );
 });
-
-export type { ActivityItem } from "@/components/modules/profile/shared";
-export { ACTION_ICONS, formatAction, formatTimeAgo };

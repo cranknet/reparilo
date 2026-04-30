@@ -30,7 +30,11 @@ const ALL_STATUSES: JobStatus[] = [
   "WAITING_FOR_PARTS",
 ];
 
-const ACTIVE_STATUSES: JobStatus[] = [
+// Dashboard "in-progress" statuses exclude DONE/DELIVERED/RETURNED/CANCELLED.
+// This differs from the shared ACTIVE_STATUSES which includes DONE (repair
+// completed but not yet delivered). Here DONE means work is finished and the
+// job is awaiting customer pickup — no longer in the active work pipeline.
+const DASHBOARD_ACTIVE_STATUSES: JobStatus[] = [
   "IN_REPAIR",
   "INTAKE",
   "ON_HOLD",
@@ -91,6 +95,12 @@ interface RevCostRow {
   revenue: string;
 }
 
+// Revenue = repairs labor + parts charged to customer.
+// Cost = parts wholesale cost only.
+// Profit (revenue - cost) = repairs labor revenue, because parts revenue
+// cancels parts cost. This models parts as pass-through cost — the shop's
+// margin comes from labor (repairs). If this model changes, both revenue
+// and cost calculations must be updated together.
 async function revenueAndCost(
   prisma: PrismaClient,
   scope: Scope,
@@ -189,7 +199,7 @@ export async function overdueJobs(
     where: {
       ...scopeWhere(scope),
       estimatedDate: { lt: new Date() },
-      status: { in: [...ACTIVE_STATUSES] },
+      status: { in: [...DASHBOARD_ACTIVE_STATUSES] },
     },
     include: {
       customer: { select: { name: true } },
@@ -263,7 +273,7 @@ export async function todayScheduleForTech(
       ? scheduled
       : await prisma.job.findMany({
           where: {
-            status: { in: [...ACTIVE_STATUSES] },
+            status: { in: [...DASHBOARD_ACTIVE_STATUSES] },
             technicianId: userId,
           },
           include: {
@@ -357,7 +367,7 @@ export async function priorityActionsForTech(
     prisma.job.count({
       where: {
         estimatedDate: { lt: new Date() },
-        status: { in: [...ACTIVE_STATUSES] },
+        status: { in: [...DASHBOARD_ACTIVE_STATUSES] },
         technicianId: userId,
       },
     }),
@@ -382,7 +392,7 @@ export async function activeRepairsQueue(
     where: {
       ...scopeWhere(scope),
       OR: [
-        { status: { in: [...ACTIVE_STATUSES] } },
+        { status: { in: [...DASHBOARD_ACTIVE_STATUSES] } },
         {
           status: "DELIVERED",
           updatedAt: { gte: today.start, lt: today.end },
@@ -491,7 +501,7 @@ export async function priorityAlerts(
       where: {
         ...scopeWhere(scope),
         estimatedDate: { lt: new Date() },
-        status: { in: [...ACTIVE_STATUSES] },
+        status: { in: [...DASHBOARD_ACTIVE_STATUSES] },
       },
       select: { id: true, jobCode: true, updatedAt: true },
       orderBy: { updatedAt: "desc" },

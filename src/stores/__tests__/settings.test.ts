@@ -189,7 +189,7 @@ describe("useSettingsStore", () => {
     it("populates notificationTemplates", async () => {
       const templates = [
         { id: "tmpl-1", name: "Ready for Pickup", channel: "WHATSAPP" },
-        { id: "tmpl-2", name: "Job Completed", channel: "SMS" },
+        { id: "tmpl-2", name: "Job Completed", channel: "IN_APP" },
       ];
       mockGet.mockResolvedValue({ data: templates });
 

@@ -59,3 +59,6 @@ export type AiInstruction = Prisma.AiInstructionGetPayload<
 export type AiChatHistory = Prisma.AiChatHistoryGetPayload<
   Record<string, never>
 >;
+export type InAppNotification = Prisma.InAppNotificationGetPayload<
+  Record<string, never>
+>;

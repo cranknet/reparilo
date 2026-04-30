@@ -8,7 +8,6 @@ import CustomerSearchDropdown from "./customer-search-dropdown";
 import PhotoUploadZone from "./photo-upload-zone";
 import {
   BRANDS,
-  DEVICE_CATEGORIES,
   errorCls,
   type IntakeFormData,
   inputCls,
@@ -298,26 +297,6 @@ export default function Step1Content(props: Step1Props) {
             </span>
             {t("intake.device_section")}
           </h2>
-
-          <div className="flex flex-wrap gap-2">
-            {DEVICE_CATEGORIES.map((cat) => (
-              <button
-                className={`flex min-h-[44px] items-center gap-1.5 rounded-full px-4 py-2 font-bold font-label text-xs transition-all ${
-                  form.deviceCategory === cat.key
-                    ? "bg-primary text-on-primary"
-                    : "bg-surface-container-highest text-on-surface-variant hover:bg-surface-variant"
-                }`}
-                key={cat.key}
-                onClick={() => update("deviceCategory", cat.key)}
-                type="button"
-              >
-                <span className="material-symbols-outlined text-sm">
-                  {cat.icon}
-                </span>
-                {t(cat.labelKey)}
-              </button>
-            ))}
-          </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>

@@ -119,7 +119,3 @@ export interface FrontDeskDashboardDTO {
     recentIntakes: RecentIntakeDTO[];
   };
 }
-
-export interface DashboardInvalidateEvent {
-  type: "dashboard:invalidate";
-}
