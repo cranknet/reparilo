@@ -61,7 +61,18 @@ export const receiptRoutes: FastifyPluginAsync = async (app) => {
 
   app.get(
     "/:id/label",
-    { preHandler: [requirePermission({ jobs: ["view"] })] },
+    {
+      preHandler: [requirePermission({ jobs: ["view"] })],
+      schema: {
+        tags: ["receipts"],
+        summary: "Get label HTML",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+      },
+    },
     async (req, reply) => {
       const paramParsed = jobIdParamSchema.safeParse(req.params);
       if (!paramParsed.success) {

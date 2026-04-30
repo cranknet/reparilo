@@ -155,6 +155,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
         tags: ["ai"],
         summary: "Stream chat message",
         body: { type: "object", additionalProperties: true },
+        produces: ["text/event-stream"],
       },
       config: {
         rateLimit: {
