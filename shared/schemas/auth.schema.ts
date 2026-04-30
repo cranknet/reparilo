@@ -9,7 +9,7 @@ const passwordPolicy = z
 
 export const signInSchema = z.object({
   username: z.string().min(1, { error: "validations.required" }),
-  password: passwordPolicy,
+  password: z.string().min(1, { error: "validations.required" }),
 });
 
 export const createUserSchema = z.object({
@@ -24,7 +24,7 @@ export const createUserSchema = z.object({
 });
 
 export const changePasswordSchema = z.object({
-  oldPassword: passwordPolicy,
+  oldPassword: z.string().min(1, { error: "validations.required" }),
   newPassword: passwordPolicy,
 });
 

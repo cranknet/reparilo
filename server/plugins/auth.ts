@@ -110,6 +110,30 @@ async function forwardResponse(
   reply.send(sanitized ?? null);
 }
 
+async function checkSignInLockout(
+  prisma: PrismaClient,
+  request: { method: string; body: unknown }
+): Promise<void> {
+  if (request.method !== "POST") {
+    return;
+  }
+  const reqBody =
+    typeof request.body === "object" && request.body !== null
+      ? (request.body as Record<string, unknown>)
+      : {};
+  const identifier = reqBody.username ?? reqBody.email;
+  if (typeof identifier !== "string") {
+    return;
+  }
+  const user = await prisma.user.findFirst({
+    where: { OR: [{ username: identifier }, { email: identifier }] },
+    select: { failedLoginAttempts: true, lockedUntil: true },
+  });
+  if (user && isAccountLocked(user)) {
+    throw new AppError("ACCOUNT_LOCKED");
+  }
+}
+
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 const authPlugin: FastifyPluginAsync = async (app) => {
   const prisma = app.prisma;
@@ -129,6 +153,10 @@ const authPlugin: FastifyPluginAsync = async (app) => {
         headers,
         ...(body ? { body } : {}),
       });
+
+      if (isSignInPost(request.method, url.pathname)) {
+        await checkSignInLockout(prisma, request);
+      }
 
       const response = await auth.handler(req);
 

@@ -17,40 +17,52 @@ describe("Password complexity policy", () => {
     { pw: "12345678", reason: "no letters" },
   ];
 
-  for (const schema of [signInSchema, createUserSchema]) {
-    const label = schema === signInSchema ? "signInSchema" : "createUserSchema";
-
-    describe(label, () => {
-      it("accepts a strong password", () => {
-        const result = schema.safeParse({
-          username: "testuser",
-          password: validPassword,
-          ...(schema === createUserSchema
-            ? { email: "test@test.com", role: "OWNER" as const }
-            : {}),
-        });
-        expect(result.success).toBe(true);
+  describe("signInSchema", () => {
+    it("accepts any non-empty password", () => {
+      const result = signInSchema.safeParse({
+        username: "testuser",
+        password: "anything",
       });
-
-      for (const { pw, reason } of weakPasswords) {
-        it(`rejects "${pw}" (${reason})`, () => {
-          const result = schema.safeParse({
-            username: "testuser",
-            password: pw,
-            ...(schema === createUserSchema
-              ? { email: "test@test.com", role: "OWNER" as const }
-              : {}),
-          });
-          expect(result.success).toBe(false);
-        });
-      }
+      expect(result.success).toBe(true);
     });
-  }
+
+    it("rejects empty password", () => {
+      const result = signInSchema.safeParse({
+        username: "testuser",
+        password: "",
+      });
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("createUserSchema", () => {
+    it("accepts a strong password", () => {
+      const result = createUserSchema.safeParse({
+        username: "testuser",
+        email: "test@test.com",
+        role: "OWNER" as const,
+        password: validPassword,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    for (const { pw, reason } of weakPasswords) {
+      it(`rejects "${pw}" (${reason})`, () => {
+        const result = createUserSchema.safeParse({
+          username: "testuser",
+          email: "test@test.com",
+          role: "OWNER" as const,
+          password: pw,
+        });
+        expect(result.success).toBe(false);
+      });
+    }
+  });
 
   describe("changePasswordSchema", () => {
-    it("accepts strong newPassword", () => {
+    it("accepts any non-empty oldPassword with strong newPassword", () => {
       const result = changePasswordSchema.safeParse({
-        oldPassword: validPassword,
+        oldPassword: "oldweak",
         newPassword: "NewPass123",
       });
       expect(result.success).toBe(true);
@@ -59,7 +71,7 @@ describe("Password complexity policy", () => {
     for (const { pw, reason } of weakPasswords) {
       it(`rejects weak newPassword "${pw}" (${reason})`, () => {
         const result = changePasswordSchema.safeParse({
-          oldPassword: validPassword,
+          oldPassword: "oldweak",
           newPassword: pw,
         });
         expect(result.success).toBe(false);

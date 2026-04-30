@@ -6,15 +6,19 @@ import {
 } from "../services/account-lockout.service.js";
 
 const mocks = vi.hoisted(() => ({
+  findFirst: vi.fn(),
   findUnique: vi.fn(),
   update: vi.fn(),
+  updateMany: vi.fn(),
 }));
 
 vi.mock("@generated/client", () => ({
   PrismaClient: class {
     user = {
+      findFirst: mocks.findFirst,
       findUnique: mocks.findUnique,
       update: mocks.update,
+      updateMany: mocks.updateMany,
     };
   },
 }));
@@ -84,17 +88,17 @@ describe("incrementFailedAttempt", () => {
 });
 
 describe("resetFailedAttempts", () => {
-  let prisma: { user: { update: typeof mocks.update } };
+  let prisma: { user: { updateMany: typeof mocks.updateMany } };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    prisma = { user: { update: mocks.update } };
+    prisma = { user: { updateMany: mocks.updateMany } };
   });
 
   it("resets failedLoginAttempts to 0 and lockedUntil to null", async () => {
     await resetFailedAttempts(prisma as never, "user-1");
 
-    expect(mocks.update).toHaveBeenCalledWith({
+    expect(mocks.updateMany).toHaveBeenCalledWith({
       data: { failedLoginAttempts: 0, lockedUntil: null },
       where: { id: "user-1" },
     });

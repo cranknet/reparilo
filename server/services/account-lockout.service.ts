@@ -40,7 +40,7 @@ export async function resetFailedAttempts(
   prisma: PrismaClient,
   userId: string
 ): Promise<void> {
-  await prisma.user.update({
+  await prisma.user.updateMany({
     data: { failedLoginAttempts: 0, lockedUntil: null },
     where: { id: userId },
   });
