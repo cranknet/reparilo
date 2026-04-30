@@ -7,6 +7,20 @@
   "active": "Actif",
   "active_jobs": "Travaux actifs",
   "active_suppliers": "Fournisseurs actifs",
+  "add_customer": "Ajouter un client",
+  "add_customer_modal": {
+    "title": "Ajouter un client",
+    "name": "Nom et prénom",
+    "phone": "Téléphone",
+    "email": "E-mail",
+    "cancel": "Annuler",
+    "submit": "Ajouter un client",
+    "error_general": "Échec de l'ajout du client. ",
+    "discard_title": "Supprimer les modifications ?",
+    "discard_desc": "Vous avez des modifications non enregistrées qui seront perdues.",
+    "keep_editing": "Continuer à éditer",
+    "discard": "Jeter"
+  },
   "add_new_part": "Ajouter une pièce",
   "add_part_modal": {
     "title": "Ajouter une nouvelle pièce",

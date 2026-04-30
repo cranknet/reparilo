@@ -7,6 +7,20 @@
   "active": "Active",
   "active_jobs": "Active Jobs",
   "active_suppliers": "Active Suppliers",
+  "add_customer": "Add Customer",
+  "add_customer_modal": {
+    "title": "Add Customer",
+    "name": "Full Name",
+    "phone": "Phone",
+    "email": "Email",
+    "cancel": "Cancel",
+    "submit": "Add Customer",
+    "error_general": "Failed to add customer. Please try again.",
+    "discard_title": "Discard changes?",
+    "discard_desc": "You have unsaved changes that will be lost.",
+    "keep_editing": "Keep editing",
+    "discard": "Discard"
+  },
   "add_new_part": "Add New Part",
   "add_part_modal": {
     "title": "Add New Part",

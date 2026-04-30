@@ -7,6 +7,20 @@
   "active": "نشط",
   "active_jobs": "أعمال نشطة",
   "active_suppliers": "الموردين النشطين",
+  "add_customer": "إضافة العميل",
+  "add_customer_modal": {
+    "title": "إضافة العميل",
+    "name": "الاسم الكامل",
+    "phone": "هاتف",
+    "email": "بريد إلكتروني",
+    "cancel": "يلغي",
+    "submit": "إضافة العميل",
+    "error_general": "فشلت إضافة العميل. ",
+    "discard_title": "هل تريد تجاهل التغييرات؟",
+    "discard_desc": "لديك تغييرات غير محفوظة وسيتم فقدها.",
+    "keep_editing": "استمر في التحرير",
+    "discard": "ينبذ"
+  },
   "add_new_part": "إضافة قطعة جديدة",
   "add_part_modal": {
     "title": "إضافة جزء جديد",

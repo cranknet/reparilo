@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import AddCustomerModal from "@/components/modules/customers/add-customer-modal";
+import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -140,6 +142,7 @@ function MobileCustomerCard({
 export default function CustomersPage() {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
+  const [showAddModal, setShowAddModal] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
   const { customers, isLoading, totalCount, fetchCustomers } =
     useCustomersStore();
@@ -168,6 +171,15 @@ export default function CustomersPage() {
             {t("customers_desc")}
           </p>
         </div>
+        <Button
+          icon="add"
+          onClick={() => setShowAddModal(true)}
+          size="md"
+          type="button"
+          variant="primary-gradient"
+        >
+          {t("add_customer")}
+        </Button>
       </div>
 
       {!showEmptyCatalog && (
@@ -253,6 +265,14 @@ export default function CustomersPage() {
           </div>
         </div>
       )}
+
+      <AddCustomerModal
+        onClose={() => setShowAddModal(false)}
+        onSuccess={() => {
+          fetchCustomers(debouncedSearch.trim() || undefined);
+        }}
+        open={showAddModal}
+      />
     </>
   );
 }
