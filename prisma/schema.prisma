@@ -115,6 +115,8 @@ model User {
   role            Role
   isActive        Boolean   @default(true)
   mustChangePassword Boolean @default(false)
+  failedLoginAttempts Int       @default(0)
+  lockedUntil        DateTime?  @db.Timestamptz
   banned          Boolean   @default(false)
   banReason       String?
   banExpires      DateTime? @db.Timestamptz
