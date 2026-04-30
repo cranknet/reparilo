@@ -25,7 +25,10 @@ import { monthRange, todayRange } from "../utils/time-range.js";
 export const dashboardRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/owner",
-    { preHandler: [requireRoles("OWNER"), dashboardScope] },
+    {
+      preHandler: [requireRoles("OWNER"), dashboardScope],
+      schema: { tags: ["dashboard"], summary: "Owner dashboard" },
+    },
     async (req) => {
       // biome-ignore lint/style/noNonNullAssertion: set by dashboardScope preHandler
       const scope = req.dashboardScope!;
@@ -66,7 +69,10 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
 
   app.get(
     "/technician",
-    { preHandler: [requireRoles("OWNER", "TECHNICIAN"), dashboardScope] },
+    {
+      preHandler: [requireRoles("OWNER", "TECHNICIAN"), dashboardScope],
+      schema: { tags: ["dashboard"], summary: "Technician dashboard" },
+    },
     async (req) => {
       // biome-ignore lint/style/noNonNullAssertion: set by dashboardScope preHandler
       const scope = req.dashboardScope!;
@@ -112,7 +118,10 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
 
   app.get(
     "/front-desk",
-    { preHandler: [requireRoles("OWNER", "FRONT_DESK"), dashboardScope] },
+    {
+      preHandler: [requireRoles("OWNER", "FRONT_DESK"), dashboardScope],
+      schema: { tags: ["dashboard"], summary: "Front desk dashboard" },
+    },
     async (req) => {
       // biome-ignore lint/style/noNonNullAssertion: set by dashboardScope preHandler
       const scope = req.dashboardScope!;

@@ -104,6 +104,18 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
   // Public: no auth — used by customer self-tracking page
   // Per-IP rate limit: 10 attempts / 15 min (generous for shared NAT)
   app.get("/lookup", {
+    schema: {
+      tags: ["jobs"],
+      summary: "Public job lookup by code + phone4",
+      querystring: {
+        type: "object",
+        required: ["code", "phone4"],
+        properties: {
+          code: { type: "string" },
+          phone4: { type: "string" },
+        },
+      },
+    },
     preHandler: [],
     config: {
       rateLimit: {
@@ -157,7 +169,18 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.get(
     "/by-code/:jobCode",
-    { preHandler: [requirePermission({ jobs: ["view"] })] },
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "Get job by code (authenticated)",
+        params: {
+          type: "object",
+          properties: { jobCode: { type: "string" } },
+          required: ["jobCode"],
+        },
+      },
+      preHandler: [requirePermission({ jobs: ["view"] })],
+    },
     async (req, reply) => {
       const { jobCode } = req.params as { jobCode: string };
       const job = await lookupByCodeAuth(app.prisma, jobCode);
@@ -168,61 +191,115 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
     }
   );
 
-  app.get("/metrics", async (_req, reply) => {
-    const metrics = await getMetrics(app.prisma);
-    return reply.send(metrics);
-  });
-
-  app.get("/", async (req, reply) => {
-    const parsed = jobListQuerySchema.safeParse(req.query);
-    if (!parsed.success) {
-      throw new AppError("VALIDATION_ERROR", {
-        errors: resolveZodErrors(
-          parsed.error.flatten().fieldErrors,
-          req.locale
-        ),
-      });
-    }
-    const result = await listJobs(app.prisma, parsed.data);
-    return reply.send(result);
-  });
-
-  app.get("/:id", async (req, reply) => {
-    const { id } = req.params as { id: string };
-    const job = await getJobById(app.prisma, id);
-    if (!job) {
-      throw new AppError("JOB_NOT_FOUND");
-    }
-    const marginResult = await req.server.auth.api.userHasPermission({
-      body: {
-        role: (req.user?.role ?? "") as RoleType,
-        permissions: { reports: ["viewMargin"] },
+  app.get(
+    "/metrics",
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "Job metrics",
       },
-    });
-    if (marginResult.success) {
-      const margin = computeMargin(job);
-      return reply.send({ ...job, margin });
+    },
+    async (_req, reply) => {
+      const metrics = await getMetrics(app.prisma);
+      return reply.send(metrics);
     }
-    return reply.send(job);
-  });
+  );
 
-  app.get("/:id/history", async (req, reply) => {
-    const { id } = req.params as { id: string };
-    const job = await getJobById(app.prisma, id);
-    if (!job) {
-      throw new AppError("JOB_NOT_FOUND");
+  app.get(
+    "/",
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "List jobs",
+        querystring: { type: "object", additionalProperties: true },
+      },
+    },
+    async (req, reply) => {
+      const parsed = jobListQuerySchema.safeParse(req.query);
+      if (!parsed.success) {
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
+      }
+      const result = await listJobs(app.prisma, parsed.data);
+      return reply.send(result);
     }
-    const entries = await app.prisma.auditLog.findMany({
-      where: { jobId: id },
-      include: { user: { select: { id: true, name: true, role: true } } },
-      orderBy: { createdAt: "desc" },
-    });
-    return reply.send(entries);
-  });
+  );
+
+  app.get(
+    "/:id",
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "Get job by ID",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+      },
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const job = await getJobById(app.prisma, id);
+      if (!job) {
+        throw new AppError("JOB_NOT_FOUND");
+      }
+      const marginResult = await req.server.auth.api.userHasPermission({
+        body: {
+          role: (req.user?.role ?? "") as RoleType,
+          permissions: { reports: ["viewMargin"] },
+        },
+      });
+      if (marginResult.success) {
+        const margin = computeMargin(job);
+        return reply.send({ ...job, margin });
+      }
+      return reply.send(job);
+    }
+  );
+
+  app.get(
+    "/:id/history",
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "Get job audit history",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+      },
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const job = await getJobById(app.prisma, id);
+      if (!job) {
+        throw new AppError("JOB_NOT_FOUND");
+      }
+      const entries = await app.prisma.auditLog.findMany({
+        where: { jobId: id },
+        include: { user: { select: { id: true, name: true, role: true } } },
+        orderBy: { createdAt: "desc" },
+      });
+      return reply.send(entries);
+    }
+  );
 
   app.post(
     "/",
-    { preHandler: [requirePermission({ jobs: ["create"] })] },
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "Create job",
+        body: { type: "object", additionalProperties: true },
+      },
+      preHandler: [requirePermission({ jobs: ["create"] })],
+    },
     async (req, reply) => {
       const parsed = createJobSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -260,7 +337,19 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.patch(
     "/:id",
-    { preHandler: [requirePermission({ jobs: ["edit"] })] },
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "Update job",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        body: { type: "object", additionalProperties: true },
+      },
+      preHandler: [requirePermission({ jobs: ["edit"] })],
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = updateJobSchema.safeParse(req.body);
@@ -282,58 +371,105 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
     }
   );
 
-  app.patch("/:id/status", async (req, reply) => {
-    const { id } = req.params as { id: string };
-    const parsed = transitionStatusSchema.safeParse(req.body);
-    if (!parsed.success) {
-      throw new AppError("VALIDATION_ERROR", {
-        errors: resolveZodErrors(
-          parsed.error.flatten().fieldErrors,
-          req.locale
-        ),
-      });
-    }
-
-    const permCheck = await app.auth.api.userHasPermission({
-      body: {
-        role: req.user.role as RoleType,
-        permissions: { jobStatus: [parsed.data.status] },
+  app.patch(
+    "/:id/status",
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "Transition job status",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        body: { type: "object", additionalProperties: true },
       },
-    });
-    if (!permCheck.success) {
-      throw new AppError("FORBIDDEN_STATUS_TRANSITION");
-    }
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const parsed = transitionStatusSchema.safeParse(req.body);
+      if (!parsed.success) {
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
+      }
 
-    const userId = getUserId(req);
-    const result = await transitionStatus(app, id, parsed.data.status, userId, {
-      requestingRole: req.user.role as RoleType,
-      reason: parsed.data.reason,
-    });
-    if (!result) {
-      throw new AppError("JOB_NOT_FOUND");
-    }
-    if ("error" in result && result.error === "CONFLICT_STATUS_TRANSITION") {
-      throw new AppError("CONFLICT_STATUS_TRANSITION", {
-        allowedTransitions: result.allowedTransitions,
-        currentStatus: result.currentStatus,
+      const permCheck = await app.auth.api.userHasPermission({
+        body: {
+          role: req.user.role as RoleType,
+          permissions: { jobStatus: [parsed.data.status] },
+        },
       });
-    }
-    throwIfError(result);
-    return reply.send(result);
-  });
+      if (!permCheck.success) {
+        throw new AppError("FORBIDDEN_STATUS_TRANSITION");
+      }
 
-  app.get("/:id/notes", async (req, reply) => {
-    const { id } = req.params as { id: string };
-    const notes = await listNotes(app.prisma, id);
-    if (!notes) {
-      throw new AppError("JOB_NOT_FOUND");
+      const userId = getUserId(req);
+      const result = await transitionStatus(
+        app,
+        id,
+        parsed.data.status,
+        userId,
+        {
+          requestingRole: req.user.role as RoleType,
+          reason: parsed.data.reason,
+        }
+      );
+      if (!result) {
+        throw new AppError("JOB_NOT_FOUND");
+      }
+      if ("error" in result && result.error === "CONFLICT_STATUS_TRANSITION") {
+        throw new AppError("CONFLICT_STATUS_TRANSITION", {
+          allowedTransitions: result.allowedTransitions,
+          currentStatus: result.currentStatus,
+        });
+      }
+      throwIfError(result);
+      return reply.send(result);
     }
-    return reply.send(notes);
-  });
+  );
+
+  app.get(
+    "/:id/notes",
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "List job notes",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+      },
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const notes = await listNotes(app.prisma, id);
+      if (!notes) {
+        throw new AppError("JOB_NOT_FOUND");
+      }
+      return reply.send(notes);
+    }
+  );
 
   app.post(
     "/:id/notes",
-    { preHandler: [requirePermission({ jobs: ["edit"] })] },
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "Add job note",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        body: { type: "object", additionalProperties: true },
+      },
+      preHandler: [requirePermission({ jobs: ["edit"] })],
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = addJobNoteSchema.safeParse(req.body);
@@ -357,7 +493,19 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/:id/parts",
-    { preHandler: [requirePermission({ jobs: ["edit"] })] },
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "Add part to job",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        body: { type: "object", additionalProperties: true },
+      },
+      preHandler: [requirePermission({ jobs: ["edit"] })],
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = addJobPartSchema.safeParse(req.body);
@@ -381,7 +529,18 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete(
     "/:id/parts/:partId",
-    { preHandler: [requirePermission({ jobs: ["edit"] })] },
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "Remove part from job",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" }, partId: { type: "string" } },
+          required: ["id", "partId"],
+        },
+      },
+      preHandler: [requirePermission({ jobs: ["edit"] })],
+    },
     async (req, reply) => {
       const { id, partId } = req.params as { id: string; partId: string };
       const userId = getUserId(req);
@@ -395,7 +554,19 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/:id/repairs",
-    { preHandler: [requirePermission({ jobs: ["edit"] })] },
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "Add repair to job",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        body: { type: "object", additionalProperties: true },
+      },
+      preHandler: [requirePermission({ jobs: ["edit"] })],
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = addJobRepairSchema.safeParse(req.body);
@@ -419,7 +590,18 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete(
     "/:id/repairs/:repairId",
-    { preHandler: [requirePermission({ jobs: ["edit"] })] },
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "Remove repair from job",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" }, repairId: { type: "string" } },
+          required: ["id", "repairId"],
+        },
+      },
+      preHandler: [requirePermission({ jobs: ["edit"] })],
+    },
     async (req, reply) => {
       const { id, repairId } = req.params as { id: string; repairId: string };
       const userId = getUserId(req);
@@ -433,7 +615,19 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/:id/photos",
-    { preHandler: [requirePermission({ jobs: ["edit"] })] },
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "Upload job photo",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        consumes: ["multipart/form-data"],
+      },
+      preHandler: [requirePermission({ jobs: ["edit"] })],
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const data = await req.file();
@@ -452,7 +646,18 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete(
     "/:id/photos/:photoId",
-    { preHandler: [requirePermission({ jobs: ["edit"] })] },
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "Delete job photo",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" }, photoId: { type: "string" } },
+          required: ["id", "photoId"],
+        },
+      },
+      preHandler: [requirePermission({ jobs: ["edit"] })],
+    },
     async (req, reply) => {
       const { id, photoId } = req.params as { id: string; photoId: string };
       const userId = getUserId(req);
@@ -466,7 +671,19 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/:id/waiting-parts",
-    { preHandler: [requirePermission({ jobs: ["edit"] })] },
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "Add waiting part",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        body: { type: "object", additionalProperties: true },
+      },
+      preHandler: [requirePermission({ jobs: ["edit"] })],
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = addWaitingPartSchema.safeParse(req.body);
@@ -490,7 +707,18 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete(
     "/:id/waiting-parts/:waitingId",
-    { preHandler: [requirePermission({ jobs: ["edit"] })] },
+    {
+      schema: {
+        tags: ["jobs"],
+        summary: "Remove waiting part",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" }, waitingId: { type: "string" } },
+          required: ["id", "waitingId"],
+        },
+      },
+      preHandler: [requirePermission({ jobs: ["edit"] })],
+    },
     async (req, reply) => {
       const { id, waitingId } = req.params as { id: string; waitingId: string };
       const userId = getUserId(req);

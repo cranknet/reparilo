@@ -13,7 +13,18 @@ import {
 export const receiptRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/:id/receipt",
-    { preHandler: [requirePermission({ jobs: ["view"] })] },
+    {
+      preHandler: [requirePermission({ jobs: ["view"] })],
+      schema: {
+        tags: ["receipts"],
+        summary: "Get receipt HTML",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+      },
+    },
     async (req, reply) => {
       const paramParsed = jobIdParamSchema.safeParse(req.params);
       if (!paramParsed.success) {

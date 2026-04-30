@@ -21,32 +21,63 @@ import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 export const partsRoutes: FastifyPluginAsync = async (app) => {
   app.addHook("preHandler", requirePermission({ parts: ["viewCatalog"] }));
 
-  app.get("/", async (req, reply) => {
-    const parsed = listPartsQuerySchema.safeParse(req.query);
-    if (!parsed.success) {
-      throw new AppError("VALIDATION_ERROR", {
-        errors: resolveZodErrors(
-          parsed.error.flatten().fieldErrors,
-          req.locale
-        ),
-      });
+  app.get(
+    "/",
+    {
+      schema: {
+        tags: ["parts"],
+        summary: "List parts",
+        querystring: { type: "object", additionalProperties: true },
+      },
+    },
+    async (req, reply) => {
+      const parsed = listPartsQuerySchema.safeParse(req.query);
+      if (!parsed.success) {
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
+      }
+      const result = await listParts(app.prisma, parsed.data);
+      return reply.send(result);
     }
-    const result = await listParts(app.prisma, parsed.data);
-    return reply.send(result);
-  });
+  );
 
-  app.get("/:id", async (req, reply) => {
-    const { id } = req.params as { id: string };
-    const part = await getPartById(app.prisma, id);
-    if (!part) {
-      throw new AppError("PART_NOT_FOUND");
+  app.get(
+    "/:id",
+    {
+      schema: {
+        tags: ["parts"],
+        summary: "Get part by ID",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+      },
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const part = await getPartById(app.prisma, id);
+      if (!part) {
+        throw new AppError("PART_NOT_FOUND");
+      }
+      return reply.send(part);
     }
-    return reply.send(part);
-  });
+  );
 
   app.post(
     "/",
-    { preHandler: [requirePermission({ parts: ["manageCatalog"] })] },
+    {
+      preHandler: [requirePermission({ parts: ["manageCatalog"] })],
+      schema: {
+        tags: ["parts"],
+        summary: "Create part",
+        body: { type: "object", additionalProperties: true },
+      },
+    },
     async (req, reply) => {
       const parsed = createPartSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -64,7 +95,19 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
 
   app.patch(
     "/:id",
-    { preHandler: [requirePermission({ parts: ["manageCatalog"] })] },
+    {
+      preHandler: [requirePermission({ parts: ["manageCatalog"] })],
+      schema: {
+        tags: ["parts"],
+        summary: "Update part",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        body: { type: "object", additionalProperties: true },
+      },
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = updatePartSchema.safeParse(req.body);
@@ -86,7 +129,19 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
 
   app.patch(
     "/:id/status",
-    { preHandler: [requirePermission({ parts: ["manageCatalog"] })] },
+    {
+      preHandler: [requirePermission({ parts: ["manageCatalog"] })],
+      schema: {
+        tags: ["parts"],
+        summary: "Toggle part status",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        body: { type: "object", additionalProperties: true },
+      },
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = togglePartStatusSchema.safeParse(req.body);
@@ -108,7 +163,18 @@ export const partsRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete(
     "/:id",
-    { preHandler: [requirePermission({ parts: ["manageCatalog"] })] },
+    {
+      preHandler: [requirePermission({ parts: ["manageCatalog"] })],
+      schema: {
+        tags: ["parts"],
+        summary: "Delete part",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+      },
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const result = await deletePart(app.prisma, id);

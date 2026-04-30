@@ -21,22 +21,37 @@ import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 export const settingsRoutes: FastifyPluginAsync = async (app) => {
   app.addHook("preHandler", requirePermission({ settings: ["view"] }));
 
-  app.get("/", async (_req, reply) => {
-    const [ai, shop] = await Promise.all([
-      getAiSettings(app.prisma),
-      getShopSettings(app.prisma),
-    ]);
-    return reply.send({ ai, shop });
-  });
+  app.get(
+    "/",
+    { schema: { tags: ["settings"], summary: "Get all settings" } },
+    async (_req, reply) => {
+      const [ai, shop] = await Promise.all([
+        getAiSettings(app.prisma),
+        getShopSettings(app.prisma),
+      ]);
+      return reply.send({ ai, shop });
+    }
+  );
 
-  app.get("/ai", async (_req, reply) => {
-    const ai = await getAiSettings(app.prisma);
-    return reply.send(ai);
-  });
+  app.get(
+    "/ai",
+    { schema: { tags: ["settings"], summary: "Get AI settings" } },
+    async (_req, reply) => {
+      const ai = await getAiSettings(app.prisma);
+      return reply.send(ai);
+    }
+  );
 
   app.put(
     "/ai",
-    { preHandler: [requirePermission({ settings: ["edit"] })] },
+    {
+      preHandler: [requirePermission({ settings: ["edit"] })],
+      schema: {
+        tags: ["settings"],
+        summary: "Update AI settings",
+        body: { type: "object", additionalProperties: true },
+      },
+    },
     async (req, reply) => {
       const parsed = updateAiSettingsSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -54,21 +69,35 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/ai/test",
-    { preHandler: [requirePermission({ settings: ["edit"] })] },
+    {
+      preHandler: [requirePermission({ settings: ["edit"] })],
+      schema: { tags: ["settings"], summary: "Test AI connection" },
+    },
     async (_req, reply) => {
       const result = await testAiConnection(app.prisma);
       return reply.send(result);
     }
   );
 
-  app.get("/shop", async (_req, reply) => {
-    const shop = await getShopSettings(app.prisma);
-    return reply.send(shop);
-  });
+  app.get(
+    "/shop",
+    { schema: { tags: ["settings"], summary: "Get shop settings" } },
+    async (_req, reply) => {
+      const shop = await getShopSettings(app.prisma);
+      return reply.send(shop);
+    }
+  );
 
   app.put(
     "/shop",
-    { preHandler: [requirePermission({ settings: ["edit"] })] },
+    {
+      preHandler: [requirePermission({ settings: ["edit"] })],
+      schema: {
+        tags: ["settings"],
+        summary: "Update shop settings",
+        body: { type: "object", additionalProperties: true },
+      },
+    },
     async (req, reply) => {
       const parsed = updateShopSettingsSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -84,14 +113,25 @@ export const settingsRoutes: FastifyPluginAsync = async (app) => {
     }
   );
 
-  app.get("/whatsapp", async (_req, reply) => {
-    const settings = await getWhatsAppSettings(app.prisma);
-    return reply.send(settings);
-  });
+  app.get(
+    "/whatsapp",
+    { schema: { tags: ["settings"], summary: "Get WhatsApp settings" } },
+    async (_req, reply) => {
+      const settings = await getWhatsAppSettings(app.prisma);
+      return reply.send(settings);
+    }
+  );
 
   app.put(
     "/whatsapp",
-    { preHandler: [requirePermission({ settings: ["edit"] })] },
+    {
+      preHandler: [requirePermission({ settings: ["edit"] })],
+      schema: {
+        tags: ["settings"],
+        summary: "Update WhatsApp settings",
+        body: { type: "object", additionalProperties: true },
+      },
+    },
     async (req, reply) => {
       const parsed = updateWhatsAppSettingsSchema.safeParse(req.body);
       if (!parsed.success) {

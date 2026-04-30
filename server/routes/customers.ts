@@ -23,7 +23,14 @@ export const customersRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/",
-    { preHandler: [requirePermission({ customers: ["create"] })] },
+    {
+      schema: {
+        tags: ["customers"],
+        summary: "Create customer",
+        body: { type: "object", additionalProperties: true },
+      },
+      preHandler: [requirePermission({ customers: ["create"] })],
+    },
     async (req, reply) => {
       const parsed = createCustomerSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -41,7 +48,19 @@ export const customersRoutes: FastifyPluginAsync = async (app) => {
 
   app.patch(
     "/:id",
-    { preHandler: [requirePermission({ customers: ["edit"] })] },
+    {
+      schema: {
+        tags: ["customers"],
+        summary: "Update customer",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        body: { type: "object", additionalProperties: true },
+      },
+      preHandler: [requirePermission({ customers: ["edit"] })],
+    },
     async (req, reply) => {
       const parsed = updateCustomerSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -61,44 +80,78 @@ export const customersRoutes: FastifyPluginAsync = async (app) => {
     }
   );
 
-  app.get("/search", async (req, reply) => {
-    const parsed = customerSearchQuerySchema.safeParse(req.query);
-    if (!parsed.success) {
-      throw new AppError("VALIDATION_ERROR", {
-        errors: resolveZodErrors(
-          parsed.error.flatten().fieldErrors,
-          req.locale
-        ),
-      });
+  app.get(
+    "/search",
+    {
+      schema: {
+        tags: ["customers"],
+        summary: "Search customers",
+        querystring: { type: "object", additionalProperties: true },
+      },
+    },
+    async (req, reply) => {
+      const parsed = customerSearchQuerySchema.safeParse(req.query);
+      if (!parsed.success) {
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
+      }
+      const results = await searchCustomers(app.prisma, parsed.data);
+      return reply.send(results);
     }
-    const results = await searchCustomers(app.prisma, parsed.data);
-    return reply.send(results);
-  });
+  );
 
-  app.get("/:id", async (req, reply) => {
-    const { id } = req.params as { id: string };
-    const parsed = customerIdParamSchema.safeParse(id);
-    if (!parsed.success) {
-      throw new AppError("INVALID_CUSTOMER_ID");
+  app.get(
+    "/:id",
+    {
+      schema: {
+        tags: ["customers"],
+        summary: "Get customer by ID",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+      },
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const parsed = customerIdParamSchema.safeParse(id);
+      if (!parsed.success) {
+        throw new AppError("INVALID_CUSTOMER_ID");
+      }
+      const customer = await getById(app.prisma, id);
+      if (!customer) {
+        throw new AppError("CUSTOMER_NOT_FOUND");
+      }
+      return reply.send(customer);
     }
-    const customer = await getById(app.prisma, id);
-    if (!customer) {
-      throw new AppError("CUSTOMER_NOT_FOUND");
-    }
-    return reply.send(customer);
-  });
+  );
 
-  app.get("/", async (req, reply) => {
-    const parsed = customerListQuerySchema.safeParse(req.query);
-    if (!parsed.success) {
-      throw new AppError("VALIDATION_ERROR", {
-        errors: resolveZodErrors(
-          parsed.error.flatten().fieldErrors,
-          req.locale
-        ),
-      });
+  app.get(
+    "/",
+    {
+      schema: {
+        tags: ["customers"],
+        summary: "List customers",
+        querystring: { type: "object", additionalProperties: true },
+      },
+    },
+    async (req, reply) => {
+      const parsed = customerListQuerySchema.safeParse(req.query);
+      if (!parsed.success) {
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
+      }
+      const result = await listCustomers(app.prisma, parsed.data);
+      return reply.send(result);
     }
-    const result = await listCustomers(app.prisma, parsed.data);
-    return reply.send(result);
-  });
+  );
 };

@@ -61,64 +61,101 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     }
   }
 
-  app.get("/", async (req, reply) => {
-    const parsed = listQuerySchema.safeParse(req.query);
-    if (!parsed.success) {
-      throw new AppError("VALIDATION_ERROR", {
-        errors: resolveZodErrors(
-          parsed.error.flatten().fieldErrors,
-          req.locale
-        ),
-      });
+  app.get(
+    "/",
+    {
+      schema: {
+        tags: ["ai"],
+        summary: "List conversations",
+        querystring: { type: "object", additionalProperties: true },
+      },
+    },
+    async (req, reply) => {
+      const parsed = listQuerySchema.safeParse(req.query);
+      if (!parsed.success) {
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
+      }
+      const result = await listConversations(
+        app.prisma,
+        req.user.id,
+        parsed.data
+      );
+      return await reply.send(result);
     }
-    const result = await listConversations(
-      app.prisma,
-      req.user.id,
-      parsed.data
-    );
-    return await reply.send(result);
-  });
+  );
 
-  app.post("/", { preHandler: [requireAiEnabled] }, async (req, reply) => {
-    const parsed = createConversationSchema.safeParse(req.body);
-    if (!parsed.success) {
-      throw new AppError("VALIDATION_ERROR", {
-        errors: resolveZodErrors(
-          parsed.error.flatten().fieldErrors,
-          req.locale
-        ),
-      });
+  app.post(
+    "/",
+    {
+      preHandler: [requireAiEnabled],
+      schema: {
+        tags: ["ai"],
+        summary: "Create conversation",
+        body: { type: "object", additionalProperties: true },
+      },
+    },
+    async (req, reply) => {
+      const parsed = createConversationSchema.safeParse(req.body);
+      if (!parsed.success) {
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
+      }
+      const conversation = await createConversation(
+        app.prisma,
+        req.user.id,
+        parsed.data.title
+      );
+      return await reply.status(201).send(conversation);
     }
-    const conversation = await createConversation(
-      app.prisma,
-      req.user.id,
-      parsed.data.title
-    );
-    return await reply.status(201).send(conversation);
-  });
+  );
 
-  app.post("/bulk-delete", async (req, reply) => {
-    const parsed = bulkDeleteConversationsSchema.safeParse(req.body);
-    if (!parsed.success) {
-      throw new AppError("VALIDATION_ERROR", {
-        errors: resolveZodErrors(
-          parsed.error.flatten().fieldErrors,
-          req.locale
-        ),
-      });
+  app.post(
+    "/bulk-delete",
+    {
+      schema: {
+        tags: ["ai"],
+        summary: "Bulk delete conversations",
+        body: { type: "object", additionalProperties: true },
+      },
+    },
+    async (req, reply) => {
+      const parsed = bulkDeleteConversationsSchema.safeParse(req.body);
+      if (!parsed.success) {
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
+      }
+      const result = await bulkDeleteConversations(
+        app.prisma,
+        req.user.id,
+        parsed.data
+      );
+      return await reply.send(result);
     }
-    const result = await bulkDeleteConversations(
-      app.prisma,
-      req.user.id,
-      parsed.data
-    );
-    return await reply.send(result);
-  });
+  );
 
   app.post(
     "/chat/stream",
     {
       preHandler: [requireAiEnabled],
+      requestTimeout: 0,
+      schema: {
+        tags: ["ai"],
+        summary: "Stream chat message",
+        body: { type: "object", additionalProperties: true },
+      },
       config: {
         rateLimit: {
           max: 10,
@@ -177,14 +214,30 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     }
   );
 
-  app.get("/definitions", async (_req, reply) => {
-    const definitions = await listAgentDefinitions(app.prisma);
-    return await reply.send(definitions);
-  });
+  app.get(
+    "/definitions",
+    {
+      schema: {
+        tags: ["ai"],
+        summary: "List agent definitions",
+      },
+    },
+    async (_req, reply) => {
+      const definitions = await listAgentDefinitions(app.prisma);
+      return await reply.send(definitions);
+    }
+  );
 
   app.post(
     "/definitions",
-    { preHandler: [requirePermission({ settings: ["edit"] })] },
+    {
+      preHandler: [requirePermission({ settings: ["edit"] })],
+      schema: {
+        tags: ["ai"],
+        summary: "Create agent definition",
+        body: { type: "object", additionalProperties: true },
+      },
+    },
     async (req, reply) => {
       const parsed = agentDefinitionCreateSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -200,18 +253,44 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     }
   );
 
-  app.get("/definitions/:defId", async (req, reply) => {
-    const { defId } = req.params as { defId: string };
-    const definition = await getAgentDefinition(app.prisma, defId);
-    if (!definition) {
-      throw new AppError("AGENT_DEFINITION_NOT_FOUND");
+  app.get(
+    "/definitions/:defId",
+    {
+      schema: {
+        tags: ["ai"],
+        summary: "Get agent definition",
+        params: {
+          type: "object",
+          properties: { defId: { type: "string" } },
+          required: ["defId"],
+        },
+      },
+    },
+    async (req, reply) => {
+      const { defId } = req.params as { defId: string };
+      const definition = await getAgentDefinition(app.prisma, defId);
+      if (!definition) {
+        throw new AppError("AGENT_DEFINITION_NOT_FOUND");
+      }
+      return await reply.send(definition);
     }
-    return await reply.send(definition);
-  });
+  );
 
   app.put(
     "/definitions/:defId",
-    { preHandler: [requirePermission({ settings: ["edit"] })] },
+    {
+      preHandler: [requirePermission({ settings: ["edit"] })],
+      schema: {
+        tags: ["ai"],
+        summary: "Update agent definition",
+        params: {
+          type: "object",
+          properties: { defId: { type: "string" } },
+          required: ["defId"],
+        },
+        body: { type: "object", additionalProperties: true },
+      },
+    },
     async (req, reply) => {
       const { defId } = req.params as { defId: string };
       const parsed = agentDefinitionUpdateSchema.safeParse(req.body);
@@ -237,7 +316,18 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete(
     "/definitions/:defId",
-    { preHandler: [requirePermission({ settings: ["edit"] })] },
+    {
+      preHandler: [requirePermission({ settings: ["edit"] })],
+      schema: {
+        tags: ["ai"],
+        summary: "Delete agent definition",
+        params: {
+          type: "object",
+          properties: { defId: { type: "string" } },
+          required: ["defId"],
+        },
+      },
+    },
     async (req, reply) => {
       const { defId } = req.params as { defId: string };
       const deleted = await deleteAgentDefinition(app.prisma, defId);
@@ -248,14 +338,30 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     }
   );
 
-  app.get("/instructions", async (_req, reply) => {
-    const instructions = await listInstructions(app.prisma);
-    return await reply.send(instructions);
-  });
+  app.get(
+    "/instructions",
+    {
+      schema: {
+        tags: ["ai"],
+        summary: "List AI instructions",
+      },
+    },
+    async (_req, reply) => {
+      const instructions = await listInstructions(app.prisma);
+      return await reply.send(instructions);
+    }
+  );
 
   app.post(
     "/instructions",
-    { preHandler: [requirePermission({ settings: ["edit"] })] },
+    {
+      preHandler: [requirePermission({ settings: ["edit"] })],
+      schema: {
+        tags: ["ai"],
+        summary: "Create AI instruction",
+        body: { type: "object", additionalProperties: true },
+      },
+    },
     async (req, reply) => {
       const parsed = aiInstructionSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -273,7 +379,19 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
 
   app.put(
     "/instructions/:instId",
-    { preHandler: [requirePermission({ settings: ["edit"] })] },
+    {
+      preHandler: [requirePermission({ settings: ["edit"] })],
+      schema: {
+        tags: ["ai"],
+        summary: "Update AI instruction",
+        params: {
+          type: "object",
+          properties: { instId: { type: "string" } },
+          required: ["instId"],
+        },
+        body: { type: "object", additionalProperties: true },
+      },
+    },
     async (req, reply) => {
       const { instId } = req.params as { instId: string };
       const parsed = aiInstructionSchema.safeParse(req.body);
@@ -295,7 +413,18 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete(
     "/instructions/:instId",
-    { preHandler: [requirePermission({ settings: ["edit"] })] },
+    {
+      preHandler: [requirePermission({ settings: ["edit"] })],
+      schema: {
+        tags: ["ai"],
+        summary: "Delete AI instruction",
+        params: {
+          type: "object",
+          properties: { instId: { type: "string" } },
+          required: ["instId"],
+        },
+      },
+    },
     async (req, reply) => {
       const { instId } = req.params as { instId: string };
       const deleted = await deleteInstruction(app.prisma, instId);
@@ -306,14 +435,30 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     }
   );
 
-  app.get("/memories", async (_req, reply) => {
-    const memories = await listMemories(app.prisma);
-    return await reply.send(memories);
-  });
+  app.get(
+    "/memories",
+    {
+      schema: {
+        tags: ["ai"],
+        summary: "List AI memories",
+      },
+    },
+    async (_req, reply) => {
+      const memories = await listMemories(app.prisma);
+      return await reply.send(memories);
+    }
+  );
 
   app.post(
     "/memories",
-    { preHandler: [requirePermission({ settings: ["edit"] })] },
+    {
+      preHandler: [requirePermission({ settings: ["edit"] })],
+      schema: {
+        tags: ["ai"],
+        summary: "Create AI memory",
+        body: { type: "object", additionalProperties: true },
+      },
+    },
     async (req, reply) => {
       const parsed = aiMemorySchema.safeParse(req.body);
       if (!parsed.success) {
@@ -331,7 +476,19 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
 
   app.put(
     "/memories/:memId",
-    { preHandler: [requirePermission({ settings: ["edit"] })] },
+    {
+      preHandler: [requirePermission({ settings: ["edit"] })],
+      schema: {
+        tags: ["ai"],
+        summary: "Update AI memory",
+        params: {
+          type: "object",
+          properties: { memId: { type: "string" } },
+          required: ["memId"],
+        },
+        body: { type: "object", additionalProperties: true },
+      },
+    },
     async (req, reply) => {
       const { memId } = req.params as { memId: string };
       const parsed = aiMemorySchema.safeParse(req.body);
@@ -353,7 +510,18 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
 
   app.delete(
     "/memories/:memId",
-    { preHandler: [requirePermission({ settings: ["edit"] })] },
+    {
+      preHandler: [requirePermission({ settings: ["edit"] })],
+      schema: {
+        tags: ["ai"],
+        summary: "Delete AI memory",
+        params: {
+          type: "object",
+          properties: { memId: { type: "string" } },
+          required: ["memId"],
+        },
+      },
+    },
     async (req, reply) => {
       const { memId } = req.params as { memId: string };
       const deleted = await deleteMemory(app.prisma, memId);
@@ -364,129 +532,263 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     }
   );
 
-  app.get("/settings", async (_req, reply) => {
-    const aiSettings = await getAiSettings(app.prisma);
-    return await reply.send(aiSettings);
-  });
+  app.get(
+    "/settings",
+    {
+      schema: {
+        tags: ["ai"],
+        summary: "Get AI settings",
+      },
+    },
+    async (_req, reply) => {
+      const aiSettings = await getAiSettings(app.prisma);
+      return await reply.send(aiSettings);
+    }
+  );
 
-  app.get("/tools/available", async (_req, reply) => {
-    const tools = getToolDefinitions();
-    return await reply.send(tools);
-  });
+  app.get(
+    "/tools/available",
+    {
+      schema: {
+        tags: ["ai"],
+        summary: "List available AI tools",
+      },
+    },
+    async (_req, reply) => {
+      const tools = getToolDefinitions();
+      return await reply.send(tools);
+    }
+  );
 
-  app.get("/:id", async (req, reply) => {
-    const { id } = req.params as { id: string };
-    const conversation = await getConversation(app.prisma, req.user.id, id);
-    if (!conversation) {
-      throw new AppError("CONVERSATION_NOT_FOUND");
-    }
-    return await reply.send(conversation);
-  });
-
-  app.put("/:id", async (req, reply) => {
-    const { id } = req.params as { id: string };
-    const parsed = updateConversationSchema.safeParse(req.body);
-    if (!parsed.success) {
-      throw new AppError("VALIDATION_ERROR", {
-        errors: resolveZodErrors(
-          parsed.error.flatten().fieldErrors,
-          req.locale
-        ),
-      });
-    }
-    const updated = await updateConversation(
-      app.prisma,
-      req.user.id,
-      id,
-      parsed.data
-    );
-    if (!updated) {
-      throw new AppError("CONVERSATION_NOT_FOUND");
-    }
-    return await reply.send(updated);
-  });
-
-  app.delete("/:id", async (req, reply) => {
-    const { id } = req.params as { id: string };
-    const deleted = await deleteConversation(app.prisma, req.user.id, id);
-    if (!deleted) {
-      throw new AppError("CONVERSATION_NOT_FOUND");
-    }
-    return await reply.send(deleted);
-  });
-
-  app.get("/:id/export", async (req, reply) => {
-    const { id } = req.params as { id: string };
-    const parsed = exportQuerySchema.safeParse(req.query);
-    if (!parsed.success) {
-      throw new AppError("VALIDATION_ERROR", {
-        errors: resolveZodErrors(
-          parsed.error.flatten().fieldErrors,
-          req.locale
-        ),
-      });
-    }
-    const conversation = await exportConversation(app.prisma, req.user.id, id);
-    if (!conversation) {
-      throw new AppError("CONVERSATION_NOT_FOUND");
-    }
-    if (parsed.data.format === "json") {
+  app.get(
+    "/:id",
+    {
+      schema: {
+        tags: ["ai"],
+        summary: "Get conversation",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+      },
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const conversation = await getConversation(app.prisma, req.user.id, id);
+      if (!conversation) {
+        throw new AppError("CONVERSATION_NOT_FOUND");
+      }
       return await reply.send(conversation);
     }
-    const text = formatConversationText(conversation);
-    return await reply.type("text/plain").send(text);
-  });
+  );
 
-  app.get("/:id/messages", async (req, reply) => {
-    const { id } = req.params as { id: string };
-    const parsed = messagesQuerySchema.safeParse(req.query);
-    if (!parsed.success) {
-      throw new AppError("VALIDATION_ERROR", {
-        errors: resolveZodErrors(
-          parsed.error.flatten().fieldErrors,
-          req.locale
-        ),
-      });
+  app.put(
+    "/:id",
+    {
+      schema: {
+        tags: ["ai"],
+        summary: "Update conversation",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        body: { type: "object", additionalProperties: true },
+      },
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const parsed = updateConversationSchema.safeParse(req.body);
+      if (!parsed.success) {
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
+      }
+      const updated = await updateConversation(
+        app.prisma,
+        req.user.id,
+        id,
+        parsed.data
+      );
+      if (!updated) {
+        throw new AppError("CONVERSATION_NOT_FOUND");
+      }
+      return await reply.send(updated);
     }
-    const result = await listMessages(app.prisma, req.user.id, id, parsed.data);
-    if (!result) {
-      throw new AppError("CONVERSATION_NOT_FOUND");
-    }
-    return await reply.send(result);
-  });
+  );
 
-  app.put("/:id/messages/:messageId", async (req, reply) => {
-    const { id, messageId } = req.params as { id: string; messageId: string };
-    const parsed = updateMessageSchema.safeParse(req.body);
-    if (!parsed.success) {
-      throw new AppError("VALIDATION_ERROR", {
-        errors: resolveZodErrors(
-          parsed.error.flatten().fieldErrors,
-          req.locale
-        ),
-      });
+  app.delete(
+    "/:id",
+    {
+      schema: {
+        tags: ["ai"],
+        summary: "Delete conversation",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+      },
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const deleted = await deleteConversation(app.prisma, req.user.id, id);
+      if (!deleted) {
+        throw new AppError("CONVERSATION_NOT_FOUND");
+      }
+      return await reply.send(deleted);
     }
-    const updated = await updateMessage(
-      app.prisma,
-      req.user.id,
-      id,
-      messageId,
-      parsed.data
-    );
-    if (!updated) {
-      throw new AppError("MESSAGE_NOT_FOUND");
-    }
-    return await reply.send(updated);
-  });
+  );
 
-  app.delete("/:id/messages/:messageId", async (req, reply) => {
-    const { id, messageId } = req.params as { id: string; messageId: string };
-    const deleted = await deleteMessage(app.prisma, req.user.id, id, messageId);
-    if (!deleted) {
-      throw new AppError("MESSAGE_NOT_FOUND");
+  app.get(
+    "/:id/export",
+    {
+      schema: {
+        tags: ["ai"],
+        summary: "Export conversation",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        querystring: { type: "object", additionalProperties: true },
+      },
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const parsed = exportQuerySchema.safeParse(req.query);
+      if (!parsed.success) {
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
+      }
+      const conversation = await exportConversation(
+        app.prisma,
+        req.user.id,
+        id
+      );
+      if (!conversation) {
+        throw new AppError("CONVERSATION_NOT_FOUND");
+      }
+      if (parsed.data.format === "json") {
+        return await reply.send(conversation);
+      }
+      const text = formatConversationText(conversation);
+      return await reply.type("text/plain").send(text);
     }
-    return await reply.send(deleted);
-  });
+  );
+
+  app.get(
+    "/:id/messages",
+    {
+      schema: {
+        tags: ["ai"],
+        summary: "List conversation messages",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        querystring: { type: "object", additionalProperties: true },
+      },
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const parsed = messagesQuerySchema.safeParse(req.query);
+      if (!parsed.success) {
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
+      }
+      const result = await listMessages(
+        app.prisma,
+        req.user.id,
+        id,
+        parsed.data
+      );
+      if (!result) {
+        throw new AppError("CONVERSATION_NOT_FOUND");
+      }
+      return await reply.send(result);
+    }
+  );
+
+  app.put(
+    "/:id/messages/:messageId",
+    {
+      schema: {
+        tags: ["ai"],
+        summary: "Update message",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" }, messageId: { type: "string" } },
+          required: ["id", "messageId"],
+        },
+        body: { type: "object", additionalProperties: true },
+      },
+    },
+    async (req, reply) => {
+      const { id, messageId } = req.params as { id: string; messageId: string };
+      const parsed = updateMessageSchema.safeParse(req.body);
+      if (!parsed.success) {
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            req.locale
+          ),
+        });
+      }
+      const updated = await updateMessage(
+        app.prisma,
+        req.user.id,
+        id,
+        messageId,
+        parsed.data
+      );
+      if (!updated) {
+        throw new AppError("MESSAGE_NOT_FOUND");
+      }
+      return await reply.send(updated);
+    }
+  );
+
+  app.delete(
+    "/:id/messages/:messageId",
+    {
+      schema: {
+        tags: ["ai"],
+        summary: "Delete message",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" }, messageId: { type: "string" } },
+          required: ["id", "messageId"],
+        },
+      },
+    },
+    async (req, reply) => {
+      const { id, messageId } = req.params as { id: string; messageId: string };
+      const deleted = await deleteMessage(
+        app.prisma,
+        req.user.id,
+        id,
+        messageId
+      );
+      if (!deleted) {
+        throw new AppError("MESSAGE_NOT_FOUND");
+      }
+      return await reply.send(deleted);
+    }
+  );
 };
 
 interface ExportedConversation {

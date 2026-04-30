@@ -22,7 +22,13 @@ import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 export const notificationsRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/templates",
-    { preHandler: [requirePermission({ notifications: ["read"] })] },
+    {
+      preHandler: [requirePermission({ notifications: ["read"] })],
+      schema: {
+        tags: ["notifications"],
+        summary: "Get notification templates",
+      },
+    },
     async (_req, reply) => {
       const templates = await getNotificationTemplates(app.prisma);
       return reply.send(templates);
@@ -31,7 +37,19 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
 
   app.put(
     "/templates/:id",
-    { preHandler: [requirePermission({ notifications: ["manage"] })] },
+    {
+      preHandler: [requirePermission({ notifications: ["manage"] })],
+      schema: {
+        tags: ["notifications"],
+        summary: "Update notification template",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        body: { type: "object", additionalProperties: true },
+      },
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = updateNotificationTemplateSchema.safeParse(req.body);
@@ -57,7 +75,14 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
 
   app.get(
     "/in-app",
-    { preHandler: [requirePermission({ notifications: ["read"] })] },
+    {
+      preHandler: [requirePermission({ notifications: ["read"] })],
+      schema: {
+        tags: ["notifications"],
+        summary: "List in-app notifications",
+        querystring: { type: "object", additionalProperties: true },
+      },
+    },
     async (req, reply) => {
       const parsed = listInAppQuerySchema.safeParse(req.query);
       if (!parsed.success) {
@@ -83,7 +108,18 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
 
   app.put(
     "/in-app/:id/read",
-    { preHandler: [requirePermission({ notifications: ["read"] })] },
+    {
+      preHandler: [requirePermission({ notifications: ["read"] })],
+      schema: {
+        tags: ["notifications"],
+        summary: "Mark notification read",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+      },
+    },
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const parsed = markReadParamSchema.safeParse({ id });
@@ -109,7 +145,13 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
 
   app.put(
     "/in-app/read-all",
-    { preHandler: [requirePermission({ notifications: ["read"] })] },
+    {
+      preHandler: [requirePermission({ notifications: ["read"] })],
+      schema: {
+        tags: ["notifications"],
+        summary: "Mark all notifications read",
+      },
+    },
     async (req, reply) => {
       const result = await markAllNotificationsRead(app.prisma, req.user.id);
       return reply.send({ count: result.count });
@@ -118,7 +160,10 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
 
   app.get(
     "/outbox",
-    { preHandler: [requirePermission({ notifications: ["read"] })] },
+    {
+      preHandler: [requirePermission({ notifications: ["read"] })],
+      schema: { tags: ["notifications"], summary: "Get outbox logs" },
+    },
     async (_req, reply) => {
       const logs = await getOutboxLogs(app.prisma);
       return reply.send(logs);
@@ -127,7 +172,18 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
 
   app.post(
     "/test/:templateId",
-    { preHandler: [requirePermission({ notifications: ["manage"] })] },
+    {
+      preHandler: [requirePermission({ notifications: ["manage"] })],
+      schema: {
+        tags: ["notifications"],
+        summary: "Send test notification",
+        params: {
+          type: "object",
+          properties: { templateId: { type: "string" } },
+          required: ["templateId"],
+        },
+      },
+    },
     async (req, reply) => {
       const { templateId } = req.params as { templateId: string };
       const template = await app.prisma.notificationTemplate.findUnique({

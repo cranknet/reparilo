@@ -3,6 +3,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import multipart from "@fastify/multipart";
 import staticPlugin from "@fastify/static";
+import swagger from "@fastify/swagger";
+import swaggerUi from "@fastify/swagger-ui";
 import websocket from "@fastify/websocket";
 import Fastify from "fastify";
 import { loadEnv } from "./config/env.js";
@@ -36,6 +38,8 @@ const app = Fastify({
   trustProxy: env.TRUST_PROXY ?? IS_PROD,
   requestIdHeader: false,
   requestIdLogLabel: "reqId",
+  connectionTimeout: 60_000,
+  requestTimeout: 30_000,
   genReqId: () =>
     globalThis.crypto?.randomUUID?.() ??
     Math.random().toString(36).slice(2) + Date.now().toString(36),
@@ -47,6 +51,52 @@ app.addHook("onSend", (request, reply, _payload, done) => {
 });
 
 await app.register(securityPlugin);
+
+if (!IS_PROD) {
+  await app.register(swagger, {
+    openapi: {
+      openapi: "3.0.3",
+      info: {
+        title: "Reparilo API",
+        description: "Repair shop management system API",
+        version: "1.0.0",
+      },
+      tags: [
+        { name: "auth", description: "Authentication" },
+        { name: "jobs", description: "Job management" },
+        { name: "customers", description: "Customer management" },
+        { name: "users", description: "User management" },
+        { name: "parts", description: "Parts catalog" },
+        { name: "repairs", description: "Repair catalog" },
+        { name: "notifications", description: "Notifications" },
+        { name: "settings", description: "Settings" },
+        { name: "dashboard", description: "Dashboard" },
+        { name: "ai", description: "AI analyst" },
+        { name: "receipts", description: "Receipts and labels" },
+        { name: "health", description: "Health check" },
+      ],
+      components: {
+        securitySchemes: {
+          cookieAuth: {
+            type: "apiKey",
+            in: "cookie",
+            name: "better-auth.session_token",
+          },
+        },
+      },
+    },
+  });
+
+  await app.register(swaggerUi, {
+    routePrefix: "/docs",
+    uiConfig: {
+      docExpansion: "list",
+      deepLinking: true,
+    },
+    staticCSP: true,
+  });
+}
+
 await app.register(multipart, { limits: { fileSize: 5 * 1024 * 1024 } });
 await app.register(websocket);
 await app.register(localePlugin);

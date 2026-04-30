@@ -133,6 +133,11 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/",
     {
+      schema: {
+        tags: ["users"],
+        summary: "List users",
+        querystring: { type: "object", additionalProperties: true },
+      },
       preHandler: [requirePermission({ user: ["list"] })],
     },
     async (request, reply) => {
@@ -181,6 +186,15 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/:id",
     {
+      schema: {
+        tags: ["users"],
+        summary: "Get user by ID",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+      },
       preHandler: [requirePermission({ user: ["get"] })],
     },
     async (request, reply) => {
@@ -199,6 +213,11 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     "/",
     {
+      schema: {
+        tags: ["users"],
+        summary: "Create user",
+        body: { type: "object", additionalProperties: true },
+      },
       preHandler: [requirePermission({ user: ["create"] })],
     },
     async (request, reply) => {
@@ -270,6 +289,16 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.patch(
     "/:id/status",
     {
+      schema: {
+        tags: ["users"],
+        summary: "Toggle user active status",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        body: { type: "object", additionalProperties: true },
+      },
       preHandler: [requirePermission({ user: ["update"] })],
     },
     async (request, reply) => {
@@ -310,6 +339,16 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
   app.post(
     "/:id/reset-password",
     {
+      schema: {
+        tags: ["users"],
+        summary: "Reset user password",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        body: { type: "object", additionalProperties: true },
+      },
       preHandler: [requirePermission({ user: ["update"] })],
     },
     async (request, reply) => {
@@ -358,245 +397,346 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     }
   );
 
-  app.patch("/:id", async (request, reply) => {
-    const { id } = request.params as { id: string };
+  app.patch(
+    "/:id",
+    {
+      schema: {
+        tags: ["users"],
+        summary: "Update user profile",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        body: { type: "object", additionalProperties: true },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
 
-    if (!(await canAccessUser(request.user, id, { user: ["update"] }))) {
-      throw new AppError("FORBIDDEN");
-    }
-
-    const parsed = updateProfileSchema.safeParse(request.body);
-    if (!parsed.success) {
-      throw new AppError("VALIDATION_ERROR", {
-        errors: resolveZodErrors(
-          parsed.error.flatten().fieldErrors,
-          request.locale
-        ),
-      });
-    }
-
-    const { name, email, username } = parsed.data;
-
-    const data = buildUpdateData({ name, email, username });
-
-    if (Object.keys(data).length === 0) {
-      throw new AppError("AT_LEAST_ONE_FIELD");
-    }
-
-    const conflict = await checkProfileUniqueness(
-      app.prisma,
-      id,
-      email,
-      username
-    );
-    if (conflict) {
-      throw new AppError("CONFLICT", { message: conflict });
-    }
-
-    try {
-      const updated = await updateProfile(app.prisma, id, data);
-      return reply.send(updated);
-    } catch (err) {
-      const conflictMsg = isUniqueViolation(err);
-      if (conflictMsg) {
-        throw new AppError("CONFLICT", { message: conflictMsg });
+      if (!(await canAccessUser(request.user, id, { user: ["update"] }))) {
+        throw new AppError("FORBIDDEN");
       }
-      throw err;
-    }
-  });
 
-  app.get("/:id/activity", async (request, reply) => {
-    const paramParsed = userIdParamSchema.safeParse(
-      (request.params as { id: string }).id
-    );
-    if (!paramParsed.success) {
-      throw new AppError("VALIDATION_ERROR", {
-        errors: paramParsed.error
-          .flatten()
-          .formErrors.map((m) => resolveValidationMessage(m, request.locale)),
-      });
-    }
-    const id = paramParsed.data;
-    const queryParsed = activityListQuerySchema.safeParse(request.query);
-    if (!queryParsed.success) {
-      throw new AppError("VALIDATION_ERROR", {
-        errors: resolveZodErrors(
-          queryParsed.error.flatten().fieldErrors,
-          request.locale
-        ),
-      });
-    }
-    const take = queryParsed.data.limit;
-    const cursor = queryParsed.data.cursor;
-
-    if (!(await canAccessUser(request.user, id, { user: ["list"] }))) {
-      throw new AppError("FORBIDDEN");
-    }
-
-    let cursorFilter = {};
-    if (cursor) {
-      const cursorLog = await app.prisma.auditLog.findUnique({
-        where: { id: cursor },
-        select: { createdAt: true },
-      });
-      if (!cursorLog) {
-        throw new AppError("INVALID_CURSOR");
+      const parsed = updateProfileSchema.safeParse(request.body);
+      if (!parsed.success) {
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            parsed.error.flatten().fieldErrors,
+            request.locale
+          ),
+        });
       }
-      cursorFilter = {
-        OR: [
-          { createdAt: { lt: cursorLog.createdAt } },
-          {
-            createdAt: cursorLog.createdAt,
-            id: { lt: cursor },
+
+      const { name, email, username } = parsed.data;
+
+      const data = buildUpdateData({ name, email, username });
+
+      if (Object.keys(data).length === 0) {
+        throw new AppError("AT_LEAST_ONE_FIELD");
+      }
+
+      const conflict = await checkProfileUniqueness(
+        app.prisma,
+        id,
+        email,
+        username
+      );
+      if (conflict) {
+        throw new AppError("CONFLICT", { message: conflict });
+      }
+
+      try {
+        const updated = await updateProfile(app.prisma, id, data);
+        return reply.send(updated);
+      } catch (err) {
+        const conflictMsg = isUniqueViolation(err);
+        if (conflictMsg) {
+          throw new AppError("CONFLICT", { message: conflictMsg });
+        }
+        throw err;
+      }
+    }
+  );
+
+  app.get(
+    "/:id/activity",
+    {
+      schema: {
+        tags: ["users"],
+        summary: "Get user activity log",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+        querystring: { type: "object", additionalProperties: true },
+      },
+    },
+    async (request, reply) => {
+      const paramParsed = userIdParamSchema.safeParse(
+        (request.params as { id: string }).id
+      );
+      if (!paramParsed.success) {
+        throw new AppError("VALIDATION_ERROR", {
+          errors: paramParsed.error
+            .flatten()
+            .formErrors.map((m) => resolveValidationMessage(m, request.locale)),
+        });
+      }
+      const id = paramParsed.data;
+      const queryParsed = activityListQuerySchema.safeParse(request.query);
+      if (!queryParsed.success) {
+        throw new AppError("VALIDATION_ERROR", {
+          errors: resolveZodErrors(
+            queryParsed.error.flatten().fieldErrors,
+            request.locale
+          ),
+        });
+      }
+      const take = queryParsed.data.limit;
+      const cursor = queryParsed.data.cursor;
+
+      if (!(await canAccessUser(request.user, id, { user: ["list"] }))) {
+        throw new AppError("FORBIDDEN");
+      }
+
+      let cursorFilter = {};
+      if (cursor) {
+        const cursorLog = await app.prisma.auditLog.findUnique({
+          where: { id: cursor },
+          select: { createdAt: true },
+        });
+        if (!cursorLog) {
+          throw new AppError("INVALID_CURSOR");
+        }
+        cursorFilter = {
+          OR: [
+            { createdAt: { lt: cursorLog.createdAt } },
+            {
+              createdAt: cursorLog.createdAt,
+              id: { lt: cursor },
+            },
+          ],
+        };
+      }
+
+      const logs = await app.prisma.auditLog.findMany({
+        where: { userId: id, ...cursorFilter },
+        select: {
+          id: true,
+          action: true,
+          fromValue: true,
+          toValue: true,
+          metadata: true,
+          createdAt: true,
+        },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take,
+      });
+
+      const nextCursor = logs.length === take ? logs.at(-1)?.id : null;
+
+      return reply.send({ items: logs, nextCursor });
+    }
+  );
+
+  app.get(
+    "/:id/stats",
+    {
+      schema: {
+        tags: ["users"],
+        summary: "Get user stats",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+
+      if (!(await canAccessUser(request.user, id, { user: ["list"] }))) {
+        throw new AppError("FORBIDDEN");
+      }
+
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const [completedJobs, monthlyJobs] = await Promise.all([
+        app.prisma.job.count({
+          where: {
+            technicianId: id,
+            status: { in: ["DONE", "DELIVERED"] },
           },
-        ],
+        }),
+        app.prisma.job.count({
+          where: {
+            technicianId: id,
+            status: { in: ["DONE", "DELIVERED"] },
+            createdAt: { gte: monthStart },
+          },
+        }),
+      ]);
+
+      return reply.send({ completedJobs, monthlyJobs });
+    }
+  );
+
+  app.get(
+    "/:id/sessions",
+    {
+      schema: {
+        tags: ["users"],
+        summary: "List user sessions",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+
+      if (!(await canAccessUser(request.user, id, { session: ["list"] }))) {
+        throw new AppError("FORBIDDEN");
+      }
+
+      const currentSessionId = request.user.sessionId;
+
+      const sessions = await app.prisma.session.findMany({
+        where: { userId: id, expiresAt: { gt: new Date() } },
+        select: {
+          id: true,
+          ipAddress: true,
+          userAgent: true,
+          createdAt: true,
+          expiresAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      const result = sessions.map((s) => ({
+        id: s.id,
+        ipAddress: s.ipAddress,
+        userAgent: s.userAgent,
+        createdAt: s.createdAt,
+        expiresAt: s.expiresAt,
+        isCurrent: s.id === currentSessionId,
+      }));
+
+      return reply.send(result);
+    }
+  );
+
+  app.delete(
+    "/:id/sessions/:sessionId",
+    {
+      schema: {
+        tags: ["users"],
+        summary: "Revoke user session",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" }, sessionId: { type: "string" } },
+          required: ["id", "sessionId"],
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id, sessionId } = request.params as {
+        id: string;
+        sessionId: string;
       };
+
+      if (!(await canAccessUser(request.user, id, { session: ["revoke"] }))) {
+        throw new AppError("FORBIDDEN");
+      }
+
+      const session = await app.prisma.session.findUnique({
+        where: { id: sessionId },
+        select: { id: true, userId: true },
+      });
+
+      if (!session || session.userId !== id) {
+        throw new AppError("SESSION_NOT_FOUND");
+      }
+
+      if (sessionId === request.user.sessionId) {
+        throw new AppError("CANNOT_END_CURRENT_SESSION");
+      }
+
+      await app.prisma.session.delete({ where: { id: sessionId } });
+
+      return reply.send({ success: true });
     }
+  );
 
-    const logs = await app.prisma.auditLog.findMany({
-      where: { userId: id, ...cursorFilter },
-      select: {
-        id: true,
-        action: true,
-        fromValue: true,
-        toValue: true,
-        metadata: true,
-        createdAt: true,
-      },
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-      take,
-    });
-
-    const nextCursor = logs.length === take ? logs.at(-1)?.id : null;
-
-    return reply.send({ items: logs, nextCursor });
-  });
-
-  app.get("/:id/stats", async (request, reply) => {
-    const { id } = request.params as { id: string };
-
-    if (!(await canAccessUser(request.user, id, { user: ["list"] }))) {
-      throw new AppError("FORBIDDEN");
-    }
-
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    const [completedJobs, monthlyJobs] = await Promise.all([
-      app.prisma.job.count({
-        where: {
-          technicianId: id,
-          status: { in: ["DONE", "DELIVERED"] },
+  app.post(
+    "/:id/avatar",
+    {
+      schema: {
+        tags: ["users"],
+        summary: "Upload user avatar",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
         },
-      }),
-      app.prisma.job.count({
-        where: {
-          technicianId: id,
-          status: { in: ["DONE", "DELIVERED"] },
-          createdAt: { gte: monthStart },
-        },
-      }),
-    ]);
-
-    return reply.send({ completedJobs, monthlyJobs });
-  });
-
-  app.get("/:id/sessions", async (request, reply) => {
-    const { id } = request.params as { id: string };
-
-    if (!(await canAccessUser(request.user, id, { session: ["list"] }))) {
-      throw new AppError("FORBIDDEN");
-    }
-
-    const currentSessionId = request.user.sessionId;
-
-    const sessions = await app.prisma.session.findMany({
-      where: { userId: id, expiresAt: { gt: new Date() } },
-      select: {
-        id: true,
-        ipAddress: true,
-        userAgent: true,
-        createdAt: true,
-        expiresAt: true,
+        consumes: ["multipart/form-data"],
       },
-      orderBy: { createdAt: "desc" },
-    });
+    },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
 
-    const result = sessions.map((s) => ({
-      id: s.id,
-      ipAddress: s.ipAddress,
-      userAgent: s.userAgent,
-      createdAt: s.createdAt,
-      expiresAt: s.expiresAt,
-      isCurrent: s.id === currentSessionId,
-    }));
+      if (request.user.id !== id) {
+        throw new AppError("AVATAR_NOT_OWN");
+      }
 
-    return reply.send(result);
-  });
+      const data = await request.file();
+      if (!data) {
+        throw new AppError("NO_FILE_UPLOADED");
+      }
 
-  app.delete("/:id/sessions/:sessionId", async (request, reply) => {
-    const { id, sessionId } = request.params as {
-      id: string;
-      sessionId: string;
-    };
+      const result = await uploadAvatar(app.prisma, id, data);
+      if (!result) {
+        throw new AppError("USER_NOT_FOUND");
+      }
+      if ("error" in result && result.error) {
+        throw new AppError(result.error);
+      }
 
-    if (!(await canAccessUser(request.user, id, { session: ["revoke"] }))) {
-      throw new AppError("FORBIDDEN");
+      return reply.send(result);
     }
+  );
 
-    const session = await app.prisma.session.findUnique({
-      where: { id: sessionId },
-      select: { id: true, userId: true },
-    });
+  app.delete(
+    "/:id/avatar",
+    {
+      schema: {
+        tags: ["users"],
+        summary: "Delete user avatar",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
 
-    if (!session || session.userId !== id) {
-      throw new AppError("SESSION_NOT_FOUND");
+      if (request.user.id !== id) {
+        throw new AppError("AVATAR_NOT_OWN");
+      }
+
+      const result = await deleteAvatar(app.prisma, id);
+      if (!result) {
+        throw new AppError("USER_NOT_FOUND");
+      }
+
+      return reply.send(result);
     }
-
-    if (sessionId === request.user.sessionId) {
-      throw new AppError("CANNOT_END_CURRENT_SESSION");
-    }
-
-    await app.prisma.session.delete({ where: { id: sessionId } });
-
-    return reply.send({ success: true });
-  });
-
-  app.post("/:id/avatar", async (request, reply) => {
-    const { id } = request.params as { id: string };
-
-    if (request.user.id !== id) {
-      throw new AppError("AVATAR_NOT_OWN");
-    }
-
-    const data = await request.file();
-    if (!data) {
-      throw new AppError("NO_FILE_UPLOADED");
-    }
-
-    const result = await uploadAvatar(app.prisma, id, data);
-    if (!result) {
-      throw new AppError("USER_NOT_FOUND");
-    }
-    if ("error" in result && result.error) {
-      throw new AppError(result.error);
-    }
-
-    return reply.send(result);
-  });
-
-  app.delete("/:id/avatar", async (request, reply) => {
-    const { id } = request.params as { id: string };
-
-    if (request.user.id !== id) {
-      throw new AppError("AVATAR_NOT_OWN");
-    }
-
-    const result = await deleteAvatar(app.prisma, id);
-    if (!result) {
-      throw new AppError("USER_NOT_FOUND");
-    }
-
-    return reply.send(result);
-  });
+  );
 };
