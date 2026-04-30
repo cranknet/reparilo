@@ -8,6 +8,7 @@ export const ERRORS = {
   UNAUTHORIZED: { status: 401, message: "errors.unauthorized" },
   FORBIDDEN: { status: 403, message: "errors.forbidden" },
   ACCOUNT_DISABLED: { status: 403, message: "errors.account_disabled" },
+  ACCOUNT_LOCKED: { status: 423, message: "errors.account_locked" },
   FORBIDDEN_STATUS_TRANSITION: {
     status: 403,
     message: "errors.forbidden_status_transition",
