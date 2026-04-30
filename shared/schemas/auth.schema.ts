@@ -1,8 +1,15 @@
 import { z } from "zod";
 
+const passwordPolicy = z
+  .string()
+  .min(8, { error: "validations.password_min" })
+  .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
+    error: "validations.password_complexity",
+  });
+
 export const signInSchema = z.object({
   username: z.string().min(1, { error: "validations.required" }),
-  password: z.string().min(8, { error: "validations.password_min" }),
+  password: passwordPolicy,
 });
 
 export const createUserSchema = z.object({
@@ -12,13 +19,13 @@ export const createUserSchema = z.object({
     .max(50)
     .regex(/^[a-zA-Z0-9_]+$/, { error: "validations.username_pattern" }),
   email: z.string().email({ error: "validations.email" }),
-  password: z.string().min(8, { error: "validations.password_min" }),
+  password: passwordPolicy,
   role: z.enum(["OWNER", "TECHNICIAN", "FRONT_DESK"]),
 });
 
 export const changePasswordSchema = z.object({
-  oldPassword: z.string().min(8, { error: "validations.password_min" }),
-  newPassword: z.string().min(8, { error: "validations.password_min" }),
+  oldPassword: passwordPolicy,
+  newPassword: passwordPolicy,
 });
 
 export const updateProfileSchema = z.object({
@@ -37,7 +44,7 @@ export const updateProfileSchema = z.object({
 });
 
 export const resetPasswordSchema = z.object({
-  password: z.string().min(8, { error: "validations.password_min" }),
+  password: passwordPolicy,
 });
 
 export const updateUserSchema = z.object({

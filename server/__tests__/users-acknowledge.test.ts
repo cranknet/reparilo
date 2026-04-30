@@ -78,7 +78,7 @@ describe("POST /api/auth/change-password", () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/auth/change-password",
-      payload: { oldPassword: "old", newPassword: "newpassword1" },
+      payload: { oldPassword: "Old12345", newPassword: "New12345" },
     });
     expect(res.statusCode).toBe(401);
   });
@@ -90,7 +90,7 @@ describe("POST /api/auth/change-password", () => {
     const res = await app.inject({
       method: "POST",
       url: "/api/auth/change-password",
-      payload: { oldPassword: "oldpassword", newPassword: "newpassword1" },
+      payload: { oldPassword: "Oldpassword1", newPassword: "Newpassword1" },
     });
 
     expect(res.statusCode).toBe(200);

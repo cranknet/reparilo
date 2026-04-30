@@ -1297,6 +1297,7 @@
     "username_min": "Le nom d'utilisateur doit comporter au moins 3 caractères",
     "username_pattern": "Le nom d'utilisateur ne peut contenir que des lettres, des chiffres et des traits de soulignement",
     "password_min": "Le mot de passe doit contenir au moins 8 caractères",
+    "password_complexity": "Le mot de passe doit contenir au moins une lettre majuscule, une lettre minuscule et un chiffre.",
     "shop_name_required": "Le nom de la boutique est obligatoire",
     "endpoint_required": "L'URL du point de terminaison est obligatoire",
     "at_least_one_field": "Au moins un champ est obligatoire"
