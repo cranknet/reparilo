@@ -20,13 +20,19 @@ export function isAppError(err: unknown): err is AppError {
 
 interface ErrorResult {
   error: string;
+  [key: string]: unknown;
 }
 
 export function throwIfError<T>(result: T | ErrorResult): asserts result is T {
   if (result && typeof result === "object" && "error" in result) {
-    const code = (result as ErrorResult).error;
+    const errResult = result as ErrorResult;
+    const code = errResult.error;
     const validCode =
       code in ERRORS ? (code as ErrorCode) : ("INTERNAL_ERROR" as ErrorCode);
-    throw new AppError(validCode);
+    const { error: _error, ...details } = errResult;
+    throw new AppError(
+      validCode,
+      Object.keys(details).length > 0 ? details : undefined
+    );
   }
 }

@@ -85,6 +85,17 @@ export async function processOutbox(prisma: PrismaClient): Promise<void> {
             status: result.success ? OutboxStatus.SENT : OutboxStatus.FAILED,
           },
         });
+      } else {
+        logger.warn(
+          `Outbox: unexpected channel "${entry.channel}" for entry ${entry.id} — marking FAILED`
+        );
+        await prisma.notificationOutbox.update({
+          where: { id: entry.id },
+          data: {
+            error: `Unsupported channel: ${entry.channel}`,
+            status: OutboxStatus.FAILED,
+          },
+        });
       }
     }
   } finally {
