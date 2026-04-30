@@ -550,6 +550,10 @@ async function buildJobLookupPayload(
   };
 }
 
+// Timing note: Both "job not found" and "wrong phone4" paths perform exactly
+// one DB query (findFirst). The payload builder runs only on success (2 extra
+// queries for audit + settings). For a repair shop this timing difference is
+// negligible. Full mitigation would require dummy queries on failure.
 export async function lookupByCode(
   prisma: PrismaClient,
   jobCode: string,

@@ -299,7 +299,7 @@ const securityPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
             action: "API_MUTATION",
             toValue: action,
             jobId: null,
-            metadata: { statusCode },
+            metadata: { requestId: request.id, statusCode },
           },
         })
         .catch((err) => {
