@@ -5,6 +5,15 @@ import type {
   CustomerSearchQueryInput,
   UpdateCustomerInput,
 } from "@shared/schemas/customer.schema";
+import {
+  count as customerCount,
+  findMany as customerFindMany,
+  findUnique as customerFindUnique,
+  search as customerSearch,
+  update as customerUpdate,
+  upsert as customerUpsert,
+  findUniqueWithJobs,
+} from "../repositories/customer.repository.js";
 
 export async function create(prisma: PrismaClient, input: CreateCustomerInput) {
   const email = input.email?.trim() || null;
@@ -17,14 +26,10 @@ export async function create(prisma: PrismaClient, input: CreateCustomerInput) {
     updateData.email = email;
   }
 
-  return await prisma.customer.upsert({
-    where: { phone: input.phone },
-    update: updateData,
-    create: {
-      email,
-      name: input.name,
-      phone: input.phone,
-    },
+  return await customerUpsert(prisma, { phone: input.phone }, updateData, {
+    email,
+    name: input.name,
+    phone: input.phone,
   });
 }
 
@@ -33,7 +38,7 @@ export async function update(
   id: string,
   data: UpdateCustomerInput
 ) {
-  const existing = await prisma.customer.findUnique({ where: { id } });
+  const existing = await customerFindUnique(prisma, id);
   if (!existing) {
     return null;
   }
@@ -53,10 +58,7 @@ export async function update(
     return existing;
   }
 
-  return await prisma.customer.update({
-    where: { id },
-    data: updateData,
-  });
+  return await customerUpdate(prisma, id, updateData);
 }
 
 export async function list(
@@ -77,13 +79,14 @@ export async function list(
   }
 
   const [customers, totalCount] = await Promise.all([
-    prisma.customer.findMany({
+    customerFindMany(
+      prisma,
       where,
-      include: { _count: { select: { jobs: true } } },
-      orderBy: { id: "desc" },
-      take: limit + 1,
-    }),
-    cursor ? Promise.resolve(null) : prisma.customer.count({ where }),
+      { _count: { select: { jobs: true } } },
+      { id: "desc" },
+      limit + 1
+    ),
+    cursor ? Promise.resolve(null) : customerCount(prisma, where),
   ]);
 
   let nextCursor: string | null = null;
@@ -103,41 +106,28 @@ export async function search(
 ) {
   const { q, limit } = query;
 
-  return await prisma.customer.findMany({
-    where: {
+  return await customerSearch(
+    prisma,
+    {
       OR: [
         { name: { contains: q, mode: "insensitive" } },
         { phone: { startsWith: q } },
       ],
     },
-    select: {
+    {
       _count: { select: { jobs: true } },
       email: true,
       id: true,
       name: true,
       phone: true,
     },
-    take: limit,
-    orderBy: { name: "asc" },
-  });
+    limit,
+    { name: "asc" }
+  );
 }
 
 export async function getById(prisma: PrismaClient, id: string) {
-  const customer = await prisma.customer.findUnique({
-    where: { id },
-    include: {
-      jobs: {
-        include: {
-          device: {
-            select: { model: true, brand: { select: { name: true } } },
-          },
-          repairs: { select: { repairName: true, price: true } },
-          partsUsed: { select: { partName: true, totalCost: true } },
-        },
-        orderBy: { createdAt: "desc" },
-      },
-    },
-  });
+  const customer = await findUniqueWithJobs(prisma, id);
   if (!customer) {
     return null;
   }
