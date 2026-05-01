@@ -1,9 +1,4 @@
-import {
-  type AuditAction,
-  type JobStatus,
-  Prisma,
-  type PrismaClient,
-} from "@generated/client";
+import { type AuditAction, type JobStatus, Prisma } from "@generated/client";
 import type {
   ActiveRepairDTO,
   ActivityItemDTO,
@@ -16,6 +11,23 @@ import type {
   Scope,
   WarrantyReturnDTO,
 } from "@shared/types/dashboard";
+import {
+  auditLogFindMany,
+  countWaitingForParts,
+  type DbClient,
+  findActiveRepairs,
+  findDeliveredJobs,
+  findOverdueJobs,
+  findPickupReady,
+  findRepairTimeJobs,
+  findScheduledForTech,
+  findTodayIntakes,
+  findWarrantyReturns,
+  jobCount,
+  jobGroupByStatus,
+  queryFinancialTrend,
+  queryRevenueAndCost,
+} from "../repositories/dashboard.repository.js";
 import type { DateRange } from "../utils/time-range.js";
 import { toMoney } from "../utils/time-range.js";
 
@@ -30,10 +42,6 @@ const ALL_STATUSES: JobStatus[] = [
   "WAITING_FOR_PARTS",
 ];
 
-// Dashboard "in-progress" statuses exclude DONE/DELIVERED/RETURNED/CANCELLED.
-// This differs from the shared ACTIVE_STATUSES which includes DONE (repair
-// completed but not yet delivered). Here DONE means work is finished and the
-// job is awaiting customer pickup — no longer in the active work pipeline.
 const DASHBOARD_ACTIVE_STATUSES: JobStatus[] = [
   "IN_REPAIR",
   "INTAKE",
@@ -46,14 +54,10 @@ function scopeWhere(scope: Scope) {
 }
 
 export async function pipelineCounts(
-  prisma: PrismaClient,
+  prisma: DbClient,
   scope: Scope
 ): Promise<Record<JobStatus, number>> {
-  const groups = await prisma.job.groupBy({
-    by: ["status"],
-    _count: { _all: true },
-    where: scopeWhere(scope),
-  });
+  const groups = await jobGroupByStatus(prisma, scopeWhere(scope));
   const counts = Object.fromEntries(ALL_STATUSES.map((s) => [s, 0])) as Record<
     JobStatus,
     number
@@ -65,59 +69,39 @@ export async function pipelineCounts(
 }
 
 export async function activeJobsCount(
-  prisma: PrismaClient,
+  prisma: DbClient,
   scope: Scope
 ): Promise<number> {
-  return await prisma.job.count({
-    where: {
-      ...scopeWhere(scope),
-      status: { in: ["INTAKE", "IN_REPAIR", "ON_HOLD", "WAITING_FOR_PARTS"] },
-    },
+  return await jobCount(prisma, {
+    status: { in: ["INTAKE", "IN_REPAIR", "ON_HOLD", "WAITING_FOR_PARTS"] },
+    ...scopeWhere(scope),
   });
 }
 
 export async function completedTodayCount(
-  prisma: PrismaClient,
+  prisma: DbClient,
   scope: Scope,
   today: DateRange
 ): Promise<number> {
-  return await prisma.job.count({
-    where: {
-      ...scopeWhere(scope),
-      status: "DELIVERED",
-      updatedAt: { gte: today.start, lt: today.end },
-    },
+  return await jobCount(prisma, {
+    ...scopeWhere(scope),
+    status: "DELIVERED",
+    updatedAt: { gte: today.start, lt: today.end },
   });
 }
 
-interface RevCostRow {
-  cost: string;
-  revenue: string;
-}
-
-// Revenue = repairs labor + parts charged to customer.
-// Cost = parts wholesale cost only.
-// Profit (revenue - cost) = repairs labor revenue, because parts revenue
-// cancels parts cost. This models parts as pass-through cost — the shop's
-// margin comes from labor (repairs). If this model changes, both revenue
-// and cost calculations must be updated together.
 async function revenueAndCost(
-  prisma: PrismaClient,
+  prisma: DbClient,
   scope: Scope,
   range: DateRange
 ): Promise<{ cost: number; revenue: number }> {
-  const rows = await prisma.$queryRaw<RevCostRow[]>(
-    Prisma.sql`SELECT
-        COALESCE(SUM(rt.total), 0) + COALESCE(SUM(pt.total), 0) AS revenue,
-        COALESCE(SUM(pt.total), 0) AS cost
-      FROM "jobs" j
-      LEFT JOIN (SELECT "jobId", SUM("price") AS total FROM "job_repairs" GROUP BY "jobId") rt
-        ON rt."jobId" = j."id"
-      LEFT JOIN (SELECT "jobId", SUM("totalCost") AS total FROM "job_parts" GROUP BY "jobId") pt
-        ON pt."jobId" = j."id"
-      WHERE j."status" = 'DELIVERED'
-        AND j."updatedAt" >= ${range.start} AND j."updatedAt" < ${range.end}
-        ${scope.role === "TECHNICIAN" ? Prisma.sql`AND j."technicianId" = ${scope.userId}` : Prisma.empty}`
+  const rows = await queryRevenueAndCost(
+    prisma,
+    range.start,
+    range.end,
+    scope.role === "TECHNICIAN"
+      ? Prisma.sql`AND j."technicianId" = ${scope.userId}`
+      : Prisma.empty
   );
   let revenue = 0;
   let cost = 0;
@@ -129,7 +113,7 @@ async function revenueAndCost(
 }
 
 export async function revenueThisMonth(
-  prisma: PrismaClient,
+  prisma: DbClient,
   scope: Scope,
   month: DateRange
 ): Promise<number> {
@@ -138,7 +122,7 @@ export async function revenueThisMonth(
 }
 
 export async function avgProfitMargin(
-  prisma: PrismaClient,
+  prisma: DbClient,
   scope: Scope,
   month: DateRange
 ): Promise<number> {
@@ -150,38 +134,17 @@ export async function avgProfitMargin(
 }
 
 export async function financialTrend(
-  prisma: PrismaClient,
+  prisma: DbClient,
   scope: Scope,
   days: number
 ): Promise<FinancialTrendPoint[]> {
-  const rows = await prisma.$queryRaw<
-    Array<{ cost: string; day: Date; revenue: string }>
-  >(
-    Prisma.sql`WITH series AS (
-       SELECT generate_series(
-         (date_trunc('day', now() AT TIME ZONE ${scope.shopTz}) - INTERVAL '1 day' * ${days - 1})::date,
-         (date_trunc('day', now() AT TIME ZONE ${scope.shopTz}))::date,
-         '1 day'::interval
-       )::date AS day
-     ),
-     repair_totals AS (
-       SELECT "jobId", SUM("price") AS total FROM "job_repairs" GROUP BY "jobId"
-     ),
-     parts_totals AS (
-       SELECT "jobId", SUM("totalCost") AS total FROM "job_parts" GROUP BY "jobId"
-     )
-     SELECT s.day,
-       COALESCE(SUM(rt.total), 0) + COALESCE(SUM(pt.total), 0) AS revenue,
-       COALESCE(SUM(pt.total), 0) AS cost
-     FROM series s
-     LEFT JOIN "jobs" j
-       ON j."status" = 'DELIVERED'
-      AND (j."updatedAt" AT TIME ZONE ${scope.shopTz})::date = s.day
-      ${scope.role === "TECHNICIAN" ? Prisma.sql`AND j."technicianId" = ${scope.userId}` : Prisma.empty}
-     LEFT JOIN repair_totals rt ON rt."jobId" = j."id"
-     LEFT JOIN parts_totals pt ON pt."jobId" = j."id"
-     GROUP BY s.day
-     ORDER BY s.day ASC`
+  const rows = await queryFinancialTrend(
+    prisma,
+    days,
+    scope.shopTz,
+    scope.role === "TECHNICIAN"
+      ? Prisma.sql`AND j."technicianId" = ${scope.userId}`
+      : Prisma.empty
   );
   return rows.map((r) => ({
     cost: toMoney(Number(r.cost)),
@@ -191,24 +154,20 @@ export async function financialTrend(
 }
 
 export async function overdueJobs(
-  prisma: PrismaClient,
+  prisma: DbClient,
   scope: Scope,
   limit: number
 ): Promise<OverdueJobDTO[]> {
-  const jobs = await prisma.job.findMany({
-    where: {
+  const jobs = await findOverdueJobs(
+    prisma,
+    {
       ...scopeWhere(scope),
       estimatedDate: { lt: new Date() },
       status: { in: [...DASHBOARD_ACTIVE_STATUSES] },
     },
-    include: {
-      customer: { select: { name: true } },
-      device: { select: { model: true, brand: { select: { name: true } } } },
-      repairs: { take: 1, select: { repairName: true } },
-    },
-    orderBy: { estimatedDate: "asc" },
-    take: limit,
-  });
+    { estimatedDate: "asc" },
+    limit
+  );
   const now = Date.now();
   return jobs.map((j) => ({
     customerName: j.customer.name,
@@ -223,25 +182,20 @@ export async function overdueJobs(
 }
 
 export async function warrantyReturnsOpen(
-  prisma: PrismaClient,
+  prisma: DbClient,
   scope: Scope,
   limit: number
 ): Promise<WarrantyReturnDTO[]> {
-  const jobs = await prisma.job.findMany({
-    where: {
+  const jobs = await findWarrantyReturns(
+    prisma,
+    {
       ...scopeWhere(scope),
       isWarrantyReturn: true,
       status: { notIn: ["DELIVERED", "CANCELLED"] },
     },
-    select: {
-      createdAt: true,
-      id: true,
-      jobCode: true,
-      reportedProblem: true,
-    },
-    orderBy: { createdAt: "desc" },
-    take: limit,
-  });
+    { createdAt: "desc" },
+    limit
+  );
   return jobs.map((j) => ({
     createdAt: j.createdAt.toISOString(),
     description: j.reportedProblem.slice(0, 80),
@@ -251,41 +205,31 @@ export async function warrantyReturnsOpen(
 }
 
 export async function todayScheduleForTech(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string,
   today: DateRange
 ): Promise<ScheduleItemDTO[]> {
-  const scheduled = await prisma.job.findMany({
-    where: {
+  const scheduled = await findScheduledForTech(
+    prisma,
+    {
       estimatedDate: { gte: today.start, lt: today.end },
       technicianId: userId,
     },
-    include: {
-      customer: { select: { name: true } },
-      device: { select: { model: true, brand: { select: { name: true } } } },
-      repairs: { take: 1, select: { repairName: true } },
-    },
-    orderBy: { createdAt: "asc" },
-    take: 20,
-  });
+    { createdAt: "asc" },
+    20
+  );
   const source =
     scheduled.length > 0
       ? scheduled
-      : await prisma.job.findMany({
-          where: {
+      : await findScheduledForTech(
+          prisma,
+          {
             status: { in: [...DASHBOARD_ACTIVE_STATUSES] },
             technicianId: userId,
           },
-          include: {
-            customer: { select: { name: true } },
-            device: {
-              select: { model: true, brand: { select: { name: true } } },
-            },
-            repairs: { take: 1, select: { repairName: true } },
-          },
-          orderBy: { createdAt: "asc" },
-          take: 5,
-        });
+          { createdAt: "asc" },
+          5
+        );
   return source.map((j) => ({
     customerName: j.customer.name,
     device: `${j.device.brand.name} ${j.device.model}`,
@@ -300,18 +244,17 @@ export async function todayScheduleForTech(
 }
 
 export async function recentActivityForTech(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string,
   limit: number
 ): Promise<ActivityItemDTO[]> {
-  const rows = await prisma.auditLog.findMany({
-    where: {
-      OR: [{ job: { technicianId: userId } }, { userId }],
-    },
-    include: { job: { select: { jobCode: true } } },
-    orderBy: { createdAt: "desc" },
-    take: limit,
-  });
+  const rows = await auditLogFindMany(
+    prisma,
+    { OR: [{ job: { technicianId: userId } }, { userId }] },
+    { job: { select: { jobCode: true } } },
+    { createdAt: "desc" },
+    limit
+  );
   return rows.map((r) => ({
     action: r.action as AuditAction,
     createdAt: r.createdAt.toISOString(),
@@ -323,18 +266,15 @@ export async function recentActivityForTech(
 }
 
 export async function avgRepairTimeHours(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string,
   days: number
 ): Promise<number> {
   const since = new Date(Date.now() - days * 86_400_000);
-  const rows = await prisma.job.findMany({
-    where: {
-      status: "DELIVERED",
-      technicianId: userId,
-      updatedAt: { gte: since },
-    },
-    select: { createdAt: true, updatedAt: true },
+  const rows = await findRepairTimeJobs(prisma, {
+    status: "DELIVERED",
+    technicianId: userId,
+    updatedAt: { gte: since },
   });
   if (rows.length === 0) {
     return 0;
@@ -350,7 +290,7 @@ export async function avgRepairTimeHours(
 }
 
 export async function priorityActionsForTech(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string
 ): Promise<{
   jobsNeedingStatusUpdate: number;
@@ -359,23 +299,17 @@ export async function priorityActionsForTech(
 }> {
   const staleThreshold = new Date(Date.now() - 24 * 3_600_000);
   const [stale, overdue, waiting] = await Promise.all([
-    prisma.job.count({
-      where: {
-        status: "IN_REPAIR",
-        technicianId: userId,
-        updatedAt: { lt: staleThreshold },
-      },
+    jobCount(prisma, {
+      status: "IN_REPAIR",
+      technicianId: userId,
+      updatedAt: { lt: staleThreshold },
     }),
-    prisma.job.count({
-      where: {
-        estimatedDate: { lt: new Date() },
-        status: { in: [...DASHBOARD_ACTIVE_STATUSES] },
-        technicianId: userId,
-      },
+    jobCount(prisma, {
+      estimatedDate: { lt: new Date() },
+      status: { in: [...DASHBOARD_ACTIVE_STATUSES] },
+      technicianId: userId,
     }),
-    prisma.job.count({
-      where: { status: "WAITING_FOR_PARTS", technicianId: userId },
-    }),
+    jobCount(prisma, { status: "WAITING_FOR_PARTS", technicianId: userId }),
   ]);
   return {
     jobsNeedingStatusUpdate: stale,
@@ -385,13 +319,14 @@ export async function priorityActionsForTech(
 }
 
 export async function activeRepairsQueue(
-  prisma: PrismaClient,
+  prisma: DbClient,
   scope: Scope,
   today: DateRange,
   limit: number
 ): Promise<ActiveRepairDTO[]> {
-  const rows = await prisma.job.findMany({
-    where: {
+  const rows = await findActiveRepairs(
+    prisma,
+    {
       ...scopeWhere(scope),
       OR: [
         { status: { in: [...DASHBOARD_ACTIVE_STATUSES] } },
@@ -401,14 +336,9 @@ export async function activeRepairsQueue(
         },
       ],
     },
-    include: {
-      customer: { select: { name: true } },
-      device: { select: { model: true, brand: { select: { name: true } } } },
-      technician: { select: { name: true, username: true } },
-    },
-    orderBy: { updatedAt: "desc" },
-    take: limit,
-  });
+    { updatedAt: "desc" },
+    limit
+  );
   return rows.map((j) => ({
     customerName: j.customer.name,
     deviceModel: `${j.device.brand.name} ${j.device.model}`,
@@ -424,7 +354,7 @@ export async function activeRepairsQueue(
 }
 
 export async function todayOverview(
-  prisma: PrismaClient,
+  prisma: DbClient,
   scope: Scope,
   today: DateRange
 ): Promise<{
@@ -433,31 +363,25 @@ export async function todayOverview(
   totalToday: number;
 }> {
   const [totalToday, completedToday, intakes] = await Promise.all([
-    prisma.job.count({
-      where: {
-        ...scopeWhere(scope),
-        createdAt: { gte: today.start, lt: today.end },
-      },
+    jobCount(prisma, {
+      ...scopeWhere(scope),
+      createdAt: { gte: today.start, lt: today.end },
     }),
-    prisma.job.count({
-      where: {
-        ...scopeWhere(scope),
-        status: "DELIVERED",
-        updatedAt: { gte: today.start, lt: today.end },
-      },
+    jobCount(prisma, {
+      ...scopeWhere(scope),
+      status: "DELIVERED",
+      updatedAt: { gte: today.start, lt: today.end },
     }),
-    prisma.job.findMany({
-      where: {
+    findTodayIntakes(
+      prisma,
+      {
         ...scopeWhere(scope),
         createdAt: { gte: today.start, lt: today.end },
         status: "INTAKE",
       },
-      include: {
-        device: { select: { model: true, brand: { select: { name: true } } } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 3,
-    }),
+      { createdAt: "desc" },
+      3
+    ),
   ]);
   return {
     completedToday,
@@ -472,19 +396,16 @@ export async function todayOverview(
 }
 
 export async function pickupReady(
-  prisma: PrismaClient,
+  prisma: DbClient,
   scope: Scope,
   limit: number
 ): Promise<PickupReadyDTO[]> {
-  const rows = await prisma.job.findMany({
-    where: { ...scopeWhere(scope), status: "DONE" },
-    include: {
-      customer: { select: { name: true, phone: true } },
-      device: { select: { model: true, brand: { select: { name: true } } } },
-    },
-    orderBy: { updatedAt: "desc" },
-    take: limit,
-  });
+  const rows = await findPickupReady(
+    prisma,
+    { ...scopeWhere(scope), status: "DONE" },
+    { updatedAt: "desc" },
+    limit
+  );
   return rows.map((j) => ({
     customerName: j.customer.name,
     customerPhone: j.customer.phone,
@@ -496,47 +417,50 @@ export async function pickupReady(
 }
 
 export async function priorityAlerts(
-  prisma: PrismaClient,
+  prisma: DbClient,
   scope: Scope,
   limit: number
 ): Promise<PriorityAlertDTO[]> {
   const [overdue, warranty, ready] = await Promise.all([
-    prisma.job.findMany({
-      where: {
+    findDeliveredJobs(
+      prisma,
+      {
         ...scopeWhere(scope),
         estimatedDate: { lt: new Date() },
         status: { in: [...DASHBOARD_ACTIVE_STATUSES] },
       },
-      select: { id: true, jobCode: true, updatedAt: true },
-      orderBy: { updatedAt: "desc" },
-      take: limit,
-    }),
-    prisma.job.findMany({
-      where: {
+      { id: true, jobCode: true, updatedAt: true },
+      { updatedAt: "desc" },
+      limit
+    ),
+    findDeliveredJobs(
+      prisma,
+      {
         ...scopeWhere(scope),
         isWarrantyReturn: true,
         status: { notIn: ["DELIVERED", "CANCELLED"] },
       },
-      select: {
+      {
         customer: { select: { name: true } },
         id: true,
         jobCode: true,
         updatedAt: true,
       },
-      orderBy: { updatedAt: "desc" },
-      take: limit,
-    }),
-    prisma.job.findMany({
-      where: { ...scopeWhere(scope), status: "DONE" },
-      select: {
+      { updatedAt: "desc" },
+      limit
+    ),
+    findDeliveredJobs(
+      prisma,
+      { ...scopeWhere(scope), status: "DONE" },
+      {
         customer: { select: { name: true } },
         id: true,
         jobCode: true,
         updatedAt: true,
       },
-      orderBy: { updatedAt: "desc" },
-      take: limit,
-    }),
+      { updatedAt: "desc" },
+      limit
+    ),
   ]);
   const combined: Array<PriorityAlertDTO & { ts: number }> = [
     ...overdue.map((j) => ({
@@ -563,4 +487,11 @@ export async function priorityAlerts(
   ];
   combined.sort((a, b) => b.ts - a.ts);
   return combined.slice(0, limit).map(({ ts: _ts, ...rest }) => rest);
+}
+
+export async function waitingForPartsCount(
+  prisma: DbClient,
+  userId: string
+): Promise<number> {
+  return await countWaitingForParts(prisma, userId);
 }

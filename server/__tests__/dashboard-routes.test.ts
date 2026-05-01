@@ -38,6 +38,7 @@ const svc = vi.hoisted(() => ({
   }),
   todayScheduleForTech: vi.fn().mockResolvedValue([]),
   warrantyReturnsOpen: vi.fn().mockResolvedValue([]),
+  waitingForPartsCount: vi.fn().mockResolvedValue(0),
 }));
 
 vi.mock("../services/dashboard.service.js", () => svc);

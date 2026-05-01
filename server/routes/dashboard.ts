@@ -17,6 +17,7 @@ import {
   revenueThisMonth,
   todayOverview,
   todayScheduleForTech,
+  waitingForPartsCount,
   warrantyReturnsOpen,
 } from "../services/dashboard.service.js";
 import { monthRange, todayRange } from "../utils/time-range.js";
@@ -89,9 +90,7 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
         priorityActions,
       ] = await Promise.all([
         pipelineCounts(app.prisma, techScope),
-        app.prisma.job.count({
-          where: { technicianId: scope.userId, status: "WAITING_FOR_PARTS" },
-        }),
+        waitingForPartsCount(app.prisma, scope.userId),
         completedTodayCount(app.prisma, techScope, today),
         todayScheduleForTech(app.prisma, scope.userId, today),
         recentActivityForTech(app.prisma, scope.userId, 20),
