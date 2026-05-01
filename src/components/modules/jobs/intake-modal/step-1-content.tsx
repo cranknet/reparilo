@@ -501,12 +501,17 @@ export default function Step1Content(props: Step1Props) {
           </div>
 
           {showQuickAdd && (
-            <QuickAddCustomer
-              onAdd={(data) => {
-                handleQuickAdd(data);
-              }}
-              onClose={() => setShowQuickAdd(false)}
-            />
+            <>
+              <div className="fixed inset-0 z-10 bg-on-surface/60 backdrop-blur-sm" />
+              <div className="relative z-20">
+                <QuickAddCustomer
+                  onAdd={(data) => {
+                    handleQuickAdd(data);
+                  }}
+                  onClose={() => setShowQuickAdd(false)}
+                />
+              </div>
+            </>
           )}
 
           <div className="space-y-4">
