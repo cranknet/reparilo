@@ -1,4 +1,9 @@
-import { type JobStatus, Prisma, type PrismaClient } from "@generated/client";
+import {
+  AuditAction,
+  type JobStatus,
+  Prisma,
+  type PrismaClient,
+} from "@generated/client";
 import type { Scope } from "@shared/types/dashboard";
 import type {
   InsightsReportDTO,
@@ -132,7 +137,7 @@ export async function revenueReport(
         AND j."updatedAt" >= ${range.start} AND j."updatedAt" < ${range.end}
         ${scope.role === "TECHNICIAN" ? Prisma.sql`AND j."technicianId" = ${scope.userId}` : Prisma.empty}
     `;
-    const cost = toMoney(costRows[0]?.cost);
+    const cost = toMoney(Number(costRows[0]?.cost ?? 0));
     avgProfitMargin =
       totalRevenue > 0
         ? Math.round(((totalRevenue - cost) / totalRevenue) * 10_000) / 100
@@ -150,11 +155,11 @@ export async function revenueReport(
       device: {
         select: { model: true, brand: { select: { name: true } } },
       },
-      parts: { select: { totalCost: true } },
+      partsUsed: { select: { totalCost: true } },
       repairs: { select: { price: true } },
       auditLogs: {
         where: {
-          action: "status_change",
+          action: AuditAction.STATUS_CHANGED,
           toValue: { in: ["DONE", "DELIVERED"] },
         },
         select: { createdAt: true },
@@ -167,7 +172,7 @@ export async function revenueReport(
 
   const breakdown = breakdownRows.map((j) => {
     const partsCost = toMoney(
-      j.parts.reduce((s, p) => s + toMoney(p.totalCost), 0)
+      j.partsUsed.reduce((s, p) => s + toMoney(p.totalCost), 0)
     );
     const repairsTotal = toMoney(
       j.repairs.reduce((s, r) => s + toMoney(r.price), 0)
@@ -238,7 +243,7 @@ export async function operationsReport(
           createdAt: true,
           auditLogs: {
             where: {
-              action: "status_change",
+              action: AuditAction.STATUS_CHANGED,
               toValue: { in: ["DONE", "DELIVERED"] },
             },
             select: { createdAt: true },
@@ -304,17 +309,18 @@ export async function operationsReport(
     _count: { _all: true },
     _avg: { price: true },
     _sum: { price: true },
-    orderBy: { _count: { _all: "desc" } },
-    take: 20,
   });
 
-  const topRepairs = topRepairsRaw.map((r) => ({
-    repairName: r.repairName,
-    category: r.category ?? "",
-    count: r._count._all,
-    avgPrice: toMoney(r._avg.price),
-    revenue: toMoney(r._sum.price),
-  }));
+  const topRepairs = topRepairsRaw
+    .map((r) => ({
+      repairName: r.repairName,
+      category: r.category ?? "",
+      count: typeof r._count === "object" ? (r._count._all ?? 0) : 0,
+      avgPrice: toMoney(r._avg?.price),
+      revenue: toMoney(r._sum?.price),
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 20);
 
   const statusGroups = await prisma.job.groupBy({
     by: ["status"],
@@ -328,14 +334,14 @@ export async function operationsReport(
   const statusBreakdown: OperationsReportDTO["statusBreakdown"] =
     statusGroups.map((g) => ({
       status: g.status,
-      count: g._count._all,
+      count: typeof g._count === "object" ? (g._count._all ?? 0) : 0,
       avgDays: 0,
     }));
 
   for (const sb of statusBreakdown) {
     const statusEntries = await prisma.auditLog.findMany({
       where: {
-        action: "status_change",
+        action: AuditAction.STATUS_CHANGED,
         toValue: sb.status,
         job: {
           ...scopeWhere(scope),
@@ -347,6 +353,9 @@ export async function operationsReport(
     });
     if (statusEntries.length > 0) {
       const totalDays = statusEntries.reduce((acc, entry) => {
+        if (!entry.job) {
+          return acc;
+        }
         const days = Math.max(
           0,
           (entry.createdAt.getTime() - entry.job.createdAt.getTime()) /
@@ -354,7 +363,12 @@ export async function operationsReport(
         );
         return acc + days;
       }, 0);
-      sb.avgDays = Math.round((totalDays / statusEntries.length) * 10) / 10;
+      sb.avgDays =
+        statusEntries.filter((e) => e.job).length > 0
+          ? Math.round(
+              (totalDays / statusEntries.filter((e) => e.job).length) * 10
+            ) / 10
+          : 0;
     }
   }
 

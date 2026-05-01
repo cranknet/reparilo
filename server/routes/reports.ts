@@ -1,3 +1,4 @@
+import type { Role } from "@shared/constants";
 import { AppError } from "@shared/errors/app-error.js";
 import { reportsQuerySchema } from "@shared/schemas/reports.schema.js";
 import type { FastifyPluginAsync } from "fastify";
@@ -32,7 +33,7 @@ export const reportsRoutes: FastifyPluginAsync = async (app) => {
 
       const marginResult = await req.server.auth.api.userHasPermission({
         body: {
-          role: req.user?.role as string,
+          role: (req.user?.role ?? "") as (typeof Role)[keyof typeof Role],
           permissions: { reports: ["viewMargin"] },
         },
       });
@@ -66,7 +67,7 @@ export const reportsRoutes: FastifyPluginAsync = async (app) => {
 
       const shopResult = await req.server.auth.api.userHasPermission({
         body: {
-          role: req.user?.role as string,
+          role: (req.user?.role ?? "") as (typeof Role)[keyof typeof Role],
           permissions: { reports: ["viewShop"] },
         },
       });
