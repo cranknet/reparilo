@@ -18,6 +18,7 @@ import { aiRoutes } from "./routes/ai.js";
 import { authRoutes } from "./routes/auth.js";
 import { customersRoutes } from "./routes/customers.js";
 import { dashboardRoutes } from "./routes/dashboard.js";
+import { devicesRoutes } from "./routes/devices.js";
 import { healthRoutes } from "./routes/health.js";
 import { jobRoutes } from "./routes/jobs.js";
 import { notificationsRoutes } from "./routes/notifications.js";
@@ -63,6 +64,7 @@ if (!IS_PROD) {
       },
       tags: [
         { name: "auth", description: "Authentication" },
+        { name: "brands", description: "Brands and models" },
         { name: "jobs", description: "Job management" },
         { name: "customers", description: "Customer management" },
         { name: "users", description: "User management" },
@@ -135,6 +137,7 @@ app.register(receiptRoutes, { prefix: "/api/receipts" });
 app.register(partsRoutes, { prefix: "/api/parts" });
 app.register(repairCatalogRoutes, { prefix: "/api/repairs" });
 app.register(customersRoutes, { prefix: "/api/customers" });
+app.register(devicesRoutes, { prefix: "/api/brands" });
 app.register(usersRoutes, { prefix: "/api/users" });
 app.register(notificationsRoutes, { prefix: "/api/notifications" });
 app.register(settingsRoutes, { prefix: "/api/settings" });

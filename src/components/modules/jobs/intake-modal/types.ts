@@ -12,6 +12,7 @@ export interface SelectedRepair {
 
 export interface IntakeFormData {
   brand: string;
+  brandId: string;
   color: string;
   conditionNotes: string;
   customerEmail: string;
@@ -23,6 +24,7 @@ export interface IntakeFormData {
   estimatedDelivery: string;
   isWarrantyReturn: boolean;
   model: string;
+  modelId: string;
   photos: File[];
   repairs: SelectedRepair[];
   reportedProblem: string;
@@ -32,6 +34,7 @@ export const MAX_PHOTOS = 5;
 
 export const INITIAL_FORM: IntakeFormData = {
   brand: "",
+  brandId: "",
   color: "",
   conditionNotes: "",
   customerEmail: "",
@@ -43,6 +46,7 @@ export const INITIAL_FORM: IntakeFormData = {
   estimatedDelivery: new Date().toISOString().split("T")[0],
   isWarrantyReturn: false,
   model: "",
+  modelId: "",
   photos: [],
   repairs: [],
   reportedProblem: "",

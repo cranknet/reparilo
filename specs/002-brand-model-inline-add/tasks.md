@@ -17,14 +17,14 @@
 
 **Purpose**: Schema changes and shared code that all user stories depend on
 
-- [ ] T001 Add Brand model to `prisma/schema.prisma` with id, name (@unique), createdAt, updatedAt, devices relation
-- [ ] T002 Modify Device model in `prisma/schema.prisma`: replace `brand: String` with `brandId: String` FK to Brand, update @@unique to [brandId, model], update @@index to [brandId]
-- [ ] T003 [P] Add Brand type export to `shared/types/index.ts` using Prisma.BrandGetPayload
-- [ ] T004 [P] Create Zod schemas in `shared/schemas/device.schema.ts`: brandSearchQuery, createBrandSchema, modelSearchQuery, createModelSchema with inferred types
-- [ ] T005 [P] Export new schemas from `shared/schemas/index.ts`
-- [ ] T006 Create manual Prisma migration for Brand table + Device.brandId FK change per data-model.md migration plan
-- [ ] T007 [P] Add i18n keys to `src/i18n/locales/en.json` for brand/model dropdowns (search placeholder, add option, loading, error messages) then run `pnpm run sync-locales`
-- [ ] T008 Remove `BRANDS` constant from `src/components/modules/jobs/intake-modal/types.ts`
+- [x] T001 Add Brand model to `prisma/schema.prisma` with id, name (@unique), createdAt, updatedAt, devices relation
+- [x] T002 Modify Device model in `prisma/schema.prisma`: replace `brand: String` with `brandId: String` FK to Brand, update @@unique to [brandId, model], update @@index to [brandId]
+- [x] T003 [P] Add Brand type export to `shared/types/index.ts` using Prisma.BrandGetPayload
+- [x] T004 [P] Create Zod schemas in `shared/schemas/device.schema.ts`: brandSearchQuery, createBrandSchema, modelSearchQuery, createModelSchema with inferred types
+- [x] T005 [P] Export new schemas from `shared/schemas/index.ts`
+- [x] T006 Create manual Prisma migration for Brand table + Device.brandId FK change per data-model.md migration plan
+- [x] T007 [P] Add i18n keys to `src/i18n/locales/en.json` for brand/model dropdowns (search placeholder, add option, loading, error messages) then run `pnpm run sync-locales`
+- [x] T008 Remove `BRANDS` constant from `src/components/modules/jobs/intake-modal/types.ts`
 
 **Checkpoint**: Schema migrated, shared types/schemas available, i18n ready, BRANDS constant removed
 
@@ -36,11 +36,11 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T009 Create `server/services/device.service.ts` with searchBrands, searchModels, createBrand, createModel functions following existing service patterns (pure functions receiving prisma as first arg). searchBrands MUST use case-insensitive `startsWith` matching (mode: 'insensitive') per FR-008
-- [ ] T010 Create `server/routes/devices.ts` with four endpoints: GET /api/brands/search, POST /api/brands, GET /api/brands/:brandId/models/search, POST /api/brands/:brandId/models — following customers.ts pattern (Zod safeParse, requirePermission, AppError)
-- [ ] T011 Register devicesRoutes in `server/index.ts` with prefix `/api/brands`
-- [ ] T012 Update `server/services/job.service.ts` device.upsert logic: when form has brandId, look up Brand by id; otherwise look up by name. Then create Device with brandId instead of brand string
-- [ ] T013 Add `seedDevices()` function to `prisma/seed.ts` — upsert Brand records and Device records for the 8 brands and ~32 models from data-model.md, call it in main()
+- [x] T009 Create `server/services/device.service.ts` with searchBrands, searchModels, createBrand, createModel functions following existing service patterns (pure functions receiving prisma as first arg). searchBrands MUST use case-insensitive `startsWith` matching (mode: 'insensitive') per FR-008
+- [x] T010 Create `server/routes/devices.ts` with four endpoints: GET /api/brands/search, POST /api/brands, GET /api/brands/:brandId/models/search, POST /api/brands/:brandId/models — following customers.ts pattern (Zod safeParse, requirePermission, AppError)
+- [x] T011 Register devicesRoutes in `server/index.ts` with prefix `/api/brands`
+- [x] T012 Update `server/services/job.service.ts` device.upsert logic: when form has brandId, look up Brand by id; otherwise look up by name. Then create Device with brandId instead of brand string
+- [x] T013 Add `seedDevices()` function to `prisma/seed.ts` — upsert Brand records and Device records for the 8 brands and ~32 models from data-model.md, call it in main()
 
 **Checkpoint**: Backend ready — brand/model search and create endpoints functional, seed data populated, job creation still works
 
@@ -54,13 +54,13 @@
 
 ### Implementation for User Stories 4 & 1
 
-- [ ] T014 Create `src/hooks/use-brand-search.ts` following use-customer-search.ts pattern (debounced API call to GET /api/brands/search, AbortController, returns { query, setQuery, results, isSearching, searchError })
-- [ ] T015 [P] Create `src/hooks/use-model-search.ts` following use-brand-search pattern (debounced API call to GET /api/brands/:brandId/models/search, accepts brandId param, skips if no brandId)
-- [ ] T016 [P] Create `src/components/modules/jobs/intake-modal/brand-search-dropdown.tsx` following CustomerSearchDropdown pattern (dropdown with search results, click-outside, loading state, visible prop)
-- [ ] T017 [P] Create `src/components/modules/jobs/intake-modal/model-search-dropdown.tsx` following BrandSearchDropdown pattern (brand-filtered model results, click-outside, loading state, visible prop, disabled when no brandId per FR-007)
-- [ ] T018 Add `brandId: string` and `modelId: string` fields to IntakeFormData in `src/components/modules/jobs/intake-modal/types.ts`, add to INITIAL_FORM defaults, update REQUIRED_FIELDS if needed
-- [ ] T019 Modify `src/components/modules/jobs/intake-modal/use-intake-modal.ts`: wire up useBrandSearch and useModelSearch hooks, add brand select handler (sets brand + brandId, clears model + modelId), add model select handler (sets model + modelId)
-- [ ] T020 Modify `src/components/modules/jobs/intake-modal/step-1-content.tsx`: replace Brand datalist input with text input + BrandSearchDropdown, replace Model plain input with text input + ModelSearchDropdown, pass brandId and handlers from props
+- [x] T014 Create `src/hooks/use-brand-search.ts` following use-customer-search.ts pattern (debounced API call to GET /api/brands/search, AbortController, returns { query, setQuery, results, isSearching, searchError })
+- [x] T015 [P] Create `src/hooks/use-model-search.ts` following use-brand-search pattern (debounced API call to GET /api/brands/:brandId/models/search, accepts brandId param, skips if no brandId)
+- [x] T016 [P] Create `src/components/modules/jobs/intake-modal/brand-search-dropdown.tsx` following CustomerSearchDropdown pattern (dropdown with search results, click-outside, loading state, visible prop)
+- [x] T017 [P] Create `src/components/modules/jobs/intake-modal/model-search-dropdown.tsx` following BrandSearchDropdown pattern (brand-filtered model results, click-outside, loading state, visible prop, disabled when no brandId per FR-007)
+- [x] T018 Add `brandId: string` and `modelId: string` fields to IntakeFormData in `src/components/modules/jobs/intake-modal/types.ts`, add to INITIAL_FORM defaults, update REQUIRED_FIELDS if needed
+- [x] T019 Modify `src/components/modules/jobs/intake-modal/use-intake-modal.ts`: wire up useBrandSearch and useModelSearch hooks, add brand select handler (sets brand + brandId, clears model + modelId), add model select handler (sets model + modelId)
+- [x] T020 Modify `src/components/modules/jobs/intake-modal/step-1-content.tsx`: replace Brand datalist input with text input + BrandSearchDropdown, replace Model plain input with text input + ModelSearchDropdown, pass brandId and handlers from props
 
 **Checkpoint**: Brand and model search dropdowns work with seeded data. MVP complete — user can select brands and see filtered models.
 
@@ -74,9 +74,9 @@
 
 ### Implementation for User Story 2
 
-- [ ] T021 [US2] Add "Add '[typed text]'" option to BrandSearchDropdown in `src/components/modules/jobs/intake-modal/brand-search-dropdown.tsx` — show when query has no exact match among results, clicking calls POST /api/brands with optimistic selection
-- [ ] T022 [US2] Add inline-create logic to `src/hooks/use-brand-search.ts` — createBrand function that calls POST /api/brands, on 409 fallback to re-search, on success add to results and return created brand
-- [ ] T023 [US2] Wire brand inline-add in `src/components/modules/jobs/intake-modal/use-intake-modal.ts` — call createBrand on "Add" click, set brand + brandId on success, handle error with form field error message
+- [x] T021 [US2] Add "Add '[typed text]'" option to BrandSearchDropdown in `src/components/modules/jobs/intake-modal/brand-search-dropdown.tsx` — show when query has no exact match among results, clicking calls POST /api/brands with optimistic selection
+- [x] T022 [US2] Add inline-create logic to `src/hooks/use-brand-search.ts` — createBrand function that calls POST /api/brands, on 409 fallback to re-search, on success add to results and return created brand
+- [x] T023 [US2] Wire brand inline-add in `src/components/modules/jobs/intake-modal/use-intake-modal.ts` — call createBrand on "Add" click, set brand + brandId on success, handle error with form field error message
 
 **Checkpoint**: Inline brand add works. Non-existent brands can be created without leaving the form.
 
@@ -90,9 +90,9 @@
 
 ### Implementation for User Story 3
 
-- [ ] T024 [US3] Add "Add '[typed text]'" option to ModelSearchDropdown in `src/components/modules/jobs/intake-modal/model-search-dropdown.tsx` — show ONLY when brandId is set and query has no exact match (FR-007: no Add option without brand), clicking calls POST /api/brands/:brandId/models with optimistic selection
-- [ ] T025 [US3] Add inline-create logic to `src/hooks/use-model-search.ts` — createModel function that calls POST /api/brands/:brandId/models, on 409 fallback to re-search, on success add to results and return created device
-- [ ] T026 [US3] Wire model inline-add in `src/components/modules/jobs/intake-modal/use-intake-modal.ts` — call createModel on "Add" click, set model + modelId on success, handle error with form field error message
+- [x] T024 [US3] Add "Add '[typed text]'" option to ModelSearchDropdown in `src/components/modules/jobs/intake-modal/model-search-dropdown.tsx` — show ONLY when brandId is set and query has no exact match (FR-007: no Add option without brand), clicking calls POST /api/brands/:brandId/models with optimistic selection
+- [x] T025 [US3] Add inline-create logic to `src/hooks/use-model-search.ts` — createModel function that calls POST /api/brands/:brandId/models, on 409 fallback to re-search, on success add to results and return created device
+- [x] T026 [US3] Wire model inline-add in `src/components/modules/jobs/intake-modal/use-intake-modal.ts` — call createModel on "Add" click, set model + modelId on success, handle error with form field error message
 
 **Checkpoint**: Inline model add works. Non-existent models can be created for a brand without leaving the form.
 
@@ -102,13 +102,13 @@
 
 **Purpose**: Edge cases, validation, and cleanup across all user stories
 
-- [ ] T027 Handle case-insensitive brand duplicate in `server/services/device.service.ts` createBrand — on unique violation, fetch existing brand by case-insensitive name and return it instead of throwing 409
-- [ ] T028 [P] Clear model field when brand changes in `src/components/modules/jobs/intake-modal/use-intake-modal.ts` — ensure FR-009 (clear model on brand change) works for all brand change scenarios (select, clear, inline-add)
-- [ ] T029 [P] Add loading and error states to brand/model dropdown UI — spinner on create, disable input field during inline-add operation, error message near field on failure, field reverts to typed text on failure (per edge cases in spec)
-- [ ] T030 Update `src/components/modules/jobs/jobs-shared.ts` inferDeviceType if it references Device.brand string directly — adapt to Device.brand.name via Brand relation
-- [ ] T031 [P] Sync AGENTS.md → CLAUDE.md → GEMINI.md via `cp AGENTS.md CLAUDE.md && cp AGENTS.md GEMINI.md` (constitution requirement)
-- [ ] T032 Run `pnpm check` and fix any lint/typecheck warnings across all changed files
-- [ ] T033 Run `pnpm run db:seed` on a clean database and verify all 8 brands + ~32 models are created idempotently
+- [x] T027 Handle case-insensitive brand duplicate in `server/services/device.service.ts` createBrand — on unique violation, fetch existing brand by case-insensitive name and return it instead of throwing 409
+- [x] T028 [P] Clear model field when brand changes in `src/components/modules/jobs/intake-modal/use-intake-modal.ts` — ensure FR-009 (clear model on brand change) works for all brand change scenarios (select, clear, inline-add)
+- [x] T029 [P] Add loading and error states to brand/model dropdown UI — spinner on create, disable input field during inline-add operation, error message near field on failure, field reverts to typed text on failure (per edge cases in spec)
+- [x] T030 Update `src/components/modules/jobs/jobs-shared.ts` inferDeviceType if it references Device.brand string directly — adapt to Device.brand.name via Brand relation
+- [x] T031 [P] Sync AGENTS.md → CLAUDE.md → GEMINI.md via `cp AGENTS.md CLAUDE.md && cp AGENTS.md GEMINI.md` (constitution requirement)
+- [x] T032 Run `pnpm check` and fix any lint/typecheck warnings across all changed files
+- [x] T033 Run `pnpm run db:seed` on a clean database and verify all 8 brands + ~32 models are created idempotently
 
 ---
 

@@ -81,7 +81,7 @@ function makeJob(overrides: Record<string, unknown> = {}): Job {
     deviceId: "dev-1",
     device: {
       id: "dev-1",
-      brand: "Apple",
+      brand: { name: "Apple" },
       model: "iPhone 15",
     },
     reportedProblem: "Broken screen",

@@ -66,12 +66,14 @@ function inferDeviceType(brand: string): string {
 }
 
 export function jobToRow(job: Job): JobRow {
-  const deviceType = job.device ? inferDeviceType(job.device.brand) : "phone";
+  const deviceType = job.device
+    ? inferDeviceType(job.device.brand.name)
+    : "phone";
 
   return {
     id: job.jobCode ?? job.id,
     customer: job.customer?.name ?? "",
-    device: job.device ? `${job.device.brand} ${job.device.model}` : "",
+    device: job.device ? `${job.device.brand.name} ${job.device.model}` : "",
     deviceIcon: DEVICE_ICONS[deviceType] ?? deviceType,
     deviceSpec: job.device?.model ?? "",
     rawJob: job,

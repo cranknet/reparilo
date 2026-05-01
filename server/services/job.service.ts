@@ -54,7 +54,7 @@ async function validateTechnician(prisma: PrismaClient, technicianId: string) {
 
 const JOB_INCLUDE = {
   customer: true,
-  device: true,
+  device: { include: { brand: true } },
   notes: {
     include: {
       createdBy: { select: { id: true, name: true, username: true } },
@@ -94,7 +94,9 @@ export async function list(prisma: PrismaClient, query: JobListQueryInput) {
     where.OR = [
       { jobCode: { contains: search, mode: "insensitive" } },
       { customer: { name: { contains: search, mode: "insensitive" } } },
-      { device: { brand: { contains: search, mode: "insensitive" } } },
+      {
+        device: { brand: { name: { contains: search, mode: "insensitive" } } },
+      },
       { device: { model: { contains: search, mode: "insensitive" } } },
     ];
   }
@@ -209,12 +211,27 @@ export async function create(
     });
   }
 
+  let brandId = input.deviceBrandId;
+  if (!brandId) {
+    const existingBrand = await prisma.brand.findFirst({
+      where: { name: { equals: input.deviceBrand, mode: "insensitive" } },
+    });
+    if (existingBrand) {
+      brandId = existingBrand.id;
+    } else {
+      const newBrand = await prisma.brand.create({
+        data: { name: input.deviceBrand },
+      });
+      brandId = newBrand.id;
+    }
+  }
+
   const device = await prisma.device.upsert({
     where: {
-      brand_model: { brand: input.deviceBrand, model: input.deviceModel },
+      brandId_model: { brandId, model: input.deviceModel },
     },
     update: {},
-    create: { brand: input.deviceBrand, model: input.deviceModel },
+    create: { brandId, model: input.deviceModel },
   });
 
   const { accessCode, jobCode } = await generateJobCode(prisma);
@@ -472,7 +489,7 @@ export async function transitionStatus(
 
 const LOOKUP_INCLUDE_PUBLIC = {
   customer: { select: { name: true, phone: true } },
-  device: { select: { brand: true, model: true } },
+  device: { select: { model: true, brand: { select: { name: true } } } },
   repairs: { select: { repairName: true, price: true } },
   notes: {
     where: { isCustomerVisible: true },
@@ -483,7 +500,7 @@ const LOOKUP_INCLUDE_PUBLIC = {
 
 const LOOKUP_INCLUDE_AUTH = {
   customer: { select: { name: true } },
-  device: { select: { brand: true, model: true } },
+  device: { select: { model: true, brand: { select: { name: true } } } },
   repairs: { select: { repairName: true, price: true } },
   notes: {
     where: { isCustomerVisible: true },
@@ -502,7 +519,7 @@ async function buildJobLookupPayload(
     estimatedDate: Date | null;
     createdAt: Date;
     customer: { name: string };
-    device: { brand: string; model: string };
+    device: { brand: { name: string }; model: string };
     notes: Array<{ content: string; createdAt: Date }>;
     repairs: Array<{ repairName: string; price: { toNumber: () => number } }>;
   }
@@ -522,7 +539,7 @@ async function buildJobLookupPayload(
   return {
     createdAt: job.createdAt,
     customer: { name: job.customer.name },
-    device: `${job.device.brand} ${job.device.model}`,
+    device: `${job.device.brand.name} ${job.device.model}`,
     estimatedDate: job.estimatedDate,
     jobCode: job.jobCode,
     notes: job.notes.map((n) => ({

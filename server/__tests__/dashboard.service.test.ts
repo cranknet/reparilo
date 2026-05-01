@@ -280,7 +280,7 @@ describe("overdueJobs", () => {
         jobCode: "R-001",
         estimatedDate: past,
         customer: { name: "Alice" },
-        device: { brand: "Apple", model: "iPhone 15" },
+        device: { brand: { name: "Apple" }, model: "iPhone 15" },
         repairs: [{ repairName: "Screen" }],
       },
     ]);
@@ -304,7 +304,7 @@ describe("overdueJobs", () => {
         jobCode: "R-002",
         estimatedDate: past,
         customer: { name: "Bob" },
-        device: { brand: "Samsung", model: "S24" },
+        device: { brand: { name: "Samsung" }, model: "S24" },
         repairs: [],
       },
     ]);
@@ -377,7 +377,7 @@ describe("todayScheduleForTech", () => {
         status: "IN_REPAIR",
         createdAt: new Date(),
         customer: { name: "Carol" },
-        device: { brand: "Pixel", model: "8" },
+        device: { brand: { name: "Pixel" }, model: "8" },
         repairs: [{ repairName: "Battery" }],
       },
     ]);
@@ -403,7 +403,7 @@ describe("todayScheduleForTech", () => {
           status: "INTAKE",
           createdAt: new Date(),
           customer: { name: "Dave" },
-          device: { brand: "Xiaomi", model: "14" },
+          device: { brand: { name: "Xiaomi" }, model: "14" },
           repairs: [],
         },
       ]);
@@ -527,7 +527,7 @@ describe("activeRepairsQueue", () => {
         estimatedDate: new Date("2025-04-28"),
         updatedAt: new Date("2025-04-26T10:00:00Z"),
         customer: { name: "Eve" },
-        device: { brand: "OnePlus", model: "12" },
+        device: { brand: { name: "OnePlus" }, model: "12" },
         technician: { name: "Tech A", username: "techa" },
       },
     ]);
@@ -555,7 +555,7 @@ describe("activeRepairsQueue", () => {
         estimatedDate: null,
         updatedAt: new Date(),
         customer: { name: "Frank" },
-        device: { brand: "Nokia", model: "G60" },
+        device: { brand: { name: "Nokia" }, model: "G60" },
         technician: { name: null, username: "techb" },
       },
     ]);
@@ -580,7 +580,7 @@ describe("activeRepairsQueue", () => {
         estimatedDate: null,
         updatedAt: new Date(),
         customer: { name: "Grace" },
-        device: { brand: "Motorola", model: "Edge" },
+        device: { brand: { name: "Motorola" }, model: "Edge" },
         technician: null,
       },
     ]);
@@ -627,7 +627,7 @@ describe("todayOverview", () => {
         id: "j10",
         jobCode: "R-011",
         createdAt: new Date("2025-04-26T08:00:00Z"),
-        device: { brand: "Apple", model: "iPhone 14" },
+        device: { brand: { name: "Apple" }, model: "iPhone 14" },
       },
     ]);
     const prisma = makePrisma({ job: { count, findMany, groupBy: vi.fn() } });
@@ -659,7 +659,7 @@ describe("pickupReady", () => {
         jobCode: "R-012",
         updatedAt: new Date("2025-04-25T16:00:00Z"),
         customer: { name: "Heidi", phone: "+1234567890" },
-        device: { brand: "Sony", model: "Xperia 5" },
+        device: { brand: { name: "Sony" }, model: "Xperia 5" },
       },
     ]);
     const prisma = makePrisma({

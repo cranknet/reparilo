@@ -41,6 +41,7 @@ interface JobsState {
     customerName: string;
     customerPhone: string;
     deviceBrand: string;
+    deviceBrandId?: string;
     deviceModel: string;
     color?: string;
     reportedProblem: string;

@@ -24,6 +24,7 @@ export const createJobSchema = z.object({
   customerName: z.string().min(1, { error: "validations.enter_name" }),
   customerPhone: z.string().min(1, { error: "validations.enter_phone" }),
   deviceBrand: z.string().min(1, { error: "validations.enter_brand" }),
+  deviceBrandId: z.string().optional(),
   deviceModel: z.string().min(1, { error: "validations.enter_model" }),
   color: z.string().optional(),
   reportedProblem: z.string().min(1, { error: "validations.describe_problem" }),

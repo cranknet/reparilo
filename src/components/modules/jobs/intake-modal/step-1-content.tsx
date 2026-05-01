@@ -1,13 +1,16 @@
 import { useState } from "react";
 import type { CreatedCustomerData } from "@/components/modules/jobs/quick-add-customer";
 import QuickAddCustomer from "@/components/modules/jobs/quick-add-customer";
+import type { BrandSearchResult } from "@/hooks/use-brand-search";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import type { CustomerSearchResult } from "@/hooks/use-customer-search";
+import type { ModelSearchResult } from "@/hooks/use-model-search";
 import type { CaptureSource } from "@/hooks/use-native-camera";
+import BrandSearchDropdown from "./brand-search-dropdown";
 import CustomerSearchDropdown from "./customer-search-dropdown";
+import ModelSearchDropdown from "./model-search-dropdown";
 import PhotoUploadZone from "./photo-upload-zone";
 import {
-  BRANDS,
   errorCls,
   type IntakeFormData,
   inputCls,
@@ -17,25 +20,49 @@ import {
 } from "./types";
 
 interface Step1Props {
+  brandAddQuery: string;
+  brandCreateError: string | null;
+  brandQuery: string;
+  brandResults: BrandSearchResult[];
+  brandSearchError: boolean;
+  clearBrandSearch: () => void;
   clearCustomer: () => void;
+  clearModelSearch: () => void;
   errors: Partial<Record<keyof IntakeFormData, string>>;
   form: IntakeFormData;
   handleBlur: (field: keyof IntakeFormData) => void;
+  handleBrandAdd: () => void;
+  handleModelAdd: () => void;
   handleNativeCapture: (source: CaptureSource) => Promise<void>;
   handlePhotoRemove: (index: number) => void;
   handlePhotoSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleQuickAdd: (data: CreatedCustomerData) => void;
   isCapturing: boolean;
+  isCreatingBrand: boolean;
+  isCreatingModel: boolean;
   isNative: boolean;
   isSearching: boolean;
+  isSearchingBrand: boolean;
+  isSearchingModel: boolean;
+  modelAddQuery: string;
+  modelCreateError: string | null;
+  modelQuery: string;
+  modelResults: ModelSearchResult[];
+  modelSearchError: boolean;
   photoError: string | null;
   photoPreviews: { file: File; url: string }[];
   query: string;
   results: CustomerSearchResult[];
   searchError: boolean;
+  selectBrand: (brand: BrandSearchResult) => void;
   selectCustomer: (customer: CustomerSearchResult) => void;
+  selectModel: (model: ModelSearchResult) => void;
+  setBrandQuery: (q: string) => void;
+  setModelQuery: (q: string) => void;
   setQuery: (q: string) => void;
   setShowQuickAdd: (v: boolean) => void;
+  showBrandAddOption: boolean;
+  showModelAddOption: boolean;
   showQuickAdd: boolean;
   t: (key: string, opts?: Record<string, unknown>) => string;
   touched: Partial<Record<keyof IntakeFormData, boolean>>;
@@ -162,27 +189,277 @@ function CustomerSearchField({
   );
 }
 
+function BrandField({
+  brandAddQuery,
+  brandCreateError,
+  brandQuery,
+  brandResults,
+  brandSearchError,
+  clearBrandSearch,
+  clearModelSearch,
+  form,
+  handleBrandAdd,
+  handleBlur,
+  isCreatingBrand,
+  isSearchingBrand,
+  selectBrand,
+  setBrandQuery,
+  showBrandAddOption,
+  t,
+  update,
+}: Pick<
+  Step1Props,
+  | "brandAddQuery"
+  | "brandCreateError"
+  | "brandQuery"
+  | "brandResults"
+  | "brandSearchError"
+  | "clearBrandSearch"
+  | "clearModelSearch"
+  | "form"
+  | "handleBrandAdd"
+  | "handleBlur"
+  | "isCreatingBrand"
+  | "isSearchingBrand"
+  | "selectBrand"
+  | "setBrandQuery"
+  | "showBrandAddOption"
+  | "t"
+  | "update"
+>) {
+  const brandOutsideRef = useClickOutside(() => setBrandFocused(false));
+  const [brandFocused, setBrandFocused] = useState(false);
+  const showBrandDropdown =
+    brandFocused && brandQuery.length >= 1 && !form.brandId;
+
+  return (
+    <div className="relative" ref={brandOutsideRef}>
+      <label className={labelCls} htmlFor="device-brand">
+        {t("intake.brand")}
+      </label>
+      <div className="relative">
+        <span className="material-symbols-outlined absolute end-4 top-1/2 -translate-y-1/2 text-outline">
+          {form.brandId ? "check_circle" : "search"}
+        </span>
+        <input
+          className={inputCls}
+          id="device-brand"
+          onBlur={() => handleBlur("brand")}
+          onChange={(e) => {
+            const val = e.target.value;
+            update("brandId", "");
+            update("brand", val);
+            setBrandQuery(val);
+          }}
+          onFocus={() => setBrandFocused(true)}
+          placeholder={t("intake.brand_search_placeholder")}
+          type="text"
+          value={form.brand}
+        />
+        {form.brandId && (
+          <button
+            aria-label={t("intake.brand")}
+            className="absolute end-12 top-1/2 -translate-y-1/2 text-outline transition-colors hover:text-on-surface"
+            onClick={() => {
+              update("brandId", "");
+              update("brand", "");
+              update("modelId", "");
+              update("model", "");
+              clearBrandSearch();
+              clearModelSearch();
+            }}
+            type="button"
+          >
+            <span className="material-symbols-outlined text-sm">close</span>
+          </button>
+        )}
+      </div>
+      <BrandSearchDropdown
+        isCreating={isCreatingBrand}
+        isSearching={isSearchingBrand}
+        onAdd={handleBrandAdd}
+        onSelect={(b) => {
+          selectBrand(b);
+          setBrandFocused(false);
+        }}
+        query={brandAddQuery}
+        results={brandResults}
+        searchError={brandSearchError}
+        showAddOption={showBrandAddOption}
+        t={t}
+        visible={showBrandDropdown}
+      />
+      {brandCreateError && <p className={errorCls}>{brandCreateError}</p>}
+    </div>
+  );
+}
+
+function ModelField({
+  clearModelSearch,
+  errors,
+  form,
+  handleBlur,
+  handleModelAdd,
+  isCreatingModel,
+  isSearchingModel,
+  modelAddQuery,
+  modelCreateError,
+  modelQuery,
+  modelResults,
+  modelSearchError,
+  selectModel,
+  setModelQuery,
+  showModelAddOption,
+  t,
+  touched,
+  update,
+}: Pick<
+  Step1Props,
+  | "clearModelSearch"
+  | "errors"
+  | "form"
+  | "handleBlur"
+  | "handleModelAdd"
+  | "isCreatingModel"
+  | "isSearchingModel"
+  | "modelAddQuery"
+  | "modelCreateError"
+  | "modelQuery"
+  | "modelResults"
+  | "modelSearchError"
+  | "selectModel"
+  | "setModelQuery"
+  | "showModelAddOption"
+  | "t"
+  | "touched"
+  | "update"
+>) {
+  const modelOutsideRef = useClickOutside(() => setModelFocused(false));
+  const [modelFocused, setModelFocused] = useState(false);
+  const showModelDropdown =
+    modelFocused && modelQuery.length >= 1 && form.brandId && !form.modelId;
+
+  return (
+    <div className="relative" ref={modelOutsideRef}>
+      <label className={labelCls} htmlFor="device-model">
+        {t("intake.model")}
+        <span className={requiredMarkCls}>*</span>
+      </label>
+      <div className="relative">
+        <span className="material-symbols-outlined absolute end-4 top-1/2 -translate-y-1/2 text-outline">
+          {form.modelId ? "check_circle" : "search"}
+        </span>
+        <input
+          aria-describedby={
+            errors.model && touched.model ? "error-model" : undefined
+          }
+          aria-invalid={!!(errors.model && touched.model)}
+          className={errors.model && touched.model ? inputErrorCls : inputCls}
+          disabled={!form.brandId}
+          id="device-model"
+          onBlur={() => handleBlur("model")}
+          onChange={(e) => {
+            const val = e.target.value;
+            update("modelId", "");
+            update("model", val);
+            setModelQuery(val);
+          }}
+          onFocus={() => setModelFocused(true)}
+          placeholder={
+            form.brandId
+              ? t("intake.model_search_placeholder")
+              : t("intake.select_brand_first")
+          }
+          required
+          type="text"
+          value={form.model}
+        />
+        {form.modelId && (
+          <button
+            aria-label={t("intake.model")}
+            className="absolute end-12 top-1/2 -translate-y-1/2 text-outline transition-colors hover:text-on-surface"
+            onClick={() => {
+              update("modelId", "");
+              update("model", "");
+              clearModelSearch();
+            }}
+            type="button"
+          >
+            <span className="material-symbols-outlined text-sm">close</span>
+          </button>
+        )}
+      </div>
+      <ModelSearchDropdown
+        disabled={!form.brandId}
+        isCreating={isCreatingModel}
+        isSearching={isSearchingModel}
+        onAdd={handleModelAdd}
+        onSelect={(m) => {
+          selectModel(m);
+          setModelFocused(false);
+        }}
+        query={modelAddQuery}
+        results={modelResults}
+        searchError={modelSearchError}
+        showAddOption={showModelAddOption}
+        t={t}
+        visible={showModelDropdown}
+      />
+      {modelCreateError && <p className={errorCls}>{modelCreateError}</p>}
+      {errors.model && touched.model && (
+        <p className={errorCls} id="error-model">
+          {errors.model}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function Step1Content(props: Step1Props) {
   const {
+    brandAddQuery,
+    brandCreateError,
+    brandQuery,
+    brandResults,
+    brandSearchError,
+    clearBrandSearch,
     clearCustomer,
+    clearModelSearch,
     errors,
     form,
+    handleBrandAdd,
     handleBlur,
+    handleModelAdd,
     handleNativeCapture,
     handlePhotoRemove,
     handlePhotoSelect,
     handleQuickAdd,
     isCapturing,
+    isCreatingBrand,
+    isCreatingModel,
     isNative,
     isSearching,
+    isSearchingBrand,
+    isSearchingModel,
+    modelAddQuery,
+    modelCreateError,
+    modelQuery,
+    modelResults,
+    modelSearchError,
     photoError,
     photoPreviews,
     query,
     results,
     searchError,
+    selectBrand,
     selectCustomer,
+    selectModel,
+    setBrandQuery,
+    setModelQuery,
     setQuery,
     setShowQuickAdd,
+    showBrandAddOption,
+    showModelAddOption,
     showQuickAdd,
     t,
     touched,
@@ -299,52 +576,45 @@ export default function Step1Content(props: Step1Props) {
           </h2>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className={labelCls} htmlFor="device-brand">
-                {t("intake.brand")}
-              </label>
-              <input
-                className={inputCls}
-                id="device-brand"
-                list="brand-suggestions"
-                onChange={(e) => update("brand", e.target.value)}
-                placeholder={t("intake.brand")}
-                type="text"
-                value={form.brand}
-              />
-              <datalist id="brand-suggestions">
-                {BRANDS.map((b) => (
-                  <option key={b} value={b} />
-                ))}
-              </datalist>
-            </div>
-            <div>
-              <label className={labelCls} htmlFor="device-model">
-                {t("intake.model")}
-                <span className={requiredMarkCls}>*</span>
-              </label>
-              <input
-                aria-describedby={
-                  errors.model && touched.model ? "error-model" : undefined
-                }
-                aria-invalid={!!(errors.model && touched.model)}
-                className={
-                  errors.model && touched.model ? inputErrorCls : inputCls
-                }
-                id="device-model"
-                onBlur={() => handleBlur("model")}
-                onChange={(e) => update("model", e.target.value)}
-                placeholder={t("intake.model")}
-                required
-                type="text"
-                value={form.model}
-              />
-              {errors.model && touched.model && (
-                <p className={errorCls} id="error-model">
-                  {errors.model}
-                </p>
-              )}
-            </div>
+            <BrandField
+              brandAddQuery={brandAddQuery}
+              brandCreateError={brandCreateError}
+              brandQuery={brandQuery}
+              brandResults={brandResults}
+              brandSearchError={brandSearchError}
+              clearBrandSearch={clearBrandSearch}
+              clearModelSearch={clearModelSearch}
+              form={form}
+              handleBlur={handleBlur}
+              handleBrandAdd={handleBrandAdd}
+              isCreatingBrand={isCreatingBrand}
+              isSearchingBrand={isSearchingBrand}
+              selectBrand={selectBrand}
+              setBrandQuery={setBrandQuery}
+              showBrandAddOption={showBrandAddOption}
+              t={t}
+              update={update}
+            />
+            <ModelField
+              clearModelSearch={clearModelSearch}
+              errors={errors}
+              form={form}
+              handleBlur={handleBlur}
+              handleModelAdd={handleModelAdd}
+              isCreatingModel={isCreatingModel}
+              isSearchingModel={isSearchingModel}
+              modelAddQuery={modelAddQuery}
+              modelCreateError={modelCreateError}
+              modelQuery={modelQuery}
+              modelResults={modelResults}
+              modelSearchError={modelSearchError}
+              selectModel={selectModel}
+              setModelQuery={setModelQuery}
+              showModelAddOption={showModelAddOption}
+              t={t}
+              touched={touched}
+              update={update}
+            />
             <div className="sm:col-span-2">
               <label className={labelCls} htmlFor="device-color">
                 {t("intake.device_color")}

@@ -81,6 +81,9 @@ export const ERRORS = {
 
   // ── Conflict ───────────────────────────────────────────────────────────
   CONFLICT: { status: 409, message: "errors.conflict" },
+  DUPLICATE_BRAND: { status: 409, message: "errors.duplicate_brand" },
+  DUPLICATE_MODEL: { status: 409, message: "errors.duplicate_model" },
+  BRAND_NOT_FOUND: { status: 404, message: "errors.brand_not_found" },
   DUPLICATE_REPAIR: { status: 409, message: "errors.duplicate_repair" },
   PART_IN_USE: { status: 409, message: "errors.part_in_use" },
   REPAIR_IN_USE: { status: 409, message: "errors.repair_in_use" },
