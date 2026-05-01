@@ -1,10 +1,18 @@
-import type { PrismaClient } from "@generated/client";
+import type { DbClient } from "../repositories/notification.repository.js";
+import {
+  countInAppNotifications,
+  deleteManyInAppNotifications,
+  findFirstInAppNotification,
+  findManyInAppNotifications,
+  updateInAppNotification,
+  updateManyInAppNotifications,
+} from "../repositories/notification.repository.js";
 import { logger } from "../utils/logger.js";
 
 const CLEANUP_THRESHOLD_DAYS = 30;
 
 export async function getInAppNotifications(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string,
   filter: "all" | "unread" | "read" = "all",
   limit = 50
@@ -17,27 +25,27 @@ export async function getInAppNotifications(
   }
 
   const [notifications, unreadCount] = await Promise.all([
-    prisma.inAppNotification.findMany({
-      include: { job: { select: { id: true, jobCode: true } } },
-      orderBy: { createdAt: "desc" },
-      take: limit,
+    findManyInAppNotifications(
+      prisma,
       where,
-    }),
-    prisma.inAppNotification.count({
-      where: { userId, readAt: null },
-    }),
+      { job: { select: { id: true, jobCode: true } } },
+      { createdAt: "desc" },
+      limit
+    ),
+    countInAppNotifications(prisma, { userId, readAt: null }),
   ]);
 
   return { notifications, unreadCount };
 }
 
 export async function markNotificationRead(
-  prisma: PrismaClient,
+  prisma: DbClient,
   id: string,
   userId: string
 ) {
-  const notification = await prisma.inAppNotification.findFirst({
-    where: { id, userId },
+  const notification = await findFirstInAppNotification(prisma, {
+    id,
+    userId,
   });
   if (!notification) {
     return null;
@@ -45,32 +53,28 @@ export async function markNotificationRead(
   if (notification.readAt) {
     return notification;
   }
-  return await prisma.inAppNotification.update({
-    data: { readAt: new Date() },
-    where: { id },
-  });
+  return await updateInAppNotification(prisma, { id }, { readAt: new Date() });
 }
 
 export async function markAllNotificationsRead(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string
 ) {
-  const result = await prisma.inAppNotification.updateMany({
-    data: { readAt: new Date() },
-    where: { readAt: null, userId },
-  });
+  const result = await updateManyInAppNotifications(
+    prisma,
+    { readAt: null, userId },
+    { readAt: new Date() }
+  );
   return { count: result.count };
 }
 
-export async function cleanupReadNotifications(prisma: PrismaClient) {
+export async function cleanupReadNotifications(prisma: DbClient) {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - CLEANUP_THRESHOLD_DAYS);
 
-  const result = await prisma.inAppNotification.deleteMany({
-    where: {
-      createdAt: { lt: cutoff },
-      readAt: { not: null },
-    },
+  const result = await deleteManyInAppNotifications(prisma, {
+    createdAt: { lt: cutoff },
+    readAt: { not: null },
   });
 
   if (result.count > 0) {

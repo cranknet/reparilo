@@ -1,4 +1,10 @@
-import type { NotifyChannel, PrismaClient } from "@generated/client";
+import type { NotifyChannel } from "@generated/client";
+import type { DbClient } from "../repositories/notification.repository.js";
+import {
+  createManyAndReturnInAppNotifications,
+  findManyNotificationTemplatesByName,
+  findManyUsers,
+} from "../repositories/notification.repository.js";
 import { logger } from "../utils/logger.js";
 import { queueNotification } from "./notification-outbox.service.js";
 import { renderTemplate } from "./notification-renderer.js";
@@ -27,7 +33,7 @@ interface ChannelHandlerContext {
 
 interface ChannelHandler {
   handle(
-    prisma: PrismaClient,
+    prisma: DbClient,
     app: {
       wsBroadcast?: (
         predicate: (c: { role: string; userId: string }) => boolean,
@@ -46,10 +52,11 @@ const inAppHandler: ChannelHandler = {
     if (userIds?.length) {
       resolved = userIds;
     } else if (event.recipients.role) {
-      const users = await prisma.user.findMany({
-        select: { id: true },
-        where: { isActive: true, role: event.recipients.role },
-      });
+      const users = await findManyUsers(
+        prisma,
+        { isActive: true, role: event.recipients.role },
+        { id: true }
+      );
       resolved = users.map((u) => u.id);
       if (resolved.length === 0) {
         return;
@@ -63,14 +70,15 @@ const inAppHandler: ChannelHandler = {
 
     const message = renderTemplate(context.templateBody, context.templateVars);
 
-    const notifications = await prisma.inAppNotification.createManyAndReturn({
-      data: resolved.map((userId) => ({
+    const notifications = await createManyAndReturnInAppNotifications(
+      prisma,
+      resolved.map((userId) => ({
         jobId: event.jobId ?? null,
         message,
         type: event.eventName,
         userId,
-      })),
-    });
+      }))
+    );
 
     if (app.wsBroadcast && notifications.length > 0) {
       const notifyUserIds = new Set(resolved);
@@ -145,7 +153,7 @@ function resolveInAppBody(
 
 export async function notify(
   app: {
-    prisma: PrismaClient;
+    prisma: DbClient;
     wsBroadcast?: (
       predicate: (c: { role: string; userId: string }) => boolean,
       payload: Record<string, unknown>
@@ -153,9 +161,10 @@ export async function notify(
   },
   event: NotifyEvent
 ): Promise<void> {
-  const templates = await app.prisma.notificationTemplate.findMany({
-    where: { name: event.eventName },
-  });
+  const templates = await findManyNotificationTemplatesByName(
+    app.prisma,
+    event.eventName
+  );
 
   const templateVars = buildTemplateVars(event.context);
   const hasInAppTemplate = templates.some((t) => t.channel === "IN_APP");

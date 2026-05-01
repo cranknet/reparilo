@@ -1,8 +1,8 @@
 import { AppError } from "@shared/errors/app-error.js";
 import { changePasswordSchema } from "@shared/schemas/auth.schema";
-import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyPluginAsync } from "fastify";
+import { changePassword as changePasswordService } from "../services/auth.service.js";
 import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async signature
@@ -43,40 +43,14 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
 
       const { oldPassword, newPassword } = parsed.data;
 
-      if (oldPassword === newPassword) {
-        throw new AppError("PASSWORD_SAME_AS_OLD");
-      }
+      const result = await changePasswordService(
+        app.prisma,
+        session.user.id,
+        oldPassword,
+        newPassword
+      );
 
-      const account = await app.prisma.account.findFirst({
-        where: { userId: session.user.id, providerId: "credential" },
-        select: { password: true },
-      });
-      if (!account?.password) {
-        throw new AppError("NO_PASSWORD_SET");
-      }
-
-      const isValid = await verifyPassword({
-        hash: account.password,
-        password: oldPassword,
-      });
-      if (!isValid) {
-        throw new AppError("CURRENT_PASSWORD_INCORRECT");
-      }
-
-      const hashedNewPassword = await hashPassword(newPassword);
-
-      await app.prisma.$transaction([
-        app.prisma.account.updateMany({
-          where: { userId: session.user.id, providerId: "credential" },
-          data: { password: hashedNewPassword },
-        }),
-        app.prisma.user.update({
-          where: { id: session.user.id },
-          data: { mustChangePassword: false },
-        }),
-      ]);
-
-      return reply.send({ success: true });
+      return reply.send(result);
     }
   );
 

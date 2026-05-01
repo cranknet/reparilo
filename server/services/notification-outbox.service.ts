@@ -1,4 +1,11 @@
-import { OutboxStatus, type PrismaClient } from "@generated/client";
+import { OutboxStatus } from "@generated/client";
+import type { DbClient } from "../repositories/notification.repository.js";
+import {
+  createOutboxEntry,
+  findManyOutboxEntries,
+  updateOutboxEntry,
+} from "../repositories/notification.repository.js";
+import { findShopSettingsUnique } from "../repositories/settings.repository.js";
 import { logger } from "../utils/logger.js";
 import { renderTemplate } from "./notification-renderer.js";
 import { decryptWhatsAppConfig, sendWhatsApp } from "./notification-sender.js";
@@ -17,16 +24,10 @@ interface OutboxEntry {
 
 const POLL_INTERVAL_MS = 5000;
 let intervalRef: ReturnType<typeof setInterval> | null = null;
-// NOTE: isProcessing is per-process state — it will NOT prevent concurrent
-// processing across multiple server instances. For Reparilo's single-location
-// deployment (one server) this is acceptable. If multi-instance deployment is
-// ever needed, this should be replaced with a DB-level advisory lock
-// (e.g. SELECT pg_advisory_lock(id) per outbox batch).
-// TODO: Add DB-level advisory lock for multi-instance support.
 let isProcessing = false;
 
 export async function queueNotification(
-  prisma: PrismaClient,
+  prisma: DbClient,
   data: {
     jobId?: string;
     templateName: string;
@@ -37,29 +38,28 @@ export async function queueNotification(
   }
 ): Promise<void> {
   const renderedBody = renderTemplate(data.templateBody, data.templateVars);
-  await prisma.notificationOutbox.create({
-    data: {
-      channel: data.channel,
-      jobId: data.jobId ?? null,
-      recipientPhone: data.recipientPhone,
-      renderedBody,
-      status: OutboxStatus.QUEUED,
-      templateName: data.templateName,
-    },
+  await createOutboxEntry(prisma, {
+    channel: data.channel,
+    jobId: data.jobId ?? null,
+    recipientPhone: data.recipientPhone,
+    renderedBody,
+    status: OutboxStatus.QUEUED,
+    templateName: data.templateName,
   });
 }
 
-export async function processOutbox(prisma: PrismaClient): Promise<void> {
+export async function processOutbox(prisma: DbClient): Promise<void> {
   if (isProcessing) {
     return;
   }
   isProcessing = true;
   try {
-    const pending = await prisma.notificationOutbox.findMany({
-      where: { status: OutboxStatus.QUEUED },
-      orderBy: { createdAt: "asc" },
-      take: 10,
-    });
+    const pending = await findManyOutboxEntries(
+      prisma,
+      { status: OutboxStatus.QUEUED },
+      { createdAt: "asc" },
+      10
+    );
 
     if (pending.length === 0) {
       return;
@@ -77,25 +77,27 @@ export async function processOutbox(prisma: PrismaClient): Promise<void> {
           entry.recipientPhone,
           entry.renderedBody
         );
-        await prisma.notificationOutbox.update({
-          where: { id: entry.id },
-          data: {
+        await updateOutboxEntry(
+          prisma,
+          { id: entry.id },
+          {
             error: result.error,
             sentAt: result.success ? new Date() : null,
             status: result.success ? OutboxStatus.SENT : OutboxStatus.FAILED,
-          },
-        });
+          }
+        );
       } else {
         logger.warn(
           `Outbox: unexpected channel "${entry.channel}" for entry ${entry.id} — marking FAILED`
         );
-        await prisma.notificationOutbox.update({
-          where: { id: entry.id },
-          data: {
+        await updateOutboxEntry(
+          prisma,
+          { id: entry.id },
+          {
             error: `Unsupported channel: ${entry.channel}`,
             status: OutboxStatus.FAILED,
-          },
-        });
+          }
+        );
       }
     }
   } finally {
@@ -103,7 +105,7 @@ export async function processOutbox(prisma: PrismaClient): Promise<void> {
   }
 }
 
-export function startOutboxWorker(prisma: PrismaClient): () => void {
+export function startOutboxWorker(prisma: DbClient): () => void {
   intervalRef = setInterval(() => {
     processOutbox(prisma).catch((err) => {
       logger.error("Outbox worker error:", err);
@@ -120,14 +122,12 @@ export function startOutboxWorker(prisma: PrismaClient): () => void {
   };
 }
 
-async function getWhatsAppConfig(prisma: PrismaClient): Promise<{
+async function getWhatsAppConfig(prisma: DbClient): Promise<{
   apiToken: string;
   businessId: string;
   phoneNumberId: string;
 } | null> {
-  const row = await prisma.shopSettings.findUnique({
-    where: { id: "default" },
-  });
+  const row = await findShopSettingsUnique(prisma);
   if (!row) {
     return null;
   }
@@ -150,13 +150,15 @@ async function getWhatsAppConfig(prisma: PrismaClient): Promise<{
 }
 
 export async function getOutboxLogs(
-  prisma: PrismaClient,
+  prisma: DbClient,
   limit = 50
 ): Promise<OutboxEntry[]> {
-  const entries = await prisma.notificationOutbox.findMany({
-    orderBy: { createdAt: "desc" },
-    take: limit,
-  });
+  const entries = await findManyOutboxEntries(
+    prisma,
+    {},
+    { createdAt: "desc" },
+    limit
+  );
   return entries.map((e) => ({
     channel: e.channel,
     createdAt: e.createdAt,

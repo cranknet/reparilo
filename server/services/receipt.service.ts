@@ -1,5 +1,6 @@
-import type { PrismaClient } from "@generated/client";
 import QRCode from "qrcode";
+import type { DbClient } from "../repositories/notification.repository.js";
+import { findShopSettingsUnique } from "../repositories/settings.repository.js";
 
 export async function generateTrackingQr(
   jobCode: string,
@@ -31,7 +32,7 @@ const toNum = (v: number | { toNumber: () => number }) =>
   typeof v === "number" ? v : v.toNumber();
 
 export async function renderReceiptHtml(
-  prisma: PrismaClient,
+  prisma: DbClient,
   job: {
     jobCode: string;
     customer: { name: string; phone: string };
@@ -52,9 +53,7 @@ export async function renderReceiptHtml(
   baseUrl: string,
   options?: { hideCosts?: boolean }
 ): Promise<string> {
-  const settings = await prisma.shopSettings.findUnique({
-    where: { id: "default" },
-  });
+  const settings = await findShopSettingsUnique(prisma);
   const shopName = esc(settings?.shopName ?? "Reparilo");
   const qrBuf = await generateTrackingQr(job.jobCode, baseUrl);
   const qrImg = qrBuf
