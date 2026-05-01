@@ -41,7 +41,7 @@ export const useReportsStore = create<ReportsState>((set, get) => ({
   setCustomRange: (from, to) => set({ customFrom: from, customTo: to }),
 
   fetchRevenue: async () => {
-    set({ revenue: { loading: true } });
+    set({ revenue: { ...get().revenue, loading: true, error: undefined } });
     try {
       const q = queryParams(get());
       const res = await api.get(`/reports/revenue${q}`);
@@ -49,6 +49,7 @@ export const useReportsStore = create<ReportsState>((set, get) => ({
     } catch (err: unknown) {
       set({
         revenue: {
+          ...get().revenue,
           loading: false,
           error: getErrorMessage(err, i18n.t("errors.fetch_reports")),
         },
@@ -57,7 +58,9 @@ export const useReportsStore = create<ReportsState>((set, get) => ({
   },
 
   fetchOperations: async () => {
-    set({ operations: { loading: true } });
+    set({
+      operations: { ...get().operations, loading: true, error: undefined },
+    });
     try {
       const q = queryParams(get());
       const res = await api.get(`/reports/operations${q}`);
@@ -67,6 +70,7 @@ export const useReportsStore = create<ReportsState>((set, get) => ({
     } catch (err: unknown) {
       set({
         operations: {
+          ...get().operations,
           loading: false,
           error: getErrorMessage(err, i18n.t("errors.fetch_reports")),
         },
@@ -75,7 +79,7 @@ export const useReportsStore = create<ReportsState>((set, get) => ({
   },
 
   fetchInsights: async () => {
-    set({ insights: { loading: true } });
+    set({ insights: { ...get().insights, loading: true, error: undefined } });
     try {
       const q = queryParams(get());
       const res = await api.get(`/reports/insights${q}`);
@@ -85,6 +89,7 @@ export const useReportsStore = create<ReportsState>((set, get) => ({
     } catch (err: unknown) {
       set({
         insights: {
+          ...get().insights,
           loading: false,
           error: getErrorMessage(err, i18n.t("errors.fetch_reports")),
         },
