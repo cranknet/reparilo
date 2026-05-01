@@ -1,0 +1,115 @@
+import type { TimeRangePreset } from "@shared/types/reports";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useCan } from "@/hooks/use-can";
+import { useReportsStore } from "@/stores/reports";
+import InsightsTab from "./insights-tab";
+import OperationsTab from "./operations-tab";
+import RevenueTab from "./revenue-tab";
+
+const RANGE_OPTIONS: { key: TimeRangePreset; label: string }[] = [
+  { key: "7d", label: "reports.7d" },
+  { key: "30d", label: "reports.30d" },
+  { key: "month", label: "reports.month" },
+  { key: "year", label: "reports.year" },
+];
+
+type TabKey = "revenue" | "operations" | "insights";
+
+export default function ReportsPage() {
+  const { t } = useTranslation();
+  const range = useReportsStore((s) => s.range);
+  const setRange = useReportsStore((s) => s.setRange);
+  const fetchRevenue = useReportsStore((s) => s.fetchRevenue);
+  const fetchOperations = useReportsStore((s) => s.fetchOperations);
+  const fetchInsights = useReportsStore((s) => s.fetchInsights);
+
+  const canViewShop = useCan({ reports: ["viewShop"] });
+  const canViewSelf = useCan({ reports: ["viewSelf"] });
+
+  const visibleTabs = useMemo<TabKey[]>(() => {
+    const tabs: TabKey[] = [];
+    if (canViewShop) {
+      tabs.push("revenue");
+    }
+    if (canViewSelf) {
+      tabs.push("operations");
+    }
+    if (canViewShop) {
+      tabs.push("insights");
+    }
+    return tabs;
+  }, [canViewShop, canViewSelf]);
+
+  const [activeTab, setActiveTab] = useState<TabKey>(visibleTabs[0]);
+
+  useEffect(() => {
+    if (!range) {
+      return;
+    }
+    if (activeTab === "revenue") {
+      fetchRevenue();
+    }
+    if (activeTab === "operations") {
+      fetchOperations();
+    }
+    if (activeTab === "insights") {
+      fetchInsights();
+    }
+  }, [activeTab, range, fetchRevenue, fetchOperations, fetchInsights]);
+
+  useEffect(() => {
+    if (!visibleTabs.includes(activeTab) && visibleTabs.length > 0) {
+      setActiveTab(visibleTabs[0]);
+    }
+  }, [visibleTabs, activeTab]);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="font-black font-headline text-2xl text-on-surface">
+          {t("reports.title")}
+        </h1>
+        <div className="flex gap-1 rounded-xl bg-surface-container-low p-1">
+          {RANGE_OPTIONS.map(({ key, label }) => (
+            <button
+              className={`rounded-lg px-3 py-1.5 font-medium text-sm transition-colors ${
+                range === key
+                  ? "bg-surface-container-lowest text-primary shadow-sm"
+                  : "text-on-surface-variant hover:text-primary"
+              }`}
+              key={key}
+              onClick={() => setRange(key)}
+              type="button"
+            >
+              {t(label)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {visibleTabs.length > 1 && (
+        <div className="flex gap-1 rounded-xl bg-surface-container-low p-1">
+          {visibleTabs.map((tab) => (
+            <button
+              className={`rounded-lg px-4 py-2 font-medium text-sm transition-colors ${
+                activeTab === tab
+                  ? "bg-surface-container-lowest text-primary shadow-sm"
+                  : "text-on-surface-variant hover:text-primary"
+              }`}
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              type="button"
+            >
+              {t(`reports.${tab}`)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {activeTab === "revenue" && <RevenueTab />}
+      {activeTab === "operations" && <OperationsTab />}
+      {activeTab === "insights" && <InsightsTab />}
+    </div>
+  );
+}
