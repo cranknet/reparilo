@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@generated/client";
+import { Prisma } from "@generated/client";
 import { AppError } from "@shared/errors/app-error.js";
 import type {
   BrandSearchQueryInput,
@@ -66,9 +67,19 @@ export async function createBrand(
   if (existing) {
     throw new AppError("DUPLICATE_BRAND");
   }
-  return await prisma.brand.create({
-    data: { name: input.name },
-  });
+  try {
+    return await prisma.brand.create({
+      data: { name: input.name },
+    });
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
+      throw new AppError("DUPLICATE_BRAND");
+    }
+    throw err;
+  }
 }
 
 export async function createModel(
@@ -89,7 +100,17 @@ export async function createModel(
   if (existing) {
     throw new AppError("DUPLICATE_MODEL");
   }
-  return await prisma.device.create({
-    data: { brandId, model: input.model },
-  });
+  try {
+    return await prisma.device.create({
+      data: { brandId, model: input.model },
+    });
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
+      throw new AppError("DUPLICATE_MODEL");
+    }
+    throw err;
+  }
 }

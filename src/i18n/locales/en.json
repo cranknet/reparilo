@@ -744,6 +744,8 @@
     "no_model_found": "No model found.",
     "creating_brand": "Adding brand...",
     "creating_model": "Adding model...",
+    "clear_brand": "Clear brand",
+    "clear_model": "Clear model",
     "error_search_brand": "Brand search unavailable — try again",
     "error_search_model": "Model search unavailable — try again",
     "error_create_brand": "Failed to add brand",

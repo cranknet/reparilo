@@ -258,7 +258,7 @@ function BrandField({
         />
         {form.brandId && (
           <button
-            aria-label={t("intake.brand")}
+            aria-label={t("intake.clear_brand")}
             className="absolute end-12 top-1/2 -translate-y-1/2 text-outline transition-colors hover:text-on-surface"
             onClick={() => {
               update("brandId", "");
@@ -376,7 +376,7 @@ function ModelField({
         />
         {form.modelId && (
           <button
-            aria-label={t("intake.model")}
+            aria-label={t("intake.clear_model")}
             className="absolute end-12 top-1/2 -translate-y-1/2 text-outline transition-colors hover:text-on-surface"
             onClick={() => {
               update("modelId", "");

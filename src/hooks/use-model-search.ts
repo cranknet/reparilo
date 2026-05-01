@@ -102,8 +102,9 @@ export function useModelSearch(brandId: string, debounceMs = 250) {
         setResults((prev) => [...prev, device]);
         return device;
       } catch (err: unknown) {
-        const apiErr = err as ApiError;
-        if (apiErr?.code === "DUPLICATE_MODEL") {
+        const apiErr = err as Partial<ApiError>;
+        const code = typeof apiErr?.code === "string" ? apiErr.code : null;
+        if (code === "DUPLICATE_MODEL") {
           const existing = results.find(
             (r) => r.model.toLowerCase() === modelName.toLowerCase()
           );

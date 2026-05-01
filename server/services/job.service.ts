@@ -213,17 +213,12 @@ export async function create(
 
   let brandId = input.deviceBrandId;
   if (!brandId) {
-    const existingBrand = await prisma.brand.findFirst({
-      where: { name: { equals: input.deviceBrand, mode: "insensitive" } },
+    const brand = await prisma.brand.upsert({
+      where: { name: input.deviceBrand },
+      update: {},
+      create: { name: input.deviceBrand },
     });
-    if (existingBrand) {
-      brandId = existingBrand.id;
-    } else {
-      const newBrand = await prisma.brand.create({
-        data: { name: input.deviceBrand },
-      });
-      brandId = newBrand.id;
-    }
+    brandId = brand.id;
   }
 
   const device = await prisma.device.upsert({

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import ConfirmDiscardDialog from "@/components/ui/confirm-discard-dialog";
@@ -60,6 +60,13 @@ export default function AddCustomerModal({
     },
     [clearError]
   );
+
+  useEffect(() => {
+    if (open) {
+      setForm(INITIAL_FORM);
+      setErrors({});
+    }
+  }, [open]);
 
   const handleClose = useCallback(() => {
     if (isDirty(form)) {

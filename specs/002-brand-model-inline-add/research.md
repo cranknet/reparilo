@@ -16,7 +16,7 @@
 
 ## Decision 2: Device.brand Migration Strategy
 
-**Decision**: Change `Device.brand` from `String` to `String` (FK to Brand.id), keeping the `@@unique` constraint as `@@unique([brandId, model])`.
+**Decision**: Change `Device.brand` from `String` to `brandId: String` (FK to Brand.id), keeping the `@@unique` constraint as `@@unique([brandId, model])`.
 
 **Rationale**: The existing Device model has `brand: String` and `@@unique([brand, model])`. Changing `brand` to `brandId` as a FK to Brand is the cleanest approach:
 - Existing Device records need a migration to create Brand rows from distinct brands, then alter the column
@@ -45,7 +45,7 @@ The `CustomerSearchDropdown` component already implements all needed UX patterns
 
 ## Decision 4: API Endpoint Design
 
-**Decision**: Create a `devices.ts` route file with two route groups:
+**Decision**: Create a `brands.ts` route file with two route groups:
 - `GET /api/brands/search?q=&limit=` — search brands
 - `POST /api/brands` — create brand inline
 - `GET /api/brands/:brandId/models/search?q=&limit=` — search models for a brand
@@ -59,7 +59,7 @@ The `CustomerSearchDropdown` component already implements all needed UX patterns
 
 ## Decision 5: Seed Data Scope
 
-**Decision**: Seed 8 bands with 3-5 models each, focused on the North African / Algerian market.
+**Decision**: Seed 8 brands with 3-5 models each, focused on the North African / Algerian market.
 
 **Rationale**: The shop's market is Algeria. Seed data should match what they commonly repair. Include:
 - Apple (iPhone 14, 15, 16, SE, Pro Max)

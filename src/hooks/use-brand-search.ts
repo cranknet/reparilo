@@ -88,8 +88,9 @@ export function useBrandSearch(debounceMs = 250) {
         setResults((prev) => [...prev, brand]);
         return brand;
       } catch (err: unknown) {
-        const apiErr = err as ApiError;
-        if (apiErr?.code === "DUPLICATE_BRAND") {
+        const apiErr = err as Partial<ApiError>;
+        const code = typeof apiErr?.code === "string" ? apiErr.code : null;
+        if (code === "DUPLICATE_BRAND") {
           const existing = results.find(
             (r) => r.name.toLowerCase() === name.toLowerCase()
           );
