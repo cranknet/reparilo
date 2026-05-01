@@ -6,6 +6,15 @@ import type {
   UpdateWhatsAppSettingsInput,
 } from "@shared/schemas/settings.schema";
 import { decryptSecret, encryptSecret, isEncrypted } from "../lib/crypto.js";
+import {
+  findAiSettingsUnique,
+  findManyNotificationTemplates,
+  findNotificationTemplateUnique,
+  findShopSettingsUnique,
+  updateNotificationTemplate as updateNotificationTemplateRepo,
+  upsertAiSettings as upsertAiSettingsRepo,
+  upsertShopSettings as upsertShopSettingsRepo,
+} from "../repositories/settings.repository.js";
 
 function publicAiSettings<
   T extends { apiKeyEncrypted: string } | null | undefined,
@@ -18,12 +27,12 @@ function publicAiSettings<
 }
 
 export async function getAiSettings(prisma: PrismaClient) {
-  const row = await prisma.aiSettings.findUnique({ where: { id: "default" } });
+  const row = await findAiSettingsUnique(prisma);
   return publicAiSettings(row);
 }
 
 export async function getRawAiSettings(prisma: PrismaClient) {
-  return await prisma.aiSettings.findUnique({ where: { id: "default" } });
+  return await findAiSettingsUnique(prisma);
 }
 
 export async function upsertAiSettings(
@@ -51,7 +60,7 @@ export async function upsertAiSettings(
     data.enabled = input.enabled ?? true;
   }
 
-  const row = await prisma.aiSettings.upsert({
+  const row = await upsertAiSettingsRepo(prisma, {
     create: {
       apiKeyEncrypted: (data.apiKeyEncrypted as string) ?? "",
       enabled: (data.enabled as boolean) ?? false,
@@ -67,14 +76,14 @@ export async function upsertAiSettings(
 }
 
 export async function getShopSettings(prisma: PrismaClient) {
-  return await prisma.shopSettings.findUnique({ where: { id: "default" } });
+  return await findShopSettingsUnique(prisma);
 }
 
 export async function upsertShopSettings(
   prisma: PrismaClient,
   input: UpdateShopSettingsInput
 ) {
-  return await prisma.shopSettings.upsert({
+  return await upsertShopSettingsRepo(prisma, {
     create: {
       address: input.address ?? null,
       countryCode: input.countryCode ?? "DZ",
@@ -97,9 +106,7 @@ export async function upsertShopSettings(
 }
 
 export async function getNotificationTemplates(prisma: PrismaClient) {
-  return await prisma.notificationTemplate.findMany({
-    orderBy: { createdAt: "desc" },
-  });
+  return await findManyNotificationTemplates(prisma);
 }
 
 export async function updateNotificationTemplate(
@@ -107,28 +114,21 @@ export async function updateNotificationTemplate(
   id: string,
   input: UpdateNotificationTemplateInput
 ) {
-  const existing = await prisma.notificationTemplate.findUnique({
-    where: { id },
-  });
+  const existing = await findNotificationTemplateUnique(prisma, id);
   if (!existing) {
     return null;
   }
 
-  return await prisma.notificationTemplate.update({
-    data: {
-      body: input.body,
-      channel: input.channel,
-      isDefault: input.isDefault,
-      name: input.name,
-    },
-    where: { id },
+  return await updateNotificationTemplateRepo(prisma, id, {
+    body: input.body,
+    channel: input.channel,
+    isDefault: input.isDefault,
+    name: input.name,
   });
 }
 
 export async function testAiConnection(prisma: PrismaClient) {
-  const settings = await prisma.aiSettings.findUnique({
-    where: { id: "default" },
-  });
+  const settings = await findAiSettingsUnique(prisma);
   if (!settings) {
     return { message: "AI settings not configured", success: false };
   }
@@ -143,7 +143,7 @@ export async function testAiConnection(prisma: PrismaClient) {
     if (settings.apiKeyEncrypted) {
       const apiKey = isEncrypted(settings.apiKeyEncrypted)
         ? decryptSecret(settings.apiKeyEncrypted)
-        : settings.apiKeyEncrypted; // legacy plaintext — re-encrypted on next write
+        : settings.apiKeyEncrypted;
       if (!apiKey) {
         return {
           message: "Stored API key could not be decrypted",
@@ -178,9 +178,7 @@ export async function testAiConnection(prisma: PrismaClient) {
 }
 
 export async function getWhatsAppSettings(prisma: PrismaClient) {
-  const row = await prisma.shopSettings.findUnique({
-    where: { id: "default" },
-  });
+  const row = await findShopSettingsUnique(prisma);
   if (!row) {
     return {
       businessId: null,
@@ -220,7 +218,7 @@ export async function upsertWhatsAppSettings(
     data.whatsappApiTokenEncrypted = encryptSecret(input.apiToken);
   }
 
-  return await prisma.shopSettings.upsert({
+  return await upsertShopSettingsRepo(prisma, {
     create: {
       id: "default",
       shopName: "",

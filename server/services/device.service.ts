@@ -7,6 +7,15 @@ import type {
   CreateModelInput,
   ModelSearchQueryInput,
 } from "@shared/schemas/device.schema";
+import {
+  createBrand as createBrandRepo,
+  createDevice as createDeviceRepo,
+  findBrandFirst as findBrandFirstRepo,
+  findBrands as findBrandsRepo,
+  findBrandUnique,
+  findDeviceFirst as findDeviceFirstRepo,
+  findDevices as findDevicesRepo,
+} from "../repositories/device.repository.js";
 
 export async function searchBrands(
   prisma: PrismaClient,
@@ -14,18 +23,14 @@ export async function searchBrands(
 ) {
   const { q, limit } = query;
   if (!q) {
-    return await prisma.brand.findMany({
-      orderBy: { name: "asc" },
-      take: limit,
-    });
+    return await findBrandsRepo(prisma, {}, { name: "asc" }, limit);
   }
-  return await prisma.brand.findMany({
-    where: {
-      name: { startsWith: q, mode: "insensitive" },
-    },
-    orderBy: { name: "asc" },
-    take: limit,
-  });
+  return await findBrandsRepo(
+    prisma,
+    { name: { startsWith: q, mode: "insensitive" } },
+    { name: "asc" },
+    limit
+  );
 }
 
 export async function searchModels(
@@ -34,50 +39,47 @@ export async function searchModels(
   query: ModelSearchQueryInput
 ) {
   const { q, limit } = query;
-  const brand = await prisma.brand.findUnique({ where: { id: brandId } });
+  const brand = await findBrandUnique(prisma, brandId);
   if (!brand) {
     throw new AppError("BRAND_NOT_FOUND");
   }
   if (!q) {
-    return await prisma.device.findMany({
-      where: { brandId },
-      select: { id: true, brandId: true, model: true },
-      orderBy: { model: "asc" },
-      take: limit,
-    });
+    return await findDevicesRepo(
+      prisma,
+      { brandId },
+      { id: true, brandId: true, model: true },
+      { model: "asc" },
+      limit
+    );
   }
-  return await prisma.device.findMany({
-    where: {
-      brandId,
-      model: { startsWith: q, mode: "insensitive" },
-    },
-    select: { id: true, brandId: true, model: true },
-    orderBy: { model: "asc" },
-    take: limit,
-  });
+  return await findDevicesRepo(
+    prisma,
+    { brandId, model: { startsWith: q, mode: "insensitive" } },
+    { id: true, brandId: true, model: true },
+    { model: "asc" },
+    limit
+  );
 }
 
 export async function createBrand(
   prisma: PrismaClient,
   input: CreateBrandInput
 ) {
-  const existing = await prisma.brand.findFirst({
-    where: { name: { equals: input.name, mode: "insensitive" } },
+  const existing = await findBrandFirstRepo(prisma, {
+    name: { equals: input.name, mode: "insensitive" },
   });
   if (existing) {
     return existing;
   }
   try {
-    return await prisma.brand.create({
-      data: { name: input.name },
-    });
+    return await createBrandRepo(prisma, { name: input.name });
   } catch (err) {
     if (
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
     ) {
-      return await prisma.brand.findFirst({
-        where: { name: { equals: input.name, mode: "insensitive" } },
+      return await findBrandFirstRepo(prisma, {
+        name: { equals: input.name, mode: "insensitive" },
       });
     }
     throw err;
@@ -89,33 +91,27 @@ export async function createModel(
   brandId: string,
   input: CreateModelInput
 ) {
-  const brand = await prisma.brand.findUnique({ where: { id: brandId } });
+  const brand = await findBrandUnique(prisma, brandId);
   if (!brand) {
     throw new AppError("BRAND_NOT_FOUND");
   }
-  const existing = await prisma.device.findFirst({
-    where: {
-      brandId,
-      model: { equals: input.model, mode: "insensitive" },
-    },
+  const existing = await findDeviceFirstRepo(prisma, {
+    brandId,
+    model: { equals: input.model, mode: "insensitive" },
   });
   if (existing) {
     return existing;
   }
   try {
-    return await prisma.device.create({
-      data: { brandId, model: input.model },
-    });
+    return await createDeviceRepo(prisma, { brandId, model: input.model });
   } catch (err) {
     if (
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
     ) {
-      return await prisma.device.findFirst({
-        where: {
-          brandId,
-          model: { equals: input.model, mode: "insensitive" },
-        },
+      return await findDeviceFirstRepo(prisma, {
+        brandId,
+        model: { equals: input.model, mode: "insensitive" },
       });
     }
     throw err;

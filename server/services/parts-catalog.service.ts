@@ -5,6 +5,15 @@ import type {
   ListPartsQueryInput,
   UpdatePartInput,
 } from "@shared/schemas/parts-catalog.schema";
+import {
+  countJobPartsByPartId,
+  count as countParts,
+  create as createPart,
+  deletePart as deletePartRepo,
+  findMany as findManyParts,
+  findUnique as findPartUnique,
+  update as updatePart,
+} from "../repositories/part.repository.js";
 
 export async function list(prisma: PrismaClient, query: ListPartsQueryInput) {
   const { category, cursor, isActive, limit, search } = query;
@@ -24,12 +33,8 @@ export async function list(prisma: PrismaClient, query: ListPartsQueryInput) {
   }
 
   const [parts, totalCount] = await Promise.all([
-    prisma.partsCatalog.findMany({
-      where,
-      orderBy: { name: "asc" },
-      take: limit + 1,
-    }),
-    cursor ? Promise.resolve(null) : prisma.partsCatalog.count({ where }),
+    findManyParts(prisma, where, { name: "asc" }, limit + 1),
+    cursor ? Promise.resolve(null) : countParts(prisma, where),
   ]);
 
   let nextCursor: string | null = null;
@@ -44,17 +49,15 @@ export async function list(prisma: PrismaClient, query: ListPartsQueryInput) {
 }
 
 export async function getById(prisma: PrismaClient, id: string) {
-  return await prisma.partsCatalog.findUnique({ where: { id } });
+  return await findPartUnique(prisma, id);
 }
 
 export async function create(prisma: PrismaClient, input: CreatePartInput) {
-  return await prisma.partsCatalog.create({
-    data: {
-      category: input.category,
-      defaultPrice: input.defaultPrice,
-      name: input.name,
-      supplier: input.supplier ?? null,
-    },
+  return await createPart(prisma, {
+    category: input.category,
+    defaultPrice: input.defaultPrice,
+    name: input.name,
+    supplier: input.supplier ?? null,
   });
 }
 
@@ -63,15 +66,12 @@ export async function update(
   id: string,
   input: UpdatePartInput
 ) {
-  const part = await prisma.partsCatalog.findUnique({ where: { id } });
+  const part = await findPartUnique(prisma, id);
   if (!part) {
     return null;
   }
 
-  return prisma.partsCatalog.update({
-    data: input,
-    where: { id },
-  });
+  return updatePart(prisma, id, input);
 }
 
 export async function toggleActive(
@@ -79,29 +79,26 @@ export async function toggleActive(
   id: string,
   isActive: boolean
 ) {
-  const part = await prisma.partsCatalog.findUnique({ where: { id } });
+  const part = await findPartUnique(prisma, id);
   if (!part) {
     return null;
   }
 
-  return prisma.partsCatalog.update({
-    data: { isActive },
-    where: { id },
-  });
+  return updatePart(prisma, id, { isActive });
 }
 
 export async function remove(prisma: PrismaClient, id: string) {
   return await prisma.$transaction(async (tx) => {
-    const part = await tx.partsCatalog.findUnique({ where: { id } });
+    const part = await findPartUnique(tx, id);
     if (!part) {
       return null;
     }
 
-    const refCount = await tx.jobPart.count({ where: { partId: id } });
+    const refCount = await countJobPartsByPartId(tx, id);
     if (refCount > 0) {
       throw new AppError("PART_IN_USE");
     }
 
-    return tx.partsCatalog.delete({ where: { id } });
+    return deletePartRepo(tx, id);
   });
 }

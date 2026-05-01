@@ -5,6 +5,15 @@ import type {
   ListRepairsQueryInput,
   UpdateRepairInput,
 } from "@shared/schemas/repair-catalog.schema";
+import {
+  countJobRepairsByRepairId,
+  count as countRepairs,
+  create as createRepair,
+  deleteRepair as deleteRepairRepo,
+  findMany as findManyRepairs,
+  findUnique as findRepairUnique,
+  update as updateRepair,
+} from "../repositories/repair.repository.js";
 
 export async function list(prisma: PrismaClient, query: ListRepairsQueryInput) {
   const { cursor, limit, search, category, isActive } = query;
@@ -24,12 +33,8 @@ export async function list(prisma: PrismaClient, query: ListRepairsQueryInput) {
   }
 
   const [repairs, totalCount] = await Promise.all([
-    prisma.repairCatalog.findMany({
-      orderBy: { name: "asc" },
-      take: limit + 1,
-      where,
-    }),
-    cursor ? Promise.resolve(null) : prisma.repairCatalog.count({ where }),
+    findManyRepairs(prisma, where, { name: "asc" }, limit + 1),
+    cursor ? Promise.resolve(null) : countRepairs(prisma, where),
   ]);
 
   let nextCursor: string | null = null;
@@ -44,16 +49,14 @@ export async function list(prisma: PrismaClient, query: ListRepairsQueryInput) {
 }
 
 export async function getById(prisma: PrismaClient, id: string) {
-  return await prisma.repairCatalog.findUnique({ where: { id } });
+  return await findRepairUnique(prisma, id);
 }
 
 export async function create(prisma: PrismaClient, input: CreateRepairInput) {
-  return await prisma.repairCatalog.create({
-    data: {
-      category: input.category,
-      defaultPrice: input.defaultPrice,
-      name: input.name,
-    },
+  return await createRepair(prisma, {
+    category: input.category,
+    defaultPrice: input.defaultPrice,
+    name: input.name,
   });
 }
 
@@ -62,15 +65,12 @@ export async function update(
   id: string,
   input: UpdateRepairInput
 ) {
-  const existing = await prisma.repairCatalog.findUnique({ where: { id } });
+  const existing = await findRepairUnique(prisma, id);
   if (!existing) {
     return null;
   }
 
-  return await prisma.repairCatalog.update({
-    data: input,
-    where: { id },
-  });
+  return await updateRepair(prisma, id, input);
 }
 
 export async function toggleActive(
@@ -78,27 +78,24 @@ export async function toggleActive(
   id: string,
   isActive: boolean
 ) {
-  const existing = await prisma.repairCatalog.findUnique({ where: { id } });
+  const existing = await findRepairUnique(prisma, id);
   if (!existing) {
     return null;
   }
 
-  return await prisma.repairCatalog.update({
-    data: { isActive },
-    where: { id },
-  });
+  return await updateRepair(prisma, id, { isActive });
 }
 
 export async function remove(prisma: PrismaClient, id: string) {
-  const existing = await prisma.repairCatalog.findUnique({ where: { id } });
+  const existing = await findRepairUnique(prisma, id);
   if (!existing) {
     return null;
   }
 
-  const refCount = await prisma.jobRepair.count({ where: { repairId: id } });
+  const refCount = await countJobRepairsByRepairId(prisma, id);
   if (refCount > 0) {
     throw new AppError("REPAIR_IN_USE");
   }
 
-  return await prisma.repairCatalog.delete({ where: { id } });
+  return await deleteRepairRepo(prisma, id);
 }
