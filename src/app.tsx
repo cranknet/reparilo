@@ -1,38 +1,48 @@
 import type { RoleType } from "@shared/constants";
 import { Role } from "@shared/constants";
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Route, Routes } from "react-router";
 import DashboardLayout from "@/components/modules/dashboard-layout";
 import ProtectedRoute, {
   RequirePermission,
 } from "@/components/modules/protected-route";
-import AiAnalystPage from "@/pages/ai-analyst";
-import AiAnalystLayout from "@/pages/ai-analyst/layout";
-import AiMemoriesPage from "@/pages/ai-analyst/memories/page";
-import ChangePasswordPage from "@/pages/auth/change-password";
-import LoginPage from "@/pages/auth/login";
-import ResetPasswordPage from "@/pages/auth/reset-password";
-import CustomersPage from "@/pages/customers";
-import CustomerDetailPage from "@/pages/customers/detail";
-import DashboardPage from "@/pages/dashboard";
-import FrontDeskPage from "@/pages/dashboard/front-desk";
-import TechnicianDashboardPage from "@/pages/dashboard/technician";
-import JobsPage from "@/pages/jobs";
-import JobDetailPage from "@/pages/jobs/detail";
-import NotificationsPage from "@/pages/notifications";
-import PartsCatalogPage from "@/pages/parts";
-import ProfilePage from "@/pages/profile";
-import RepairsPage from "@/pages/repairs";
-import ReportsPage from "@/pages/reports";
-import SettingsPage from "@/pages/settings";
-import TrackingPage from "@/pages/tracking";
 import { useAuthStore } from "@/stores/auth";
 
-const DASHBOARD_MAP: Record<RoleType, React.ComponentType> = {
+const AiAnalystPage = lazy(() => import("@/pages/ai-analyst"));
+const AiAnalystLayout = lazy(() => import("@/pages/ai-analyst/layout"));
+const AiMemoriesPage = lazy(() => import("@/pages/ai-analyst/memories/page"));
+const ChangePasswordPage = lazy(() => import("@/pages/auth/change-password"));
+const LoginPage = lazy(() => import("@/pages/auth/login"));
+const ResetPasswordPage = lazy(() => import("@/pages/auth/reset-password"));
+const CustomersPage = lazy(() => import("@/pages/customers"));
+const CustomerDetailPage = lazy(() => import("@/pages/customers/detail"));
+const DashboardPage = lazy(() => import("@/pages/dashboard"));
+const FrontDeskPage = lazy(() => import("@/pages/dashboard/front-desk"));
+const TechnicianDashboardPage = lazy(
+  () => import("@/pages/dashboard/technician")
+);
+const JobsPage = lazy(() => import("@/pages/jobs"));
+const JobDetailPage = lazy(() => import("@/pages/jobs/detail"));
+const NotificationsPage = lazy(() => import("@/pages/notifications"));
+const PartsCatalogPage = lazy(() => import("@/pages/parts"));
+const ProfilePage = lazy(() => import("@/pages/profile"));
+const RepairsPage = lazy(() => import("@/pages/repairs"));
+const ReportsPage = lazy(() => import("@/pages/reports"));
+const SettingsPage = lazy(() => import("@/pages/settings"));
+const TrackingPage = lazy(() => import("@/pages/tracking"));
+
+const DASHBOARD_LAZY_MAP: Record<
+  RoleType,
+  React.LazyExoticComponent<() => React.JSX.Element>
+> = {
   [Role.OWNER]: DashboardPage,
   [Role.TECHNICIAN]: TechnicianDashboardPage,
   [Role.FRONT_DESK]: FrontDeskPage,
 };
+
+function PageSkeleton() {
+  return <div className="m-4 h-96 animate-pulse rounded-lg bg-muted" />;
+}
 
 export default function App() {
   const role = useAuthStore((s) => s.role);
@@ -42,152 +52,156 @@ export default function App() {
     checkSession();
   }, [checkSession]);
 
-  const DashboardComponent = DASHBOARD_MAP[role] ?? DashboardPage;
+  const DashboardComponent = DASHBOARD_LAZY_MAP[role] ?? DashboardPage;
 
   return (
-    <Routes>
-      <Route element={<LoginPage />} path="/login" />
-      <Route element={<ResetPasswordPage />} path="/reset-password" />
-      <Route element={<ProtectedRoute requireMustChangePassword={false} />}>
-        <Route element={<ChangePasswordPage />} path="/change-password" />
-      </Route>
-      <Route element={<ProtectedRoute />}>
-        <Route
-          element={
-            <DashboardLayout>
-              <DashboardComponent />
-            </DashboardLayout>
-          }
-          path="/"
-        />
-        <Route
-          element={
-            <DashboardLayout>
-              <JobsPage />
-            </DashboardLayout>
-          }
-          path="/jobs"
-        />
-        <Route
-          element={
-            <DashboardLayout>
-              <JobDetailPage />
-            </DashboardLayout>
-          }
-          path="/jobs/:id"
-        />
-        <Route
-          element={<RequirePermission perm={{ notifications: ["read"] }} />}
-        >
-          <Route
-            element={
-              <DashboardLayout>
-                <NotificationsPage />
-              </DashboardLayout>
-            }
-            path="/notifications"
-          />
+    <Suspense fallback={<PageSkeleton />}>
+      <Routes>
+        <Route element={<LoginPage />} path="/login" />
+        <Route element={<ResetPasswordPage />} path="/reset-password" />
+        <Route element={<ProtectedRoute requireMustChangePassword={false} />}>
+          <Route element={<ChangePasswordPage />} path="/change-password" />
         </Route>
-        <Route
-          element={<RequirePermission perm={{ parts: ["viewCatalog"] }} />}
-        >
+        <Route element={<ProtectedRoute />}>
           <Route
             element={
               <DashboardLayout>
-                <PartsCatalogPage />
+                <DashboardComponent />
               </DashboardLayout>
             }
-            path="/parts"
+            path="/"
           />
+          <Route
+            element={
+              <DashboardLayout>
+                <JobsPage />
+              </DashboardLayout>
+            }
+            path="/jobs"
+          />
+          <Route
+            element={
+              <DashboardLayout>
+                <JobDetailPage />
+              </DashboardLayout>
+            }
+            path="/jobs/:id"
+          />
+          <Route
+            element={<RequirePermission perm={{ notifications: ["read"] }} />}
+          >
+            <Route
+              element={
+                <DashboardLayout>
+                  <NotificationsPage />
+                </DashboardLayout>
+              }
+              path="/notifications"
+            />
+          </Route>
+          <Route
+            element={<RequirePermission perm={{ parts: ["viewCatalog"] }} />}
+          >
+            <Route
+              element={
+                <DashboardLayout>
+                  <PartsCatalogPage />
+                </DashboardLayout>
+              }
+              path="/parts"
+            />
+          </Route>
+          <Route
+            element={<RequirePermission perm={{ repairs: ["viewCatalog"] }} />}
+          >
+            <Route
+              element={
+                <DashboardLayout>
+                  <RepairsPage />
+                </DashboardLayout>
+              }
+              path="/repairs"
+            />
+          </Route>
+          <Route
+            element={
+              <DashboardLayout>
+                <SettingsPage />
+              </DashboardLayout>
+            }
+            path="/settings"
+          />
+          <Route element={<RequirePermission perm={{ ai: ["access"] }} />}>
+            <Route
+              element={
+                <DashboardLayout>
+                  <AiAnalystLayout>
+                    <AiAnalystPage />
+                  </AiAnalystLayout>
+                </DashboardLayout>
+              }
+              path="/ai-analyst"
+            />
+            <Route
+              element={
+                <DashboardLayout>
+                  <AiAnalystLayout>
+                    <AiMemoriesPage />
+                  </AiAnalystLayout>
+                </DashboardLayout>
+              }
+              path="/ai-analyst/memories"
+            />
+          </Route>
+          <Route
+            element={
+              <DashboardLayout>
+                <ProfilePage />
+              </DashboardLayout>
+            }
+            path="/profile"
+          />
+          <Route
+            element={
+              <DashboardLayout>
+                <ProfilePage />
+              </DashboardLayout>
+            }
+            path="/profile/:userId"
+          />
+          <Route element={<RequirePermission perm={{ customers: ["view"] }} />}>
+            <Route
+              element={
+                <DashboardLayout>
+                  <CustomersPage />
+                </DashboardLayout>
+              }
+              path="/customers"
+            />
+            <Route
+              element={
+                <DashboardLayout>
+                  <CustomerDetailPage />
+                </DashboardLayout>
+              }
+              path="/customers/:id"
+            />
+          </Route>
+          <Route
+            element={<RequirePermission perm={{ reports: ["viewSelf"] }} />}
+          >
+            <Route
+              element={
+                <DashboardLayout>
+                  <ReportsPage />
+                </DashboardLayout>
+              }
+              path="/reports"
+            />
+          </Route>
         </Route>
-        <Route
-          element={<RequirePermission perm={{ repairs: ["viewCatalog"] }} />}
-        >
-          <Route
-            element={
-              <DashboardLayout>
-                <RepairsPage />
-              </DashboardLayout>
-            }
-            path="/repairs"
-          />
-        </Route>
-        <Route
-          element={
-            <DashboardLayout>
-              <SettingsPage />
-            </DashboardLayout>
-          }
-          path="/settings"
-        />
-        <Route element={<RequirePermission perm={{ ai: ["access"] }} />}>
-          <Route
-            element={
-              <DashboardLayout>
-                <AiAnalystLayout>
-                  <AiAnalystPage />
-                </AiAnalystLayout>
-              </DashboardLayout>
-            }
-            path="/ai-analyst"
-          />
-          <Route
-            element={
-              <DashboardLayout>
-                <AiAnalystLayout>
-                  <AiMemoriesPage />
-                </AiAnalystLayout>
-              </DashboardLayout>
-            }
-            path="/ai-analyst/memories"
-          />
-        </Route>
-        <Route
-          element={
-            <DashboardLayout>
-              <ProfilePage />
-            </DashboardLayout>
-          }
-          path="/profile"
-        />
-        <Route
-          element={
-            <DashboardLayout>
-              <ProfilePage />
-            </DashboardLayout>
-          }
-          path="/profile/:userId"
-        />
-        <Route element={<RequirePermission perm={{ customers: ["view"] }} />}>
-          <Route
-            element={
-              <DashboardLayout>
-                <CustomersPage />
-              </DashboardLayout>
-            }
-            path="/customers"
-          />
-          <Route
-            element={
-              <DashboardLayout>
-                <CustomerDetailPage />
-              </DashboardLayout>
-            }
-            path="/customers/:id"
-          />
-        </Route>
-        <Route element={<RequirePermission perm={{ reports: ["viewSelf"] }} />}>
-          <Route
-            element={
-              <DashboardLayout>
-                <ReportsPage />
-              </DashboardLayout>
-            }
-            path="/reports"
-          />
-        </Route>
-      </Route>
-      <Route element={<TrackingPage />} path="/tracking/:jobCode?" />
-    </Routes>
+        <Route element={<TrackingPage />} path="/tracking/:jobCode?" />
+      </Routes>
+    </Suspense>
   );
 }

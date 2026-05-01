@@ -3,5 +3,8 @@
   "provider": "node",
   "deploy": {
     "startCommand": "bun run start:prod"
+  },
+  "install": {
+    "pruneDevDependencies": true
   }
 }

@@ -97,8 +97,8 @@ export default function JobsPage() {
     setStatusFilter("ALL");
   };
 
-  const handleExport = useCallback(() => {
-    exportJobsPdf({
+  const handleExport = useCallback(async () => {
+    await exportJobsPdf({
       columns: [
         { key: "id", label: t("job_id") },
         { key: "customer", label: t("customer") },

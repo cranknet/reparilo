@@ -33,5 +33,28 @@ export default defineConfig({
     outDir: "dist",
     emptyOutDir: true,
     sourcemap: "hidden",
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("react-dom") || id.includes("react/")) {
+              return "vendor-react";
+            }
+            if (id.includes("react-router")) {
+              return "vendor-react";
+            }
+            if (id.includes("@tanstack")) {
+              return "vendor-tanstack";
+            }
+            if (id.includes("sonner")) {
+              return "vendor-ui";
+            }
+            if (id.includes("i18next") || id.includes("react-i18next") || id.includes("i18next-browser-languagedetector")) {
+              return "vendor-i18n";
+            }
+          }
+        },
+      },
+    },
   },
 });

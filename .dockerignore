@@ -1,0 +1,14 @@
+.git
+node_modules
+dist
+coverage
+.env
+.env.*
+!.env.production
+*.log
+.DS_Store
+.stitch.worktrees
+.worktrees
+android/
+.turbo
+.playwright-mcp

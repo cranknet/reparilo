@@ -1,5 +1,3 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import type { JobRow } from "@/components/modules/jobs/jobs-shared";
 
 type JobRowKey = keyof JobRow;
@@ -16,14 +14,16 @@ interface ExportPdfOptions {
   title: string;
 }
 
-export function exportJobsPdf({
+export async function exportJobsPdf({
   columns,
   rows,
   title,
   filename,
 }: ExportPdfOptions) {
-  const doc = new jsPDF();
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
 
+  const doc = new jsPDF();
   doc.setFontSize(16);
   doc.text(title, 14, 20);
 
