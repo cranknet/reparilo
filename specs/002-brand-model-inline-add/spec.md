@@ -65,7 +65,7 @@ When the database is first set up, it contains a predefined set of popular phone
 
 **Acceptance Scenarios**:
 
-1. **Given** a fresh database after seeding, **When** the user opens the Brand dropdown, **Then** predefined brands appear (Apple, Samsung, Huawei, Xiaomi, Oppo, Vivo, OnePlus, Google Pixel, etc.)
+1. **Given** a fresh database after seeding, **When** the user opens the Brand dropdown, **Then** predefined brands appear (Apple, Samsung, Huawei, Xiaomi, Oppo, Vivo, OnePlus, Google, etc.)
 2. **Given** "Samsung" is selected, **When** the Model dropdown opens, **Then** predefined Samsung models appear (Galaxy S24, Galaxy A54, Galaxy Z Flip5, etc.)
 3. **Given** existing Device records in the database from prior job creation, **When** the seed script runs, **Then** those existing records are preserved (seed is idempotent)
 
@@ -84,7 +84,7 @@ When the database is first set up, it contains a predefined set of popular phone
 
 ### Functional Requirements
 
-- **FR-001**: System MUST display a searchable dropdown for brands that queries existing Device records from the database grouped by brand
+- **FR-001**: System MUST display a searchable dropdown for brands that queries Brand records from the Brand table
 - **FR-002**: System MUST display a searchable dropdown for models that shows only models belonging to the currently selected brand
 - **FR-003**: System MUST show an "Add '[typed text]'" option in the Brand dropdown when no existing brand matches the user's input
 - **FR-004**: System MUST create a new brand entry in the database when the user clicks the "Add" option in the Brand dropdown, and immediately select it
@@ -93,16 +93,16 @@ When the database is first set up, it contains a predefined set of popular phone
 - **FR-007**: System MUST NOT show the inline "Add" option in the Model dropdown when no brand is selected
 - **FR-008**: Brand and model matching MUST be case-insensitive
 - **FR-009**: The Model field MUST be cleared when the Brand field is changed (to avoid stale brand-model associations)
-- **FR-010**: System MUST seed predefined brands and their top models into the Device table during initial setup
+- **FR-010**: System MUST seed predefined brands into the Brand table and their top models as Device records during initial setup
 - **FR-011**: Seed script MUST be idempotent — re-running it MUST NOT duplicate existing Device records
 - **FR-012**: System MUST replace any hardcoded brand lists with database-driven data across the entire application
-- **FR-013**: System MUST support searching brands and models, including brand-filtered model search
-- **FR-014**: System MUST support creating new brands and models inline from the intake form
+- **FR-013**: System MUST support searching brands and models, including brand-filtered model search (supersedes FR-001 and FR-002)
+- **FR-014**: System MUST support creating new brands and models inline from the intake form (supersedes FR-003 through FR-006)
 
 ### Key Entities
 
 - **Brand**: Represents a device manufacturer (e.g., Apple, Samsung, Vivo). Stored in a dedicated Brand table, independent of Device records. A brand can exist without any associated models.
-- **Model**: Represents a specific device model (e.g., Galaxy S24, iPhone 15). Stored as a Device record with both `brand` (referencing Brand) and `model` fields. Each brand-model combination is unique per the existing `@@unique([brand, model])` constraint.
+- **Model**: Represents a specific device model (e.g., Galaxy S24, iPhone 15). Stored as a Device record with `brandId` (FK to Brand) and `model` fields. Each brand-model combination is unique per the `@@unique([brandId, model])` constraint.
 
 ## Success Criteria *(mandatory)*
 
@@ -117,10 +117,7 @@ When the database is first set up, it contains a predefined set of popular phone
 
 ## Assumptions
 
-- The existing Device model in Prisma (with `brand` + `model` + `@@unique([brand, model])`) is sufficient to store brand-model data without schema changes
-- Brand list is derived by querying distinct `brand` values from the Device table — no separate Brand table is needed
-- The inline-add operation creates a Device record (brand + model pair) directly, since the Device table already has the unique constraint on `[brand, model]`
-- A separate Brand table will be added to the schema so that brands can exist independently of Device records. This allows a new brand to appear in suggestions immediately after inline-add, even before any models are associated. The Device table's `brand` field becomes a foreign key reference to the Brand table, and models continue to be stored as Device records with the existing `@@unique([brand, model])` constraint
+- A separate Brand table will be added to the schema so that brands can exist independently of Device records. This allows a new brand to appear in suggestions immediately after inline-add, even before any models are associated. The Device table's `brand` field becomes `brandId` as a foreign key reference to the Brand table, and models continue to be stored as Device records with a `@@unique([brandId, model])` constraint
 - Seed data focuses on brands and models commonly repaired in North Africa / Algeria (the shop's market), including Chinese brands like Vivo, Oppo, Xiaomi
 - The user's locale (AR/FR/EN) does not affect brand/model names since they are proper nouns
 - Existing `device.upsert` logic in `job.service.ts` continues to work alongside the new inline-add functionality

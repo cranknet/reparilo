@@ -36,10 +36,10 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T009 Create `server/services/device.service.ts` with searchBrands, searchModels, createBrand, createModel functions following existing service patterns (pure functions receiving prisma as first arg)
+- [ ] T009 Create `server/services/device.service.ts` with searchBrands, searchModels, createBrand, createModel functions following existing service patterns (pure functions receiving prisma as first arg). searchBrands MUST use case-insensitive `startsWith` matching (mode: 'insensitive') per FR-008
 - [ ] T010 Create `server/routes/devices.ts` with four endpoints: GET /api/brands/search, POST /api/brands, GET /api/brands/:brandId/models/search, POST /api/brands/:brandId/models — following customers.ts pattern (Zod safeParse, requirePermission, AppError)
 - [ ] T011 Register devicesRoutes in `server/index.ts` with prefix `/api/brands`
-- [ ] T012 Update `server/services/job.service.ts` device.upsert logic: look up Brand by name first, then create Device with brandId instead of brand string
+- [ ] T012 Update `server/services/job.service.ts` device.upsert logic: when form has brandId, look up Brand by id; otherwise look up by name. Then create Device with brandId instead of brand string
 - [ ] T013 Add `seedDevices()` function to `prisma/seed.ts` — upsert Brand records and Device records for the 8 brands and ~32 models from data-model.md, call it in main()
 
 **Checkpoint**: Backend ready — brand/model search and create endpoints functional, seed data populated, job creation still works
@@ -57,7 +57,7 @@
 - [ ] T014 Create `src/hooks/use-brand-search.ts` following use-customer-search.ts pattern (debounced API call to GET /api/brands/search, AbortController, returns { query, setQuery, results, isSearching, searchError })
 - [ ] T015 [P] Create `src/hooks/use-model-search.ts` following use-brand-search pattern (debounced API call to GET /api/brands/:brandId/models/search, accepts brandId param, skips if no brandId)
 - [ ] T016 [P] Create `src/components/modules/jobs/intake-modal/brand-search-dropdown.tsx` following CustomerSearchDropdown pattern (dropdown with search results, click-outside, loading state, visible prop)
-- [ ] T017 [P] Create `src/components/modules/jobs/intake-modal/model-search-dropdown.tsx` following BrandSearchDropdown pattern (brand-filtered model results, click-outside, loading state, visible prop, disabled when no brandId)
+- [ ] T017 [P] Create `src/components/modules/jobs/intake-modal/model-search-dropdown.tsx` following BrandSearchDropdown pattern (brand-filtered model results, click-outside, loading state, visible prop, disabled when no brandId per FR-007)
 - [ ] T018 Add `brandId: string` and `modelId: string` fields to IntakeFormData in `src/components/modules/jobs/intake-modal/types.ts`, add to INITIAL_FORM defaults, update REQUIRED_FIELDS if needed
 - [ ] T019 Modify `src/components/modules/jobs/intake-modal/use-intake-modal.ts`: wire up useBrandSearch and useModelSearch hooks, add brand select handler (sets brand + brandId, clears model + modelId), add model select handler (sets model + modelId)
 - [ ] T020 Modify `src/components/modules/jobs/intake-modal/step-1-content.tsx`: replace Brand datalist input with text input + BrandSearchDropdown, replace Model plain input with text input + ModelSearchDropdown, pass brandId and handlers from props
@@ -90,7 +90,7 @@
 
 ### Implementation for User Story 3
 
-- [ ] T024 [US3] Add "Add '[typed text]'" option to ModelSearchDropdown in `src/components/modules/jobs/intake-modal/model-search-dropdown.tsx` — show only when brandId is set and query has no exact match, clicking calls POST /api/brands/:brandId/models with optimistic selection
+- [ ] T024 [US3] Add "Add '[typed text]'" option to ModelSearchDropdown in `src/components/modules/jobs/intake-modal/model-search-dropdown.tsx` — show ONLY when brandId is set and query has no exact match (FR-007: no Add option without brand), clicking calls POST /api/brands/:brandId/models with optimistic selection
 - [ ] T025 [US3] Add inline-create logic to `src/hooks/use-model-search.ts` — createModel function that calls POST /api/brands/:brandId/models, on 409 fallback to re-search, on success add to results and return created device
 - [ ] T026 [US3] Wire model inline-add in `src/components/modules/jobs/intake-modal/use-intake-modal.ts` — call createModel on "Add" click, set model + modelId on success, handle error with form field error message
 
@@ -104,10 +104,11 @@
 
 - [ ] T027 Handle case-insensitive brand duplicate in `server/services/device.service.ts` createBrand — on unique violation, fetch existing brand by case-insensitive name and return it instead of throwing 409
 - [ ] T028 [P] Clear model field when brand changes in `src/components/modules/jobs/intake-modal/use-intake-modal.ts` — ensure FR-009 (clear model on brand change) works for all brand change scenarios (select, clear, inline-add)
-- [ ] T029 [P] Add loading and error states to brand/model dropdown UI — spinner on create, error message near field on failure, field reverts to typed text on failure (per edge cases in spec)
+- [ ] T029 [P] Add loading and error states to brand/model dropdown UI — spinner on create, disable input field during inline-add operation, error message near field on failure, field reverts to typed text on failure (per edge cases in spec)
 - [ ] T030 Update `src/components/modules/jobs/jobs-shared.ts` inferDeviceType if it references Device.brand string directly — adapt to Device.brand.name via Brand relation
-- [ ] T031 Run `pnpm check` and fix any lint/typecheck warnings across all changed files
-- [ ] T032 Run `pnpm run db:seed` on a clean database and verify all 8 brands + ~32 models are created idempotently
+- [ ] T031 [P] Sync AGENTS.md → CLAUDE.md → GEMINI.md via `cp AGENTS.md CLAUDE.md && cp AGENTS.md GEMINI.md` (constitution requirement)
+- [ ] T032 Run `pnpm check` and fix any lint/typecheck warnings across all changed files
+- [ ] T033 Run `pnpm run db:seed` on a clean database and verify all 8 brands + ~32 models are created idempotently
 
 ---
 
