@@ -1,9 +1,8 @@
-import type { AuditAction, Prisma, PrismaClient } from "@generated/client";
+import type { AuditAction } from "@generated/client";
+import type { DbClient } from "../repositories/audit.repository.js";
+import { create } from "../repositories/audit.repository.js";
 
-type PrismaOrTx = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$use" | "$extends"
->;
+export type { DbClient } from "../repositories/audit.repository.js";
 
 interface AuditInput {
   action: AuditAction;
@@ -16,20 +15,8 @@ interface AuditInput {
 }
 
 export async function createAuditLog(
-  prisma: PrismaOrTx,
+  prisma: DbClient,
   input: AuditInput
 ): Promise<void> {
-  await prisma.auditLog.create({
-    data: {
-      jobId: input.jobId,
-      userId: input.userId,
-      action: input.action,
-      fromValue: input.fromValue,
-      toValue: input.toValue,
-      note: input.note,
-      metadata: (input.metadata ?? undefined) as
-        | Prisma.InputJsonValue
-        | undefined,
-    },
-  });
+  await create(prisma, input);
 }
