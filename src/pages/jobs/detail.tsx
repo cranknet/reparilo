@@ -144,7 +144,7 @@ export default function JobDetailPage() {
               {t("intake.device_section")}
             </p>
             <h1 className="mt-0.5 font-extrabold font-headline text-2xl text-on-surface tracking-tight sm:text-3xl">
-              {[job.device?.brand, job.device?.model]
+              {[job.device?.brand?.name, job.device?.model]
                 .filter(Boolean)
                 .join(" ") || "—"}
             </h1>
