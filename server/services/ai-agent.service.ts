@@ -17,6 +17,8 @@ import {
   findUniqueAgentDefinition,
   findUniqueInstruction,
   findUniqueMemory,
+  softDeleteInstruction,
+  softDeleteMemory,
   updateAgentDefinition as updateAgentDefinitionRepo,
   updateInstruction as updateInstructionRepo,
   updateMemory as updateMemoryRepo,
@@ -96,11 +98,7 @@ export async function deleteMemory(prisma: DbClient, id: string) {
   if (!existing) {
     return null;
   }
-  return await updateMemoryRepo(
-    prisma,
-    { id },
-    { content: existing.content, tags: existing.tags, isActive: false }
-  );
+  return await softDeleteMemory(prisma, { id });
 }
 
 export async function listInstructions(prisma: DbClient) {
@@ -136,9 +134,5 @@ export async function deleteInstruction(prisma: DbClient, id: string) {
   if (!existing) {
     return null;
   }
-  return await updateInstructionRepo(
-    prisma,
-    { id },
-    { content: existing.content, tags: existing.tags, isActive: false }
-  );
+  return await softDeleteInstruction(prisma, { id });
 }

@@ -230,3 +230,13 @@ export async function updateInstruction(
 ) {
   return await prisma.aiInstruction.update({ where, data });
 }
+
+export async function softDeleteInstruction(
+  prisma: DbClient,
+  where: Prisma.AiInstructionWhereUniqueInput
+) {
+  return await prisma.aiInstruction.update({
+    where,
+    data: { isActive: false },
+  });
+}
