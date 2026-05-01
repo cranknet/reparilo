@@ -6,6 +6,21 @@ import type {
   UpdateConversationInput,
   UpdateMessageInput,
 } from "@shared/schemas/ai.schema";
+import type { DbClient } from "../repositories/ai.repository.js";
+import {
+  countMessages,
+  createConversation as createConversationRepo,
+  deleteConversation as deleteConversationRepo,
+  deleteManyConversations,
+  deleteMessage as deleteMessageRepo,
+  findFirstConversation,
+  findFirstMessage,
+  findManyConversations,
+  findManyMessages,
+  rawDistinctOnLastAssistant,
+  updateConversation as updateConversationRepo,
+  updateMessage as updateMessageRepo,
+} from "../repositories/ai.repository.js";
 
 export async function listConversations(
   prisma: PrismaClient,
@@ -20,12 +35,13 @@ export async function listConversations(
       : {}),
   };
 
-  const conversations = await prisma.aiConversation.findMany({
+  const conversations = await findManyConversations(
+    prisma,
     where,
-    orderBy: [{ starred: "desc" }, { updatedAt: "desc" }],
-    take: limit + 1,
-    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-    select: {
+    [{ starred: "desc" }, { updatedAt: "desc" }],
+    limit + 1,
+    cursor,
+    {
       id: true,
       title: true,
       starred: true,
@@ -38,8 +54,8 @@ export async function listConversations(
         take: 1,
         select: { content: true },
       },
-    },
-  });
+    }
+  );
 
   const hasMore = conversations.length > limit;
   const items = hasMore ? conversations.slice(0, limit) : conversations;
@@ -47,16 +63,7 @@ export async function listConversations(
 
   const ids = items.map((c) => c.id);
 
-  const lastAssistantMessages = await prisma.$queryRaw<
-    Array<{ conversationId: string; agentName: string | null }>
-  >`
-    SELECT DISTINCT ON ("conversationId") "conversationId", "agentName"
-    FROM "ai_messages"
-    WHERE "conversationId" = ANY(${ids}::text[])
-      AND role = 'ASSISTANT'
-      AND "agentName" IS NOT NULL
-    ORDER BY "conversationId", "createdAt" DESC
-  `;
+  const lastAssistantMessages = await rawDistinctOnLastAssistant(prisma, ids);
 
   const agentNameMap = new Map(
     lastAssistantMessages.map((m) => [m.conversationId, m.agentName])
@@ -77,75 +84,69 @@ export async function listConversations(
 }
 
 export async function getConversation(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string,
   id: string
 ) {
-  return await prisma.aiConversation.findFirst({
-    where: { id, userId },
-    include: { messages: { orderBy: { createdAt: "asc" }, take: 50 } },
+  return await findFirstConversation(prisma, { id, userId }, undefined, {
+    messages: { orderBy: { createdAt: "asc" }, take: 50 },
   });
 }
 
 export async function createConversation(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string,
   title?: string
 ) {
-  return await prisma.aiConversation.create({
-    data: { userId, title: title ?? null },
-  });
+  return await createConversationRepo(prisma, { userId, title: title ?? null });
 }
 
 export async function updateConversation(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string,
   id: string,
   data: UpdateConversationInput
 ) {
-  const conversation = await prisma.aiConversation.findFirst({
-    where: { id, userId },
-  });
+  const conversation = await findFirstConversation(prisma, { id, userId });
   if (!conversation) {
     return null;
   }
-  return await prisma.aiConversation.update({ where: { id }, data });
+  return await updateConversationRepo(prisma, { id }, data);
 }
 
 export async function deleteConversation(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string,
   id: string
 ) {
-  const conversation = await prisma.aiConversation.findFirst({
-    where: { id, userId },
-  });
+  const conversation = await findFirstConversation(prisma, { id, userId });
   if (!conversation) {
     return null;
   }
-  return await prisma.aiConversation.delete({ where: { id } });
+  return await deleteConversationRepo(prisma, { id });
 }
 
 export async function bulkDeleteConversations(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string,
   input: BulkDeleteConversationsInput
 ) {
-  const result = await prisma.aiConversation.deleteMany({
-    where: { id: { in: input.ids }, userId },
+  const result = await deleteManyConversations(prisma, {
+    id: { in: input.ids },
+    userId,
   });
   return { deleted: result.count };
 }
 
 export async function listMessages(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string,
   conversationId: string,
   query: MessagesQueryInput
 ) {
-  const conversation = await prisma.aiConversation.findFirst({
-    where: { id: conversationId, userId },
-    select: { id: true },
+  const conversation = await findFirstConversation(prisma, {
+    id: conversationId,
+    userId,
   });
   if (!conversation) {
     return null;
@@ -153,74 +154,76 @@ export async function listMessages(
 
   const { page, limit } = query;
   const [messages, total] = await Promise.all([
-    prisma.aiMessage.findMany({
-      where: { conversationId },
-      orderBy: { createdAt: "asc" },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    prisma.aiMessage.count({ where: { conversationId } }),
+    findManyMessages(
+      prisma,
+      { conversationId },
+      { createdAt: "asc" },
+      (page - 1) * limit,
+      limit
+    ),
+    countMessages(prisma, { conversationId }),
   ]);
 
   return { items: messages, total, page, limit };
 }
 
 export async function updateMessage(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string,
   conversationId: string,
   messageId: string,
   data: UpdateMessageInput
 ) {
-  const conversation = await prisma.aiConversation.findFirst({
-    where: { id: conversationId, userId },
-    select: { id: true },
+  const conversation = await findFirstConversation(prisma, {
+    id: conversationId,
+    userId,
   });
   if (!conversation) {
     return null;
   }
 
-  const message = await prisma.aiMessage.findFirst({
-    where: { id: messageId, conversationId },
+  const message = await findFirstMessage(prisma, {
+    id: messageId,
+    conversationId,
   });
   if (!message) {
     return null;
   }
 
-  return await prisma.aiMessage.update({ where: { id: messageId }, data });
+  return await updateMessageRepo(prisma, { id: messageId }, data);
 }
 
 export async function deleteMessage(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string,
   conversationId: string,
   messageId: string
 ) {
-  const conversation = await prisma.aiConversation.findFirst({
-    where: { id: conversationId, userId },
-    select: { id: true },
+  const conversation = await findFirstConversation(prisma, {
+    id: conversationId,
+    userId,
   });
   if (!conversation) {
     return null;
   }
 
-  const message = await prisma.aiMessage.findFirst({
-    where: { id: messageId, conversationId },
+  const message = await findFirstMessage(prisma, {
+    id: messageId,
+    conversationId,
   });
   if (!message) {
     return null;
   }
 
-  return await prisma.aiMessage.delete({ where: { id: messageId } });
+  return await deleteMessageRepo(prisma, { id: messageId });
 }
 
 export async function exportConversation(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string,
   id: string
 ) {
-  return await prisma.aiConversation.findFirst({
-    where: { id, userId },
-    include: { messages: { orderBy: { createdAt: "asc" } } },
+  return await findFirstConversation(prisma, { id, userId }, undefined, {
+    messages: { orderBy: { createdAt: "asc" } },
   });
 }

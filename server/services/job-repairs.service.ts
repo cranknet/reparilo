@@ -1,6 +1,13 @@
 import type { PrismaClient } from "@generated/client";
 import { AuditAction, type RepairCategory } from "@generated/client";
 import type { AddJobRepairInput } from "@shared/schemas/job.schema";
+import {
+  createRepair as createRepairRepo,
+  deleteRepairById,
+  findDuplicateRepair,
+  findJobById,
+  findRepairWithJob,
+} from "../repositories/job-repair.repository.js";
 import { assertJobMutable } from "../utils/job-mutations.js";
 import { createAuditLog } from "./audit.service.js";
 
@@ -10,7 +17,7 @@ export async function add(
   input: AddJobRepairInput,
   userId: string
 ) {
-  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  const job = await findJobById(prisma, jobId);
   if (!job) {
     return null;
   }
@@ -20,24 +27,20 @@ export async function add(
   }
 
   if (input.repairId) {
-    const existing = await prisma.jobRepair.findFirst({
-      where: { jobId, repairId: input.repairId },
-    });
+    const existing = await findDuplicateRepair(prisma, jobId, input.repairId);
     if (existing) {
       return { error: "DUPLICATE_REPAIR" as const };
     }
   }
 
   const jobRepair = await prisma.$transaction(async (tx) => {
-    const created = await tx.jobRepair.create({
-      data: {
-        jobId,
-        repairId: input.repairId ?? null,
-        repairName: input.repairName,
-        category: input.category as RepairCategory,
-        price: input.price,
-        createdById: userId,
-      },
+    const created = await createRepairRepo(tx, {
+      jobId,
+      repairId: input.repairId ?? null,
+      repairName: input.repairName,
+      category: input.category as RepairCategory,
+      price: input.price,
+      createdById: userId,
     });
 
     await createAuditLog(tx, {
@@ -60,10 +63,7 @@ export async function remove(
   repairId: string,
   userId: string
 ) {
-  const repair = await prisma.jobRepair.findFirst({
-    where: { id: repairId, jobId },
-    include: { job: { select: { status: true } } },
-  });
+  const repair = await findRepairWithJob(prisma, repairId, jobId);
   if (!repair) {
     return null;
   }
@@ -73,7 +73,7 @@ export async function remove(
   }
 
   await prisma.$transaction(async (tx) => {
-    await tx.jobRepair.delete({ where: { id: repairId } });
+    await deleteRepairById(tx, repairId);
     await createAuditLog(tx, {
       jobId,
       userId,

@@ -4,6 +4,13 @@ import path from "node:path";
 import type { PrismaClient } from "@generated/client";
 import { AuditAction } from "@generated/client";
 import { loadEnv } from "../config/env.js";
+import {
+  countPhotos,
+  createPhoto as createPhotoRepo,
+  deletePhotoById,
+  findJobById,
+  findPhotoByIdAndJob,
+} from "../repositories/job-photo.repository.js";
 import { validateMagicBytes } from "../utils/file-validation.js";
 import { assertJobMutable } from "../utils/job-mutations.js";
 import { createAuditLog } from "./audit.service.js";
@@ -29,7 +36,7 @@ export async function upload(
   file: { mimetype: string; toBuffer: () => Promise<Buffer> },
   userId: string
 ) {
-  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  const job = await findJobById(prisma, jobId);
   if (!job) {
     return null;
   }
@@ -38,7 +45,7 @@ export async function upload(
     return mutabilityError;
   }
 
-  const photoCount = await prisma.jobPhoto.count({ where: { jobId } });
+  const photoCount = await countPhotos(prisma, jobId);
   if (photoCount >= MAX_PHOTOS) {
     return { error: "PHOTO_LIMIT_REACHED" as const };
   }
@@ -61,15 +68,11 @@ export async function upload(
   await fs.writeFile(filePath, buffer);
 
   const relativePath = `job-photos/${jobId}/${filename}`;
-  let photo: Awaited<ReturnType<typeof prisma.jobPhoto.create>>;
+  let photo: Awaited<ReturnType<typeof createPhotoRepo>>;
   try {
-    photo = await prisma.jobPhoto.create({
-      data: { jobId, path: relativePath },
-    });
+    photo = await createPhotoRepo(prisma, { jobId, path: relativePath });
   } catch (err) {
-    await fs.unlink(filePath).catch(() => {
-      /* intentionally ignored */
-    });
+    await fs.unlink(filePath).catch(() => undefined);
     throw err;
   }
 
@@ -89,21 +92,15 @@ export async function remove(
   photoId: string,
   userId: string
 ) {
-  const photo = await prisma.jobPhoto.findFirst({
-    where: { id: photoId, jobId },
-  });
+  const photo = await findPhotoByIdAndJob(prisma, photoId, jobId);
   if (!photo) {
     return null;
   }
 
   const fullPath = path.join(UPLOAD_BASE, photo.path);
-  try {
-    await fs.unlink(fullPath);
-  } catch {
-    // File already deleted or missing — not an error
-  }
+  await fs.unlink(fullPath).catch(() => undefined);
 
-  await prisma.jobPhoto.delete({ where: { id: photoId } });
+  await deletePhotoById(prisma, photoId);
 
   await createAuditLog(prisma, {
     jobId,

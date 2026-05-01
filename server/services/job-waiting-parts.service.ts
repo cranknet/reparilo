@@ -1,6 +1,12 @@
 import type { PrismaClient } from "@generated/client";
 import { AuditAction } from "@generated/client";
 import type { AddWaitingPartInput } from "@shared/schemas/job.schema";
+import {
+  createWaitingPart as createWaitingPartRepo,
+  deleteWaitingPart,
+  findJobById,
+  findWaitingPartByIdAndJob,
+} from "../repositories/job-waiting-parts.repository.js";
 import { assertJobMutable } from "../utils/job-mutations.js";
 import { createAuditLog } from "./audit.service.js";
 
@@ -10,7 +16,7 @@ export async function add(
   input: AddWaitingPartInput,
   userId: string
 ) {
-  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  const job = await findJobById(prisma, jobId);
   if (!job) {
     return null;
   }
@@ -19,12 +25,10 @@ export async function add(
     return mutabilityError;
   }
 
-  const waitingPart = await prisma.jobPartsWaiting.create({
-    data: {
-      jobId,
-      partName: input.partName,
-      supplier: input.supplier ?? null,
-    },
+  const waitingPart = await createWaitingPartRepo(prisma, {
+    jobId,
+    partName: input.partName,
+    supplier: input.supplier ?? null,
   });
 
   await createAuditLog(prisma, {
@@ -44,14 +48,12 @@ export async function remove(
   waitingId: string,
   userId: string
 ) {
-  const waitingPart = await prisma.jobPartsWaiting.findFirst({
-    where: { id: waitingId, jobId },
-  });
+  const waitingPart = await findWaitingPartByIdAndJob(prisma, waitingId, jobId);
   if (!waitingPart) {
     return null;
   }
 
-  await prisma.jobPartsWaiting.delete({ where: { id: waitingId } });
+  await deleteWaitingPart(prisma, waitingId);
 
   await createAuditLog(prisma, {
     jobId,

@@ -1,4 +1,3 @@
-import type { PrismaClient } from "@generated/client";
 import { AppError } from "@shared/errors/app-error.js";
 import type {
   AgentDefinitionCreateInput,
@@ -6,30 +5,44 @@ import type {
   AiInstructionInput,
   AiMemoryInput,
 } from "@shared/schemas/ai.schema";
+import type { DbClient } from "../repositories/ai.repository.js";
+import {
+  createAgentDefinition as createAgentDefinitionRepo,
+  createInstruction as createInstructionRepo,
+  createMemory as createMemoryRepo,
+  deleteAgentDefinition as deleteAgentDefinitionRepo,
+  findManyAgentDefinitions,
+  findManyInstructions,
+  findManyMemories,
+  findUniqueAgentDefinition,
+  findUniqueInstruction,
+  findUniqueMemory,
+  updateAgentDefinition as updateAgentDefinitionRepo,
+  updateInstruction as updateInstructionRepo,
+  updateMemory as updateMemoryRepo,
+} from "../repositories/ai.repository.js";
 
-export async function listAgentDefinitions(prisma: PrismaClient) {
-  return await prisma.aiAgentDefinition.findMany({
-    orderBy: { createdAt: "asc" },
-  });
+export async function listAgentDefinitions(prisma: DbClient) {
+  return await findManyAgentDefinitions(prisma);
 }
 
-export async function getAgentDefinition(prisma: PrismaClient, id: string) {
-  return await prisma.aiAgentDefinition.findUnique({ where: { id } });
+export async function getAgentDefinition(prisma: DbClient, id: string) {
+  return await findUniqueAgentDefinition(prisma, { id });
 }
 
 export async function createAgentDefinition(
-  prisma: PrismaClient,
+  prisma: DbClient,
   data: AgentDefinitionCreateInput
 ) {
-  return await prisma.aiAgentDefinition.create({ data });
+  return await createAgentDefinitionRepo(prisma, data);
 }
 
 export async function updateAgentDefinition(
-  prisma: PrismaClient,
+  prisma: DbClient,
   id: string,
   data: AgentDefinitionUpdateInput
 ) {
-  const existing = await prisma.aiAgentDefinition.findUnique({ where: { id } });
+  const existing = await findUniqueAgentDefinition(prisma, { id });
   if (!existing) {
     return null;
   }
@@ -39,94 +52,93 @@ export async function updateAgentDefinition(
     safeData.name = undefined;
   }
 
-  return await prisma.aiAgentDefinition.update({
-    where: { id },
-    data: safeData,
-  });
+  return await updateAgentDefinitionRepo(prisma, { id }, safeData);
 }
 
-export async function deleteAgentDefinition(prisma: PrismaClient, id: string) {
-  const existing = await prisma.aiAgentDefinition.findUnique({ where: { id } });
+export async function deleteAgentDefinition(prisma: DbClient, id: string) {
+  const existing = await findUniqueAgentDefinition(prisma, { id });
   if (!existing) {
     return null;
   }
   if (existing.isBuiltIn) {
     throw new AppError("BUILTIN_AGENT_DELETE");
   }
-  return await prisma.aiAgentDefinition.delete({ where: { id } });
+  return await deleteAgentDefinitionRepo(prisma, { id });
 }
 
-export async function listMemories(prisma: PrismaClient) {
-  return await prisma.aiMemory.findMany({
-    where: { isActive: true },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
+export async function listMemories(prisma: DbClient) {
+  return await findManyMemories(
+    prisma,
+    { isActive: true },
+    { createdAt: "desc" },
+    100
+  );
 }
 
-export async function createMemory(prisma: PrismaClient, data: AiMemoryInput) {
-  return await prisma.aiMemory.create({
-    data: { ...data, source: "manual" },
-  });
+export async function createMemory(prisma: DbClient, data: AiMemoryInput) {
+  return await createMemoryRepo(prisma, { ...data, source: "manual" });
 }
 
 export async function updateMemory(
-  prisma: PrismaClient,
+  prisma: DbClient,
   id: string,
   data: AiMemoryInput
 ) {
-  const existing = await prisma.aiMemory.findUnique({ where: { id } });
+  const existing = await findUniqueMemory(prisma, { id });
   if (!existing) {
     return null;
   }
-  return await prisma.aiMemory.update({ where: { id }, data });
+  return await updateMemoryRepo(prisma, { id }, data);
 }
 
-export async function deleteMemory(prisma: PrismaClient, id: string) {
-  const existing = await prisma.aiMemory.findUnique({ where: { id } });
+export async function deleteMemory(prisma: DbClient, id: string) {
+  const existing = await findUniqueMemory(prisma, { id });
   if (!existing) {
     return null;
   }
-  return await prisma.aiMemory.update({
-    where: { id },
-    data: { isActive: false },
-  });
+  return await updateMemoryRepo(
+    prisma,
+    { id },
+    { content: existing.content, tags: existing.tags, isActive: false }
+  );
 }
 
-export async function listInstructions(prisma: PrismaClient) {
-  return await prisma.aiInstruction.findMany({
-    where: { isActive: true },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
+export async function listInstructions(prisma: DbClient) {
+  return await findManyInstructions(
+    prisma,
+    { isActive: true },
+    { createdAt: "desc" },
+    50
+  );
 }
 
 export async function createInstruction(
-  prisma: PrismaClient,
+  prisma: DbClient,
   data: AiInstructionInput
 ) {
-  return await prisma.aiInstruction.create({ data });
+  return await createInstructionRepo(prisma, data);
 }
 
 export async function updateInstruction(
-  prisma: PrismaClient,
+  prisma: DbClient,
   id: string,
   data: AiInstructionInput
 ) {
-  const existing = await prisma.aiInstruction.findUnique({ where: { id } });
+  const existing = await findUniqueInstruction(prisma, { id });
   if (!existing) {
     return null;
   }
-  return await prisma.aiInstruction.update({ where: { id }, data });
+  return await updateInstructionRepo(prisma, { id }, data);
 }
 
-export async function deleteInstruction(prisma: PrismaClient, id: string) {
-  const existing = await prisma.aiInstruction.findUnique({ where: { id } });
+export async function deleteInstruction(prisma: DbClient, id: string) {
+  const existing = await findUniqueInstruction(prisma, { id });
   if (!existing) {
     return null;
   }
-  return await prisma.aiInstruction.update({
-    where: { id },
-    data: { isActive: false },
-  });
+  return await updateInstructionRepo(
+    prisma,
+    { id },
+    { content: existing.content, tags: existing.tags, isActive: false }
+  );
 }

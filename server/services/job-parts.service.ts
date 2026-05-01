@@ -1,6 +1,12 @@
 import type { PrismaClient } from "@generated/client";
 import { AuditAction } from "@generated/client";
 import type { AddJobPartInput } from "@shared/schemas/job.schema";
+import {
+  createPart as createPartRepo,
+  deletePartById,
+  findJobById,
+  findPartWithJob,
+} from "../repositories/job-part.repository.js";
 import { assertJobMutable } from "../utils/job-mutations.js";
 import { createAuditLog } from "./audit.service.js";
 
@@ -10,7 +16,7 @@ export async function add(
   input: AddJobPartInput,
   userId: string
 ) {
-  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  const job = await findJobById(prisma, jobId);
   if (!job) {
     return null;
   }
@@ -21,18 +27,16 @@ export async function add(
 
   const totalCost = input.unitPrice * input.quantity;
 
-  const jobPart = await prisma.jobPart.create({
-    data: {
-      category: input.category,
-      jobId,
-      partId: input.partId ?? null,
-      partName: input.partName,
-      quantity: input.quantity,
-      supplier: input.supplier ?? null,
-      totalCost,
-      unitPrice: input.unitPrice,
-      createdById: userId,
-    },
+  const jobPart = await createPartRepo(prisma, {
+    category: input.category,
+    jobId,
+    partId: input.partId ?? null,
+    partName: input.partName,
+    quantity: input.quantity,
+    supplier: input.supplier ?? null,
+    totalCost,
+    unitPrice: input.unitPrice,
+    createdById: userId,
   });
 
   await createAuditLog(prisma, {
@@ -52,10 +56,7 @@ export async function remove(
   partId: string,
   userId: string
 ) {
-  const part = await prisma.jobPart.findFirst({
-    where: { id: partId, jobId },
-    include: { job: { select: { status: true } } },
-  });
+  const part = await findPartWithJob(prisma, partId, jobId);
   if (!part) {
     return null;
   }
@@ -65,7 +66,7 @@ export async function remove(
   }
 
   await prisma.$transaction(async (tx) => {
-    await tx.jobPart.delete({ where: { id: partId } });
+    await deletePartById(tx, partId);
     await createAuditLog(tx, {
       action: AuditAction.PART_REMOVED,
       fromValue: `${part.partName} x${part.quantity}`,
