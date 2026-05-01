@@ -1,7 +1,7 @@
 providers = ["node"]
 
 [phases.setup]
-nixPkgs = ["nodejs_22", "openssl"]
+nixPkgs = ["nodejs_22", "openssl", "unzip"]
 cmds = ["curl -fsSL https://bun.sh/install | bash"]
 
 [phases.install]
