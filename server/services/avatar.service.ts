@@ -1,11 +1,15 @@
-import type { PrismaClient } from "@generated/client";
+import type { DbClient } from "../repositories/avatar.repository.js";
+import {
+  findUserImage,
+  updateUserImage,
+} from "../repositories/avatar.repository.js";
 import { validateMagicBytes } from "../utils/file-validation.js";
 
 const ALLOWED_MIMES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_SIZE = 2 * 1024 * 1024; // 2 MB — prevents DB bloat from large base64 avatars
+const MAX_SIZE = 2 * 1024 * 1024;
 
 export async function uploadAvatar(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string,
   file: { mimetype: string; toBuffer: () => Promise<Buffer> }
 ) {
@@ -21,29 +25,20 @@ export async function uploadAvatar(
     return { error: "INVALID_FILE_CONTENT" as const };
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { image: true },
-  });
+  const user = await findUserImage(prisma, userId);
   if (!user) {
     return null;
   }
 
   const dataUrl = `data:${file.mimetype};base64,${buffer.toString("base64")}`;
 
-  await prisma.user.update({
-    where: { id: userId },
-    data: { image: dataUrl },
-  });
+  await updateUserImage(prisma, userId, dataUrl);
 
   return { image: dataUrl };
 }
 
-export async function deleteAvatar(prisma: PrismaClient, userId: string) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { image: true },
-  });
+export async function deleteAvatar(prisma: DbClient, userId: string) {
+  const user = await findUserImage(prisma, userId);
   if (!user) {
     return null;
   }
@@ -51,10 +46,7 @@ export async function deleteAvatar(prisma: PrismaClient, userId: string) {
     return { image: null };
   }
 
-  await prisma.user.update({
-    where: { id: userId },
-    data: { image: null },
-  });
+  await updateUserImage(prisma, userId, null);
 
   return { image: null };
 }
