@@ -6,22 +6,19 @@ import {
 } from "../services/account-lockout.service.js";
 
 const mocks = vi.hoisted(() => ({
-  findFirst: vi.fn(),
-  findUnique: vi.fn(),
-  update: vi.fn(),
-  updateMany: vi.fn(),
+  findFailedAttempts: vi.fn(),
+  incrementFailedAttempt: vi.fn(),
+  resetFailedAttempts: vi.fn(),
 }));
 
-vi.mock("@generated/client", () => ({
-  PrismaClient: class {
-    user = {
-      findFirst: mocks.findFirst,
-      findUnique: mocks.findUnique,
-      update: mocks.update,
-      updateMany: mocks.updateMany,
-    };
-  },
+vi.mock("../repositories/user.repository.js", () => ({
+  DbClient: {},
+  findFailedAttempts: mocks.findFailedAttempts,
+  incrementFailedAttempt: mocks.incrementFailedAttempt,
+  resetFailedAttempts: mocks.resetFailedAttempts,
 }));
+
+const prisma = {} as never;
 
 describe("isAccountLocked", () => {
   it("returns true when lockedUntil is in the future", () => {
@@ -40,67 +37,58 @@ describe("isAccountLocked", () => {
 });
 
 describe("incrementFailedAttempt", () => {
-  let prisma: {
-    user: { findUnique: typeof mocks.findUnique; update: typeof mocks.update };
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
-    prisma = { user: { findUnique: mocks.findUnique, update: mocks.update } };
   });
 
   it("increments failedLoginAttempts by 1", async () => {
-    mocks.findUnique.mockResolvedValue({ failedLoginAttempts: 2 });
+    mocks.findFailedAttempts.mockResolvedValue({ failedLoginAttempts: 2 });
 
-    await incrementFailedAttempt(prisma as never, "user-1");
+    await incrementFailedAttempt(prisma, "user-1");
 
-    expect(mocks.update).toHaveBeenCalledWith({
-      data: { failedLoginAttempts: { increment: 1 } },
-      where: { id: "user-1" },
-    });
+    expect(mocks.incrementFailedAttempt).toHaveBeenCalledWith(
+      prisma,
+      "user-1",
+      { failedLoginAttempts: { increment: 1 } }
+    );
   });
 
   it("sets lockedUntil when attempts reach threshold (5)", async () => {
-    mocks.findUnique.mockResolvedValue({ failedLoginAttempts: 4 });
+    mocks.findFailedAttempts.mockResolvedValue({ failedLoginAttempts: 4 });
 
-    await incrementFailedAttempt(prisma as never, "user-1");
+    await incrementFailedAttempt(prisma, "user-1");
 
-    expect(mocks.update).toHaveBeenCalledWith({
-      data: {
+    expect(mocks.incrementFailedAttempt).toHaveBeenCalledWith(
+      prisma,
+      "user-1",
+      {
         failedLoginAttempts: { increment: 1 },
         lockedUntil: expect.any(Date),
-      },
-      where: { id: "user-1" },
-    });
+      }
+    );
 
-    const call = mocks.update.mock.calls[0][0];
-    const lockedUntil = call.data.lockedUntil as Date;
+    const call = mocks.incrementFailedAttempt.mock.calls[0][2];
+    const lockedUntil = call.lockedUntil as Date;
     expect(lockedUntil.getTime()).toBeGreaterThan(Date.now() - 1000);
   });
 
   it("does nothing when user is not found", async () => {
-    mocks.findUnique.mockResolvedValue(null);
+    mocks.findFailedAttempts.mockResolvedValue(null);
 
-    await incrementFailedAttempt(prisma as never, "missing-user");
+    await incrementFailedAttempt(prisma, "missing-user");
 
-    expect(mocks.update).not.toHaveBeenCalled();
+    expect(mocks.incrementFailedAttempt).not.toHaveBeenCalled();
   });
 });
 
 describe("resetFailedAttempts", () => {
-  let prisma: { user: { updateMany: typeof mocks.updateMany } };
-
   beforeEach(() => {
     vi.clearAllMocks();
-    prisma = { user: { updateMany: mocks.updateMany } };
   });
 
   it("resets failedLoginAttempts to 0 and lockedUntil to null", async () => {
-    await resetFailedAttempts(prisma as never, "user-1");
+    await resetFailedAttempts(prisma, "user-1");
 
-    expect(mocks.updateMany).toHaveBeenCalledWith({
-      data: { failedLoginAttempts: 0, lockedUntil: null },
-      where: { id: "user-1" },
-    });
+    expect(mocks.resetFailedAttempts).toHaveBeenCalledWith(prisma, "user-1");
   });
 });

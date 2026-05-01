@@ -264,6 +264,7 @@ describe("getOutboxLogs", () => {
     expect(mocks.outboxFindMany).toHaveBeenCalledWith({
       orderBy: { createdAt: "desc" },
       take: 50,
+      where: {},
     });
     expect(logs).toHaveLength(2);
     expect(logs[0]).toEqual({
@@ -298,6 +299,7 @@ describe("getOutboxLogs", () => {
     expect(mocks.outboxFindMany).toHaveBeenCalledWith({
       orderBy: { createdAt: "desc" },
       take: 10,
+      where: {},
     });
   });
 });

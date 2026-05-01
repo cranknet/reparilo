@@ -1,4 +1,9 @@
-import type { PrismaClient } from "@generated/client";
+import type { DbClient } from "../repositories/user.repository.js";
+import {
+  findFailedAttempts,
+  incrementFailedAttempt as repoIncrementFailedAttempt,
+  resetFailedAttempts as repoResetFailedAttempts,
+} from "../repositories/user.repository.js";
 
 const LOCKOUT_THRESHOLD = 5;
 const LOCKOUT_DURATION_MS = 30 * 60 * 1000;
@@ -11,13 +16,10 @@ export function isAccountLocked(user: { lockedUntil: Date | null }): boolean {
 }
 
 export async function incrementFailedAttempt(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string
 ): Promise<void> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { failedLoginAttempts: true },
-  });
+  const user = await findFailedAttempts(prisma, userId);
   if (!user) {
     return;
   }
@@ -25,23 +27,17 @@ export async function incrementFailedAttempt(
   const nextAttempts = user.failedLoginAttempts + 1;
   const shouldLock = nextAttempts >= LOCKOUT_THRESHOLD;
 
-  await prisma.user.update({
-    data: {
-      failedLoginAttempts: { increment: 1 },
-      ...(shouldLock
-        ? { lockedUntil: new Date(Date.now() + LOCKOUT_DURATION_MS) }
-        : {}),
-    },
-    where: { id: userId },
+  await repoIncrementFailedAttempt(prisma, userId, {
+    failedLoginAttempts: { increment: 1 },
+    ...(shouldLock
+      ? { lockedUntil: new Date(Date.now() + LOCKOUT_DURATION_MS) }
+      : {}),
   });
 }
 
 export async function resetFailedAttempts(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string
 ): Promise<void> {
-  await prisma.user.updateMany({
-    data: { failedLoginAttempts: 0, lockedUntil: null },
-    where: { id: userId },
-  });
+  await repoResetFailedAttempts(prisma, userId);
 }
