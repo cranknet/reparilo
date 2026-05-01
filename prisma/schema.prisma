@@ -108,6 +108,7 @@ model User {
   id              String    @id @default(cuid())
   name            String    @default("")
   username        String   @unique
+  displayUsername String?
   email           String    @unique
   emailVerified   Boolean   @default(false)
   image           String?
