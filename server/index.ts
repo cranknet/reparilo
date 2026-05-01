@@ -25,6 +25,7 @@ import { notificationsRoutes } from "./routes/notifications.js";
 import { partsRoutes } from "./routes/parts.js";
 import { receiptRoutes } from "./routes/receipts.js";
 import { repairCatalogRoutes } from "./routes/repairs.js";
+import { reportsRoutes } from "./routes/reports.js";
 import { settingsRoutes } from "./routes/settings.js";
 import { usersRoutes } from "./routes/users.js";
 import { cleanupReadNotifications } from "./services/notification-inapp.service.js";
@@ -74,6 +75,7 @@ if (!IS_PROD) {
         { name: "settings", description: "Settings" },
         { name: "dashboard", description: "Dashboard" },
         { name: "ai", description: "AI analyst" },
+        { name: "reports", description: "Reports" },
         { name: "receipts", description: "Receipts and labels" },
         { name: "health", description: "Health check" },
       ],
@@ -143,6 +145,7 @@ app.register(notificationsRoutes, { prefix: "/api/notifications" });
 app.register(settingsRoutes, { prefix: "/api/settings" });
 app.register(dashboardRoutes, { prefix: "/api/dashboard" });
 app.register(aiRoutes, { prefix: "/api/ai" });
+app.register(reportsRoutes, { prefix: "/api/reports" });
 
 if (IS_PROD) {
   const distRoot = path.resolve("dist");
