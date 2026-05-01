@@ -78,7 +78,7 @@ Reuse established single sources of truth; do not duplicate or invent.
 - Shared types, constants, and schemas live in `shared/` — frontend
   and server MUST import from there, not duplicate them.
 - Locale keys MUST be added to `en.json` and synced via
-  `pnpm run sync-locales`.
+  `bun run sync-locales`.
 - Prisma migrations MUST be created after every schema change.
 
 Rationale: Duplication across the shared boundary (frontend ↔ server)
@@ -99,9 +99,9 @@ far more expensive than building it in from the start.
 
 No lint warnings; no skipped checks; no suppressed errors.
 
-- Run `pnpm check` or `pnpm fix` — never suppress lint warnings.
+- Run `bun run check` or `bun run fix` — never suppress lint warnings.
 - Always apply best practices.
-- After creating a new worktree, run `pnpm setup:worktree`.
+- After creating a new worktree, run `bun run setup-worktree`.
 - When running tests, build, or lint — collect output in a single run.
 - Always collect and flag console errors during QA.
 
@@ -110,8 +110,8 @@ Rationale: Suppressed warnings accumulate into an unreliable codebase.
 ## Technology & Constraints
 
 **Language**: TypeScript (strict mode)
-**Runtime**: Node.js ≥ 20.19.0
-**Package Manager**: pnpm ≥ 10.0.0
+**Runtime**: Bun ≥ 1.3.0
+**Package Manager**: Bun (bun install, bun add, bun run, bunx)
 
 **Frontend**: React 19 · Vite 8 · Tailwind 4 · Zustand · TanStack Query
 **Backend**: Fastify 5 · Prisma 7 · PostgreSQL
@@ -119,7 +119,7 @@ Rationale: Suppressed warnings accumulate into an unreliable codebase.
 **i18n**: i18next (AR/FR/EN) with RTL support
 **Validation**: Zod (shared schemas)
 **Auth**: Better Auth
-**Lint**: ultracite (`pnpm check` / `pnpm fix`)
+**Lint**: ultracite (`bun run check` / `bun run fix`)
 
 **Constraints**:
 - Single `package.json` — monorepo is not used.
@@ -133,7 +133,7 @@ Rationale: Suppressed warnings accumulate into an unreliable codebase.
    approach.
 2. **Implement**: Minimal code. Follow existing patterns. Use shared
    utilities.
-3. **Verify**: Run `pnpm check`. Run `pnpm test`. Collect console errors.
+3. **Verify**: Run `bun run check`. Run `bun test`. Collect console errors.
 4. **Iterate**: Loop until success criteria are met — no unresolved
    lint warnings, no failing tests.
 

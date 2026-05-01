@@ -1,14 +1,14 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 import { spawnSync } from "node:child_process";
 
 function getWorktreeSetupSteps() {
   return [
-    { label: "Install dependencies", command: "pnpm", args: ["install"] },
+    { label: "Install dependencies", command: "bun", args: ["install"] },
     {
       label: "Generate Prisma client",
-      command: "pnpm",
-      args: ["exec", "prisma", "generate"],
+      command: "bunx",
+      args: ["prisma", "generate"],
     },
   ];
 }

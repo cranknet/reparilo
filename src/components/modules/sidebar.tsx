@@ -148,61 +148,59 @@ export default function Sidebar() {
 
         <NavLink
           className={({ isActive }) =>
-            `rounded-xl p-3 transition-colors ${FOCUS_VISIBLE} ${
+            `flex items-center gap-3 rounded-lg px-3 py-3 transition-all duration-200 ${FOCUS_VISIBLE} ${
               isActive
-                ? "bg-surface-container-lowest"
-                : "hover:bg-surface-container"
+                ? "translate-x-1 bg-surface-container-lowest font-semibold text-primary shadow-sm rtl:-translate-x-1"
+                : "text-on-surface-variant hover:bg-surface-container hover:text-primary"
             }`
           }
           to="/profile"
         >
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-on-primary text-sm">
-              {getInitials(userName)}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-bold text-on-surface text-sm">
-                {userName}
-              </p>
-              <p className="truncate text-on-surface-variant text-xs">
-                {t(ROLE_LABELS[role])}
-              </p>
-            </div>
-            <button
-              aria-label={
-                logoutPending
-                  ? t("auth_sign_out_confirm")
-                  : t("auth_sign_out_instead")
-              }
-              className={`flex items-center justify-center rounded-xl px-3 py-3 transition-all duration-200 ${FOCUS_VISIBLE} ${
-                logoutPending
-                  ? "bg-error-container font-medium text-on-error-container text-xs"
-                  : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
-              }`}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleLogoutClick();
-              }}
-              title={
-                logoutPending
-                  ? t("auth_sign_out_confirm")
-                  : t("auth_sign_out_instead")
-              }
-              type="button"
-            >
-              {logoutPending ? (
-                t("auth_sign_out_confirm")
-              ) : (
-                <span
-                  aria-hidden="true"
-                  className="material-symbols-outlined text-lg"
-                >
-                  power_settings_new
-                </span>
-              )}
-            </button>
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary font-bold text-on-primary text-sm">
+            {getInitials(userName)}
           </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-bold text-on-surface text-sm">
+              {userName}
+            </p>
+            <p className="truncate text-on-surface-variant text-xs">
+              {t(ROLE_LABELS[role])}
+            </p>
+          </div>
+          <button
+            aria-label={
+              logoutPending
+                ? t("auth_sign_out_confirm")
+                : t("auth_sign_out_instead")
+            }
+            className={`flex items-center justify-center rounded-xl px-3 py-3 transition-all duration-200 ${FOCUS_VISIBLE} ${
+              logoutPending
+                ? "bg-error-container font-medium text-on-error-container text-xs"
+                : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+            }`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleLogoutClick();
+            }}
+            title={
+              logoutPending
+                ? t("auth_sign_out_confirm")
+                : t("auth_sign_out_instead")
+            }
+            type="button"
+          >
+            {logoutPending ? (
+              t("auth_sign_out_confirm")
+            ) : (
+              <span
+                aria-hidden="true"
+                className="material-symbols-outlined text-lg"
+              >
+                power_settings_new
+              </span>
+            )}
+          </button>
         </NavLink>
       </div>
     </aside>

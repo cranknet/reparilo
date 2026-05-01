@@ -121,10 +121,10 @@ reparilo/
 ## General Rules
 
 - Sync `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` on any update — use `cp`
-- The project uses ultracite for code quality and formatting. use pnpm check or pnpm fix to fix any lint warnings.
-- For Impeccable detector use npx impeccable --json "File".
-- The project uses pnpm for package management.
-- Add locale keys to en.json and use pnpm run sync-locales to sync and auto-translate other languages files.
+- The project uses ultracite for code quality and formatting. use bun run check or bun run fix to fix any lint warnings.
+- For Impeccable detector use bunx impeccable --json "File".
+- The project uses Bun for package management and runtime. Use `bun install`, `bun add`, `bun run`, and `bunx` instead of pnpm/npm/npx.
+- Add locale keys to en.json and use bun run sync-locales to sync and auto-translate other languages files.
 - Never suppress lint warnings — always apply best practices
 - Explain tasks, errors, and solutions in plain English with minimal jargon
 - When I bring you an issue, your job is not to fix it directly. Instead, open a brief discussion: ask clarifying questions, explore the problem space, and propose industry best-practice solutions. Always lean toward the approach that reflects current standards, and walk me through the reasoning so we decide together.
@@ -139,7 +139,7 @@ reparilo/
 
 ## QA & Dev
 
-- After creating a new worktree, run `pnpm setup:worktree`
+- After creating a new worktree, run `bun run setup-worktree`
 - Use Chrome DevTools for QA — login with `admin` and the configured `SEED_ADMIN_PASSWORD`
 - Always collect and flag console errors
 - When running tests, build, or lint — always collect output in a single run

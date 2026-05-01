@@ -4,7 +4,7 @@
       {
         "hooks": [
           {
-            "command": "pnpm fix --skip=correctness/noUnusedImports",
+            "command": "bun run fix --skip=correctness/noUnusedImports",
             "type": "command"
           }
         ],
