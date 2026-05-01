@@ -125,7 +125,7 @@ export default function AddCustomerModal({
     >
       <button
         aria-label={t("close_modal")}
-        className="absolute inset-0 bg-on-surface/40 backdrop-blur-[20px]"
+        className="absolute inset-0 bg-on-surface"
         onClick={handleClose}
         type="button"
       />
