@@ -1,7 +1,14 @@
 providers = ["node"]
 
+[phases.setup]
+nixPkgs = ["nodejs_22", "openssl"]
+cmds = ["curl -fsSL https://bun.sh/install | bash"]
+
+[phases.install]
+cmds = ["~/.bun/bin/bun install --frozen-lockfile"]
+
 [phases.build]
-cmds = ["bun run build"]
+cmds = ["~/.bun/bin/bun run build"]
 
 [start]
-cmd = "bun run start:prod"
+cmd = "~/.bun/bin/bun run start:prod"
