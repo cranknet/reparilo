@@ -53,7 +53,9 @@ interface Step1Props {
   photoPreviews: { file: File; url: string }[];
   query: string;
   results: CustomerSearchResult[];
+  searchBrands: (q: string) => Promise<void>;
   searchError: boolean;
+  searchModels: (q: string) => Promise<void>;
   selectBrand: (brand: BrandSearchResult) => void;
   selectCustomer: (customer: CustomerSearchResult) => void;
   selectModel: (model: ModelSearchResult) => void;
@@ -202,6 +204,7 @@ function BrandField({
   handleBlur,
   isCreatingBrand,
   isSearchingBrand,
+  searchBrands,
   selectBrand,
   setBrandQuery,
   showBrandAddOption,
@@ -221,6 +224,7 @@ function BrandField({
   | "handleBlur"
   | "isCreatingBrand"
   | "isSearchingBrand"
+  | "searchBrands"
   | "selectBrand"
   | "setBrandQuery"
   | "showBrandAddOption"
@@ -229,8 +233,7 @@ function BrandField({
 >) {
   const brandOutsideRef = useClickOutside(() => setBrandFocused(false));
   const [brandFocused, setBrandFocused] = useState(false);
-  const showBrandDropdown =
-    brandFocused && brandQuery.length >= 1 && !form.brandId;
+  const showBrandDropdown = brandFocused && !form.brandId;
 
   return (
     <div className="relative" ref={brandOutsideRef}>
@@ -251,7 +254,10 @@ function BrandField({
             update("brand", val);
             setBrandQuery(val);
           }}
-          onFocus={() => setBrandFocused(true)}
+          onFocus={() => {
+            setBrandFocused(true);
+            searchBrands(brandQuery);
+          }}
           placeholder={t("intake.brand_search_placeholder")}
           type="text"
           value={form.brand}
@@ -307,6 +313,7 @@ function ModelField({
   modelQuery,
   modelResults,
   modelSearchError,
+  searchModels,
   selectModel,
   setModelQuery,
   showModelAddOption,
@@ -327,6 +334,7 @@ function ModelField({
   | "modelQuery"
   | "modelResults"
   | "modelSearchError"
+  | "searchModels"
   | "selectModel"
   | "setModelQuery"
   | "showModelAddOption"
@@ -336,8 +344,7 @@ function ModelField({
 >) {
   const modelOutsideRef = useClickOutside(() => setModelFocused(false));
   const [modelFocused, setModelFocused] = useState(false);
-  const showModelDropdown =
-    modelFocused && modelQuery.length >= 1 && form.brandId && !form.modelId;
+  const showModelDropdown = modelFocused && form.brandId && !form.modelId;
 
   return (
     <div className="relative" ref={modelOutsideRef}>
@@ -364,7 +371,10 @@ function ModelField({
             update("model", val);
             setModelQuery(val);
           }}
-          onFocus={() => setModelFocused(true)}
+          onFocus={() => {
+            setModelFocused(true);
+            searchModels(modelQuery);
+          }}
           placeholder={
             form.brandId
               ? t("intake.model_search_placeholder")
@@ -450,7 +460,9 @@ export default function Step1Content(props: Step1Props) {
     photoPreviews,
     query,
     results,
+    searchBrands,
     searchError,
+    searchModels,
     selectBrand,
     selectCustomer,
     selectModel,
@@ -589,6 +601,7 @@ export default function Step1Content(props: Step1Props) {
               handleBrandAdd={handleBrandAdd}
               isCreatingBrand={isCreatingBrand}
               isSearchingBrand={isSearchingBrand}
+              searchBrands={searchBrands}
               selectBrand={selectBrand}
               setBrandQuery={setBrandQuery}
               showBrandAddOption={showBrandAddOption}
@@ -608,6 +621,7 @@ export default function Step1Content(props: Step1Props) {
               modelQuery={modelQuery}
               modelResults={modelResults}
               modelSearchError={modelSearchError}
+              searchModels={searchModels}
               selectModel={selectModel}
               setModelQuery={setModelQuery}
               showModelAddOption={showModelAddOption}

@@ -54,12 +54,15 @@ export default function ModelSearchDropdown({
         </div>
       )}
       {!isSearching && results.length > 0 && !searchError && (
-        <ul className="max-h-48 overflow-y-auto py-1">
+        <ul className="max-h-[11rem] overflow-y-auto py-1">
           {results.map((m) => (
             <li key={m.id}>
               <button
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-start transition-colors hover:bg-surface-container-high"
-                onClick={() => onSelect(m)}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onSelect(m);
+                }}
                 type="button"
               >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary-container">
@@ -78,7 +81,10 @@ export default function ModelSearchDropdown({
       {showAddOption && !isSearching && !searchError && !isCreating && (
         <button
           className="flex w-full items-center gap-3 border-outline-variant border-t px-4 py-2.5 text-start transition-colors hover:bg-surface-container-high"
-          onClick={onAdd}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            onAdd();
+          }}
           type="button"
         >
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-tertiary-container">

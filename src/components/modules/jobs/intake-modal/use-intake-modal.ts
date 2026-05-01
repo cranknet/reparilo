@@ -51,6 +51,7 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
     isSearching: isSearchingBrand,
     query: brandQuery,
     results: brandResults,
+    search: searchBrands,
     searchError: brandSearchError,
     setQuery: setBrandQuery,
   } = useBrandSearch();
@@ -63,6 +64,7 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
     isSearching: isSearchingModel,
     query: modelQuery,
     results: modelResults,
+    search: searchModels,
     searchError: modelSearchError,
     setQuery: setModelQuery,
   } = useModelSearch(form.brandId);
@@ -195,6 +197,13 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
         model: model.model,
         modelId: model.id,
       }));
+      setErrors((prev) => {
+        if (!prev.model) {
+          return prev;
+        }
+        const { model: _, ...rest } = prev;
+        return rest;
+      });
       clearModelSearch();
     },
     [clearModelSearch]
@@ -412,6 +421,7 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
     brandCreateError,
     brandQuery,
     brandResults,
+    brandSearchError,
     clearBrandSearch,
     clearCustomer,
     clearModelSearch,
@@ -440,13 +450,14 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
     modelCreateError,
     modelQuery,
     modelResults,
-    brandSearchError,
     modelSearchError,
     photoError,
     photoPreviews,
     query,
     results,
+    searchBrands,
     searchError,
+    searchModels,
     selectBrand,
     selectCustomer,
     selectModel,

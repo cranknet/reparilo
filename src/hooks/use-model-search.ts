@@ -132,6 +132,7 @@ export function useModelSearch(brandId: string, debounceMs = 250) {
     isSearching,
     query,
     results,
+    search,
     searchError,
     setQuery,
   };

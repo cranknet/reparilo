@@ -17,11 +17,6 @@ export function useBrandSearch(debounceMs = 250) {
   const controllerRef = useRef<AbortController | null>(null);
 
   const search = useCallback(async (q: string) => {
-    if (q.trim().length < 1) {
-      setResults([]);
-      setIsSearching(false);
-      return;
-    }
     if (controllerRef.current) {
       controllerRef.current.abort();
     }
@@ -118,6 +113,7 @@ export function useBrandSearch(debounceMs = 250) {
     isSearching,
     query,
     results,
+    search,
     searchError,
     setQuery,
   };

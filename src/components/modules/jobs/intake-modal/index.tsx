@@ -148,7 +148,9 @@ export default function IntakeModal({
               photoPreviews={m.photoPreviews}
               query={m.query}
               results={m.results}
+              searchBrands={m.searchBrands}
               searchError={m.searchError}
+              searchModels={m.searchModels}
               selectBrand={m.selectBrand}
               selectCustomer={m.selectCustomer}
               selectModel={m.selectModel}
