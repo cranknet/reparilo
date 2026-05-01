@@ -94,11 +94,14 @@ reparilo/
 │   ├── main.tsx                  #   Entry point (providers)
 │   └── app.css                   #   Tailwind import
 ├── server/                       # Fastify REST API
-│   ├── routes/                   #   Endpoint handlers (jobs, parts, customers, users, notifications, settings, ai)
-│   ├── services/                 #   Business logic
+│   ├── routes/                   #   Controllers (HTTP only — validation, auth, response shaping)
+│   ├── services/                 #   Business logic (orchestration, rules — no Prisma calls)
+│   ├── repositories/             #   Data access (Prisma queries only — no business logic)
 │   ├── plugins/                  #   Auth, Prisma, WebSocket
 │   ├── middlewares/              #   Role guards, validation
 │   ├── ai/                       #   AI analyst (tools, prompt, streaming)
+│   ├── config/                   #   Environment config
+│   ├── lib/                      #   Crypto, formatters
 │   ├── utils/                    #   Encryption, job ID generation
 │   └── index.ts                  #   Fastify entry point (port 4000)
 ├── shared/                       # Shared between frontend and server
