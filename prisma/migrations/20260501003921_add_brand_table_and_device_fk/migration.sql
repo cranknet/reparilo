@@ -25,7 +25,7 @@ SET "brandId" = b.id
 FROM "brands" b
 WHERE LOWER(d.brand) = LOWER(b.name);
 
--- Step 4b: Handle orphaned devices with NULL/empty or unmatched brand
+-- Step 4b: Handle orphaned devices with unmatched or NULL brand
 -- Create an 'Unknown' brand placeholder and assign orphans to it
 INSERT INTO "brands" ("id", "name", "createdAt", "updatedAt")
 VALUES (gen_random_uuid()::text, 'Unknown', now(), now())
@@ -50,8 +50,9 @@ ALTER TABLE "devices" ALTER COLUMN "brandId" SET NOT NULL;
 ALTER TABLE "devices" ADD CONSTRAINT "devices_brandId_fkey"
     FOREIGN KEY ("brandId") REFERENCES "brands"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- Step 7: Drop old unique constraint and index
-ALTER TABLE "devices" DROP CONSTRAINT "devices_brand_model_key";
+-- Step 7: Drop old unique index and regular index
+-- The original schema used CREATE UNIQUE INDEX (not ALTER TABLE ADD CONSTRAINT)
+DROP INDEX IF EXISTS "devices_brand_model_key";
 DROP INDEX IF EXISTS "devices_brand_idx";
 
 -- Step 8: Add new unique constraint and index
