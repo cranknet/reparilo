@@ -26,7 +26,7 @@ export const createModelSchema = z.object({
     .max(200, { error: "validations.model_too_long" }),
 });
 
-export const brandIdParamSchema = z.string().cuid();
+export const brandIdParamSchema = z.string().min(1);
 
 export type BrandSearchQueryInput = z.infer<typeof brandSearchQuerySchema>;
 export type CreateBrandInput = z.infer<typeof createBrandSchema>;

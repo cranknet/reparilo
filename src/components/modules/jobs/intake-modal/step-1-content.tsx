@@ -362,7 +362,6 @@ function ModelField({
           }
           aria-invalid={!!(errors.model && touched.model)}
           className={errors.model && touched.model ? inputErrorCls : inputCls}
-          disabled={!form.brandId}
           id="device-model"
           onBlur={() => handleBlur("model")}
           onChange={(e) => {

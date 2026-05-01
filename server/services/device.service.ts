@@ -65,7 +65,7 @@ export async function createBrand(
     where: { name: { equals: input.name, mode: "insensitive" } },
   });
   if (existing) {
-    throw new AppError("DUPLICATE_BRAND");
+    return existing;
   }
   try {
     return await prisma.brand.create({
@@ -76,7 +76,9 @@ export async function createBrand(
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
     ) {
-      throw new AppError("DUPLICATE_BRAND");
+      return await prisma.brand.findFirst({
+        where: { name: { equals: input.name, mode: "insensitive" } },
+      });
     }
     throw err;
   }
@@ -98,7 +100,7 @@ export async function createModel(
     },
   });
   if (existing) {
-    throw new AppError("DUPLICATE_MODEL");
+    return existing;
   }
   try {
     return await prisma.device.create({
@@ -109,7 +111,12 @@ export async function createModel(
       err instanceof Prisma.PrismaClientKnownRequestError &&
       err.code === "P2002"
     ) {
-      throw new AppError("DUPLICATE_MODEL");
+      return await prisma.device.findFirst({
+        where: {
+          brandId,
+          model: { equals: input.model, mode: "insensitive" },
+        },
+      });
     }
     throw err;
   }

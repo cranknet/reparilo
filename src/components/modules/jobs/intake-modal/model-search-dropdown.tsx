@@ -54,15 +54,21 @@ export default function ModelSearchDropdown({
         </div>
       )}
       {!isSearching && results.length > 0 && !searchError && (
-        <ul className="max-h-[11rem] overflow-y-auto py-1">
+        <div
+          aria-label={t("intake.model_search_placeholder")}
+          className="max-h-[11rem] overflow-y-auto py-1"
+          role="listbox"
+        >
           {results.map((m) => (
-            <li key={m.id}>
+            <div key={m.id}>
               <button
+                aria-selected={false}
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-start transition-colors hover:bg-surface-container-high"
                 onMouseDown={(e) => {
                   e.preventDefault();
                   onSelect(m);
                 }}
+                role="option"
                 type="button"
               >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary-container">
@@ -74,9 +80,9 @@ export default function ModelSearchDropdown({
                   {m.model}
                 </span>
               </button>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
       {showAddOption && !isSearching && !searchError && !isCreating && (
         <button

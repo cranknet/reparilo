@@ -58,17 +58,6 @@ export interface IntakeModalProps {
   open: boolean;
 }
 
-export const BRANDS = [
-  "Apple iPhone",
-  "Samsung Galaxy",
-  "Google Pixel",
-  "Huawei",
-  "Xiaomi",
-  "Oppo",
-  "OnePlus",
-  "Other",
-];
-
 export const labelCls =
   "mb-1.5 ms-1 block font-label text-xs font-bold uppercase tracking-wide text-on-surface-variant";
 export const inputCls =

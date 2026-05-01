@@ -103,25 +103,13 @@ export function useModelSearch(brandId: string, debounceMs = 250) {
         return device;
       } catch (err: unknown) {
         const apiErr = err as Partial<ApiError>;
-        const code = typeof apiErr?.code === "string" ? apiErr.code : null;
-        if (code === "DUPLICATE_MODEL") {
-          const existing = results.find(
-            (r) => r.model.toLowerCase() === modelName.toLowerCase()
-          );
-          if (existing) {
-            return existing;
-          }
-          setResults([]);
-          await search(modelName);
-          return null;
-        }
         setCreateError(apiErr?.message ?? "Failed to add model");
         return null;
       } finally {
         setIsCreating(false);
       }
     },
-    [brandId, results, search]
+    [brandId]
   );
 
   return {

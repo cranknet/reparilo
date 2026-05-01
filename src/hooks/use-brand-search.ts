@@ -84,25 +84,13 @@ export function useBrandSearch(debounceMs = 250) {
         return brand;
       } catch (err: unknown) {
         const apiErr = err as Partial<ApiError>;
-        const code = typeof apiErr?.code === "string" ? apiErr.code : null;
-        if (code === "DUPLICATE_BRAND") {
-          const existing = results.find(
-            (r) => r.name.toLowerCase() === name.toLowerCase()
-          );
-          if (existing) {
-            return existing;
-          }
-          setResults([]);
-          await search(name);
-          return null;
-        }
         setCreateError(apiErr?.message ?? "Failed to add brand");
         return null;
       } finally {
         setIsCreating(false);
       }
     },
-    [results, search]
+    []
   );
 
   return {
