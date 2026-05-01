@@ -67,29 +67,10 @@ export async function renderReceiptHtml(
   const partsUsed = job.partsUsed ?? [];
   const repairs = job.repairs ?? [];
 
-  const partsRows = partsUsed
-    .map(
-      (p) =>
-        `<tr><td style="padding:4px 0">${esc(p.partName)}</td><td style="text-align:center">${p.quantity}</td>${hideCosts ? "" : `<td style="text-align:right">${fmtDzd(p.totalCost)}</td>`}</tr>`
-    )
-    .join("");
-
-  const repairRows = repairs
-    .map(
-      (r) =>
-        `<tr><td style="padding:4px 0">${esc(r.repairName)}</td>${hideCosts ? "" : `<td style="text-align:right">${fmtDzd(r.price)}</td>`}</tr>`
-    )
-    .join("");
-
   const partsTotal = partsUsed.reduce((s, p) => s + toNum(p.totalCost), 0);
   const repairsTotal = repairs.reduce((s, r) => s + toNum(r.price), 0);
   const finalCost = partsTotal + repairsTotal;
   const displayCost = finalCost > 0 ? finalCost : toNum(job.estimatedCost);
-
-  const costColumns = hideCosts ? "" : "<th style='text-align:right'>Cost</th>";
-  const repairCostCol = hideCosts
-    ? ""
-    : "<th style='text-align:right'>Price</th>";
 
   return `<!doctype html>
 <html lang="en">
@@ -105,7 +86,6 @@ export async function renderReceiptHtml(
   .total td{font-weight:bold;border-top:1px solid #000}
   .qr{text-align:center;margin:8px 0}
   .qr img{width:120px}
-  .track{text-align:center;font-size:11px;color:#333;margin:4px 0}
   @media print{body{margin:0;max-width:none}}
 </style>
 </head>
@@ -121,27 +101,12 @@ export async function renderReceiptHtml(
 <p style="text-align:left"><strong>Problem:</strong> ${esc(job.reportedProblem)}</p>
 <div class="sep"></div>
 ${
-  partsRows
-    ? `<table><tr><th style="text-align:left">Part</th><th>Qty</th>${costColumns}</tr>${partsRows}
-${hideCosts ? "" : `<tr class="total"><td colspan="2">Parts Total</td><td style="text-align:right">${fmtDzd(partsTotal)}</td></tr>`}</table>`
-    : ""
-}
-${
-  repairRows
-    ? `<table><tr><th style="text-align:left">Repair</th>${repairCostCol}</tr>${repairRows}
-${hideCosts ? "" : `<tr class="total"><td>Repairs Total</td><td style="text-align:right">${fmtDzd(repairsTotal)}</td></tr>`}</table>`
-    : ""
-}
-${
   hideCosts
     ? ""
-    : `<div class="sep"></div>
-<table><tr><td><strong>Total</strong></td><td style="text-align:right">${fmtDzd(displayCost)}</td></tr></table>`
+    : `<table><tr><td><strong>Total</strong></td><td style="text-align:right">${fmtDzd(displayCost)}</td></tr></table><div class="sep"></div>`
 }
-<div class="sep"></div>
 ${qrImg}
-<p class="track">Scan to track your repair</p>
-<p class="track">${esc(baseUrl)}/tracking/${esc(job.jobCode)}</p>
+<p style="text-align:center;font-size:10px;color:#555">Scan QR to track your repair</p>
 </body></html>`;
 }
 

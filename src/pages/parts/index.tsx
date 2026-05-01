@@ -871,8 +871,12 @@ export default function PartsCatalogPage() {
   };
 
   const hasParts = sorted.length > 0 || isLoading;
-  const showSearchEmpty = sorted.length === 0 && !isLoading && search !== "";
-  const showEmptyCatalog = totalCount === 0 && !isLoading && search === "";
+  const showSearchEmpty =
+    sorted.length === 0 &&
+    !isLoading &&
+    (search !== "" || activeFilter !== "ALL");
+  const showEmptyCatalog =
+    totalCount === 0 && !isLoading && search === "" && activeFilter === "ALL";
   const hasMore = nextCursor !== null && !isLoading;
 
   const handleLoadMore = useCallback(() => {

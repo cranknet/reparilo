@@ -169,34 +169,41 @@ describe("renderReceiptHtml", () => {
     expect(html).not.toMatch(QR_BASE64_RE);
   });
 
-  it("renders itemized parts rows", async () => {
+  it("does not include tracking link text", async () => {
+    const html = await renderReceiptHtml(makePrisma(), baseJob, "https://x.y");
+    expect(html).not.toContain("/tracking/");
+    expect(html).toContain("Scan QR");
+  });
+
+  it("renders problem and total for parts and repairs", async () => {
     const job = {
       ...baseJob,
       partsUsed: [
         { partName: "Screen", quantity: 1, totalCost: 3000 },
         { partName: "Battery", quantity: 2, totalCost: 4000 },
       ],
+      repairs: [{ repairName: "Screen Replace", price: 5000 }],
     };
     const html = await renderReceiptHtml(makePrisma(), job, "https://x.y");
-    expect(html).toContain("Screen");
-    expect(html).toContain("Battery");
-    expect(html).toContain("3,000");
-    expect(html).toContain("4,000");
-    expect(html).toContain("Parts Total");
+    expect(html).toContain("Problem:");
+    expect(html).toContain("Cracked screen");
+    expect(html).not.toContain("Issue");
+    expect(html).not.toContain("Parts Total");
+    expect(html).not.toContain("Repairs Total");
+    expect(html).toContain("12,000");
   });
 
-  it("renders itemized repair rows", async () => {
+  it("renders problem line for repairs", async () => {
     const job = {
       ...baseJob,
       repairs: [{ repairName: "Screen Replace", price: 5000 }],
     };
     const html = await renderReceiptHtml(makePrisma(), job, "https://x.y");
-    expect(html).toContain("Screen Replace");
-    expect(html).toContain("5,000");
-    expect(html).toContain("Repairs Total");
+    expect(html).toContain("Problem:");
+    expect(html).not.toContain("Repairs Total");
   });
 
-  it("hides all costs when hideCosts is true", async () => {
+  it("hides total cost when hideCosts is true", async () => {
     const job = {
       ...baseJob,
       partsUsed: [{ partName: "Screen", quantity: 1, totalCost: 3000 }],
@@ -205,8 +212,8 @@ describe("renderReceiptHtml", () => {
       hideCosts: true,
     });
     expect(html).not.toContain("DZD");
-    expect(html).not.toContain("Parts Total");
     expect(html).not.toContain("Total");
+    expect(html).toContain("Problem:");
   });
 
   it("shows final total line when costs are visible", async () => {

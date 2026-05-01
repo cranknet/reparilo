@@ -108,7 +108,7 @@ function CustomerSearchField({
 >) {
   const searchOutsideRef = useClickOutside(() => setSearchFocused(false));
   const [searchFocused, setSearchFocused] = useState(false);
-  const showDropdown = searchFocused && query.length >= 2 && !form.customerId;
+  const showDropdown = searchFocused && query.length >= 1 && !form.customerId;
   const nameError = errors.customerName && touched.customerName;
 
   return (

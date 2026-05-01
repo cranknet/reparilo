@@ -158,6 +158,21 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
         customerPhone: customer.phone,
         customerEmail: customer.email ?? "",
       }));
+      setErrors((prev) => {
+        const {
+          customerName: _,
+          customerPhone: __,
+          customerEmail: ___,
+          ...rest
+        } = prev;
+        return rest;
+      });
+      setTouched((prev) => ({
+        ...prev,
+        customerName: true,
+        customerPhone: true,
+        customerEmail: true,
+      }));
       clearSearch();
     },
     [clearSearch]
@@ -244,6 +259,21 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
         customerName: data.name,
         customerPhone: data.phone,
         customerEmail: data.email ?? "",
+      }));
+      setErrors((prev) => {
+        const {
+          customerName: _,
+          customerPhone: __,
+          customerEmail: ___,
+          ...rest
+        } = prev;
+        return rest;
+      });
+      setTouched((prev) => ({
+        ...prev,
+        customerName: true,
+        customerPhone: true,
+        customerEmail: true,
       }));
       setQuery("");
       clearSearch();
