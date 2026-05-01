@@ -109,7 +109,7 @@ export async function list(prisma: PrismaClient, query: JobListQueryInput) {
       where,
       include: {
         customer: true,
-        device: true,
+        device: { include: { brand: true } },
         technician: { select: { id: true, name: true, username: true } },
       },
       orderBy: { id: "desc" },
