@@ -4,6 +4,7 @@ export type User = Prisma.UserGetPayload<Record<string, never>>;
 export type SafeUser = Omit<User, "password">;
 export type Customer = Prisma.CustomerGetPayload<Record<string, never>>;
 export type Device = Prisma.DeviceGetPayload<Record<string, never>>;
+export type Brand = Prisma.BrandGetPayload<Record<string, never>>;
 export type Job = Prisma.JobGetPayload<{
   include: {
     customer: true;

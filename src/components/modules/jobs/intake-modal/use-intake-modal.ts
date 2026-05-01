@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { CreatedCustomerData } from "@/components/modules/jobs/quick-add-customer";
+import type { BrandSearchResult } from "@/hooks/use-brand-search";
+import { useBrandSearch } from "@/hooks/use-brand-search";
 import type { CustomerSearchResult } from "@/hooks/use-customer-search";
 import { useCustomerSearch } from "@/hooks/use-customer-search";
+import type { ModelSearchResult } from "@/hooks/use-model-search";
+import { useModelSearch } from "@/hooks/use-model-search";
 import { type CaptureSource, useNativeCamera } from "@/hooks/use-native-camera";
 import {
   INITIAL_FORM,
@@ -38,6 +42,49 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
     setQuery,
     clear: clearSearch,
   } = useCustomerSearch();
+
+  const {
+    clear: clearBrandSearch,
+    createBrand,
+    createError: brandCreateError,
+    isCreating: isCreatingBrand,
+    isSearching: isSearchingBrand,
+    query: brandQuery,
+    results: brandResults,
+    search: searchBrands,
+    searchError: brandSearchError,
+    setQuery: setBrandQuery,
+  } = useBrandSearch();
+
+  const {
+    clear: clearModelSearch,
+    createError: modelCreateError,
+    createModel,
+    isCreating: isCreatingModel,
+    isSearching: isSearchingModel,
+    query: modelQuery,
+    results: modelResults,
+    search: searchModels,
+    searchError: modelSearchError,
+    setQuery: setModelQuery,
+  } = useModelSearch(form.brandId);
+
+  const brandAddQuery = brandQuery.trim();
+  const showBrandAddOption =
+    !form.brandId &&
+    brandAddQuery.length >= 1 &&
+    !brandResults.some(
+      (r) => r.name.toLowerCase() === brandAddQuery.toLowerCase()
+    );
+
+  const modelAddQuery = modelQuery.trim();
+  const showModelAddOption =
+    !!form.brandId &&
+    !form.modelId &&
+    modelAddQuery.length >= 1 &&
+    !modelResults.some(
+      (r) => r.model.toLowerCase() === modelAddQuery.toLowerCase()
+    );
 
   const [photoPreviews, setPhotoPreviews] = useState<PhotoPreview[]>([]);
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -126,6 +173,68 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
     }));
     clearSearch();
   }, [clearSearch]);
+
+  /* ───── Brand/Model handling ───── */
+  const selectBrand = useCallback(
+    (brand: BrandSearchResult) => {
+      setForm((prev) => ({
+        ...prev,
+        brand: brand.name,
+        brandId: brand.id,
+        model: "",
+        modelId: "",
+      }));
+      clearBrandSearch();
+      setModelQuery("");
+    },
+    [clearBrandSearch, setModelQuery]
+  );
+
+  const selectModel = useCallback(
+    (model: ModelSearchResult) => {
+      setForm((prev) => ({
+        ...prev,
+        model: model.model,
+        modelId: model.id,
+      }));
+      setErrors((prev) => {
+        if (!prev.model) {
+          return prev;
+        }
+        const { model: _, ...rest } = prev;
+        return rest;
+      });
+      clearModelSearch();
+    },
+    [clearModelSearch]
+  );
+
+  const handleBrandAdd = useCallback(async () => {
+    const brand = await createBrand(brandAddQuery);
+    if (brand) {
+      setForm((prev) => ({
+        ...prev,
+        brand: brand.name,
+        brandId: brand.id,
+        model: "",
+        modelId: "",
+      }));
+      clearBrandSearch();
+      setModelQuery("");
+    }
+  }, [createBrand, brandAddQuery, clearBrandSearch, setModelQuery]);
+
+  const handleModelAdd = useCallback(async () => {
+    const model = await createModel(modelAddQuery);
+    if (model) {
+      setForm((prev) => ({
+        ...prev,
+        model: model.model,
+        modelId: model.id,
+      }));
+      clearModelSearch();
+    }
+  }, [createModel, modelAddQuery, clearModelSearch]);
 
   const handleQuickAdd = useCallback(
     (data: CreatedCustomerData) => {
@@ -308,12 +417,21 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
   }, [validateStep1]);
 
   return {
+    brandAddQuery,
+    brandCreateError,
+    brandQuery,
+    brandResults,
+    brandSearchError,
+    clearBrandSearch,
     clearCustomer,
+    clearModelSearch,
     errors,
     form,
     handleBackdropClick,
+    handleBrandAdd,
     handleBlur,
     handleCloseClick,
+    handleModelAdd,
     handleNativeCapture,
     handleNextStep,
     handlePhotoRemove,
@@ -321,20 +439,37 @@ export function useIntakeModal({ open, onClose, onSubmit }: IntakeModalProps) {
     handleQuickAdd,
     handleSubmit,
     isCapturing,
+    isCreatingBrand,
+    isCreatingModel,
     isSearching,
+    isSearchingBrand,
+    isSearchingModel,
     isSubmitting,
     isNative,
+    modelAddQuery,
+    modelCreateError,
+    modelQuery,
+    modelResults,
+    modelSearchError,
     photoError,
     photoPreviews,
     query,
     results,
+    searchBrands,
     searchError,
+    searchModels,
+    selectBrand,
     selectCustomer,
+    selectModel,
+    setBrandQuery,
+    setModelQuery,
     setQuery,
     setShowCloseConfirm,
     setShowQuickAdd,
     setStep,
+    showBrandAddOption,
     showCloseConfirm,
+    showModelAddOption,
     showQuickAdd,
     step,
     submissionSuccess,

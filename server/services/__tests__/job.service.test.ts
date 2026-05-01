@@ -154,7 +154,7 @@ describe("lookupByCode", () => {
   it("returns jobExists: true but no job when phone4 is wrong", async () => {
     (prisma.job.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue({
       customer: { phone: "+1-555-123-4567", name: "John" },
-      device: { brand: "Apple", model: "iPhone 14" },
+      device: { brand: { name: "Apple" }, model: "iPhone 14" },
       jobCode: "ABC123",
       notes: [],
       repairs: [],
@@ -171,7 +171,7 @@ describe("lookupByCode", () => {
     (prisma.job.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue({
       createdAt: new Date("2024-01-01"),
       customer: { name: "John Doe", phone: "+1-555-123-4567" },
-      device: { brand: "Apple", model: "iPhone 14" },
+      device: { brand: { name: "Apple" }, model: "iPhone 14" },
       estimatedDate: null,
       jobCode: "ABC123",
       notes: [],
@@ -192,7 +192,7 @@ describe("lookupByCode", () => {
     (prisma.job.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue({
       createdAt: new Date("2024-01-01"),
       customer: { name: "Jane", phone: "(555) 123-9999" },
-      device: { brand: "Samsung", model: "Galaxy S23" },
+      device: { brand: { name: "Samsung" }, model: "Galaxy S23" },
       estimatedDate: null,
       jobCode: "DEF456",
       notes: [],
@@ -210,7 +210,7 @@ describe("lookupByCode", () => {
   it("returns jobExists: true but no job when stored phone is empty", async () => {
     (prisma.job.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue({
       customer: { name: "No Phone", phone: "" },
-      device: { brand: "Apple", model: "iPhone 13" },
+      device: { brand: { name: "Apple" }, model: "iPhone 13" },
       jobCode: "GHI789",
       notes: [],
       repairs: [],
@@ -226,7 +226,7 @@ describe("lookupByCode", () => {
   it("returns jobExists: true but no job when normalized phone has less than 4 digits", async () => {
     (prisma.job.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue({
       customer: { name: "Short", phone: "123" },
-      device: { brand: "Apple", model: "iPhone 13" },
+      device: { brand: { name: "Apple" }, model: "iPhone 13" },
       jobCode: "JKL012",
       notes: [],
       repairs: [],
@@ -252,13 +252,13 @@ describe("list", () => {
       {
         id: "1",
         customer: { name: "Alice" },
-        device: { brand: "Apple" },
+        device: { brand: { name: "Apple" } },
         technician: null,
       },
       {
         id: "2",
         customer: { name: "Bob" },
-        device: { brand: "Samsung" },
+        device: { brand: { name: "Samsung" } },
         technician: null,
       },
     ];
@@ -335,7 +335,7 @@ describe("list", () => {
   it("sets nextCursor when more results exist", async () => {
     const mockJobs = new Array(11).fill(null).map((_, i) => ({
       customer: { name: `User ${i}` },
-      device: { brand: "Apple" },
+      device: { brand: { name: "Apple" } },
       id: String(i + 1),
       technician: null,
     }));

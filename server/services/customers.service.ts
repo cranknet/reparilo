@@ -128,7 +128,9 @@ export async function getById(prisma: PrismaClient, id: string) {
     include: {
       jobs: {
         include: {
-          device: { select: { brand: true, model: true } },
+          device: {
+            select: { model: true, brand: { select: { name: true } } },
+          },
           repairs: { select: { repairName: true, price: true } },
           partsUsed: { select: { partName: true, totalCost: true } },
         },
@@ -144,7 +146,7 @@ export async function getById(prisma: PrismaClient, id: string) {
     ...customerInfo,
     jobs: jobs.map((j) => ({
       createdAt: j.createdAt.toISOString(),
-      deviceModel: `${j.device.brand} ${j.device.model}`,
+      deviceModel: `${j.device.brand.name} ${j.device.model}`,
       estimatedCost: Number(j.estimatedCost),
       finalCost:
         j.repairs.reduce((sum, r) => sum + Number(r.price), 0) +

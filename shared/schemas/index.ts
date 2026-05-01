@@ -64,6 +64,20 @@ export {
   updateCustomerSchema,
 } from "./customer.schema";
 export type {
+  BrandIdParamInput,
+  BrandSearchQueryInput,
+  CreateBrandInput,
+  CreateModelInput,
+  ModelSearchQueryInput,
+} from "./device.schema";
+export {
+  brandIdParamSchema,
+  brandSearchQuerySchema,
+  createBrandSchema,
+  createModelSchema,
+  modelSearchQuerySchema,
+} from "./device.schema";
+export type {
   AddJobNoteInput,
   AddJobPartInput,
   AddJobRepairInput,

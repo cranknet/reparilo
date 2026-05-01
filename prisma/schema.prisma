@@ -108,6 +108,7 @@ model User {
   id              String    @id @default(cuid())
   name            String    @default("")
   username        String   @unique
+  displayUsername String?
   email           String    @unique
   emailVerified   Boolean   @default(false)
   image           String?
@@ -188,16 +189,32 @@ model Customer {
 
 model Device {
   id        String   @id @default(cuid())
-  brand     String
+  brandId   String
   model     String
   createdAt DateTime @default(now()) @db.Timestamptz
   updatedAt DateTime @updatedAt      @db.Timestamptz
 
+  brand     Brand @relation(fields: [brandId], references: [id], onDelete: Restrict)
   jobs      Job[]
 
-  @@unique([brand, model])
-  @@index([brand])
+  @@unique([brandId, model])
+  @@index([brandId])
   @@map("devices")
+}
+
+// ─────────────────────────────────────────────
+// BRAND
+// ─────────────────────────────────────────────
+
+model Brand {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt      @db.Timestamptz
+
+  devices   Device[]
+
+  @@map("brands")
 }
 
 // ─────────────────────────────────────────────

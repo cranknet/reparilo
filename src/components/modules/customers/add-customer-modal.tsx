@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import ConfirmDiscardDialog from "@/components/ui/confirm-discard-dialog";
@@ -18,6 +18,8 @@ const INITIAL_FORM = {
   name: "",
   phone: "",
 };
+
+type FieldErrors = Partial<Record<keyof typeof INITIAL_FORM, string>>;
 
 function isDirty(form: typeof INITIAL_FORM): boolean {
   return (
@@ -43,15 +45,28 @@ export default function AddCustomerModal({
   } = useCreateCustomer();
 
   const [form, setForm] = useState(INITIAL_FORM);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
   const updateForm = useCallback(
     <K extends keyof typeof INITIAL_FORM>(key: K, value: string) => {
       setForm((p) => ({ ...p, [key]: value }));
       clearError();
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
     },
     [clearError]
   );
-  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setForm(INITIAL_FORM);
+      setErrors({});
+    }
+  }, [open]);
 
   const handleClose = useCallback(() => {
     if (isDirty(form)) {
@@ -68,7 +83,15 @@ export default function AddCustomerModal({
   }, [onClose]);
 
   const handleSubmit = useCallback(async () => {
-    if (!(form.name.trim() && form.phone.trim())) {
+    const newErrors: FieldErrors = {};
+    if (!form.name.trim()) {
+      newErrors.name = t("add_customer_modal.error_name_required");
+    }
+    if (!form.phone.trim()) {
+      newErrors.phone = t("add_customer_modal.error_phone_required");
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -84,13 +107,14 @@ export default function AddCustomerModal({
     } catch {
       // error handled by useCreateCustomer
     }
-  }, [form, create, onSuccess, onClose]);
+  }, [form, create, onSuccess, onClose, t]);
 
   if (!open) {
     return null;
   }
 
-  const canSubmit = form.name.trim().length > 0 && form.phone.trim().length > 0;
+  const nameError = errors.name;
+  const phoneError = errors.phone;
 
   return (
     <div
@@ -101,9 +125,14 @@ export default function AddCustomerModal({
     >
       <button
         aria-label={t("close_modal")}
-        className="absolute inset-0 bg-on-surface/40"
+        className="absolute inset-0 bg-on-surface"
         onClick={handleClose}
         type="button"
+      />
+      <ConfirmDiscardDialog
+        onDiscard={handleDiscard}
+        onKeepEditing={() => setShowDiscardDialog(false)}
+        open={showDiscardDialog}
       />
       <div
         className="modal-surface relative z-10 flex max-h-[85vh] w-full flex-col overflow-hidden rounded-b-none bg-surface-container-lowest shadow-2xl sm:max-h-[80vh] sm:max-w-md sm:rounded-xl"
@@ -136,6 +165,9 @@ export default function AddCustomerModal({
                 onChange={(e) => updateForm("name", e.target.value)}
                 value={form.name}
               />
+              {nameError && (
+                <p className="ms-1 mt-1 text-error text-xs">{nameError}</p>
+              )}
             </div>
 
             <div>
@@ -148,6 +180,9 @@ export default function AddCustomerModal({
                 type="tel"
                 value={form.phone}
               />
+              {phoneError && (
+                <p className="ms-1 mt-1 text-error text-xs">{phoneError}</p>
+              )}
             </div>
 
             <div>
@@ -176,7 +211,7 @@ export default function AddCustomerModal({
             {t("add_customer_modal.cancel")}
           </Button>
           <Button
-            disabled={!canSubmit || isCreating}
+            disabled={isCreating}
             loading={isCreating}
             onClick={handleSubmit}
             type="button"
@@ -185,26 +220,6 @@ export default function AddCustomerModal({
           </Button>
         </div>
       </div>
-
-      {showDiscardDialog && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center">
-          <button
-            aria-label={t("close_modal")}
-            className="absolute inset-0 bg-on-surface/40"
-            onClick={() => setShowDiscardDialog(false)}
-            type="button"
-          />
-          <ConfirmDiscardDialog
-            description={t("add_customer_modal.discard_desc")}
-            discardLabel={t("add_customer_modal.discard")}
-            keepLabel={t("add_customer_modal.keep_editing")}
-            onDiscard={handleDiscard}
-            onKeepEditing={() => setShowDiscardDialog(false)}
-            open={showDiscardDialog}
-            title={t("add_customer_modal.discard_title")}
-          />
-        </div>
-      )}
     </div>
   );
 }

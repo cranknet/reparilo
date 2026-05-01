@@ -372,7 +372,11 @@ describe("RBAC Matrix", () => {
           url: "/api/jobs",
           payload: {
             customer: { name: "Test", phone: "1234567890" },
-            device: { brand: "Apple", model: "iPhone", type: "PHONE" },
+            device: {
+              brand: { name: "Apple" },
+              model: "iPhone",
+              type: "PHONE",
+            },
             problem: "Screen broken",
           },
         });
@@ -387,7 +391,11 @@ describe("RBAC Matrix", () => {
           url: "/api/jobs",
           payload: {
             customer: { name: "Test", phone: "1234567890" },
-            device: { brand: "Apple", model: "iPhone", type: "PHONE" },
+            device: {
+              brand: { name: "Apple" },
+              model: "iPhone",
+              type: "PHONE",
+            },
             problem: "Screen broken",
           },
         });
@@ -401,7 +409,11 @@ describe("RBAC Matrix", () => {
           url: "/api/jobs",
           payload: {
             customer: { name: "Test", phone: "1234567890" },
-            device: { brand: "Apple", model: "iPhone", type: "PHONE" },
+            device: {
+              brand: { name: "Apple" },
+              model: "iPhone",
+              type: "PHONE",
+            },
             problem: "Screen broken",
           },
         });

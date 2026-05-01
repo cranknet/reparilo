@@ -203,7 +203,7 @@ export async function overdueJobs(
     },
     include: {
       customer: { select: { name: true } },
-      device: { select: { brand: true, model: true } },
+      device: { select: { model: true, brand: { select: { name: true } } } },
       repairs: { take: 1, select: { repairName: true } },
     },
     orderBy: { estimatedDate: "asc" },
@@ -212,7 +212,7 @@ export async function overdueJobs(
   const now = Date.now();
   return jobs.map((j) => ({
     customerName: j.customer.name,
-    device: `${j.device.brand} ${j.device.model}`,
+    device: `${j.device.brand.name} ${j.device.model}`,
     hoursLate: j.estimatedDate
       ? Math.max(0, Math.floor((now - j.estimatedDate.getTime()) / 3_600_000))
       : 0,
@@ -262,7 +262,7 @@ export async function todayScheduleForTech(
     },
     include: {
       customer: { select: { name: true } },
-      device: { select: { brand: true, model: true } },
+      device: { select: { model: true, brand: { select: { name: true } } } },
       repairs: { take: 1, select: { repairName: true } },
     },
     orderBy: { createdAt: "asc" },
@@ -278,7 +278,9 @@ export async function todayScheduleForTech(
           },
           include: {
             customer: { select: { name: true } },
-            device: { select: { brand: true, model: true } },
+            device: {
+              select: { model: true, brand: { select: { name: true } } },
+            },
             repairs: { take: 1, select: { repairName: true } },
           },
           orderBy: { createdAt: "asc" },
@@ -286,7 +288,7 @@ export async function todayScheduleForTech(
         });
   return source.map((j) => ({
     customerName: j.customer.name,
-    device: `${j.device.brand} ${j.device.model}`,
+    device: `${j.device.brand.name} ${j.device.model}`,
     estimatedDate: j.estimatedDate
       ? j.estimatedDate.toISOString().slice(0, 10)
       : null,
@@ -401,7 +403,7 @@ export async function activeRepairsQueue(
     },
     include: {
       customer: { select: { name: true } },
-      device: { select: { brand: true, model: true } },
+      device: { select: { model: true, brand: { select: { name: true } } } },
       technician: { select: { name: true, username: true } },
     },
     orderBy: { updatedAt: "desc" },
@@ -409,7 +411,7 @@ export async function activeRepairsQueue(
   });
   return rows.map((j) => ({
     customerName: j.customer.name,
-    deviceModel: `${j.device.brand} ${j.device.model}`,
+    deviceModel: `${j.device.brand.name} ${j.device.model}`,
     estimatedDate: j.estimatedDate
       ? j.estimatedDate.toISOString().slice(0, 10)
       : null,
@@ -450,7 +452,9 @@ export async function todayOverview(
         createdAt: { gte: today.start, lt: today.end },
         status: "INTAKE",
       },
-      include: { device: { select: { brand: true, model: true } } },
+      include: {
+        device: { select: { model: true, brand: { select: { name: true } } } },
+      },
       orderBy: { createdAt: "desc" },
       take: 3,
     }),
@@ -459,7 +463,7 @@ export async function todayOverview(
     completedToday,
     recentIntakes: intakes.map((j) => ({
       createdAt: j.createdAt.toISOString(),
-      deviceModel: `${j.device.brand} ${j.device.model}`,
+      deviceModel: `${j.device.brand.name} ${j.device.model}`,
       id: j.id,
       jobCode: j.jobCode,
     })),
@@ -476,7 +480,7 @@ export async function pickupReady(
     where: { ...scopeWhere(scope), status: "DONE" },
     include: {
       customer: { select: { name: true, phone: true } },
-      device: { select: { brand: true, model: true } },
+      device: { select: { model: true, brand: { select: { name: true } } } },
     },
     orderBy: { updatedAt: "desc" },
     take: limit,
@@ -484,7 +488,7 @@ export async function pickupReady(
   return rows.map((j) => ({
     customerName: j.customer.name,
     customerPhone: j.customer.phone,
-    deviceModel: `${j.device.brand} ${j.device.model}`,
+    deviceModel: `${j.device.brand.name} ${j.device.model}`,
     id: j.id,
     jobCode: j.jobCode,
     readyAt: j.updatedAt.toISOString(),

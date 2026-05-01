@@ -61,6 +61,7 @@ async function main() {
     await seedNotificationTemplates();
     await seedAgentDefinitions();
     await seedRepairCatalog();
+    await seedDevices();
     return;
   }
 
@@ -94,6 +95,7 @@ async function main() {
   await seedNotificationTemplates();
   await seedAgentDefinitions();
   await seedRepairCatalog();
+  await seedDevices();
 }
 
 async function seedNotificationTemplates() {
@@ -300,6 +302,56 @@ async function seedAgentDefinitions() {
     });
   }
   console.log("Agent definitions seeded.");
+}
+
+async function seedDevices() {
+  const brands = [
+    {
+      name: "Apple",
+      models: [
+        "iPhone 14",
+        "iPhone 15",
+        "iPhone 16",
+        "iPhone 16 Pro Max",
+        "iPhone SE",
+      ],
+    },
+    {
+      name: "Samsung",
+      models: [
+        "Galaxy S24",
+        "Galaxy A54",
+        "Galaxy A34",
+        "Galaxy Z Flip5",
+        "Galaxy M14",
+      ],
+    },
+    { name: "Huawei", models: ["P40", "Nova 11", "Y9 Prime", "Mate 40"] },
+    {
+      name: "Xiaomi",
+      models: ["Redmi 13", "Redmi Note 13 Pro", "Poco X6", "14"],
+    },
+    { name: "Oppo", models: ["Reno 10", "A78", "Find X5", "A58"] },
+    { name: "Vivo", models: ["V29", "X100", "Y36", "V30"] },
+    { name: "OnePlus", models: ["Nord CE 3", "12", "11", "Nord 3"] },
+    { name: "Google", models: ["Pixel 8", "Pixel 7a", "Pixel 8 Pro"] },
+  ];
+
+  for (const { name, models } of brands) {
+    const brand = await prisma.brand.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
+    for (const model of models) {
+      await prisma.device.upsert({
+        where: { brandId_model: { brandId: brand.id, model } },
+        update: {},
+        create: { brandId: brand.id, model },
+      });
+    }
+  }
+  console.log("Device brands and models seeded.");
 }
 
 main()

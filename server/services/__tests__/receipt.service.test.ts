@@ -15,7 +15,7 @@ function makePrisma(shopName = "Reparilo Test Shop"): PrismaClient {
 const baseJob = {
   jobCode: "JOB-0042",
   customer: { name: "John Doe", phone: "+213555000000" },
-  device: { brand: "iPhone", model: "13 Pro" },
+  device: { brand: { name: "iPhone" }, model: "13 Pro" },
   reportedProblem: "Cracked screen",
   estimatedCost: 8500,
   createdAt: new Date("2026-04-21T10:00:00Z"),
@@ -90,7 +90,7 @@ describe("renderLabelHtml", () => {
     const malicious = {
       ...baseJob,
       reportedProblem: "<script>alert(1)</script>",
-      device: { brand: 'Acme"', model: "<b>X</b>" },
+      device: { brand: { name: 'Acme"' }, model: "<b>X</b>" },
     };
     const html = await renderLabelHtml(makePrisma(), malicious, "https://x.y");
     expect(html).not.toContain("<script>alert(1)</script>");

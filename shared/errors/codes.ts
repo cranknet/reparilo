@@ -64,6 +64,7 @@ export const ERRORS = {
   TEMPLATE_NOT_FOUND: { status: 404, message: "errors.template_not_found" },
   SESSION_NOT_FOUND: { status: 404, message: "errors.session_not_found" },
   RESOURCE_NOT_FOUND: { status: 404, message: "errors.resource_not_found" },
+  BRAND_NOT_FOUND: { status: 404, message: "errors.brand_not_found" },
   CONVERSATION_NOT_FOUND: {
     status: 404,
     message: "errors.conversation_not_found",
@@ -81,6 +82,8 @@ export const ERRORS = {
 
   // ── Conflict ───────────────────────────────────────────────────────────
   CONFLICT: { status: 409, message: "errors.conflict" },
+  DUPLICATE_BRAND: { status: 409, message: "errors.duplicate_brand" },
+  DUPLICATE_MODEL: { status: 409, message: "errors.duplicate_model" },
   DUPLICATE_REPAIR: { status: 409, message: "errors.duplicate_repair" },
   PART_IN_USE: { status: 409, message: "errors.part_in_use" },
   REPAIR_IN_USE: { status: 409, message: "errors.repair_in_use" },
