@@ -23,8 +23,8 @@ import NotificationsPage from "@/pages/notifications";
 import PartsCatalogPage from "@/pages/parts";
 import ProfilePage from "@/pages/profile";
 import RepairsPage from "@/pages/repairs";
+import ReportsPage from "@/pages/reports";
 import SettingsPage from "@/pages/settings";
-
 import TrackingPage from "@/pages/tracking";
 import { useAuthStore } from "@/stores/auth";
 
@@ -174,6 +174,16 @@ export default function App() {
               </DashboardLayout>
             }
             path="/customers/:id"
+          />
+        </Route>
+        <Route element={<RequirePermission perm={{ reports: ["viewSelf"] }} />}>
+          <Route
+            element={
+              <DashboardLayout>
+                <ReportsPage />
+              </DashboardLayout>
+            }
+            path="/reports"
           />
         </Route>
       </Route>

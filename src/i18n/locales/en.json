@@ -607,6 +607,7 @@
     "builtin_agent_delete": "Cannot delete built-in agent definitions",
 
     "internal_error": "An unexpected error occurred",
+    "fetch_reports": "Failed to load reports",
     "generic": "Something went wrong"
   },
   "failed_to_create_part": "Failed to create part",
@@ -1119,6 +1120,7 @@
   },
   "repair_dashboard": "Repair Dashboard",
   "repair_deleted_successfully": "Repair deleted successfully",
+  "reports": "Reports",
   "repair_modal": {
     "title": "Add New Service",
     "subtitle": "Add a repair service to your catalog",

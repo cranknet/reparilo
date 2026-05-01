@@ -601,6 +601,7 @@
     "no_shop_phone": "Téléphone du magasin non configuré",
     "builtin_agent_delete": "Impossible de supprimer les définitions d'agent intégrées",
     "internal_error": "Une erreur inattendue s'est produite",
+    "fetch_reports": "Échec du chargement des rapports",
     "generic": "Quelque chose s'est mal passé"
   },
   "failed_to_create_part": "Échec de la création de la pièce",
@@ -1113,6 +1114,7 @@
   },
   "repair_dashboard": "Tableau de réparation",
   "repair_deleted_successfully": "Réparation supprimée avec succès",
+  "reports": "Rapports",
   "repair_modal": {
     "title": "Ajouter un nouveau service",
     "subtitle": "Ajoutez un service de réparation à votre catalogue",

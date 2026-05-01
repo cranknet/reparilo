@@ -1,0 +1,94 @@
+import type {
+  InsightsReportDTO,
+  OperationsReportDTO,
+  RevenueReportDTO,
+  TimeRangePreset,
+} from "@shared/types/reports";
+import { create } from "zustand";
+import i18n from "@/i18n";
+import api, { getErrorMessage } from "@/lib/api";
+
+interface ReportsState {
+  customFrom: string | null;
+  customTo: string | null;
+  fetchInsights: () => Promise<void>;
+  fetchOperations: () => Promise<void>;
+  fetchRevenue: () => Promise<void>;
+  insights: { data?: InsightsReportDTO; loading: boolean; error?: string };
+  operations: { data?: OperationsReportDTO; loading: boolean; error?: string };
+  range: TimeRangePreset;
+  revenue: { data?: RevenueReportDTO; loading: boolean; error?: string };
+  setCustomRange: (from: string, to: string) => void;
+  setRange: (range: TimeRangePreset) => void;
+}
+
+function queryParams(state: ReportsState): string {
+  if (state.customFrom && state.customTo) {
+    return `?from=${encodeURIComponent(state.customFrom)}&to=${encodeURIComponent(state.customTo)}`;
+  }
+  return `?range=${state.range}`;
+}
+
+export const useReportsStore = create<ReportsState>((set, get) => ({
+  range: "30d",
+  customFrom: null,
+  customTo: null,
+  revenue: { loading: false },
+  operations: { loading: false },
+  insights: { loading: false },
+
+  setRange: (range) => set({ range, customFrom: null, customTo: null }),
+  setCustomRange: (from, to) => set({ customFrom: from, customTo: to }),
+
+  fetchRevenue: async () => {
+    set({ revenue: { loading: true } });
+    try {
+      const q = queryParams(get());
+      const res = await api.get(`/reports/revenue${q}`);
+      set({ revenue: { data: res.data as RevenueReportDTO, loading: false } });
+    } catch (err: unknown) {
+      set({
+        revenue: {
+          loading: false,
+          error: getErrorMessage(err, i18n.t("errors.fetch_reports")),
+        },
+      });
+    }
+  },
+
+  fetchOperations: async () => {
+    set({ operations: { loading: true } });
+    try {
+      const q = queryParams(get());
+      const res = await api.get(`/reports/operations${q}`);
+      set({
+        operations: { data: res.data as OperationsReportDTO, loading: false },
+      });
+    } catch (err: unknown) {
+      set({
+        operations: {
+          loading: false,
+          error: getErrorMessage(err, i18n.t("errors.fetch_reports")),
+        },
+      });
+    }
+  },
+
+  fetchInsights: async () => {
+    set({ insights: { loading: true } });
+    try {
+      const q = queryParams(get());
+      const res = await api.get(`/reports/insights${q}`);
+      set({
+        insights: { data: res.data as InsightsReportDTO, loading: false },
+      });
+    } catch (err: unknown) {
+      set({
+        insights: {
+          loading: false,
+          error: getErrorMessage(err, i18n.t("errors.fetch_reports")),
+        },
+      });
+    }
+  },
+}));

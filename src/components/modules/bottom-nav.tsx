@@ -67,6 +67,12 @@ const MORE_ITEMS: NavItem[] = [
     perm: { notifications: ["read"] },
     to: "/notifications",
   },
+  {
+    icon: "analytics",
+    labelKey: "reports",
+    perm: { reports: ["viewSelf"] },
+    to: "/reports",
+  },
 ];
 
 const ACTIVE_FONT_SETTINGS = '"FILL" 1, "wght" 700, "GRAD" 0, "opsz" 24';

@@ -601,6 +601,7 @@
     "no_shop_phone": "متجر الهاتف لم يتم تكوينه",
     "builtin_agent_delete": "لا يمكن حذف تعريفات الوكيل المضمنة",
     "internal_error": "حدث خطأ غير متوقع",
+    "fetch_reports": "فشل تحميل التقارير",
     "generic": "حدث خطأ ما"
   },
   "failed_to_create_part": "فشل في إنشاء الجزء",
@@ -1113,6 +1114,7 @@
   },
   "repair_dashboard": "لوحة الإصلاح",
   "repair_deleted_successfully": "تم حذف الإصلاح بنجاح",
+  "reports": "التقارير",
   "repair_modal": {
     "title": "إضافة خدمة جديدة",
     "subtitle": "أضف خدمة إصلاح إلى الكتالوج الخاص بك",

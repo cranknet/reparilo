@@ -48,6 +48,12 @@ const NAV_ITEMS: NavItem[] = [
     perm: { notifications: ["read"] },
   },
   {
+    icon: "analytics",
+    labelKey: "reports",
+    to: "/reports",
+    perm: { reports: ["viewSelf"] },
+  },
+  {
     icon: "auto_awesome",
     labelKey: "ai_agent_title",
     to: "/ai-analyst",
