@@ -1,8 +1,6 @@
 #!/bin/sh
 set -e
 
-PATH="$HOME/.bun/bin:$PATH"
-
 bunx vitest run
 
 # Check if there are any staged files
