@@ -1,11 +1,5 @@
 providers = ["node"]
 
-[phases.setup]
-nixPkgs = ["nodejs_22", "openssl"]
-
-[phases.install]
-cmds = ["corepack enable", "bun install --frozen-lockfile"]
-
 [phases.build]
 cmds = ["bun run build"]
 
