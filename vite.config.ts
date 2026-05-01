@@ -36,22 +36,19 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes("node_modules")) {
-            if (id.includes("react-dom") || id.includes("react/")) {
-              return "vendor-react";
-            }
-            if (id.includes("react-router")) {
-              return "vendor-react";
-            }
-            if (id.includes("@tanstack")) {
-              return "vendor-tanstack";
-            }
-            if (id.includes("sonner")) {
-              return "vendor-ui";
-            }
-            if (id.includes("i18next") || id.includes("react-i18next") || id.includes("i18next-browser-languagedetector")) {
-              return "vendor-i18n";
-            }
+          if (!id.includes("node_modules")) return;
+          const match = id.match(/node_modules\/([^/]+)/);
+          if (!match) return;
+          const pkg = match[1].startsWith("@") ? id.match(/node_modules\/(@[^/]+\/[^/]+)/)?.[1] : match[1];
+          if (!pkg) return;
+          const chunks: Record<string, string[]> = {
+            "vendor-react": ["react", "react-dom", "react-router"],
+            "vendor-tanstack": ["@tanstack/react-query"],
+            "vendor-ui": ["sonner"],
+            "vendor-i18n": ["i18next", "react-i18next", "i18next-browser-languagedetector"],
+          };
+          for (const [chunk, packages] of Object.entries(chunks)) {
+            if (packages.some((p) => pkg === p)) return chunk;
           }
         },
       },
