@@ -1,9 +1,5 @@
-import {
-  AuditAction,
-  type JobStatus,
-  Prisma,
-  type PrismaClient,
-} from "@generated/client";
+import type { PrismaClient } from "@generated/client";
+import { AuditAction, type JobStatus } from "@generated/client";
 import type { Scope } from "@shared/types/dashboard";
 import type {
   InsightsReportDTO,
@@ -11,6 +7,24 @@ import type {
   RevenueReportDTO,
   TimeRangePreset,
 } from "@shared/types/reports";
+import type { DbClient } from "../repositories/report.repository.js";
+import {
+  aggregateJobDeposits,
+  aggregateJobRevenue,
+  countJobs,
+  countJobsSimple,
+  findAuditLogsForStatus,
+  findCustomersByIds,
+  findOutstandingJobs,
+  findRevenueBreakdown,
+  findTurnaroundJobs,
+  groupJobRepairs,
+  groupJobsByCustomer,
+  groupJobsByCustomerWithMinDate,
+  groupJobsByStatus,
+  groupTopCustomersByRevenue,
+  queryRawProfitMargin,
+} from "../repositories/report.repository.js";
 import type { DateRange } from "../utils/time-range.js";
 import { monthRange, todayRange, toMoney } from "../utils/time-range.js";
 
@@ -76,42 +90,27 @@ export async function revenueReport(
     createdAt: { gte: prev.start, lt: prev.end },
   };
   const scopeFilter = scopeWhere(scope);
+  const db = prisma as unknown as DbClient;
 
   const [currentRevenue, depositSum, outstandingRows, prevRevenue] =
     await Promise.all([
-      prisma.job.aggregate({
-        _sum: { estimatedCost: true },
-        where: {
-          ...scopeFilter,
-          status: { in: ["DONE", "DELIVERED"] as JobStatus[] },
-          auditLogs: { some: completedInWindow },
-        },
+      aggregateJobRevenue(db, {
+        ...scopeFilter,
+        status: { in: ["DONE", "DELIVERED"] as JobStatus[] },
+        auditLogs: { some: completedInWindow },
       }),
-      prisma.job.aggregate({
-        _sum: { depositAmount: true },
-        where: {
-          ...scopeFilter,
-          createdAt: { gte: range.start, lt: range.end },
-        },
+      aggregateJobDeposits(db, {
+        ...scopeFilter,
+        createdAt: { gte: range.start, lt: range.end },
       }),
-      // Outstanding balance is intentionally all-time: current debts regardless of period
-      prisma.job.findMany({
-        where: {
-          ...scopeFilter,
-          status: { in: ["DONE", "DELIVERED"] as JobStatus[] },
-        },
-        select: {
-          estimatedCost: true,
-          depositAmount: true,
-        },
+      findOutstandingJobs(db, {
+        ...scopeFilter,
+        status: { in: ["DONE", "DELIVERED"] as JobStatus[] },
       }),
-      prisma.job.aggregate({
-        _sum: { estimatedCost: true },
-        where: {
-          ...scopeFilter,
-          status: { in: ["DONE", "DELIVERED"] as JobStatus[] },
-          auditLogs: { some: completedInPrevWindow },
-        },
+      aggregateJobRevenue(db, {
+        ...scopeFilter,
+        status: { in: ["DONE", "DELIVERED"] as JobStatus[] },
+        auditLogs: { some: completedInPrevWindow },
       }),
     ]);
 
@@ -139,18 +138,13 @@ export async function revenueReport(
 
   let avgProfitMargin: number | undefined;
   if (includeMargin) {
-    const costRows = await prisma.$queryRaw<{ cost: string }[]>`
-      SELECT COALESCE(SUM(pt."totalCost"), 0) AS cost
-      FROM "jobs" j
-      INNER JOIN "audit_logs" al ON al."jobId" = j."id"
-        AND al."action" = 'STATUS_CHANGED'
-        AND al."toValue" IN ('DONE', 'DELIVERED')
-        AND al."createdAt" >= ${range.start} AND al."createdAt" < ${range.end}
-      LEFT JOIN (SELECT "jobId", SUM("totalCost") AS "totalCost" FROM "job_parts" GROUP BY "jobId") pt
-        ON pt."jobId" = j."id"
-      WHERE j."status" IN ('DONE', 'DELIVERED')
-        ${scope.role === "TECHNICIAN" ? Prisma.sql`AND j."technicianId" = ${scope.userId}` : Prisma.empty}
-    `;
+    const costRows = await queryRawProfitMargin(
+      prisma,
+      range.start,
+      range.end,
+      scope.role === "TECHNICIAN",
+      scope.role === "TECHNICIAN" ? scope.userId : undefined
+    );
     const cost = toMoney(Number(costRows[0]?.cost ?? 0));
     avgProfitMargin =
       totalRevenue > 0
@@ -158,35 +152,10 @@ export async function revenueReport(
         : 0;
   }
 
-  const breakdownRows = await prisma.job.findMany({
-    where: {
-      ...scopeFilter,
-      status: { in: ["DONE", "DELIVERED"] as JobStatus[] },
-      auditLogs: { some: completedInWindow },
-    },
-    select: {
-      jobCode: true,
-      estimatedCost: true,
-      depositAmount: true,
-      updatedAt: true,
-      customer: { select: { name: true } },
-      device: {
-        select: { model: true, brand: { select: { name: true } } },
-      },
-      partsUsed: { select: { totalCost: true } },
-      repairs: { select: { price: true } },
-      auditLogs: {
-        where: {
-          action: AuditAction.STATUS_CHANGED,
-          toValue: { in: ["DONE", "DELIVERED"] },
-        },
-        select: { createdAt: true },
-        orderBy: { createdAt: "desc" },
-        take: 1,
-      },
-    },
-    orderBy: { updatedAt: "desc" },
-    take: 200,
+  const breakdownRows = await findRevenueBreakdown(db, {
+    ...scopeFilter,
+    status: { in: ["DONE", "DELIVERED"] as JobStatus[] },
+    auditLogs: { some: completedInWindow },
   });
 
   const breakdown = breakdownRows.map((j) => {
@@ -246,48 +215,28 @@ export async function operationsReport(
     toValue: { in: completedStatuses as string[] },
     createdAt: { gte: prev.start, lt: prev.end },
   };
+  const db = prisma as unknown as DbClient;
 
   const [jobsCompleted, prevCompleted, inProgressJobs, turnaroundRows] =
     await Promise.all([
-      prisma.job.count({
-        where: {
-          ...scopeFilter,
-          status: { in: completedStatuses },
-          auditLogs: { some: completedInWindow },
-        },
+      countJobs(db, {
+        ...scopeFilter,
+        status: { in: completedStatuses },
+        auditLogs: { some: completedInWindow },
       }),
-      prisma.job.count({
-        where: {
-          ...scopeFilter,
-          status: { in: completedStatuses },
-          auditLogs: { some: completedInPrevWindow },
-        },
+      countJobs(db, {
+        ...scopeFilter,
+        status: { in: completedStatuses },
+        auditLogs: { some: completedInPrevWindow },
       }),
-      prisma.job.count({
-        where: {
-          ...scopeFilter,
-          status: { in: ["IN_REPAIR", "ON_HOLD"] as JobStatus[] },
-        },
+      countJobs(db, {
+        ...scopeFilter,
+        status: { in: ["IN_REPAIR", "ON_HOLD"] as JobStatus[] },
       }),
-      prisma.job.findMany({
-        where: {
-          ...scopeFilter,
-          status: { in: completedStatuses },
-          auditLogs: { some: completedInWindow },
-        },
-        select: {
-          createdAt: true,
-          auditLogs: {
-            where: {
-              action: AuditAction.STATUS_CHANGED,
-              toValue: { in: completedStatuses as string[] },
-              createdAt: { gte: range.start, lt: range.end },
-            },
-            select: { createdAt: true },
-            orderBy: { createdAt: "desc" },
-            take: 1,
-          },
-        },
+      findTurnaroundJobs(db, {
+        ...scopeFilter,
+        status: { in: completedStatuses },
+        auditLogs: { some: completedInWindow },
       }),
     ]);
 
@@ -314,18 +263,14 @@ export async function operationsReport(
   let warrantyReturnRate: number | undefined;
   if (includeShopWide) {
     const [warrantyCount, totalCount] = await Promise.all([
-      prisma.job.count({
-        where: {
-          isWarrantyReturn: true,
-          status: { in: completedStatuses },
-          auditLogs: { some: completedInWindow },
-        },
+      countJobs(db, {
+        isWarrantyReturn: true,
+        status: { in: completedStatuses },
+        auditLogs: { some: completedInWindow },
       }),
-      prisma.job.count({
-        where: {
-          status: { in: completedStatuses },
-          auditLogs: { some: completedInWindow },
-        },
+      countJobs(db, {
+        status: { in: completedStatuses },
+        auditLogs: { some: completedInWindow },
       }),
     ]);
     warrantyReturnRate =
@@ -334,18 +279,12 @@ export async function operationsReport(
         : 0;
   }
 
-  const topRepairsRaw = await prisma.jobRepair.groupBy({
-    by: ["repairName", "category"],
-    where: {
-      job: {
-        ...scopeFilter,
-        status: { in: completedStatuses },
-        auditLogs: { some: completedInWindow },
-      },
+  const topRepairsRaw = await groupJobRepairs(db, {
+    job: {
+      ...scopeFilter,
+      status: { in: completedStatuses },
+      auditLogs: { some: completedInWindow },
     },
-    _count: { _all: true },
-    _avg: { price: true },
-    _sum: { price: true },
   });
 
   const topRepairs = topRepairsRaw
@@ -359,32 +298,22 @@ export async function operationsReport(
     .sort((a, b) => b.count - a.count)
     .slice(0, 20);
 
-  // Single query for avg days per status — replaces N+1 loop
-  const allStatusEntries = await prisma.auditLog.findMany({
-    where: {
+  const allStatusEntries = await findAuditLogsForStatus(
+    db,
+    {
       action: AuditAction.STATUS_CHANGED,
       toValue: { in: completedStatuses as string[] },
       createdAt: { gte: range.start, lt: range.end },
       job: { ...scopeFilter },
     },
-    select: {
-      toValue: true,
-      createdAt: true,
-      job: { select: { createdAt: true } },
-    },
-    take: 2000,
+    2000
+  );
+
+  const statusGroups = await groupJobsByStatus(db, {
+    ...scopeFilter,
+    auditLogs: { some: completedInWindow },
   });
 
-  const statusGroups = await prisma.job.groupBy({
-    by: ["status"],
-    _count: { _all: true },
-    where: {
-      ...scopeFilter,
-      auditLogs: { some: completedInWindow },
-    },
-  });
-
-  // Build avg days map from the single query
   const daysByStatus = new Map<string, { totalDays: number; count: number }>();
   for (const entry of allStatusEntries) {
     if (!entry.job) {
@@ -437,30 +366,14 @@ export async function insightsReport(
     ...scopeWhere(scope),
     createdAt: { gte: range.start, lt: range.end },
   };
+  const db = prisma as unknown as DbClient;
 
   const [customerJobGroups, newCustomerIds, totalJobs, topCustomersRaw] =
     await Promise.all([
-      prisma.job.groupBy({
-        by: ["customerId"],
-        where: baseWhere,
-        _count: { _all: true },
-        _sum: { estimatedCost: true },
-      }),
-      prisma.job.groupBy({
-        by: ["customerId"],
-        where: baseWhere,
-        _min: { createdAt: true },
-      }),
-      prisma.job.count({ where: baseWhere }),
-      prisma.job.groupBy({
-        by: ["customerId"],
-        where: baseWhere,
-        _count: { _all: true },
-        _sum: { estimatedCost: true },
-        _max: { createdAt: true },
-        orderBy: { _sum: { estimatedCost: "desc" } },
-        take: 20,
-      }),
+      groupJobsByCustomer(db, baseWhere),
+      groupJobsByCustomerWithMinDate(db, baseWhere),
+      countJobsSimple(db, baseWhere),
+      groupTopCustomersByRevenue(db, baseWhere),
     ]);
 
   let newCount = 0;
@@ -494,10 +407,7 @@ export async function insightsReport(
       : 0;
 
   const topCustomerIds = topCustomersRaw.map((g) => g.customerId);
-  const customers = await prisma.customer.findMany({
-    where: { id: { in: topCustomerIds } },
-    select: { id: true, name: true, phone: true },
-  });
+  const customers = await findCustomersByIds(db, topCustomerIds);
   const customerMap = new Map(customers.map((c) => [c.id, c]));
 
   const topCustomers = topCustomersRaw.map((g) => {
