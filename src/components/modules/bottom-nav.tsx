@@ -69,7 +69,7 @@ const MORE_ITEMS: NavItem[] = [
   },
   {
     icon: "analytics",
-    labelKey: "reports",
+    labelKey: "reports.label",
     perm: { reports: ["viewSelf"] },
     to: "/reports",
   },
