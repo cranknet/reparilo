@@ -74,7 +74,7 @@
     "server": "bun run --watch server/index.ts",
     "start": "bun run server/index.ts",
     "start:prod": "bun run db:migrate-deploy && bun start",
-    "build": "bun run db:generate && bunx vite build",
+    "build": "bun run db:generate && vite build",
     "build:mobile": "bun run build && cap sync",
     "build:prod": "bun run build",
     "db:generate": "prisma generate",

@@ -1,8 +1,5 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { config } from "dotenv";
-
-config();
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:4000";
 const AUTH_FILE = "e2e/.auth/admin.json";
