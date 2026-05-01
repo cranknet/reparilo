@@ -54,3 +54,12 @@ export async function findDeviceFirst(
 export async function createDevice(prisma: DbClient, data: DeviceCreateInput) {
   return await prisma.device.create({ data });
 }
+
+export async function upsertDevice(
+  prisma: DbClient,
+  where: Prisma.DeviceWhereUniqueInput,
+  update: Prisma.DeviceUpdateInput,
+  create: Prisma.DeviceCreateInput
+) {
+  return await prisma.device.upsert({ where, update, create });
+}

@@ -311,7 +311,13 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         });
       }
       const userId = getUserId(req);
-      const result = await createJob(app, parsed.data, userId);
+      const notifyCtx = { prisma: app.prisma, wsBroadcast: app.wsBroadcast };
+      const result = await createJob(
+        app.prisma,
+        parsed.data,
+        userId,
+        notifyCtx
+      );
       throwIfError(result);
 
       if (
@@ -319,7 +325,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         result.isWarrantyReturn &&
         "jobCode" in result
       ) {
-        notify(app, {
+        notify(notifyCtx, {
           context: {
             jobCode: (result as Record<string, unknown>).jobCode as string,
           },
@@ -408,11 +414,13 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       }
 
       const userId = getUserId(req);
+      const notifyCtx = { prisma: app.prisma, wsBroadcast: app.wsBroadcast };
       const result = await transitionStatus(
-        app,
+        app.prisma,
         id,
         parsed.data.status,
         userId,
+        notifyCtx,
         {
           requestingRole: req.user.role as RoleType,
           reason: parsed.data.reason,

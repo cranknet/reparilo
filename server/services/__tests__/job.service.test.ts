@@ -22,6 +22,11 @@ function mockPrisma(
   overrides: Partial<Record<keyof PrismaClient, unknown>> = {}
 ) {
   const mock = {
+    brand: {
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      ...((overrides as Record<string, unknown>).brand || {}),
+    },
     job: {
       findUnique: vi.fn(),
       findFirst: vi.fn(),
@@ -31,6 +36,14 @@ function mockPrisma(
       groupBy: vi.fn(),
       create: vi.fn(),
       ...((overrides as Record<string, unknown>).job || {}),
+    },
+    jobCounter: {
+      upsert: vi.fn(),
+      ...((overrides as Record<string, unknown>).jobCounter || {}),
+    },
+    jobRepair: {
+      createMany: vi.fn(),
+      ...((overrides as Record<string, unknown>).jobRepair || {}),
     },
     customer: {
       findUnique: vi.fn(),
@@ -60,6 +73,8 @@ function mockPrisma(
   };
   return mock as unknown as PrismaClient;
 }
+
+const mockNotifyCtx = { prisma: {} as PrismaClient, wsBroadcast: undefined };
 
 describe("computeFinalCost", () => {
   it("sums repairs and parts costs", () => {
@@ -636,7 +651,7 @@ describe("create", () => {
     (prisma.job.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null);
 
     const result = await create(
-      { prisma } as any,
+      prisma,
       {
         color: undefined,
         conditionNotes: undefined,
@@ -654,7 +669,8 @@ describe("create", () => {
         technicianId: undefined,
         warrantyForJobId: "invalid-job",
       },
-      "user-1"
+      "user-1",
+      mockNotifyCtx
     );
 
     expect(result).toEqual({ error: "INVALID_WARRANTY_REFERENCE" });
@@ -667,7 +683,7 @@ describe("create", () => {
     });
 
     const result = await create(
-      { prisma } as any,
+      prisma,
       {
         color: undefined,
         conditionNotes: undefined,
@@ -685,7 +701,8 @@ describe("create", () => {
         technicianId: undefined,
         warrantyForJobId: "job-1",
       },
-      "user-1"
+      "user-1",
+      mockNotifyCtx
     );
 
     expect(result).toEqual({ error: "INVALID_WARRANTY_REFERENCE" });
@@ -698,7 +715,7 @@ describe("create", () => {
     });
 
     const result = await create(
-      { prisma } as any,
+      prisma,
       {
         color: undefined,
         conditionNotes: undefined,
@@ -716,10 +733,13 @@ describe("create", () => {
         technicianId: undefined,
         warrantyForJobId: "job-1",
       },
-      "user-1"
+      "user-1",
+      mockNotifyCtx
     );
 
-    expect(result).toEqual({ error: "INVALID_WARRANTY_REFERENCE" });
+    expect(result).toEqual({
+      error: "INVALID_WARRANTY_REFERENCE",
+    });
   });
 
   it("returns error when customerId is invalid", async () => {
@@ -728,7 +748,7 @@ describe("create", () => {
     );
 
     const result = await create(
-      { prisma } as any,
+      prisma,
       {
         color: undefined,
         conditionNotes: undefined,
@@ -746,7 +766,8 @@ describe("create", () => {
         technicianId: undefined,
         warrantyForJobId: undefined,
       },
-      "user-1"
+      "user-1",
+      mockNotifyCtx
     );
 
     expect(result).toEqual({ error: "INVALID_CUSTOMER" });
@@ -764,10 +785,11 @@ describe("transitionStatus", () => {
     (prisma.job.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null);
 
     const result = await transitionStatus(
-      { prisma } as any,
+      prisma,
       "non-existent",
       "IN_REPAIR",
-      "user-1"
+      "user-1",
+      mockNotifyCtx
     );
 
     expect(result).toBeNull();
@@ -780,10 +802,11 @@ describe("transitionStatus", () => {
     });
 
     const result = await transitionStatus(
-      { prisma } as any,
+      prisma,
       "job-1",
       "INTAKE" as unknown as import("@shared/constants").JobStatusType,
-      "user-1"
+      "user-1",
+      mockNotifyCtx
     );
 
     expect(result).toHaveProperty("error", "CONFLICT_STATUS_TRANSITION");
@@ -806,10 +829,11 @@ describe("transitionStatus", () => {
     });
 
     const result = await transitionStatus(
-      { prisma } as any,
+      prisma,
       "job-1",
       "IN_REPAIR",
-      "user-1"
+      "user-1",
+      mockNotifyCtx
     );
 
     expect(result).not.toHaveProperty("error");
@@ -825,10 +849,11 @@ describe("transitionStatus", () => {
     });
 
     const result = await transitionStatus(
-      { prisma } as any,
+      prisma,
       "job-1",
       "CANCELLED",
       "user-1",
+      mockNotifyCtx,
       { requestingRole: Role.FRONT_DESK }
     );
 
@@ -844,10 +869,11 @@ describe("transitionStatus", () => {
     });
 
     const result = await transitionStatus(
-      { prisma } as any,
+      prisma,
       "job-1",
       "CANCELLED",
       "user-1",
+      mockNotifyCtx,
       { requestingRole: Role.FRONT_DESK }
     );
 
@@ -871,10 +897,11 @@ describe("transitionStatus", () => {
     });
 
     const result = await transitionStatus(
-      { prisma } as any,
+      prisma,
       "job-1",
       "CANCELLED",
       "user-1",
+      mockNotifyCtx,
       { requestingRole: Role.FRONT_DESK }
     );
 

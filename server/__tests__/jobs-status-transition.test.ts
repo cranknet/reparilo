@@ -195,14 +195,14 @@ describe("PATCH /api/jobs/:id/status", () => {
     });
     expect(res.statusCode).toBe(200);
     expect(mocks.transitionStatus).toHaveBeenCalledWith(
-      expect.objectContaining({
-        prisma: expect.objectContaining({
-          auditLog: { findMany: mocks.auditLogFindMany },
-        }),
-      }),
+      { auditLog: { findMany: mocks.auditLogFindMany } },
       "job-1",
       "CANCELLED",
       "user-1",
+      {
+        prisma: { auditLog: { findMany: mocks.auditLogFindMany } },
+        wsBroadcast: undefined,
+      },
       { requestingRole: "OWNER", reason: "Customer requested" }
     );
   });
@@ -221,14 +221,14 @@ describe("PATCH /api/jobs/:id/status", () => {
     });
     expect(res.statusCode).toBe(200);
     expect(mocks.transitionStatus).toHaveBeenCalledWith(
-      expect.objectContaining({
-        prisma: expect.objectContaining({
-          auditLog: { findMany: mocks.auditLogFindMany },
-        }),
-      }),
+      { auditLog: { findMany: mocks.auditLogFindMany } },
       "job-1",
       "IN_REPAIR",
       "user-1",
+      {
+        prisma: { auditLog: { findMany: mocks.auditLogFindMany } },
+        wsBroadcast: undefined,
+      },
       { requestingRole: "OWNER", reason: undefined }
     );
   });

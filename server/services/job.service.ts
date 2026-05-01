@@ -15,11 +15,42 @@ import type {
   JobListQueryInput,
   UpdateJobInput,
 } from "@shared/schemas/job.schema";
-import type { FastifyInstance } from "fastify";
+import { findMany as auditFindMany } from "../repositories/audit.repository.js";
+import {
+  findUnique as customerFindUnique,
+  upsert as customerUpsert,
+} from "../repositories/customer.repository.js";
+import {
+  createBrand,
+  findBrandFirst,
+  upsertDevice,
+} from "../repositories/device.repository.js";
+import {
+  createJobRepairs,
+  findUniqueSimple,
+  findUniqueWithCustomer,
+  findUserUnique,
+  groupByStatus,
+  count as jobCount,
+  createJob as jobCreateJob,
+  findFirst as jobFindFirst,
+  findMany as jobFindMany,
+  findUnique as jobFindUnique,
+  update as jobUpdate,
+} from "../repositories/job.repository.js";
+import { findShopSettingsUnique } from "../repositories/settings.repository.js";
 import { generateJobCode } from "../utils/job-code.js";
 import { assertJobMutable } from "../utils/job-mutations.js";
 import { createAuditLog } from "./audit.service.js";
 import { notify } from "./notification-dispatch.js";
+
+export interface NotifyContext {
+  prisma: PrismaClient;
+  wsBroadcast?: (
+    predicate: (c: { role: string; userId: string }) => boolean,
+    payload: Record<string, unknown>
+  ) => void;
+}
 
 export function computeMargin(job: {
   finalCost: number | { toNumber: () => number };
@@ -42,7 +73,7 @@ const VALID_TECH_ROLES: Set<RoleType> = new Set([Role.OWNER, Role.TECHNICIAN]);
 const FD_CANCEL_WINDOW_MS = 30 * 60 * 1000;
 
 async function validateTechnician(prisma: PrismaClient, technicianId: string) {
-  const tech = await prisma.user.findUnique({ where: { id: technicianId } });
+  const tech = await findUserUnique(prisma, technicianId);
   if (!tech) {
     return { error: "INVALID_TECHNICIAN" as const };
   }
@@ -104,20 +135,15 @@ export async function list(prisma: PrismaClient, query: JobListQueryInput) {
     where.id = { lt: cursor };
   }
 
+  const listInclude = {
+    customer: true,
+    device: { include: { brand: true } },
+    technician: { select: { id: true, name: true, username: true } },
+  } as const satisfies Prisma.JobInclude;
+
   const [jobs, totalCount] = await Promise.all([
-    prisma.job.findMany({
-      where,
-      include: {
-        customer: true,
-        device: { include: { brand: true } },
-        technician: { select: { id: true, name: true, username: true } },
-      },
-      orderBy: { id: "desc" },
-      take: limit + 1,
-    }),
-    cursor
-      ? (Promise.resolve(null) as Promise<null>)
-      : prisma.job.count({ where }),
+    jobFindMany(prisma, where, listInclude, { id: "desc" }, limit + 1),
+    cursor ? (Promise.resolve(null) as Promise<null>) : jobCount(prisma, where),
   ]);
 
   let nextCursor: string | null = null;
@@ -132,10 +158,7 @@ export async function list(prisma: PrismaClient, query: JobListQueryInput) {
 }
 
 export async function getById(prisma: PrismaClient, id: string) {
-  const job = await prisma.job.findUnique({
-    where: { id },
-    include: JOB_INCLUDE,
-  });
+  const job = await jobFindUnique(prisma, id, JOB_INCLUDE);
   if (!job) {
     return null;
   }
@@ -145,10 +168,7 @@ export async function getById(prisma: PrismaClient, id: string) {
 }
 
 export async function getMetrics(prisma: PrismaClient) {
-  const groups = await prisma.job.groupBy({
-    by: ["status"],
-    _count: true,
-  });
+  const groups = await groupByStatus(prisma);
 
   const allStatuses = [...ACTIVE_STATUSES, ...INACTIVE_STATUSES];
   const metrics: Record<string, number> = {};
@@ -162,16 +182,16 @@ export async function getMetrics(prisma: PrismaClient) {
 }
 
 export async function create(
-  app: FastifyInstance,
+  prisma: PrismaClient,
   input: CreateJobInput,
-  userId: string
+  userId: string,
+  notifyCtx: NotifyContext
 ) {
-  const prisma = app.prisma;
   if (input.warrantyForJobId) {
-    const warrantyJob = await prisma.job.findUnique({
-      where: { id: input.warrantyForJobId },
-      include: { customer: true },
-    });
+    const warrantyJob = await findUniqueWithCustomer(
+      prisma,
+      input.warrantyForJobId
+    );
     const isCompleted =
       warrantyJob && COMPLETED_STATUSES.includes(warrantyJob.status);
     const sameCustomer = warrantyJob?.customer?.phone === input.customerPhone;
@@ -188,64 +208,63 @@ export async function create(
   };
 
   if (input.customerId) {
-    const found = await prisma.customer.findUnique({
-      where: { id: input.customerId },
-    });
+    const found = await customerFindUnique(prisma, input.customerId);
     if (!found) {
       return { error: "INVALID_CUSTOMER" as const };
     }
     customer = found;
   } else {
     const email = input.customerEmail?.trim() || null;
-    customer = await prisma.customer.upsert({
-      where: { phone: input.customerPhone },
-      update: {
+    customer = await customerUpsert(
+      prisma,
+      { phone: input.customerPhone },
+      {
         name: input.customerName,
         ...(email ? { email } : {}),
       },
-      create: {
+      {
         email,
         name: input.customerName,
         phone: input.customerPhone,
-      },
-    });
+      }
+    );
   }
 
   let brandId = input.deviceBrandId;
   if (!brandId) {
-    const existing = await prisma.brand.findFirst({
-      where: { name: { equals: input.deviceBrand, mode: "insensitive" } },
+    const existing = await findBrandFirst(prisma, {
+      name: { equals: input.deviceBrand, mode: "insensitive" },
     });
     if (existing) {
       brandId = existing.id;
     } else {
-      const created = await prisma.brand.create({
-        data: { name: input.deviceBrand },
+      const created = await createBrand(prisma, {
+        name: input.deviceBrand,
       });
       brandId = created.id;
     }
   }
 
-  const device = await prisma.device.upsert({
-    where: {
-      brandId_model: { brandId, model: input.deviceModel },
-    },
-    update: {},
-    create: { brandId, model: input.deviceModel },
-  });
+  const device = await upsertDevice(
+    prisma,
+    { brandId_model: { brandId, model: input.deviceModel } },
+    {},
+    { brandId, model: input.deviceModel }
+  );
 
   const { accessCode, jobCode } = await generateJobCode(prisma);
 
   const job = await prisma.$transaction(async (tx) => {
-    const created = await tx.job.create({
-      data: {
+    const created = await jobCreateJob(
+      tx,
+      {
         accessCode,
         color: input.color ?? null,
         conditionNotes: input.conditionNotes ?? null,
-        createdById: userId,
-        customerId: customer.id,
+        createdBy: { connect: { id: userId } },
+        customer: { connect: { id: customer.id } },
         depositAmount: input.depositAmount ?? null,
-        deviceId: device.id,
+        device: { connect: { id: device.id } },
         estimatedCost: input.estimatedCost,
         estimatedDate: input.estimatedDate
           ? new Date(input.estimatedDate)
@@ -253,11 +272,15 @@ export async function create(
         isWarrantyReturn: input.isWarrantyReturn ?? false,
         jobCode,
         reportedProblem: input.reportedProblem,
-        technicianId: input.technicianId ?? null,
-        warrantyForJobId: input.warrantyForJobId ?? null,
+        technician: input.technicianId
+          ? { connect: { id: input.technicianId } }
+          : undefined,
+        warrantyForJob: input.warrantyForJobId
+          ? { connect: { id: input.warrantyForJobId } }
+          : undefined,
       },
-      include: JOB_INCLUDE,
-    });
+      JOB_INCLUDE
+    );
 
     if (input.repairs && input.repairs.length > 0) {
       const repairIds = input.repairs
@@ -267,16 +290,17 @@ export async function create(
       if (uniqueRepairIds.size !== repairIds.length) {
         throw new AppError("DUPLICATE_REPAIR");
       }
-      await tx.jobRepair.createMany({
-        data: input.repairs.map((repair) => ({
+      await createJobRepairs(
+        tx,
+        input.repairs.map((repair) => ({
           category: repair.category as RepairCategory,
           createdById: userId,
           jobId: created.id,
           price: repair.price,
           repairId: repair.repairId ?? null,
           repairName: repair.repairName,
-        })),
-      });
+        }))
+      );
       for (const repair of input.repairs) {
         await createAuditLog(tx, {
           action: AuditAction.REPAIR_ADDED,
@@ -298,8 +322,7 @@ export async function create(
     return created;
   });
 
-  // Fire-and-forget notification for job creation
-  notify(app, {
+  notify(notifyCtx, {
     context: {
       customerName: customer.name,
       jobCode: job.jobCode,
@@ -312,10 +335,7 @@ export async function create(
     /* fire-and-forget */
   });
 
-  const fullJob = await prisma.job.findUnique({
-    where: { id: job.id },
-    include: JOB_INCLUDE,
-  });
+  const fullJob = await jobFindUnique(prisma, job.id, JOB_INCLUDE);
 
   return { ...(fullJob ?? job), finalCost: computeFinalCost(fullJob ?? job) };
 }
@@ -326,7 +346,7 @@ export async function update(
   input: UpdateJobInput,
   userId: string
 ) {
-  const job = await prisma.job.findUnique({ where: { id } });
+  const job = await findUniqueSimple(prisma, id);
   if (!job) {
     return null;
   }
@@ -361,11 +381,7 @@ export async function update(
     data.technician = { connect: { id: technicianId } };
   }
 
-  const updated = await prisma.job.update({
-    data,
-    include: JOB_INCLUDE,
-    where: { id },
-  });
+  const updated = await jobUpdate(prisma, id, data, JOB_INCLUDE);
 
   if (
     technicianId !== undefined &&
@@ -410,7 +426,6 @@ function canFrontDeskCancel(
   if (job.createdById !== userId) {
     return { ok: false, reason: "CANCEL_NOT_CREATOR" };
   }
-  // Both are UTC ms; no timezone concern
   const elapsed = Date.now() - job.createdAt.getTime();
   if (elapsed > FD_CANCEL_WINDOW_MS) {
     return { ok: false, reason: "CANCEL_WINDOW_EXPIRED" };
@@ -419,14 +434,14 @@ function canFrontDeskCancel(
 }
 
 export async function transitionStatus(
-  app: FastifyInstance,
+  prisma: PrismaClient,
   id: string,
   newStatus: JobStatusType,
   userId: string,
+  notifyCtx: NotifyContext,
   options?: { reason?: string; requestingRole: RoleType }
 ) {
-  const prisma = app.prisma;
-  const job = await prisma.job.findUnique({ where: { id } });
+  const job = await findUniqueSimple(prisma, id);
   if (!job) {
     return null;
   }
@@ -450,11 +465,12 @@ export async function transitionStatus(
     };
   }
 
-  const updated = await prisma.job.update({
-    data: { status: newStatus, updatedById: userId },
-    include: JOB_INCLUDE,
-    where: { id },
-  });
+  const updated = await jobUpdate(
+    prisma,
+    id,
+    { status: newStatus, updatedById: userId },
+    JOB_INCLUDE
+  );
 
   await createAuditLog(prisma, {
     action: AuditAction.STATUS_CHANGED,
@@ -466,10 +482,9 @@ export async function transitionStatus(
     userId,
   });
 
-  // Fire-and-forget notification for status transitions
   const templateName = STATUS_TEMPLATE_MAP[newStatus];
   if (templateName) {
-    notify(app, {
+    notify(notifyCtx, {
       context: {
         customerName: updated.customer?.name,
         jobCode: updated.jobCode,
@@ -525,15 +540,13 @@ async function buildJobLookupPayload(
   }
 ) {
   const [statusTransitions, shopSettings] = await Promise.all([
-    prisma.auditLog.findMany({
-      where: { jobId, action: AuditAction.STATUS_CHANGED },
-      select: { fromValue: true, toValue: true, createdAt: true },
-      orderBy: { createdAt: "asc" },
-    }),
-    prisma.shopSettings.findUnique({
-      where: { id: "default" },
-      select: { shopName: true, phone: true, address: true },
-    }),
+    auditFindMany(
+      prisma,
+      { jobId, action: AuditAction.STATUS_CHANGED },
+      { fromValue: true, toValue: true, createdAt: true },
+      { createdAt: "asc" }
+    ),
+    findShopSettingsUnique(prisma),
   ]);
 
   return {
@@ -567,19 +580,12 @@ async function buildJobLookupPayload(
   };
 }
 
-// Timing note: Both "job not found" and "wrong phone4" paths perform exactly
-// one DB query (findFirst). The payload builder runs only on success (2 extra
-// queries for audit + settings). For a repair shop this timing difference is
-// negligible. Full mitigation would require dummy queries on failure.
 export async function lookupByCode(
   prisma: PrismaClient,
   jobCode: string,
   phone4: string
 ): Promise<{ job: Record<string, unknown> | null; jobExists: boolean }> {
-  const job = await prisma.job.findFirst({
-    where: { jobCode },
-    include: LOOKUP_INCLUDE_PUBLIC,
-  });
+  const job = await jobFindFirst(prisma, { jobCode }, LOOKUP_INCLUDE_PUBLIC);
   if (!job) {
     return { job: null, jobExists: false };
   }
@@ -601,10 +607,7 @@ export async function lookupByCodeAuth(
   prisma: PrismaClient,
   jobCode: string
 ): Promise<Record<string, unknown> | null> {
-  const job = await prisma.job.findFirst({
-    where: { jobCode },
-    include: LOOKUP_INCLUDE_AUTH,
-  });
+  const job = await jobFindFirst(prisma, { jobCode }, LOOKUP_INCLUDE_AUTH);
   if (!job) {
     return null;
   }
