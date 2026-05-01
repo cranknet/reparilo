@@ -16,6 +16,7 @@ import {
   computeMargin,
   create as createJob,
   getById as getJobById,
+  getJobHistory,
   getMetrics,
   list as listJobs,
   lookupByCode,
@@ -281,11 +282,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       if (!job) {
         throw new AppError("JOB_NOT_FOUND");
       }
-      const entries = await app.prisma.auditLog.findMany({
-        where: { jobId: id },
-        include: { user: { select: { id: true, name: true, role: true } } },
-        orderBy: { createdAt: "desc" },
-      });
+      const entries = await getJobHistory(app.prisma, id);
       return reply.send(entries);
     }
   );

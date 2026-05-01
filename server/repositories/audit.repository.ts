@@ -8,6 +8,7 @@ export type DbClient = Omit<
 type AuditLogWhereInput = Prisma.AuditLogWhereInput;
 type AuditLogOrderByWithRelationInput = Prisma.AuditLogOrderByWithRelationInput;
 type AuditLogSelect = Prisma.AuditLogSelect;
+type AuditLogInclude = Prisma.AuditLogInclude;
 
 interface CreateAuditLogInput {
   action: AuditAction;
@@ -50,6 +51,23 @@ export function findMany(
   return prisma.auditLog.findMany({
     where,
     ...(select ? { select } : {}),
+    ...(orderBy ? { orderBy } : {}),
+    ...(take == null ? {} : { take }),
+  });
+}
+
+export function findManyWithInclude(
+  prisma: DbClient,
+  where: AuditLogWhereInput,
+  include: AuditLogInclude,
+  orderBy?:
+    | AuditLogOrderByWithRelationInput
+    | AuditLogOrderByWithRelationInput[],
+  take?: number
+) {
+  return prisma.auditLog.findMany({
+    where,
+    include,
     ...(orderBy ? { orderBy } : {}),
     ...(take == null ? {} : { take }),
   });

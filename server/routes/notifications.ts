@@ -6,6 +6,8 @@ import {
 import { updateNotificationTemplateSchema } from "@shared/schemas/settings.schema";
 import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
+import { findNotificationTemplateUnique } from "../repositories/notification.repository.js";
+import { findShopSettingsUnique } from "../repositories/settings.repository.js";
 import {
   getInAppNotifications,
   markAllNotificationsRead,
@@ -186,18 +188,17 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { templateId } = req.params as { templateId: string };
-      const template = await app.prisma.notificationTemplate.findUnique({
-        where: { id: templateId },
-      });
+      const template = await findNotificationTemplateUnique(
+        app.prisma,
+        templateId
+      );
       if (!template) {
         throw new AppError("TEMPLATE_NOT_FOUND");
       }
       if (template.channel !== "WHATSAPP") {
         throw new AppError("TEMPLATE_NOT_FOUND");
       }
-      const shop = await app.prisma.shopSettings.findUnique({
-        where: { id: "default" },
-      });
+      const shop = await findShopSettingsUnique(app.prisma);
       const phone = shop?.phone;
       if (!phone) {
         throw new AppError("NO_SHOP_PHONE");

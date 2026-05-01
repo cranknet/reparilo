@@ -43,6 +43,7 @@ vi.mock("../services/job.service.js", () => ({
   getMetrics: mocks.getMetrics,
   lookupByCode: mocks.lookupByCode,
   update: mocks.updateJob,
+  getJobHistory: mocks.auditLogFindMany,
 }));
 
 vi.mock("../services/job-notes.service.js", () => ({
@@ -308,10 +309,6 @@ describe("GET /api/jobs/:id/history", () => {
     const body = JSON.parse(res.body);
     expect(body).toHaveLength(2);
     expect(body[0].id).toBe("log-2");
-    expect(mocks.auditLogFindMany).toHaveBeenCalledWith({
-      where: { jobId: "job-1" },
-      include: { user: { select: { id: true, name: true, role: true } } },
-      orderBy: { createdAt: "desc" },
-    });
+    expect(mocks.auditLogFindMany).toHaveBeenCalledWith(app.prisma, "job-1");
   });
 });

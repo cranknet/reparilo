@@ -15,7 +15,10 @@ import type {
   JobListQueryInput,
   UpdateJobInput,
 } from "@shared/schemas/job.schema";
-import { findMany as auditFindMany } from "../repositories/audit.repository.js";
+import {
+  findMany as auditFindMany,
+  findManyWithInclude as auditFindManyWithInclude,
+} from "../repositories/audit.repository.js";
 import {
   findUnique as customerFindUnique,
   upsert as customerUpsert,
@@ -621,3 +624,12 @@ const STATUS_TEMPLATE_MAP: Record<string, string> = {
   DONE: "job_done",
   DELIVERED: "job_delivered",
 };
+
+export function getJobHistory(prisma: PrismaClient, jobId: string) {
+  return auditFindManyWithInclude(
+    prisma,
+    { jobId },
+    { user: { select: { id: true, name: true, role: true } } },
+    { createdAt: "desc" }
+  );
+}
