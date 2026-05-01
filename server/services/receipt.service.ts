@@ -131,9 +131,7 @@ export async function renderLabelHtml(
   baseUrl: string,
   options?: { hideCosts?: boolean }
 ): Promise<string> {
-  const settings = await prisma.shopSettings.findUnique({
-    where: { id: "default" },
-  });
+  const settings = await findShopSettingsUnique(prisma);
   const shopName = esc(settings?.shopName || "Reparilo");
   const logoHtml = settings?.logoPath
     ? `<img src="${esc(settings.logoPath)}" alt="${shopName}" style="max-height:4mm;max-width:100%;" />`
