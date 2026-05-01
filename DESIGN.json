@@ -1,0 +1,322 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-01T00:00:00Z",
+  "title": "Design System: Reparilo",
+  "extensions": {
+    "colorMeta": {
+      "reliable-blue": {
+        "role": "primary",
+        "displayName": "Reliable Blue",
+        "canonical": "oklch(35% 0.17 260)",
+        "tonalRamp": [
+          "#001847", "#002a6b", "#0040a1", "#0056d2",
+          "#3380e0", "#66a4eb", "#99c4f4", "#cce0fa"
+        ]
+      },
+      "reliable-blue-light": {
+        "role": "primary-container",
+        "displayName": "Reliable Blue Light",
+        "canonical": "oklch(48% 0.19 260)",
+        "tonalRamp": [
+          "#002a6b", "#0040a1", "#0056d2", "#3380e0",
+          "#66a4eb", "#99c4f4", "#cce0fa", "#e8f0ff"
+        ]
+      },
+      "slate-river": {
+        "role": "secondary",
+        "displayName": "Slate River",
+        "canonical": "oklch(52% 0.07 250)",
+        "tonalRamp": [
+          "#1a2d42", "#2d4867", "#456080", "#5e7c9e",
+          "#7e9abb", "#a0b8d4", "#c4d8eb", "#e8f1f9"
+        ]
+      },
+      "forge-amber": {
+        "role": "tertiary",
+        "displayName": "Forge Amber",
+        "canonical": "oklch(38% 0.14 50)",
+        "tonalRamp": [
+          "#380d00", "#5c1e00", "#822800", "#a93802",
+          "#cc5518", "#e87838", "#f5a060", "#fdcdb0"
+        ]
+      },
+      "calm-rose": {
+        "role": "error",
+        "displayName": "Calm Rose",
+        "canonical": "oklch(45% 0.2 25)",
+        "tonalRamp": [
+          "#680005", "#93000a", "#ba1a1a", "#dc3636",
+          "#ef5e5e", "#f78a8a", "#fdb5b5", "#ffdad6"
+        ]
+      },
+      "steady-green": {
+        "role": "success",
+        "displayName": "Steady Green",
+        "canonical": "oklch(55% 0.17 145)",
+        "tonalRamp": [
+          "#003d16", "#006328", "#16a34a", "#22c55e",
+          "#4ade80", "#86efac", "#bbf7d0", "#dcfce7"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas",
+        "canonical": "oklch(98% 0.006 260)",
+        "tonalRamp": [
+          "#181c20", "#2d3135", "#424654", "#5c6070",
+          "#737785", "#a0a4b2", "#c3c6d6", "#f7f9ff"
+        ]
+      },
+      "workspace": {
+        "role": "neutral",
+        "displayName": "Workspace",
+        "canonical": "oklch(96% 0.007 260)",
+        "tonalRamp": [
+          "#181c20", "#2d3135", "#424654", "#5c6070",
+          "#737785", "#a0a4b2", "#c3c6d6", "#f1f4fa"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(22% 0.01 260)",
+        "tonalRamp": [
+          "#181c20", "#2d3135", "#424654", "#5c6070",
+          "#737785", "#a0a4b2", "#c3c6d6", "#f7f9ff"
+        ]
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "oklch(42% 0.01 260)",
+        "tonalRamp": [
+          "#181c20", "#2d3135", "#424654", "#5c6070",
+          "#737785", "#a0a4b2", "#c3c6d6", "#f7f9ff"
+        ]
+      },
+      "ghost-border": {
+        "role": "neutral",
+        "displayName": "Ghost Border",
+        "canonical": "oklch(82% 0.008 260)",
+        "tonalRamp": [
+          "#737785", "#8a8e9c", "#a0a4b2", "#b5b8c4",
+          "#c3c6d6", "#d1d4e0", "#dfe3e8", "#ebeef4"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero counters and metrics. Data gets hero presence."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headings, customer names, device models."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "The Big Value in Small Label / Big Value spec-sheet pairings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Descriptions, notes, general content. Max 65 to 75ch line length."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "The Small Label in spec-sheet pairings. Uppercase for metadata."
+      }
+    },
+    "shadows": [
+      {
+        "name": "ambient-float",
+        "value": "0 8px 40px rgba(0,64,161,0.06)",
+        "purpose": "Drag-and-drop elements or temporarily elevated containers. Tinted with primary blue, never pure gray or black."
+      },
+      {
+        "name": "subtle-lift",
+        "value": "0 1px 2px rgba(0,0,0,0.05)",
+        "purpose": "Active navigation items, top bar. Barely perceptible structural lift."
+      },
+      {
+        "name": "focus-ring",
+        "value": "0 0 0 2px rgba(0,64,161,1)",
+        "purpose": "Global focus-visible ring for all interactive elements. 2px offset."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default easing for all state transitions. 150ms duration."
+      },
+      {
+        "name": "ease-nav",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Navigation item transitions. 200ms duration."
+      },
+      {
+        "name": "ease-progress",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Progress bar fill transitions. 500ms duration."
+      },
+      {
+        "name": "fade-slide-up",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Entrance animation for modals and cards. Translates Y 1rem to 0 with opacity 0 to 1."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px",
+        "purpose": "Small tablets in portrait"
+      },
+      {
+        "name": "md",
+        "value": "768px",
+        "purpose": "Tablets in landscape. Top bar padding and main content shift."
+      },
+      {
+        "name": "lg",
+        "value": "1024px",
+        "purpose": "Sidebar becomes visible. Main content offset by 256px."
+      },
+      {
+        "name": "xl",
+        "value": "1280px",
+        "purpose": "Desktop with full layout breathing room."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main call-to-action. Reliable Blue fill, white text, shadow for depth.",
+      "html": "<button class=\"ds-btn-primary\">New Check-in</button>",
+      "css": ".ds-btn-primary { display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 1rem; font-weight: 700; font-family: 'Manrope', sans-serif; font-size: 0.875rem; line-height: 1.25rem; padding: 10px 20px; border: none; cursor: pointer; background-color: #0040a1; color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1); transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-primary:hover { background-color: #0056d2; } .ds-btn-primary:active { transform: scale(0.98); } .ds-btn-primary:focus-visible { outline: 2px solid #0040a1; outline-offset: 2px; } .ds-btn-primary:disabled { cursor: not-allowed; opacity: 0.6; }"
+    },
+    {
+      "name": "Primary Gradient Button",
+      "kind": "button",
+      "refersTo": "button-primary-gradient",
+      "description": "Signature CTA for Intake and Delivery flows. 135deg gradient from Reliable Blue to Reliable Blue Light.",
+      "html": "<button class=\"ds-btn-gradient\">Intake Repair</button>",
+      "css": ".ds-btn-gradient { display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 1rem; font-weight: 700; font-family: 'Manrope', sans-serif; font-size: 0.875rem; line-height: 1.25rem; padding: 10px 20px; border: none; cursor: pointer; background: linear-gradient(135deg, #0040a1 0%, #0056d2 100%); color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1); transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-gradient:hover { opacity: 0.9; } .ds-btn-gradient:active { transform: scale(0.98); } .ds-btn-gradient:focus-visible { outline: 2px solid #0040a1; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Supporting action button. Highest Surface fill with muted text, no shadow.",
+      "html": "<button class=\"ds-btn-secondary\">View History</button>",
+      "css": ".ds-btn-secondary { display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 1rem; font-weight: 700; font-family: 'Manrope', sans-serif; font-size: 0.875rem; line-height: 1.25rem; padding: 10px 20px; border: none; cursor: pointer; background-color: #dfe3e8; color: #2d4867; transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-secondary:hover { background-color: #ebeef4; } .ds-btn-secondary:active { transform: scale(0.98); } .ds-btn-secondary:focus-visible { outline: 2px solid #0040a1; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Low-emphasis text-only action. Transparent fill, Muted Ink text.",
+      "html": "<button class=\"ds-btn-ghost\">Cancel</button>",
+      "css": ".ds-btn-ghost { display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 1rem; font-weight: 700; font-family: 'Manrope', sans-serif; font-size: 0.875rem; line-height: 1.25rem; padding: 10px 20px; border: none; cursor: pointer; background-color: transparent; color: #424654; transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-ghost:hover { background-color: #f1f4fa; } .ds-btn-ghost:active { transform: scale(0.98); } .ds-btn-ghost:focus-visible { outline: 2px solid #0040a1; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Stateful input field. Highest Surface at rest, white on focus with primary ring.",
+      "html": "<div class=\"ds-input-wrapper\"><span class=\"ds-input-icon\">search</span><input class=\"ds-input\" placeholder=\"Search jobs...\" /></div>",
+      "css": ".ds-input-wrapper { position: relative; } .ds-input { width: 100%; border-radius: 1rem; border: none; background-color: #dfe3e8; padding: 14px 16px; font-size: 0.875rem; line-height: 1.25rem; font-family: 'Karla', sans-serif; color: #181c20; outline: none; transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-input:focus { background-color: #ffffff; box-shadow: 0 0 0 2px #0040a1; } .ds-input-icon { position: absolute; inset-inline-start: 16px; top: 50%; transform: translateY(-50%); color: #737785; font-size: 20px; font-family: 'Material Symbols Outlined'; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; transition: color 150ms; } .ds-input-wrapper:focus-within .ds-input-icon { color: #0040a1; }"
+    },
+    {
+      "name": "Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Sidebar navigation item. Muted at rest, primary on hover, white card on active.",
+      "html": "<a class=\"ds-nav-item ds-nav-item-active\" href=\"#\"><span class=\"ds-nav-icon\">dashboard</span><span class=\"ds-nav-label\">Dashboard</span></a>",
+      "css": ".ds-nav-item { display: flex; align-items: center; gap: 12px; border-radius: 0.75rem; padding: 12px; transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1); color: #424654; text-decoration: none; } .ds-nav-item:hover { background-color: #ebeef4; color: #0040a1; } .ds-nav-item-active { background-color: #ffffff; color: #0040a1; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transform: translateX(4px); } .ds-nav-item:focus-visible { outline: 2px solid #0040a1; outline-offset: 2px; } .ds-nav-icon { font-family: 'Material Symbols Outlined'; font-size: 20px; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; } .ds-nav-label { font-weight: 500; font-size: 0.875rem; line-height: 1.25rem; font-family: 'Karla', sans-serif; }"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "refersTo": "button-primary",
+      "description": "Compact status indicator. Full-rounded to contrast against xl-rounded cards.",
+      "html": "<span class=\"ds-chip ds-chip-in-repair\">In Repair</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; white-space: nowrap; border-radius: 9999px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; line-height: 1rem; padding: 2px 10px; font-family: 'Karla', sans-serif; } .ds-chip-in-repair { background-color: rgba(0,64,161,0.1); color: #0040a1; } .ds-chip-intake { background-color: #bed9ff; color: #445f7f; } .ds-chip-waiting { background-color: #ffdbcf; color: #812800; } .ds-chip-done { background-color: #dae2ff; color: #0040a1; } .ds-chip-delivered { background-color: #ebeef4; color: #424654; } .ds-chip-returned { background-color: #ffdad6; color: #93000a; } .ds-chip-cancelled { background-color: #e5e8ee; color: #424654; text-decoration: line-through; }"
+    },
+    {
+      "name": "Metric Card",
+      "kind": "card",
+      "refersTo": "metric-card",
+      "description": "The Small Label / Big Value spec-sheet pattern. Data is the hero.",
+      "html": "<div class=\"ds-metric-card\"><span class=\"ds-metric-label\">ACTIVE JOBS</span><div class=\"ds-metric-value-row\"><span class=\"ds-metric-value\">12</span><span class=\"ds-metric-unit\">repairs</span></div><span class=\"ds-metric-detail\">3 overdue</span></div>",
+      "css": ".ds-metric-card { border-radius: 1rem; background-color: #f1f4fa; padding: 20px; transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-metric-label { font-weight: 500; color: #424654; font-size: 0.75rem; line-height: 1rem; text-transform: uppercase; letter-spacing: 0.025em; font-family: 'Karla', sans-serif; } .ds-metric-value-row { margin-top: 4px; display: flex; align-items: baseline; gap: 8px; } .ds-metric-value { font-weight: 800; font-family: 'Manrope', sans-serif; font-size: 2.25rem; line-height: 2.5rem; color: #181c20; } .ds-metric-unit { font-weight: 500; color: #424654; font-size: 0.875rem; line-height: 1.25rem; font-family: 'Karla', sans-serif; } .ds-metric-detail { margin-top: 4px; color: #424654; font-size: 0.75rem; line-height: 1rem; font-family: 'Karla', sans-serif; }"
+    },
+    {
+      "name": "Progress Bar",
+      "kind": "custom",
+      "refersTo": "button-primary",
+      "description": "Horizontal fill bar for completion percentage. 4px height, full-rounded.",
+      "html": "<div class=\"ds-progress\"><div class=\"ds-progress-fill ds-progress-primary\" style=\"width: 65%\"></div></div>",
+      "css": ".ds-progress { height: 4px; width: 100%; overflow: hidden; border-radius: 9999px; background-color: #dfe3e8; } .ds-progress-fill { height: 100%; border-radius: 9999px; transition: all 500ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-progress-primary { background-color: #0040a1; } .ds-progress-secondary { background-color: #445f7f; } .ds-progress-tertiary { background-color: #822800; } .ds-progress-error { background-color: #ba1a1a; }"
+    },
+    {
+      "name": "Toggle Switch",
+      "kind": "custom",
+      "refersTo": "button-primary",
+      "description": "24px track toggle. Off: Highest Surface with Muted Ink thumb. On: Primary with white thumb.",
+      "html": "<button class=\"ds-switch ds-switch-on\" role=\"switch\" aria-checked=\"true\"><span class=\"ds-switch-thumb\"></span></button>",
+      "css": ".ds-switch { position: relative; height: 24px; width: 44px; border-radius: 9999px; border: none; cursor: pointer; transition: color, background-color, border-color 150ms cubic-bezier(0.4, 0, 0.2, 1); background-color: #dfe3e8; } .ds-switch-on { background-color: #0040a1; } .ds-switch-thumb { position: absolute; top: 2px; height: 20px; width: 20px; border-radius: 9999px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1); inset-inline-start: 2px; background-color: #424654; } .ds-switch-on .ds-switch-thumb { inset-inline-start: 22px; background-color: #ffffff; } .ds-switch:focus-visible { outline: 2px solid #0040a1; outline-offset: 2px; } .ds-switch:disabled { cursor: not-allowed; opacity: 0.5; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Engineering Atelier",
+    "overview": "In a fast-paced repair environment, a UI should not just be a tool; it should be a precision instrument. This system moves away from the \"generic SaaS\" look of boxes-inside-boxes. Instead, it embraces a high-end editorial approach that mirrors the technical sophistication of a master mechanic. This is achieved through Tonal Layering, using varying depths of light and color rather than harsh lines to organize information. The layout prioritizes glanceability for a shop floor while maintaining a sophisticated, premium aesthetic that builds immediate trust with high-value clients.\n\nThe system explicitly rejects generic SaaS dashboard conventions: no cookie-cutter sidebar + cards + charts templates, no CRUD-admin-panel layouts. Structure comes from surface depth, not lines.",
+    "keyCharacteristics": [
+      "Tonal layering over lines: surface hierarchy through color depth, never 1px borders",
+      "Glanceability: big numbers, clear status indicators, generous spacing",
+      "Tablet-native touch: 44px minimum targets, no hover-dependent interactions",
+      "Editorial data: Small Label / Big Value spec-sheet pairing",
+      "Integrated visual language: statuses, alerts, errors share one tonal system"
+    ],
+    "rules": [
+      {
+        "name": "The No-Line Rule",
+        "body": "1px solid borders are prohibited for sectioning. Structural boundaries must be created through background color shifts.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tinted Neutral Rule",
+        "body": "All neutrals are tinted toward the blue hue (chroma 0.005 to 0.01). Neutrals should feel like they belong to the same palette as Reliable Blue, not like they were pulled from a generic gray scale.",
+        "section": "colors"
+      },
+      {
+        "name": "The Spec-Sheet Rule",
+        "body": "Always pair a label (Small) above or beside a title (Big Value). Label-sm in Muted Ink paired with Title-md in Ink mimics technical spec sheets and enables glanceability.",
+        "section": "typography"
+      },
+      {
+        "name": "The Ghost Border Fallback",
+        "body": "If high-contrast accessibility requires a structural edge, use Ghost Border (#c3c6d6) at 15% opacity. It should be felt, not seen. Never use 100% opaque outline colors for borders.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use display-scale Manrope for Days in Shop counters. Make the data the hero.",
+      "Do use asymmetrical layouts. Wide column for repair details, narrow surface-container-high column for parts list.",
+      "Do leave breathing room. High-speed environments require more white space, not less.",
+      "Do use the Small Label / Big Value pairing for every data point that matters.",
+      "Do use Integrated Visual Language: error containers, not alert reds; surface depth, not box shadows."
+    ],
+    "donts": [
+      "Don't use 100% opaque outline colors for borders. It breaks the Engineering Atelier sophistication.",
+      "Don't use standard Alert Red for everything. Use error-container (#ffdad6) with on-error-container text.",
+      "Don't use icons without labels in the main navigation. Speed requires clarity.",
+      "Don't use generic SaaS dashboard templates with cookie-cutter sidebar + cards + charts.",
+      "Don't use CRUD admin panel layouts. Structure comes from surface depth, not lines.",
+      "Don't use divider lines between list items. 16px vertical spacing and background shifts.",
+      "Don't use 1px solid borders for sectioning. Background color shifts create structure."
+    ]
+  }
+}
