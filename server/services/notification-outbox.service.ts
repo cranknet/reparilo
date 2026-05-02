@@ -2,9 +2,9 @@ import { OutboxStatus } from "@generated/client";
 import { AppError } from "@shared/errors/app-error.js";
 import {
   createOutboxEntry,
-  deleteOutboxEntry,
   findManyOutboxEntries,
   findNotificationTemplateUnique,
+  findOutboxEntryById,
   updateOutboxEntry,
 } from "../repositories/notification.repository.js";
 import { findShopSettingsUnique } from "../repositories/settings.repository.js";
@@ -176,14 +176,18 @@ export async function getOutboxLogs(
 }
 
 export async function cancelOutboxEntry(prisma: DbClient, id: string) {
-  const entry = await prisma.notificationOutbox.findUnique({ where: { id } });
+  const entry = await findOutboxEntryById(prisma, id);
   if (!entry) {
     throw new AppError("NOT_FOUND");
   }
   if (entry.status !== OutboxStatus.QUEUED) {
     throw new AppError("OUTBOX_NOT_QUEUED");
   }
-  return await deleteOutboxEntry(prisma, id);
+  return await updateOutboxEntry(
+    prisma,
+    { id },
+    { status: OutboxStatus.CANCELLED }
+  );
 }
 
 export async function testNotification(prisma: DbClient, templateId: string) {

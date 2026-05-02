@@ -1,6 +1,5 @@
 import {
   countInAppNotifications,
-  deleteInAppNotification,
   deleteManyInAppNotifications,
   findFirstInAppNotification,
   findManyInAppNotifications,
@@ -74,14 +73,14 @@ export async function removeInAppNotification(
   id: string,
   userId: string
 ) {
-  const notification = await findFirstInAppNotification(prisma, {
+  const result = await deleteManyInAppNotifications(prisma, {
     id,
     userId,
   });
-  if (!notification) {
+  if (result.count === 0) {
     return null;
   }
-  return await deleteInAppNotification(prisma, id);
+  return { id };
 }
 
 export async function cleanupReadNotifications(prisma: DbClient) {

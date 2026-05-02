@@ -1265,6 +1265,7 @@
     "CANCELLED": "Cancelled"
   },
   "status_active": "Active",
+  "status_cancelled": "Cancelled",
   "status_failed": "Failed",
   "status_group_active": "Active",
   "status_group_closed": "Closed",

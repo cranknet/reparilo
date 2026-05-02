@@ -6,9 +6,10 @@ import { useSettingsStore } from "@/stores/settings";
 function StatusBadge({ status }: { status: string }) {
   const { t } = useTranslation();
   const colors: Record<string, string> = {
+    CANCELLED: "bg-surface-container-high text-on-surface-variant",
+    FAILED: "bg-error/10 text-error",
     QUEUED: "bg-warning-container text-on-warning-container",
     SENT: "bg-success/10 text-success",
-    FAILED: "bg-error/10 text-error",
   };
   return (
     <span
@@ -17,7 +18,8 @@ function StatusBadge({ status }: { status: string }) {
       {status === "QUEUED" && t("status_queued")}
       {status === "SENT" && t("status_sent")}
       {status === "FAILED" && t("status_failed")}
-      {!["QUEUED", "SENT", "FAILED"].includes(status) && status}
+      {status === "CANCELLED" && t("status_cancelled")}
+      {!["QUEUED", "SENT", "FAILED", "CANCELLED"].includes(status) && status}
     </span>
   );
 }

@@ -1259,6 +1259,7 @@
     "CANCELLED": "ملغى"
   },
   "status_active": "نشيط",
+  "status_cancelled": "تم الإلغاء",
   "status_failed": "فشل",
   "status_group_active": "نشيط",
   "status_group_closed": "مغلق",

@@ -1259,6 +1259,7 @@
     "CANCELLED": "Annulé"
   },
   "status_active": "Actif",
+  "status_cancelled": "Annulé",
   "status_failed": "Échoué",
   "status_group_active": "Actif",
   "status_group_closed": "Fermé",

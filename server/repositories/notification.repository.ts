@@ -54,6 +54,10 @@ export async function deleteOutboxEntry(prisma: DbClient, id: string) {
   return await prisma.notificationOutbox.delete({ where: { id } });
 }
 
+export async function findOutboxEntryById(prisma: DbClient, id: string) {
+  return await prisma.notificationOutbox.findUnique({ where: { id } });
+}
+
 export async function deleteManyInAppNotifications(
   prisma: DbClient,
   where: Prisma.InAppNotificationWhereInput

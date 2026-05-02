@@ -166,7 +166,7 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
   app.delete(
     "/in-app/:id",
     {
-      preHandler: [requirePermission({ notifications: ["read"] })],
+      preHandler: [requirePermission({ notifications: ["manage"] })],
       schema: {
         tags: ["notifications"],
         summary: "Delete in-app notification",
