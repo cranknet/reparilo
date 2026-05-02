@@ -154,7 +154,7 @@ export async function createUser(
 
   await auditCreate(prisma, {
     action: "USER_CREATED" as Parameters<typeof auditCreate>[1]["action"],
-    jobId: null as unknown as string,
+    jobId: null,
     toValue: `${username} (${role})`,
     userId,
   });
@@ -194,7 +194,7 @@ export async function resetPassword(
 
   await auditCreate(prisma, {
     action: "PASSWORD_RESET" as Parameters<typeof auditCreate>[1]["action"],
-    jobId: null as unknown as string,
+    jobId: null,
     toValue: `Password reset for ${targetUser.username}`,
     userId,
   });

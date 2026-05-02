@@ -9,7 +9,7 @@ type AuditLogInclude = Prisma.AuditLogInclude;
 interface CreateAuditLogInput {
   action: AuditAction;
   fromValue?: string;
-  jobId: string;
+  jobId: string | null;
   metadata?: Record<string, unknown>;
   note?: string;
   toValue?: string;

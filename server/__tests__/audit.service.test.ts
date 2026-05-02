@@ -66,7 +66,7 @@ describe("createAuditLog", () => {
     await createAuditLog(prisma, {
       action: "USER_SIGN_IN",
       userId: "user-1",
-      jobId: null as unknown as string,
+      jobId: null,
     });
 
     expect(auditLogCreate).toHaveBeenCalledWith({
