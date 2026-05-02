@@ -101,6 +101,48 @@ async function seedNotificationTemplates() {
   const templates = [
     {
       name: "job_created",
+      channel: "IN_APP" as const,
+      body: "New repair job created{{if jobCode}} — {{jobCode}}{{endif}}{{if customerName}} for {{customerName}}{{endif}}",
+      isDefault: true,
+    },
+    {
+      name: "job_done",
+      channel: "IN_APP" as const,
+      body: "Repair complete{{if jobCode}} — {{jobCode}}{{endif}}{{if customerName}} for {{customerName}}{{endif}}",
+      isDefault: true,
+    },
+    {
+      name: "job_in_repair",
+      channel: "IN_APP" as const,
+      body: "Repair in progress{{if jobCode}} — {{jobCode}}{{endif}}{{if customerName}} for {{customerName}}{{endif}}",
+      isDefault: true,
+    },
+    {
+      name: "job_waiting_parts",
+      channel: "IN_APP" as const,
+      body: "Waiting for parts{{if jobCode}} — {{jobCode}}{{endif}}{{if customerName}} for {{customerName}}{{endif}}",
+      isDefault: true,
+    },
+    {
+      name: "job_delivered",
+      channel: "IN_APP" as const,
+      body: "Device delivered{{if jobCode}} — {{jobCode}}{{endif}}{{if customerName}} for {{customerName}}{{endif}}",
+      isDefault: true,
+    },
+    {
+      name: "job_overdue",
+      channel: "IN_APP" as const,
+      body: "Job overdue{{if jobCode}} — {{jobCode}}{{endif}}",
+      isDefault: true,
+    },
+    {
+      name: "warranty_return_created",
+      channel: "IN_APP" as const,
+      body: "Warranty return created{{if jobCode}} — {{jobCode}}{{endif}}",
+      isDefault: true,
+    },
+    {
+      name: "job_created",
       channel: "WHATSAPP" as const,
       body: "Hello {{customerName}}, your repair {{jobCode}} has been registered at {{shopName}}. You can track it at {{shopName}}/tracking/{{jobCode}}",
       isDefault: true,

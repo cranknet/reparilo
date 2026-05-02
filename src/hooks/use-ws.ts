@@ -2,7 +2,14 @@ import { useCallback, useEffect, useRef } from "react";
 import { useAuthStore } from "@/stores/auth";
 
 interface WsMessage {
-  job?: { id: string; jobCode: string };
+  notification?: {
+    createdAt: string;
+    id: string;
+    job?: { id: string; jobCode: string } | null;
+    message: string;
+    readAt: string | null;
+    type: string;
+  };
   type: string;
 }
 
@@ -11,6 +18,7 @@ type MessageHandler = (msg: WsMessage) => void;
 const subscribers = new Set<MessageHandler>();
 let socket: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let disconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 const WS_URL_REPLACE = /^http/;
 
@@ -73,6 +81,20 @@ function disconnect() {
   }
 }
 
+function scheduleDisconnect() {
+  if (disconnectTimer) {
+    clearTimeout(disconnectTimer);
+  }
+  disconnectTimer = setTimeout(disconnect, 100);
+}
+
+function cancelDisconnect() {
+  if (disconnectTimer) {
+    clearTimeout(disconnectTimer);
+    disconnectTimer = null;
+  }
+}
+
 export function useWs(handler: MessageHandler) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
@@ -89,6 +111,7 @@ export function useWs(handler: MessageHandler) {
       return;
     }
 
+    cancelDisconnect();
     subscribers.add(wrappedHandler);
 
     if (!socket || socket.readyState === WebSocket.CLOSED) {
@@ -98,7 +121,7 @@ export function useWs(handler: MessageHandler) {
     return () => {
       subscribers.delete(wrappedHandler);
       if (subscribers.size === 0) {
-        disconnect();
+        scheduleDisconnect();
       }
     };
   }, [isAuthenticated, wrappedHandler]);

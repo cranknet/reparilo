@@ -59,6 +59,7 @@
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^6.0.1",
     "@vitest/coverage-v8": "^4.1.4",
+    "concurrently": "^9.2.1",
     "husky": "^9.1.7",
     "jsdom": "^29.0.2",
     "tailwindcss": "^4.2.2",
@@ -69,7 +70,7 @@
   },
   "name": "reparilo",
   "scripts": {
-    "dev": "bun run --watch server/index.ts & vite",
+    "dev": "concurrently -n frontend,server -c blue,green \"vite\" \"bun run --watch server/index.ts\"",
     "dev:front": "vite",
     "server": "bun run --watch server/index.ts",
     "start": "bun run server/index.ts",
