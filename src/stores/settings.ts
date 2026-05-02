@@ -27,6 +27,9 @@ interface WhatsAppSettings {
 
 interface SettingsState {
   aiSettings: AiSettings | null;
+  cancelOutboxEntry: (
+    id: string
+  ) => Promise<{ success: boolean; message?: string }>;
   clearError: () => void;
   error: string | null;
   fetchAiSettings: () => Promise<void>;
@@ -241,6 +244,16 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     } catch (err: unknown) {
       const message = getErrorMessage(err, i18n.t("errors.fetch_settings"));
       set({ error: message });
+    }
+  },
+
+  cancelOutboxEntry: async (id) => {
+    try {
+      await api.delete(`/notifications/outbox/${id}`);
+      return { success: true };
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, i18n.t("errors.fetch_settings"));
+      return { success: false, message };
     }
   },
 

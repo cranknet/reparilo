@@ -19,6 +19,7 @@ interface AlertsState {
     }
   ) => void;
   alerts: InAppAlert[];
+  deleteAlert: (id: string) => Promise<void>;
   fetchAlerts: () => Promise<void>;
   initialized: boolean;
   markAllRead: () => Promise<void>;
@@ -90,6 +91,23 @@ export const useAlertsStore = create<AlertsState>((set, get) => ({
           unreadCount: state.unreadCount + 1,
         }));
       }
+    }
+  },
+
+  deleteAlert: async (id) => {
+    const previousAlerts = get().alerts;
+    const previousCount = get().unreadCount;
+    const wasUnread = previousAlerts.find((a) => a.id === id && !a.readAt);
+    set((state) => ({
+      alerts: state.alerts.filter((a) => a.id !== id),
+      unreadCount: wasUnread
+        ? Math.max(0, state.unreadCount - 1)
+        : state.unreadCount,
+    }));
+    try {
+      await api.delete(`/notifications/in-app/${id}`);
+    } catch {
+      set({ alerts: previousAlerts, unreadCount: previousCount });
     }
   },
 

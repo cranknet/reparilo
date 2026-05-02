@@ -46,6 +46,14 @@ export async function updateManyInAppNotifications(
   return await prisma.inAppNotification.updateMany({ where, data });
 }
 
+export async function deleteInAppNotification(prisma: DbClient, id: string) {
+  return await prisma.inAppNotification.delete({ where: { id } });
+}
+
+export async function deleteOutboxEntry(prisma: DbClient, id: string) {
+  return await prisma.notificationOutbox.delete({ where: { id } });
+}
+
 export async function deleteManyInAppNotifications(
   prisma: DbClient,
   where: Prisma.InAppNotificationWhereInput

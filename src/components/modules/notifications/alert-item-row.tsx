@@ -10,21 +10,33 @@ const TYPE_CONFIG: Record<string, { icon: string; labelKey: string }> = {
     icon: "schedule",
     labelKey: "noti_type_job_overdue",
   },
-  job_done: {
-    icon: "swap_horiz",
-    labelKey: "noti_type_job_status_changed",
+  job_waiting_parts: {
+    icon: "inventory_2",
+    labelKey: "noti_type_job_waiting_parts",
   },
   job_in_repair: {
-    icon: "swap_horiz",
-    labelKey: "noti_type_job_status_changed",
+    icon: "build",
+    labelKey: "noti_type_job_in_repair",
   },
-  job_waiting_parts: {
-    icon: "swap_horiz",
-    labelKey: "noti_type_job_status_changed",
+  job_on_hold: {
+    icon: "pause_circle",
+    labelKey: "noti_type_job_on_hold",
+  },
+  job_done: {
+    icon: "check_circle",
+    labelKey: "noti_type_job_done",
   },
   job_delivered: {
-    icon: "swap_horiz",
-    labelKey: "noti_type_job_status_changed",
+    icon: "local_shipping",
+    labelKey: "noti_type_job_delivered",
+  },
+  job_returned: {
+    icon: "autorenew",
+    labelKey: "noti_type_job_returned",
+  },
+  job_cancelled: {
+    icon: "cancel",
+    labelKey: "noti_type_job_cancelled",
   },
   warranty_return_created: {
     icon: "autorenew",
@@ -59,11 +71,11 @@ function formatRelativeTime(
 
 interface AlertItemRowProps {
   alert: InAppAlert;
-  onMarkRead: (id: string) => void;
+  onDelete: (id: string) => void;
   onNavigate: (jobId: string) => void;
 }
 
-function AlertItemRow({ alert, onMarkRead, onNavigate }: AlertItemRowProps) {
+function AlertItemRow({ alert, onDelete, onNavigate }: AlertItemRowProps) {
   const { t } = useTranslation();
   const config = TYPE_CONFIG[alert.type] ?? {
     icon: "info",
@@ -155,11 +167,11 @@ function AlertItemRow({ alert, onMarkRead, onNavigate }: AlertItemRowProps) {
         )}
         <button
           aria-label={t("noti_dismiss")}
-          className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-on-surface-variant/50 transition-colors hover:bg-surface-container-high hover:text-on-surface-variant focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
-          onClick={() => onMarkRead(alert.id)}
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-on-surface-variant/50 transition-colors hover:bg-error/10 hover:text-error focus-visible:outline-2 focus-visible:outline-error focus-visible:outline-offset-2 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+          onClick={() => onDelete(alert.id)}
           type="button"
         >
-          <span className="material-symbols-outlined text-[18px]">close</span>
+          <span className="material-symbols-outlined text-[18px]">delete</span>
         </button>
       </div>
     </div>

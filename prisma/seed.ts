@@ -130,6 +130,24 @@ async function seedNotificationTemplates() {
       isDefault: true,
     },
     {
+      name: "job_on_hold",
+      channel: "IN_APP" as const,
+      body: "Job on hold{{if jobCode}} — {{jobCode}}{{endif}}{{if customerName}} for {{customerName}}{{endif}}",
+      isDefault: true,
+    },
+    {
+      name: "job_returned",
+      channel: "IN_APP" as const,
+      body: "Device returned{{if jobCode}} — {{jobCode}}{{endif}}{{if customerName}} for {{customerName}}{{endif}}",
+      isDefault: true,
+    },
+    {
+      name: "job_cancelled",
+      channel: "IN_APP" as const,
+      body: "Job cancelled{{if jobCode}} — {{jobCode}}{{endif}}{{if customerName}} for {{customerName}}{{endif}}",
+      isDefault: true,
+    },
+    {
       name: "job_overdue",
       channel: "IN_APP" as const,
       body: "Job overdue{{if jobCode}} — {{jobCode}}{{endif}}",
@@ -169,6 +187,24 @@ async function seedNotificationTemplates() {
       name: "job_delivered",
       channel: "WHATSAPP" as const,
       body: "Hello {{customerName}}, your device {{jobCode}} has been delivered. Thank you for choosing {{shopName}}!",
+      isDefault: true,
+    },
+    {
+      name: "job_on_hold",
+      channel: "WHATSAPP" as const,
+      body: "Hello {{customerName}}, your device {{jobCode}} repair has been put on hold at {{shopName}}.",
+      isDefault: true,
+    },
+    {
+      name: "job_returned",
+      channel: "WHATSAPP" as const,
+      body: "Hello {{customerName}}, your device {{jobCode}} has been returned at {{shopName}}.",
+      isDefault: true,
+    },
+    {
+      name: "job_cancelled",
+      channel: "WHATSAPP" as const,
+      body: "Hello {{customerName}}, your repair {{jobCode}} has been cancelled at {{shopName}}.",
       isDefault: true,
     },
   ];

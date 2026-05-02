@@ -28,6 +28,22 @@
       ],
       "enabled": false
     },
+    "postgres": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "mcp-postgres-server"
+      ],
+      "environment": {
+        "PG_HOST": "localhost",
+        "PG_PORT": "5432",
+        "PG_USER": "postgres",
+        "PG_PASSWORD": "Azer",
+        "PG_DATABASE": "Reparilo"
+      },
+      "enabled": true
+    },
     "stitch": {
       "type": "remote",
       "url": "https://stitch.googleapis.com/mcp",

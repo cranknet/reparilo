@@ -1,5 +1,4 @@
-import type { NotificationTemplate } from "@shared/types";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { useSettingsStore } from "@/stores/settings";
@@ -23,27 +22,19 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-interface OutboxLogProps {
-  notificationTemplates: NotificationTemplate[];
-}
-
-export default function OutboxLog({ notificationTemplates }: OutboxLogProps) {
+export default function OutboxLog() {
   const { t } = useTranslation();
-  const { outboxLogs, fetchOutboxLogs, sendTestNotification } =
-    useSettingsStore();
-  const [testSendingId, setTestSendingId] = useState<string | null>(null);
+  const { outboxLogs, fetchOutboxLogs, cancelOutboxEntry } = useSettingsStore();
 
-  const handleTestSend = useCallback(
-    async (templateId: string) => {
-      setTestSendingId(templateId);
-      const result = await sendTestNotification(templateId);
+  const handleCancel = useCallback(
+    async (id: string) => {
+      const result = await cancelOutboxEntry(id);
       if (result.success) {
-        toast(t("notification_queued"), { duration: 5000 });
+        toast(t("notification_cancelled"), { duration: 5000 });
         await fetchOutboxLogs();
       }
-      setTestSendingId(null);
     },
-    [sendTestNotification, fetchOutboxLogs, t]
+    [cancelOutboxEntry, fetchOutboxLogs, t]
   );
 
   return (
@@ -83,6 +74,9 @@ export default function OutboxLog({ notificationTemplates }: OutboxLogProps) {
                 <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
                   {t("date")}
                 </th>
+                <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
+                  {t("actions")}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -111,36 +105,27 @@ export default function OutboxLog({ notificationTemplates }: OutboxLogProps) {
                   <td className="px-4 py-3 text-on-surface-variant text-xs">
                     {new Date(log.createdAt).toLocaleDateString()}
                   </td>
+                  <td className="px-4 py-3">
+                    {log.status === "QUEUED" && (
+                      <button
+                        aria-label={t("cancel")}
+                        className="flex items-center gap-1 rounded-xl bg-error/10 px-3 py-1.5 font-medium text-error text-xs transition-colors hover:bg-error/20 focus-visible:outline-2 focus-visible:outline-error focus-visible:outline-offset-2"
+                        onClick={() => handleCancel(log.id)}
+                        type="button"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">
+                          cancel
+                        </span>
+                        {t("cancel")}
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
-
-      {notificationTemplates.length > 0 && (
-        <div className="mt-4 space-y-2">
-          <p className="font-medium text-on-surface text-sm">
-            {t("test_send")}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {notificationTemplates.map((tmpl) => (
-              <button
-                className="flex items-center gap-1.5 rounded-xl bg-surface-container px-4 py-2 font-medium text-on-surface text-xs transition-colors hover:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-50"
-                disabled={testSendingId === tmpl.id}
-                key={tmpl.id}
-                onClick={() => handleTestSend(tmpl.id)}
-                type="button"
-              >
-                <span className="material-symbols-outlined text-[16px]">
-                  {testSendingId === tmpl.id ? "progress_activity" : "send"}
-                </span>
-                {tmpl.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

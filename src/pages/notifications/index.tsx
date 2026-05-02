@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 import AlertList from "@/components/modules/notifications/alert-list";
 import ChannelSettings from "@/components/modules/notifications/channel-settings";
 import OutboxLog from "@/components/modules/notifications/outbox-log";
@@ -15,6 +16,7 @@ export default function NotificationsPage() {
   const alerts = useAlertsStore((s) => s.alerts);
   const markRead = useAlertsStore((s) => s.markRead);
   const markAllRead = useAlertsStore((s) => s.markAllRead);
+  const deleteAlert = useAlertsStore((s) => s.deleteAlert);
   const fetchAlerts = useAlertsStore((s) => s.fetchAlerts);
   const initialized = useAlertsStore((s) => s.initialized);
   const unreadCount = useAlertsStore((s) => s.unreadCount);
@@ -61,6 +63,14 @@ export default function NotificationsPage() {
     await markAllRead();
   }, [markAllRead]);
 
+  const handleDelete = useCallback(
+    async (id: string) => {
+      await deleteAlert(id);
+      toast(t("notification_deleted"));
+    },
+    [deleteAlert, t]
+  );
+
   const handleNavigate = useCallback(
     (jobId: string) => {
       if (!jobId) {
@@ -73,13 +83,6 @@ export default function NotificationsPage() {
       navigate(`/jobs/${jobId}`);
     },
     [alerts, markRead, navigate]
-  );
-
-  const handleMarkRead = useCallback(
-    (id: string) => {
-      markRead(id);
-    },
-    [markRead]
   );
 
   const [filter, setFilter] = useState<FilterType>("all");
@@ -98,9 +101,9 @@ export default function NotificationsPage() {
       <AlertList
         alerts={alerts}
         filter={filter}
+        onDelete={handleDelete}
         onFilterChange={setFilter}
         onMarkAllRead={handleMarkAllRead}
-        onMarkRead={handleMarkRead}
         onNavigate={handleNavigate}
         unreadCount={unreadCount}
       />
@@ -114,7 +117,7 @@ export default function NotificationsPage() {
       </div>
 
       <div className="mt-10">
-        <OutboxLog notificationTemplates={notificationTemplates} />
+        <OutboxLog />
       </div>
     </>
   );

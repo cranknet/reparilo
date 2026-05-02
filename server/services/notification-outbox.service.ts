@@ -2,6 +2,7 @@ import { OutboxStatus } from "@generated/client";
 import { AppError } from "@shared/errors/app-error.js";
 import {
   createOutboxEntry,
+  deleteOutboxEntry,
   findManyOutboxEntries,
   findNotificationTemplateUnique,
   updateOutboxEntry,
@@ -172,6 +173,17 @@ export async function getOutboxLogs(
     status: e.status,
     templateName: e.templateName,
   }));
+}
+
+export async function cancelOutboxEntry(prisma: DbClient, id: string) {
+  const entry = await prisma.notificationOutbox.findUnique({ where: { id } });
+  if (!entry) {
+    throw new AppError("NOT_FOUND");
+  }
+  if (entry.status !== OutboxStatus.QUEUED) {
+    throw new AppError("OUTBOX_NOT_QUEUED");
+  }
+  return await deleteOutboxEntry(prisma, id);
 }
 
 export async function testNotification(prisma: DbClient, templateId: string) {

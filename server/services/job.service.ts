@@ -621,8 +621,11 @@ export async function lookupByCodeAuth(
 const STATUS_TEMPLATE_MAP: Record<string, string> = {
   WAITING_FOR_PARTS: "job_waiting_parts",
   IN_REPAIR: "job_in_repair",
+  ON_HOLD: "job_on_hold",
   DONE: "job_done",
   DELIVERED: "job_delivered",
+  RETURNED: "job_returned",
+  CANCELLED: "job_cancelled",
 };
 
 export function getJobHistory(prisma: PrismaClient, jobId: string) {

@@ -9,9 +9,9 @@ const FILTER_KEYS: FilterType[] = ["all", "unread", "read"];
 interface AlertListProps {
   alerts: InAppAlert[];
   filter: FilterType;
+  onDelete: (id: string) => void;
   onFilterChange: (filter: FilterType) => void;
   onMarkAllRead: () => void;
-  onMarkRead: (id: string) => void;
   onNavigate: (jobId: string) => void;
   unreadCount: number;
 }
@@ -19,8 +19,8 @@ interface AlertListProps {
 export default function AlertList({
   alerts,
   filter,
+  onDelete,
   onMarkAllRead,
-  onMarkRead,
   onNavigate,
   onFilterChange,
   unreadCount,
@@ -150,7 +150,7 @@ export default function AlertList({
             <AlertItemRow
               alert={alert}
               key={alert.id}
-              onMarkRead={onMarkRead}
+              onDelete={onDelete}
               onNavigate={onNavigate}
             />
           ))

@@ -10,8 +10,10 @@ import {
   getInAppNotifications,
   markAllNotificationsRead,
   markNotificationRead,
+  removeInAppNotification,
 } from "../services/notification-inapp.service.js";
 import {
+  cancelOutboxEntry,
   getOutboxLogs,
   testNotification,
 } from "../services/notification-outbox.service.js";
@@ -161,6 +163,34 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
     }
   );
 
+  app.delete(
+    "/in-app/:id",
+    {
+      preHandler: [requirePermission({ notifications: ["read"] })],
+      schema: {
+        tags: ["notifications"],
+        summary: "Delete in-app notification",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+      },
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const deleted = await removeInAppNotification(
+        app.prisma,
+        id,
+        req.user.id
+      );
+      if (!deleted) {
+        throw new AppError("NOT_FOUND");
+      }
+      return reply.send({ id: deleted.id });
+    }
+  );
+
   app.get(
     "/outbox",
     {
@@ -170,6 +200,27 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
     async (_req, reply) => {
       const logs = await getOutboxLogs(app.prisma);
       return reply.send(logs);
+    }
+  );
+
+  app.delete(
+    "/outbox/:id",
+    {
+      preHandler: [requirePermission({ notifications: ["manage"] })],
+      schema: {
+        tags: ["notifications"],
+        summary: "Cancel queued outbox notification",
+        params: {
+          type: "object",
+          properties: { id: { type: "string" } },
+          required: ["id"],
+        },
+      },
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const cancelled = await cancelOutboxEntry(app.prisma, id);
+      return reply.send({ id: cancelled.id, status: "cancelled" });
     }
   );
 
