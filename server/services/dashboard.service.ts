@@ -14,7 +14,6 @@ import type {
 import {
   auditLogFindMany,
   countWaitingForParts,
-  type DbClient,
   findActiveRepairs,
   findDeliveredJobs,
   findOverdueJobs,
@@ -28,6 +27,7 @@ import {
   queryFinancialTrend,
   queryRevenueAndCost,
 } from "../repositories/dashboard.repository.js";
+import type { DbClient } from "../repositories/types.js";
 import type { DateRange } from "../utils/time-range.js";
 import { toMoney } from "../utils/time-range.js";
 

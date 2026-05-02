@@ -6,7 +6,6 @@ import type {
   UpdateConversationInput,
   UpdateMessageInput,
 } from "@shared/schemas/ai.schema";
-import type { DbClient } from "../repositories/ai.repository.js";
 import {
   countMessages,
   createConversation as createConversationRepo,
@@ -21,6 +20,7 @@ import {
   updateConversation as updateConversationRepo,
   updateMessage as updateMessageRepo,
 } from "../repositories/ai.repository.js";
+import type { DbClient } from "../repositories/types.js";
 
 export async function listConversations(
   prisma: PrismaClient,

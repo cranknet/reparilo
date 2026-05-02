@@ -1,9 +1,6 @@
-import { Prisma, type PrismaClient } from "@generated/client";
-
-export type DbClient = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$use" | "$extends"
->;
+import type { PrismaClient } from "@generated/client";
+import { Prisma } from "@generated/client";
+import type { DbClient } from "./types.js";
 
 type JobWhereInput = Prisma.JobWhereInput;
 type AuditLogWhereInput = Prisma.AuditLogWhereInput;

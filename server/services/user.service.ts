@@ -1,5 +1,4 @@
-import type { PrismaClient } from "@generated/client";
-import { Prisma } from "@generated/client";
+import { Prisma, type PrismaClient } from "@generated/client";
 import type { RoleType } from "@shared/constants/roles";
 import { AppError } from "@shared/errors/app-error.js";
 import type {
@@ -12,14 +11,17 @@ import {
   findMany as auditFindMany,
   findUnique as auditFindUnique,
 } from "../repositories/audit.repository.js";
+import type { DbClient } from "../repositories/types.js";
 import {
   deleteSession,
+  deleteUserSessions,
   findSessionById,
   findSessions,
   jobCount,
-  resetPasswordTransaction,
   USER_SELECT,
   USER_SELECT_NO_IMAGE,
+  updateCredentialPassword as updateCredentialPasswordRepo,
+  updateMustChangePassword as updateMustChangePasswordRepo,
   count as userCount,
   findFirst as userFindFirst,
   findMany as userFindMany,
@@ -29,7 +31,7 @@ import {
 } from "../repositories/user.repository.js";
 
 async function checkUniqueFields(
-  prisma: PrismaClient,
+  prisma: DbClient,
   checks: Array<{ field: "email" | "username"; value: string }>,
   excludeId: string
 ): Promise<string | null> {
@@ -69,7 +71,7 @@ function buildUpdateData(
   ) as Record<string, string>;
 }
 
-export async function list(prisma: PrismaClient, query: UserListQueryInput) {
+export async function list(prisma: DbClient, query: UserListQueryInput) {
   const { cursor, limit, search } = query;
 
   const where: Prisma.UserWhereInput = {};
@@ -98,7 +100,7 @@ export async function list(prisma: PrismaClient, query: UserListQueryInput) {
   return { users, nextCursor, totalCount };
 }
 
-export async function getById(prisma: PrismaClient, id: string) {
+export async function getById(prisma: DbClient, id: string) {
   const user = await userFindUniqueById(prisma, id, USER_SELECT);
   if (!user) {
     throw new AppError("USER_NOT_FOUND");
@@ -107,7 +109,7 @@ export async function getById(prisma: PrismaClient, id: string) {
 }
 
 export async function createUser(
-  prisma: PrismaClient,
+  prisma: DbClient,
   authApi: {
     createUser: (args: unknown) => Promise<{ user?: { id: string } }>;
   },
@@ -161,7 +163,7 @@ export async function createUser(
 }
 
 export async function toggleStatus(
-  prisma: PrismaClient,
+  prisma: DbClient,
   id: string,
   isActive: boolean
 ) {
@@ -184,7 +186,11 @@ export async function resetPassword(
 
   const hashed = await hashPassword(newPassword);
 
-  await resetPasswordTransaction(prisma, id, hashed);
+  await prisma.$transaction(async (tx) => {
+    await updateCredentialPasswordRepo(tx, id, hashed);
+    await updateMustChangePasswordRepo(tx, id, true);
+    await deleteUserSessions(tx, id);
+  });
 
   await auditCreate(prisma, {
     action: "PASSWORD_RESET" as Parameters<typeof auditCreate>[1]["action"],
@@ -195,7 +201,7 @@ export async function resetPassword(
 }
 
 export async function updateUserProfileService(
-  prisma: PrismaClient,
+  prisma: DbClient,
   id: string,
   data: { name?: string; email?: string; username?: string }
 ) {
@@ -239,7 +245,7 @@ export async function updateUserProfileService(
 }
 
 export async function getActivity(
-  prisma: PrismaClient,
+  prisma: DbClient,
   id: string,
   query: ActivityListQueryInput
 ) {
@@ -287,7 +293,7 @@ export async function getActivity(
   return { items: logs, nextCursor };
 }
 
-export async function getStats(prisma: PrismaClient, id: string) {
+export async function getStats(prisma: DbClient, id: string) {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -307,7 +313,7 @@ export async function getStats(prisma: PrismaClient, id: string) {
 }
 
 export async function getSessions(
-  prisma: PrismaClient,
+  prisma: DbClient,
   id: string,
   currentSessionId: string
 ) {
@@ -324,7 +330,7 @@ export async function getSessions(
 }
 
 export async function revokeSession(
-  prisma: PrismaClient,
+  prisma: DbClient,
   userId: string,
   sessionId: string,
   currentSessionId: string

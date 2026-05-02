@@ -1,9 +1,4 @@
-import type { PrismaClient } from "@generated/client";
-
-export type DbClient = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$use" | "$extends"
->;
+import type { DbClient } from "./types.js";
 
 export function findCredentialAccount(prisma: DbClient, userId: string) {
   return prisma.account.findFirst({
@@ -12,19 +7,24 @@ export function findCredentialAccount(prisma: DbClient, userId: string) {
   });
 }
 
-export function changePasswordTransaction(
+export function updateCredentialPassword(
   prisma: DbClient,
   userId: string,
   hashedPassword: string
 ) {
-  return prisma.$transaction([
-    prisma.account.updateMany({
-      where: { userId, providerId: "credential" },
-      data: { password: hashedPassword },
-    }),
-    prisma.user.update({
-      where: { id: userId },
-      data: { mustChangePassword: false },
-    }),
-  ]);
+  return prisma.account.updateMany({
+    where: { userId, providerId: "credential" },
+    data: { password: hashedPassword },
+  });
+}
+
+export function updateMustChangePassword(
+  prisma: DbClient,
+  userId: string,
+  value: boolean
+) {
+  return prisma.user.update({
+    where: { id: userId },
+    data: { mustChangePassword: value },
+  });
 }

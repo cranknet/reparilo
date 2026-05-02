@@ -1,8 +1,8 @@
-import type { DbClient } from "../repositories/avatar.repository.js";
 import {
   findUserImage,
   updateUserImage,
 } from "../repositories/avatar.repository.js";
+import type { DbClient } from "../repositories/types.js";
 import { validateMagicBytes } from "../utils/file-validation.js";
 
 const ALLOWED_MIMES = ["image/jpeg", "image/png", "image/webp"];

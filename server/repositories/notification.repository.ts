@@ -1,9 +1,5 @@
-import type { Prisma, PrismaClient } from "@generated/client";
-
-export type DbClient = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$use" | "$extends"
->;
+import type { Prisma } from "@generated/client";
+import type { DbClient } from "./types.js";
 
 export async function findManyInAppNotifications(
   prisma: DbClient,
@@ -103,4 +99,11 @@ export async function findManyUsers(
   select: Prisma.UserSelect
 ) {
   return await prisma.user.findMany({ where, select });
+}
+
+export async function findNotificationTemplateUnique(
+  prisma: DbClient,
+  id: string
+) {
+  return await prisma.notificationTemplate.findUnique({ where: { id } });
 }

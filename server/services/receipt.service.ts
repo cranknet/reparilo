@@ -1,6 +1,6 @@
 import QRCode from "qrcode";
-import type { DbClient } from "../repositories/notification.repository.js";
 import { findShopSettingsUnique } from "../repositories/settings.repository.js";
+import type { DbClient } from "../repositories/types.js";
 
 export async function generateTrackingQr(
   jobCode: string,

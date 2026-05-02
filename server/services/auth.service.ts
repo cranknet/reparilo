@@ -1,13 +1,16 @@
 import { AppError } from "@shared/errors/app-error.js";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
 import {
-  changePasswordTransaction,
-  type DbClient,
   findCredentialAccount,
+  updateCredentialPassword,
+  updateMustChangePassword,
 } from "../repositories/auth.repository.js";
+import type { DbClient } from "../repositories/types.js";
 
 export async function changePassword(
-  prisma: DbClient,
+  prisma: DbClient & {
+    $transaction: (fn: (tx: DbClient) => Promise<unknown>) => Promise<unknown>;
+  },
   userId: string,
   oldPassword: string,
   newPassword: string
@@ -31,7 +34,10 @@ export async function changePassword(
 
   const hashedNewPassword = await hashPassword(newPassword);
 
-  await changePasswordTransaction(prisma, userId, hashedNewPassword);
+  await prisma.$transaction(async (tx) => {
+    await updateCredentialPassword(tx, userId, hashedNewPassword);
+    await updateMustChangePassword(tx, userId, false);
+  });
 
   return { success: true };
 }

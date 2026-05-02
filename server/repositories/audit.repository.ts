@@ -1,9 +1,5 @@
-import type { AuditAction, Prisma, PrismaClient } from "@generated/client";
-
-export type DbClient = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$use" | "$extends"
->;
+import type { AuditAction, Prisma } from "@generated/client";
+import type { DbClient } from "./types.js";
 
 type AuditLogWhereInput = Prisma.AuditLogWhereInput;
 type AuditLogOrderByWithRelationInput = Prisma.AuditLogOrderByWithRelationInput;

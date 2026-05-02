@@ -1,8 +1,8 @@
 import type { AuditAction } from "@generated/client";
-import type { DbClient } from "../repositories/audit.repository.js";
 import { create } from "../repositories/audit.repository.js";
+import type { DbClient } from "../repositories/types.js";
 
-export type { DbClient } from "../repositories/audit.repository.js";
+export type { DbClient } from "../repositories/types.js";
 
 interface AuditInput {
   action: AuditAction;

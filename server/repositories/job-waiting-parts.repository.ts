@@ -1,9 +1,5 @@
-import type { Prisma, PrismaClient } from "@generated/client";
-
-export type DbClient = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$use" | "$extends"
->;
+import type { Prisma } from "@generated/client";
+import type { DbClient } from "./types.js";
 
 export function findJobById(prisma: DbClient, jobId: string) {
   return prisma.job.findUnique({ where: { id: jobId } });

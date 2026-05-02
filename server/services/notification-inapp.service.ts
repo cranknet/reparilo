@@ -1,4 +1,3 @@
-import type { DbClient } from "../repositories/notification.repository.js";
 import {
   countInAppNotifications,
   deleteManyInAppNotifications,
@@ -7,6 +6,7 @@ import {
   updateInAppNotification,
   updateManyInAppNotifications,
 } from "../repositories/notification.repository.js";
+import type { DbClient } from "../repositories/types.js";
 import { logger } from "../utils/logger.js";
 
 const CLEANUP_THRESHOLD_DAYS = 30;

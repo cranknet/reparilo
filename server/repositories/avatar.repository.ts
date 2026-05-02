@@ -1,9 +1,4 @@
-import type { PrismaClient } from "@generated/client";
-
-export type DbClient = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$use" | "$extends"
->;
+import type { DbClient } from "./types.js";
 
 export async function findUserImage(prisma: DbClient, userId: string) {
   return await prisma.user.findUnique({

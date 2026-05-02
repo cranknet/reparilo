@@ -1,11 +1,13 @@
 import { OutboxStatus } from "@generated/client";
-import type { DbClient } from "../repositories/notification.repository.js";
+import { AppError } from "@shared/errors/app-error.js";
 import {
   createOutboxEntry,
   findManyOutboxEntries,
+  findNotificationTemplateUnique,
   updateOutboxEntry,
 } from "../repositories/notification.repository.js";
 import { findShopSettingsUnique } from "../repositories/settings.repository.js";
+import type { DbClient } from "../repositories/types.js";
 import { logger } from "../utils/logger.js";
 import { renderTemplate } from "./notification-renderer.js";
 import { decryptWhatsAppConfig, sendWhatsApp } from "./notification-sender.js";
@@ -170,4 +172,30 @@ export async function getOutboxLogs(
     status: e.status,
     templateName: e.templateName,
   }));
+}
+
+export async function testNotification(prisma: DbClient, templateId: string) {
+  const template = await findNotificationTemplateUnique(prisma, templateId);
+  if (!template) {
+    throw new AppError("TEMPLATE_NOT_FOUND");
+  }
+  if (template.channel !== "WHATSAPP") {
+    throw new AppError("TEMPLATE_NOT_FOUND");
+  }
+  const shop = await findShopSettingsUnique(prisma);
+  const phone = shop?.phone;
+  if (!phone) {
+    throw new AppError("NO_SHOP_PHONE");
+  }
+  await queueNotification(prisma, {
+    channel: "WHATSAPP" as const,
+    recipientPhone: phone,
+    templateBody: template.body,
+    templateName: template.name,
+    templateVars: {
+      customerName: "Test",
+      jobCode: "TEST-001",
+      shopName: shop?.shopName ?? "Reparilo",
+    },
+  });
 }

@@ -6,10 +6,10 @@ import type {
   UpdateWhatsAppSettingsInput,
 } from "@shared/schemas/settings.schema";
 import { decryptSecret, encryptSecret, isEncrypted } from "../lib/crypto.js";
+import { findNotificationTemplateUnique } from "../repositories/notification.repository.js";
 import {
   findAiSettingsUnique,
   findManyNotificationTemplates,
-  findNotificationTemplateUnique,
   findShopSettingsUnique,
   updateNotificationTemplate as updateNotificationTemplateRepo,
   upsertAiSettings as upsertAiSettingsRepo,

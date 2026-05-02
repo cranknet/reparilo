@@ -5,7 +5,6 @@ import type {
   AiInstructionInput,
   AiMemoryInput,
 } from "@shared/schemas/ai.schema";
-import type { DbClient } from "../repositories/ai.repository.js";
 import {
   createAgentDefinition as createAgentDefinitionRepo,
   createInstruction as createInstructionRepo,
@@ -23,6 +22,7 @@ import {
   updateInstruction as updateInstructionRepo,
   updateMemory as updateMemoryRepo,
 } from "../repositories/ai.repository.js";
+import type { DbClient } from "../repositories/types.js";
 
 export async function listAgentDefinitions(prisma: DbClient) {
   return await findManyAgentDefinitions(prisma);

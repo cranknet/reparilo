@@ -1,9 +1,5 @@
-import type { Prisma, PrismaClient, RepairCategory } from "@generated/client";
-
-export type DbClient = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$use" | "$extends"
->;
+import type { Prisma, RepairCategory } from "@generated/client";
+import type { DbClient } from "./types.js";
 
 type JobWhereInput = Prisma.JobWhereInput;
 type JobInclude = Prisma.JobInclude;
@@ -12,7 +8,7 @@ type JobUpdateInput = Prisma.JobUpdateInput;
 export async function findMany(
   prisma: DbClient,
   where: JobWhereInput,
-  include: JobInclude | true,
+  include: JobInclude,
   orderBy: Prisma.JobOrderByWithRelationInput,
   take: number
 ) {

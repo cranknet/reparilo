@@ -1,9 +1,5 @@
-import type { Prisma, PrismaClient } from "@generated/client";
-
-export type DbClient = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$use" | "$extends"
->;
+import type { Prisma } from "@generated/client";
+import type { DbClient } from "./types.js";
 
 interface AiSettingsUpsertInput {
   create: Prisma.AiSettingsCreateInput;
@@ -15,13 +11,6 @@ interface ShopSettingsUpsertInput {
   create: Prisma.ShopSettingsCreateInput;
   update: Record<string, unknown>;
   where: Prisma.ShopSettingsWhereUniqueInput;
-}
-
-interface NotificationTemplateUpdateInput {
-  body?: string;
-  channel?: string;
-  isDefault?: boolean;
-  name?: string;
 }
 
 export async function findAiSettingsUnique(prisma: DbClient) {
@@ -52,17 +41,10 @@ export async function findManyNotificationTemplates(prisma: DbClient) {
   });
 }
 
-export async function findNotificationTemplateUnique(
-  prisma: DbClient,
-  id: string
-) {
-  return await prisma.notificationTemplate.findUnique({ where: { id } });
-}
-
 export async function updateNotificationTemplate(
   prisma: DbClient,
   id: string,
-  data: NotificationTemplateUpdateInput
+  data: Prisma.NotificationTemplateUpdateInput
 ) {
   return await prisma.notificationTemplate.update({ where: { id }, data });
 }

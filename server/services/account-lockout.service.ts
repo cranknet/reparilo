@@ -1,4 +1,4 @@
-import type { DbClient } from "../repositories/user.repository.js";
+import type { DbClient } from "../repositories/types.js";
 import {
   findFailedAttempts,
   incrementFailedAttempt as repoIncrementFailedAttempt,

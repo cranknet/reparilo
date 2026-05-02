@@ -1,9 +1,5 @@
-import { Prisma, type PrismaClient } from "@generated/client";
-
-export type DbClient = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$use" | "$extends"
->;
+import { Prisma } from "@generated/client";
+import type { DbClient } from "./types.js";
 
 export function jobGroupByStatus(
   prisma: DbClient,

@@ -1,16 +1,11 @@
-import type { Prisma, PrismaClient } from "@generated/client";
-
-export type DbClient = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$use" | "$extends"
->;
+import type { Prisma } from "@generated/client";
+import type { DbClient } from "./types.js";
 
 type UserWhereInput = Prisma.UserWhereInput;
 type UserOrderByWithRelationInput =
   | Prisma.UserOrderByWithRelationInput
   | Prisma.UserOrderByWithRelationInput[];
 type UserSelect = Prisma.UserSelect;
-type JobWhereInput = Prisma.JobWhereInput;
 
 export const USER_SELECT: UserSelect = {
   id: true,
@@ -83,24 +78,51 @@ export async function updateUserProfile(
   return await prisma.user.update({ where: { id }, data, select });
 }
 
-export async function resetPasswordTransaction(
-  prisma: PrismaClient,
+export async function findFailedAttempts(prisma: DbClient, userId: string) {
+  return await prisma.user.findUnique({
+    where: { id: userId },
+    select: { failedLoginAttempts: true },
+  });
+}
+
+export async function incrementFailedAttempt(
+  prisma: DbClient,
+  userId: string,
+  data: { failedLoginAttempts: { increment: number }; lockedUntil?: Date }
+) {
+  return await prisma.user.update({
+    data,
+    where: { id: userId },
+  });
+}
+
+export async function resetFailedAttempts(prisma: DbClient, userId: string) {
+  return await prisma.user.updateMany({
+    data: { failedLoginAttempts: 0, lockedUntil: null },
+    where: { id: userId },
+  });
+}
+
+export async function updateCredentialPassword(
+  prisma: DbClient,
   userId: string,
   hashedPassword: string
 ) {
-  await prisma.$transaction([
-    prisma.account.updateMany({
-      where: { userId, providerId: "credential" },
-      data: { password: hashedPassword },
-    }),
-    prisma.user.update({
-      where: { id: userId },
-      data: { mustChangePassword: true },
-    }),
-    prisma.session.deleteMany({
-      where: { userId },
-    }),
-  ]);
+  return await prisma.account.updateMany({
+    where: { userId, providerId: "credential" },
+    data: { password: hashedPassword },
+  });
+}
+
+export async function updateMustChangePassword(
+  prisma: DbClient,
+  userId: string,
+  value: boolean
+) {
+  return await prisma.user.update({
+    where: { id: userId },
+    data: { mustChangePassword: value },
+  });
 }
 
 export async function findSessions(prisma: DbClient, userId: string) {
@@ -128,31 +150,12 @@ export async function deleteSession(prisma: DbClient, id: string) {
   return await prisma.session.delete({ where: { id } });
 }
 
-export async function jobCount(prisma: DbClient, where: JobWhereInput) {
+export async function jobCount(prisma: DbClient, where: Prisma.JobWhereInput) {
   return await prisma.job.count({ where });
 }
 
-export async function findFailedAttempts(prisma: DbClient, userId: string) {
-  return await prisma.user.findUnique({
-    where: { id: userId },
-    select: { failedLoginAttempts: true },
-  });
-}
-
-export async function incrementFailedAttempt(
-  prisma: DbClient,
-  userId: string,
-  data: { failedLoginAttempts: { increment: number }; lockedUntil?: Date }
-) {
-  return await prisma.user.update({
-    data,
-    where: { id: userId },
-  });
-}
-
-export async function resetFailedAttempts(prisma: DbClient, userId: string) {
-  return await prisma.user.updateMany({
-    data: { failedLoginAttempts: 0, lockedUntil: null },
-    where: { id: userId },
+export async function deleteUserSessions(prisma: DbClient, userId: string) {
+  return await prisma.session.deleteMany({
+    where: { userId },
   });
 }

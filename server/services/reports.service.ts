@@ -7,7 +7,6 @@ import type {
   RevenueReportDTO,
   TimeRangePreset,
 } from "@shared/types/reports";
-import type { DbClient } from "../repositories/report.repository.js";
 import {
   aggregateJobDeposits,
   aggregateJobRevenue,
@@ -25,6 +24,7 @@ import {
   groupTopCustomersByRevenue,
   queryRawProfitMargin,
 } from "../repositories/report.repository.js";
+import type { DbClient } from "../repositories/types.js";
 import type { DateRange } from "../utils/time-range.js";
 import { monthRange, todayRange, toMoney } from "../utils/time-range.js";
 

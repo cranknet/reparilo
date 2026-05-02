@@ -1,9 +1,5 @@
-import type { Prisma, PrismaClient } from "@generated/client";
-
-export type DbClient = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$use" | "$extends"
->;
+import type { Prisma } from "@generated/client";
+import type { DbClient } from "./types.js";
 
 type RepairCatalogWhereInput = Prisma.RepairCatalogWhereInput;
 type RepairCatalogOrderByWithRelationInput =

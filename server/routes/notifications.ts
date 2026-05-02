@@ -6,14 +6,15 @@ import {
 import { updateNotificationTemplateSchema } from "@shared/schemas/settings.schema";
 import type { FastifyPluginAsync } from "fastify";
 import { requirePermission } from "../middlewares/rbac.js";
-import { findNotificationTemplateUnique } from "../repositories/notification.repository.js";
-import { findShopSettingsUnique } from "../repositories/settings.repository.js";
 import {
   getInAppNotifications,
   markAllNotificationsRead,
   markNotificationRead,
 } from "../services/notification-inapp.service.js";
-import { getOutboxLogs } from "../services/notification-outbox.service.js";
+import {
+  getOutboxLogs,
+  testNotification,
+} from "../services/notification-outbox.service.js";
 import {
   getNotificationTemplates,
   updateNotificationTemplate,
@@ -188,35 +189,7 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { templateId } = req.params as { templateId: string };
-      const template = await findNotificationTemplateUnique(
-        app.prisma,
-        templateId
-      );
-      if (!template) {
-        throw new AppError("TEMPLATE_NOT_FOUND");
-      }
-      if (template.channel !== "WHATSAPP") {
-        throw new AppError("TEMPLATE_NOT_FOUND");
-      }
-      const shop = await findShopSettingsUnique(app.prisma);
-      const phone = shop?.phone;
-      if (!phone) {
-        throw new AppError("NO_SHOP_PHONE");
-      }
-      const { queueNotification } = await import(
-        "../services/notification-outbox.service.js"
-      );
-      await queueNotification(app.prisma, {
-        channel: "WHATSAPP" as const,
-        recipientPhone: phone,
-        templateBody: template.body,
-        templateName: template.name,
-        templateVars: {
-          customerName: "Test",
-          jobCode: "TEST-001",
-          shopName: shop?.shopName ?? "Reparilo",
-        },
-      });
+      await testNotification(app.prisma, templateId);
       return reply.send({ message: "Test notification queued", success: true });
     }
   );

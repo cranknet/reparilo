@@ -7,11 +7,7 @@ import type {
   UpdateConversationInput,
   UpdateMessageInput,
 } from "@shared/schemas/ai.schema.js";
-
-export type DbClient = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$use" | "$extends"
->;
+import type { DbClient } from "./types.js";
 
 export async function findManyConversations(
   prisma: DbClient,

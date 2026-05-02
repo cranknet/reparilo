@@ -1,10 +1,10 @@
 import type { NotifyChannel } from "@generated/client";
-import type { DbClient } from "../repositories/notification.repository.js";
 import {
   createManyAndReturnInAppNotifications,
   findManyNotificationTemplatesByName,
   findManyUsers,
 } from "../repositories/notification.repository.js";
+import type { DbClient } from "../repositories/types.js";
 import { logger } from "../utils/logger.js";
 import { queueNotification } from "./notification-outbox.service.js";
 import { renderTemplate } from "./notification-renderer.js";
