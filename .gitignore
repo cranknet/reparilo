@@ -19,3 +19,6 @@ android/
 .worktrees/
 coverage/
 .DS_Store
+.agents/
+.gemini/
+.claude/
