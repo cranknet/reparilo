@@ -118,6 +118,8 @@ export const receiptRoutes: FastifyPluginAsync = async (app) => {
         "connect-src 'self'",
         isPreview ? "frame-ancestors 'self'" : "frame-ancestors 'none'",
         "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
       ].join("; ");
 
       return reply

@@ -1,7 +1,9 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useModalEffects } from "@/hooks/use-modal-effects";
 import { useUiStore } from "@/stores/ui";
 
+// 40mm × 20mm at 96 dpi ≈ 152 × 76 px
 const LABEL_WIDTH_PX = 152;
 const LABEL_HEIGHT_PX = 76;
 const PREVIEW_SCALE = 2.5;
@@ -10,17 +12,16 @@ export default function PrintPreviewDialog() {
   const jobId = useUiStore((s) => s.printPreviewJobId);
   const closePrintPreview = useUiStore((s) => s.closePrintPreview);
   const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useModalEffects(!!jobId, closePrintPreview, dialogRef);
 
   const handlePrintLabel = useCallback(() => {
-    if (jobId) {
-      window.open(`/api/receipts/${jobId}/label`, "_blank");
-    }
+    window.open(`/api/receipts/${jobId}/label`, "_blank");
   }, [jobId]);
 
   const handlePrintReceipt = useCallback(() => {
-    if (jobId) {
-      window.open(`/api/receipts/${jobId}/receipt`, "_blank");
-    }
+    window.open(`/api/receipts/${jobId}/receipt`, "_blank");
   }, [jobId]);
 
   if (!jobId) {
@@ -29,8 +30,10 @@ export default function PrintPreviewDialog() {
 
   return (
     <div
+      aria-labelledby="print-preview-title"
       aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      ref={dialogRef}
       role="dialog"
     >
       <button
@@ -45,7 +48,10 @@ export default function PrintPreviewDialog() {
             label
           </span>
           <div className="flex-1">
-            <h2 className="font-bold font-headline text-lg text-on-surface">
+            <h2
+              className="font-bold font-headline text-lg text-on-surface"
+              id="print-preview-title"
+            >
               {t("print_preview_title")}
             </h2>
             <p className="font-label text-on-surface-variant text-xs">
