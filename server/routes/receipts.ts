@@ -71,6 +71,12 @@ export const receiptRoutes: FastifyPluginAsync = async (app) => {
           properties: { id: { type: "string" } },
           required: ["id"],
         },
+        querystring: {
+          type: "object",
+          properties: {
+            preview: { type: "string" },
+          },
+        },
       },
     },
     async (req, reply) => {
@@ -97,12 +103,26 @@ export const receiptRoutes: FastifyPluginAsync = async (app) => {
           permissions: { parts: ["viewCost"] },
         },
       });
+      const isPreview = (req.query as { preview?: string }).preview === "1";
       const html = await renderLabelHtml(app.prisma, job, baseUrl, {
         hideCosts: !costPerm.success,
+        noAutoPrint: isPreview,
       });
+
+      const cspDirectives = [
+        "default-src 'self'",
+        "script-src 'self'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob:",
+        "font-src 'self'",
+        "connect-src 'self'",
+        isPreview ? "frame-ancestors 'self'" : "frame-ancestors 'none'",
+        "object-src 'none'",
+      ].join("; ");
 
       return reply
         .header("Content-Type", "text/html; charset=utf-8")
+        .header("Content-Security-Policy", cspDirectives)
         .send(html);
     }
   );

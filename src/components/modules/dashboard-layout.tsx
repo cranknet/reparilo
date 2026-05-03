@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import BottomNav from "@/components/modules/bottom-nav";
 import type { IntakeFormData } from "@/components/modules/jobs/intake-modal";
 import IntakeModal from "@/components/modules/jobs/intake-modal";
+import PrintPreviewDialog from "@/components/modules/jobs/print-preview-dialog";
 import Sidebar from "@/components/modules/sidebar";
 import TopBar from "@/components/modules/top-bar";
 import api from "@/lib/api";
@@ -18,6 +19,7 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const intakeModalOpen = useUiStore((s) => s.intakeModalOpen);
   const closeIntakeModal = useUiStore((s) => s.closeIntakeModal);
+  const showPrintPreview = useUiStore((s) => s.showPrintPreview);
   const { createJob, fetchJobs, fetchMetrics } = useJobsStore();
   const { t } = useTranslation();
 
@@ -42,7 +44,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             : undefined,
         });
         toast.success(t("jobs_created_success", { id: job.jobCode || job.id }));
-        window.open(`/api/receipts/${job.id}/label`, "_blank");
+        showPrintPreview(job.id);
         if (data.photos.length > 0) {
           await Promise.allSettled(
             data.photos.map((file) => {
@@ -59,7 +61,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         toast.error(t("jobs_create_error"));
       }
     },
-    [createJob, fetchJobs, fetchMetrics, closeIntakeModal, t]
+    [createJob, fetchJobs, fetchMetrics, closeIntakeModal, showPrintPreview, t]
   );
 
   return (
@@ -75,6 +77,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         onSubmit={handleIntakeSubmit}
         open={intakeModalOpen}
       />
+      <PrintPreviewDialog />
     </div>
   );
 }

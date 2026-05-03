@@ -129,7 +129,7 @@ export async function renderLabelHtml(
     }>;
   },
   baseUrl: string,
-  options?: { hideCosts?: boolean }
+  options?: { hideCosts?: boolean; noAutoPrint?: boolean }
 ): Promise<string> {
   const settings = await findShopSettingsUnique(prisma);
   const shopName = esc(settings?.shopName || "Reparilo");
@@ -143,6 +143,7 @@ export async function renderLabelHtml(
     : `<span style="font-size:5pt;color:#999">QR unavailable</span>`;
 
   const hideCosts = options?.hideCosts ?? false;
+  const noAutoPrint = options?.noAutoPrint ?? false;
   const device =
     `${esc(job.device.brand.name)} ${esc(job.device.model)}`.trim();
   const problem = esc(job.reportedProblem);
@@ -171,7 +172,7 @@ export async function renderLabelHtml(
   body {
     width: 40mm; height: 20mm;
     font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
-    font-size: 7pt; line-height: 1.15;
+    font-size: 7pt; line-height: 1.3;
     color: #000; background: #fff;
     display: flex; flex-direction: column;
     padding: 0.8mm 1mm;
@@ -198,7 +199,7 @@ export async function renderLabelHtml(
   .info {
     flex: 1 1 auto; min-width: 0;
     padding-left: 1mm;
-    display: flex; flex-direction: column; justify-content: space-between;
+    display: flex; flex-direction: column; justify-content: center;
   }
   .info .dev { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 6pt; }
   .info .pb { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 6pt; color: #333; }
@@ -206,7 +207,7 @@ export async function renderLabelHtml(
   @media screen { body { border: 1px dashed #999; } }
 </style>
 </head>
-<body onload="window.print(); setTimeout(function(){ window.close(); }, 500);">
+<body${noAutoPrint ? "" : ' onload="window.print(); setTimeout(function(){ window.close(); }, 500);"'}>
   <div class="logo-top">${logoHtml}</div>
   <div class="content">
     <div class="qr">
