@@ -63,8 +63,7 @@ export function createAuth(prisma: PrismaClient) {
       expiresIn: 604_800, // 7 days
       updateAge: 86_400, // 1 day rolling
       cookieCache: {
-        enabled: true,
-        maxAge: 300, // 5 minutes
+        enabled: false,
       },
     },
     user: {
