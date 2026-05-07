@@ -1,5 +1,20 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { deleteAvatar, uploadAvatar } from "../services/avatar.service.js";
+
+vi.mock("node:fs/promises", () => ({
+  default: {
+    mkdir: vi.fn().mockResolvedValue(undefined),
+    writeFile: vi.fn().mockResolvedValue(undefined),
+    unlink: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock("../config/env.js", () => ({
+  loadEnv: vi.fn(() => ({ UPLOAD_DIR: "./test-uploads" })),
+}));
 
 function makeBuffer(magic: number[], extra = 0) {
   const bytes = [...magic];
@@ -38,20 +53,45 @@ describe("uploadAvatar", () => {
     vi.clearAllMocks();
   });
 
-  it("saves avatar and returns data URL", async () => {
+  it("writes avatar file and stores relative path", async () => {
     const prisma = makePrisma(null);
     const buffer = makeBuffer(JPEG_MAGIC, 10);
     const file = makeFile("image/jpeg", buffer);
 
     const result = await uploadAvatar(prisma, "user-1", file);
 
-    expect(result).toEqual({
-      image: `data:image/jpeg;base64,${buffer.toString("base64")}`,
-    });
+    expect(result).toEqual({ image: "avatars/user-1.jpg" });
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      path.resolve("./test-uploads", "avatars/user-1.jpg"),
+      buffer
+    );
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: "user-1" },
-      data: { image: expect.stringContaining("data:image/jpeg;base64,") },
+      data: { image: "avatars/user-1.jpg" },
     });
+  });
+
+  it("removes old file before writing new one", async () => {
+    const prisma = makePrisma("avatars/user-1.png");
+    const buffer = makeBuffer(JPEG_MAGIC, 10);
+    const file = makeFile("image/jpeg", buffer);
+
+    const result = await uploadAvatar(prisma, "user-1", file);
+
+    expect(result).toEqual({ image: "avatars/user-1.jpg" });
+    expect(fs.unlink).toHaveBeenCalledWith(
+      path.resolve("./test-uploads", "avatars/user-1.png")
+    );
+  });
+
+  it("does not try to unlink old data: URL", async () => {
+    const prisma = makePrisma("data:image/png;base64,abc123");
+    const buffer = makeBuffer(JPEG_MAGIC, 10);
+    const file = makeFile("image/jpeg", buffer);
+
+    await uploadAvatar(prisma, "user-1", file);
+
+    expect(fs.unlink).not.toHaveBeenCalled();
   });
 
   it("returns INVALID_FILE_TYPE for unsupported mime", async () => {
@@ -98,27 +138,14 @@ describe("uploadAvatar", () => {
 
   it("validates WEBP requires RIFF header plus WEBP marker", async () => {
     const validWebp = Buffer.from([
-      0x52,
-      0x49,
-      0x46,
-      0x46, // RIFF
-      0x00,
-      0x00,
-      0x00,
-      0x00, // file size placeholder
-      0x57,
-      0x45,
-      0x42,
-      0x50, // WEBP
+      0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
     ]);
     const prisma = makePrisma(null);
     const file = makeFile("image/webp", validWebp);
 
     const result = await uploadAvatar(prisma, "user-1", file);
 
-    expect(result).toEqual({
-      image: `data:image/webp;base64,${validWebp.toString("base64")}`,
-    });
+    expect(result).toEqual({ image: "avatars/user-1.webp" });
   });
 
   it("rejects WEBP with invalid marker", async () => {
@@ -137,12 +164,27 @@ describe("deleteAvatar", () => {
     vi.clearAllMocks();
   });
 
-  it("clears image path and returns null", async () => {
-    const prisma = makePrisma("data:image/png;base64,abc123");
+  it("removes file and clears image path", async () => {
+    const prisma = makePrisma("avatars/user-1.png");
 
     const result = await deleteAvatar(prisma, "user-1");
 
     expect(result).toEqual({ image: null });
+    expect(fs.unlink).toHaveBeenCalledWith(
+      path.resolve("./test-uploads", "avatars/user-1.png")
+    );
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: { image: null },
+    });
+  });
+
+  it("does not try to unlink data: URL", async () => {
+    const prisma = makePrisma("data:image/png;base64,abc123");
+
+    await deleteAvatar(prisma, "user-1");
+
+    expect(fs.unlink).not.toHaveBeenCalled();
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: "user-1" },
       data: { image: null },

@@ -1,3 +1,6 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import { loadEnv } from "../config/env.js";
 import {
   findUserImage,
   updateUserImage,
@@ -7,6 +10,20 @@ import { validateMagicBytes } from "../utils/file-validation.js";
 
 const ALLOWED_MIMES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE = 2 * 1024 * 1024;
+
+const MIME_EXT: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
+async function removeFile(filePath: string): Promise<void> {
+  try {
+    await fs.unlink(filePath);
+  } catch {
+    // file may not exist — ignore
+  }
+}
 
 export async function uploadAvatar(
   prisma: DbClient,
@@ -30,11 +47,20 @@ export async function uploadAvatar(
     return null;
   }
 
-  const dataUrl = `data:${file.mimetype};base64,${buffer.toString("base64")}`;
+  const ext = MIME_EXT[file.mimetype];
+  const uploadDir = loadEnv().UPLOAD_DIR;
+  await fs.mkdir(path.resolve(uploadDir, "avatars"), { recursive: true });
 
-  await updateUserImage(prisma, userId, dataUrl);
+  if (user.image && !user.image.startsWith("data:")) {
+    await removeFile(path.resolve(loadEnv().UPLOAD_DIR, user.image));
+  }
 
-  return { image: dataUrl };
+  const relativePath = `avatars/${userId}.${ext}`;
+  await fs.writeFile(path.resolve(loadEnv().UPLOAD_DIR, relativePath), buffer);
+
+  await updateUserImage(prisma, userId, relativePath);
+
+  return { image: relativePath };
 }
 
 export async function deleteAvatar(prisma: DbClient, userId: string) {
@@ -44,6 +70,10 @@ export async function deleteAvatar(prisma: DbClient, userId: string) {
   }
   if (!user.image) {
     return { image: null };
+  }
+
+  if (!user.image.startsWith("data:")) {
+    await removeFile(path.resolve(loadEnv().UPLOAD_DIR, user.image));
   }
 
   await updateUserImage(prisma, userId, null);
