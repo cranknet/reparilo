@@ -49,9 +49,14 @@ export const receiptRoutes: FastifyPluginAsync = async (app) => {
           permissions: { parts: ["viewCost"] },
         },
       });
-      const html = await renderReceiptHtml(app.prisma, job, baseUrl, {
-        hideCosts: !costPerm.success,
-      });
+      const html = await renderReceiptHtml(
+        app.prisma,
+        job as unknown as Parameters<typeof renderReceiptHtml>[1],
+        baseUrl,
+        {
+          hideCosts: !costPerm.success,
+        }
+      );
 
       return reply
         .header("Content-Type", "text/html; charset=utf-8")
@@ -104,10 +109,15 @@ export const receiptRoutes: FastifyPluginAsync = async (app) => {
         },
       });
       const isPreview = (req.query as { preview?: string }).preview === "1";
-      const html = await renderLabelHtml(app.prisma, job, baseUrl, {
-        hideCosts: !costPerm.success,
-        noAutoPrint: isPreview,
-      });
+      const html = await renderLabelHtml(
+        app.prisma,
+        job as unknown as Parameters<typeof renderLabelHtml>[1],
+        baseUrl,
+        {
+          hideCosts: !costPerm.success,
+          noAutoPrint: isPreview,
+        }
+      );
 
       const cspDirectives = [
         "default-src 'self'",

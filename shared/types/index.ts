@@ -8,7 +8,7 @@ export type Brand = Prisma.BrandGetPayload<Record<string, never>>;
 export type Job = Prisma.JobGetPayload<{
   include: {
     customer: true;
-    device: true;
+    device: { include: { brand: true } };
     technician: { select: { id: true; name: true; username: true } };
     photos: true;
     notes: {
@@ -57,9 +57,7 @@ export type AiMemory = Prisma.AiMemoryGetPayload<Record<string, never>>;
 export type AiInstruction = Prisma.AiInstructionGetPayload<
   Record<string, never>
 >;
-export type AiChatHistory = Prisma.AiChatHistoryGetPayload<
-  Record<string, never>
->;
+// AiChatHistory model removed from schema — type no longer available
 export type InAppNotification = Prisma.InAppNotificationGetPayload<
   Record<string, never>
 >;

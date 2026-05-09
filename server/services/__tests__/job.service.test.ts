@@ -629,7 +629,12 @@ describe("update", () => {
       status: "PENDING",
     });
 
-    await update(prisma, "job-1", { estimatedDate: "2024-12-25" }, "user-1");
+    await update(
+      prisma,
+      "job-1",
+      { estimatedDate: new Date("2024-12-25") },
+      "user-1"
+    );
 
     const updateCall = (prisma.job.update as ReturnType<typeof vi.fn>).mock
       .calls[0];

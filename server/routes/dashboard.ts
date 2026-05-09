@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import { dashboardScope } from "../middlewares/dashboard-scope.js";
-import { requireRoles } from "../middlewares/require-roles.js";
+import { requirePermission } from "../middlewares/rbac.js";
 import {
   activeJobsCount,
   activeRepairsQueue,
@@ -27,7 +27,10 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/owner",
     {
-      preHandler: [requireRoles("OWNER"), dashboardScope],
+      preHandler: [
+        requirePermission({ dashboard: ["viewOwner"] }),
+        dashboardScope,
+      ],
       schema: { tags: ["dashboard"], summary: "Owner dashboard" },
     },
     async (req) => {
@@ -71,7 +74,10 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/technician",
     {
-      preHandler: [requireRoles("OWNER", "TECHNICIAN"), dashboardScope],
+      preHandler: [
+        requirePermission({ dashboard: ["viewTechnician"] }),
+        dashboardScope,
+      ],
       schema: { tags: ["dashboard"], summary: "Technician dashboard" },
     },
     async (req) => {
@@ -118,7 +124,10 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/front-desk",
     {
-      preHandler: [requireRoles("OWNER", "FRONT_DESK"), dashboardScope],
+      preHandler: [
+        requirePermission({ dashboard: ["viewFrontDesk"] }),
+        dashboardScope,
+      ],
       schema: { tags: ["dashboard"], summary: "Front desk dashboard" },
     },
     async (req) => {

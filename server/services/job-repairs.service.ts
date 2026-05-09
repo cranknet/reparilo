@@ -35,12 +35,12 @@ export async function add(
 
   const jobRepair = await prisma.$transaction(async (tx) => {
     const created = await createRepairRepo(tx, {
-      jobId,
-      repairId: input.repairId ?? null,
+      job: { connect: { id: jobId } },
+      repair: input.repairId ? { connect: { id: input.repairId } } : undefined,
       repairName: input.repairName,
       category: input.category as RepairCategory,
       price: input.price,
-      createdById: userId,
+      createdBy: { connect: { id: userId } },
     });
 
     await createAuditLog(tx, {

@@ -43,7 +43,7 @@ export async function queueNotification(
   const renderedBody = renderTemplate(data.templateBody, data.templateVars);
   await createOutboxEntry(prisma, {
     channel: data.channel,
-    jobId: data.jobId ?? null,
+    job: data.jobId ? { connect: { id: data.jobId } } : undefined,
     recipientPhone: data.recipientPhone,
     renderedBody,
     status: OutboxStatus.QUEUED,

@@ -56,6 +56,8 @@ export const statement = {
   notifications: ["read", "send", "manage"] as const,
 
   ai: ["access"] as const,
+
+  dashboard: ["viewOwner", "viewTechnician", "viewFrontDesk"] as const,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -110,6 +112,7 @@ export const ownerRole = ac.newRole({
   settings: ["view", "edit"],
   notifications: ["read", "send", "manage"],
   ai: ["access"],
+  dashboard: ["viewOwner", "viewTechnician", "viewFrontDesk"],
 });
 
 export const technicianRole = ac.newRole({
@@ -134,6 +137,7 @@ export const technicianRole = ac.newRole({
   notifications: ["read"],
   // No settings
   ai: ["access"],
+  dashboard: ["viewTechnician"],
 });
 
 export const frontDeskRole = ac.newRole({
@@ -151,6 +155,7 @@ export const frontDeskRole = ac.newRole({
   // No settings
   notifications: ["read", "send"],
   // No ai
+  dashboard: ["viewFrontDesk"],
 });
 
 // ---------------------------------------------------------------------------

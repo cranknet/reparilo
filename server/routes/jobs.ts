@@ -45,6 +45,7 @@ import {
   remove as removeWaitingPart,
 } from "../services/job-waiting-parts.service.js";
 import { notify } from "../services/notification-dispatch.js";
+import { getUserId } from "../utils/request.js";
 import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 
 const JOB_CODE_RE = /^[A-Za-z0-9-]+$/;
@@ -62,14 +63,6 @@ function trackFailedAttempt(lockouts: Map<string, LockoutEntry>, code: string) {
     existing.lockedUntil = Date.now() + 60 * 60 * 1000;
   }
   lockouts.set(code, existing);
-}
-
-function getUserId(req: FastifyRequest): string {
-  const id = req.user?.id;
-  if (!id) {
-    throw new AppError("UNAUTHORIZED");
-  }
-  return id;
 }
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
@@ -180,7 +173,6 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
           required: ["jobCode"],
         },
       },
-      preHandler: [requirePermission({ jobs: ["view"] })],
     },
     async (req, reply) => {
       const { jobCode } = req.params as { jobCode: string };
@@ -402,7 +394,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
       const permCheck = await app.auth.api.userHasPermission({
         body: {
-          role: req.user.role as RoleType,
+          role: req.user?.role as RoleType,
           permissions: { jobStatus: [parsed.data.status] },
         },
       });
@@ -419,7 +411,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         userId,
         notifyCtx,
         {
-          requestingRole: req.user.role as RoleType,
+          requestingRole: req.user?.role as RoleType,
           reason: parsed.data.reason,
         }
       );

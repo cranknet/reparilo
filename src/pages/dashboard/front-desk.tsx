@@ -65,7 +65,7 @@ export default function FrontDeskPage() {
       )
       .map((j) => ({
         id: j.jobCode,
-        deviceModel: `${j.device.brand.name} ${j.device.model}`,
+        deviceModel: `${j.device.brand?.name ?? ""} ${j.device.model}`,
         customerName: j.customer.name,
         status: j.status,
         estimatedCompletion: j.estimatedDate
@@ -91,7 +91,7 @@ export default function FrontDeskPage() {
         .slice(0, 3)
         .map((j) => ({
           id: j.jobCode,
-          device: `${j.device.brand.name} ${j.device.model}`,
+          device: `${j.device.brand?.name ?? ""} ${j.device.model}`,
           status: j.status,
           timeAgo: timeAgo(j.createdAt),
         })),

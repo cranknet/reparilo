@@ -24,6 +24,7 @@ import {
   toggleStatus as toggleStatusSvc,
   updateUserProfileService,
 } from "../services/user.service.js";
+import { getSessionId, getUserId } from "../utils/request.js";
 import {
   resolveValidationMessage,
   resolveZodErrors,
@@ -32,10 +33,13 @@ import {
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const usersRoutes: FastifyPluginAsync = async (app) => {
   async function canAccessUser(
-    requestingUser: { id: string; role: string },
+    requestingUser: { id: string; role: string } | null,
     targetId: string,
     permission: Record<string, string[]>
   ): Promise<boolean> {
+    if (!requestingUser) {
+      return false;
+    }
     if (requestingUser.id === targetId) {
       return true;
     }
@@ -117,10 +121,15 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
       const user = await createUserSvc(
         app.prisma,
-        { createUser: (args) => app.auth.api.createUser(args) },
+        {
+          createUser: (args: unknown) =>
+            app.auth.api.createUser(
+              args as Parameters<typeof app.auth.api.createUser>[0]
+            ),
+        },
         request.headers as unknown as Headers,
         parsed.data,
-        request.user.id
+        getUserId(request)
       );
 
       return reply.status(201).send(user);
@@ -155,7 +164,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
       }
       const { isActive } = parsed.data;
 
-      if (id === request.user?.id && !isActive) {
+      if (id === getUserId(request) && !isActive) {
         throw new AppError("CANNOT_DEACTIVATE_OWN");
       }
 
@@ -195,7 +204,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
         app.prisma,
         id,
         parsed.data.password,
-        request.user.id
+        getUserId(request)
       );
       return reply.send({ success: true });
     }
@@ -331,7 +340,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
         throw new AppError("FORBIDDEN");
       }
 
-      const result = await getSessions(app.prisma, id, request.user.sessionId);
+      const result = await getSessions(app.prisma, id, getSessionId(request));
       return reply.send(result);
     }
   );
@@ -359,7 +368,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
         throw new AppError("FORBIDDEN");
       }
 
-      await revokeSessionSvc(app.prisma, id, sessionId, request.user.sessionId);
+      await revokeSessionSvc(app.prisma, id, sessionId, getSessionId(request));
       return reply.send({ success: true });
     }
   );
@@ -381,7 +390,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const { id } = request.params as { id: string };
 
-      if (request.user.id !== id) {
+      if (getUserId(request) !== id) {
         throw new AppError("AVATAR_NOT_OWN");
       }
 
@@ -418,7 +427,7 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     async (request, reply) => {
       const { id } = request.params as { id: string };
 
-      if (request.user.id !== id) {
+      if (getUserId(request) !== id) {
         throw new AppError("AVATAR_NOT_OWN");
       }
 

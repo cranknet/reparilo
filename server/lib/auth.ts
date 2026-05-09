@@ -40,7 +40,10 @@ export function createAuth(prisma: PrismaClient) {
         try {
           await sendPasswordResetEmail(user.email, url);
         } catch (error) {
-          logger.error("[auth] Failed to send password reset email", error);
+          logger.error(
+            { err: error },
+            "[auth] Failed to send password reset email"
+          );
           throw error;
         }
       },

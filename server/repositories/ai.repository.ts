@@ -57,7 +57,9 @@ export async function findFirstConversation(
 
 export async function createConversation(
   prisma: DbClient,
-  data: Prisma.AiConversationCreateInput
+  data:
+    | Prisma.AiConversationCreateInput
+    | Prisma.AiConversationUncheckedCreateInput
 ) {
   return await prisma.aiConversation.create({ data });
 }

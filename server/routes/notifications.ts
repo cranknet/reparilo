@@ -21,6 +21,7 @@ import {
   getNotificationTemplates,
   updateNotificationTemplate,
 } from "../services/settings.service.js";
+import { getUserId } from "../utils/request.js";
 import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
@@ -100,7 +101,7 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
       }
       const result = await getInAppNotifications(
         app.prisma,
-        req.user.id,
+        getUserId(req),
         parsed.data.filter,
         parsed.data.limit
       );
@@ -139,7 +140,7 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
       const notification = await markNotificationRead(
         app.prisma,
         parsed.data.id,
-        req.user.id
+        getUserId(req)
       );
       if (!notification) {
         throw new AppError("NOT_FOUND");
@@ -158,7 +159,7 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
       },
     },
     async (req, reply) => {
-      const result = await markAllNotificationsRead(app.prisma, req.user.id);
+      const result = await markAllNotificationsRead(app.prisma, getUserId(req));
       return reply.send({ count: result.count });
     }
   );
@@ -182,7 +183,7 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
       const deleted = await removeInAppNotification(
         app.prisma,
         id,
-        req.user.id
+        getUserId(req)
       );
       if (!deleted) {
         throw new AppError("NOT_FOUND");

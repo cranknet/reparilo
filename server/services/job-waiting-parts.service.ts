@@ -26,7 +26,7 @@ export async function add(
   }
 
   const waitingPart = await createWaitingPartRepo(prisma, {
-    jobId,
+    job: { connect: { id: jobId } },
     partName: input.partName,
     supplier: input.supplier ?? null,
   });

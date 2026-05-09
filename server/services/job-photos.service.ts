@@ -70,7 +70,10 @@ export async function upload(
   const relativePath = `job-photos/${jobId}/${filename}`;
   let photo: Awaited<ReturnType<typeof createPhotoRepo>>;
   try {
-    photo = await createPhotoRepo(prisma, { jobId, path: relativePath });
+    photo = await createPhotoRepo(prisma, {
+      job: { connect: { id: jobId } },
+      path: relativePath,
+    });
   } catch (err) {
     await fs.unlink(filePath).catch(() => undefined);
     throw err;

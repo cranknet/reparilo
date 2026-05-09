@@ -1,4 +1,5 @@
 import type { NotifyChannel } from "@generated/client";
+import type { RoleType } from "@shared/constants/roles.js";
 import {
   createManyAndReturnInAppNotifications,
   findManyNotificationTemplatesByName,
@@ -20,7 +21,7 @@ interface NotifyEvent {
   eventName: string;
   jobId?: string;
   recipients: {
-    role?: string;
+    role?: RoleType;
     userIds?: string[];
   };
 }

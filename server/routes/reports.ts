@@ -1,9 +1,9 @@
-import type { Role } from "@shared/constants";
+import type { RoleType } from "@shared/constants/roles";
 import { AppError } from "@shared/errors/app-error.js";
 import { reportsQuerySchema } from "@shared/schemas/reports.schema.js";
 import type { FastifyPluginAsync } from "fastify";
 import { dashboardScope } from "../middlewares/dashboard-scope.js";
-import { requireRoles } from "../middlewares/require-roles.js";
+import { requirePermission } from "../middlewares/rbac.js";
 import {
   insightsReport,
   operationsReport,
@@ -16,7 +16,10 @@ export const reportsRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/revenue",
     {
-      preHandler: [requireRoles("OWNER"), dashboardScope],
+      preHandler: [
+        requirePermission({ reports: ["viewShop"] }),
+        dashboardScope,
+      ],
       schema: { tags: ["reports"], summary: "Revenue & financial report" },
     },
     async (req) => {
@@ -33,7 +36,7 @@ export const reportsRoutes: FastifyPluginAsync = async (app) => {
 
       const marginResult = await req.server.auth.api.userHasPermission({
         body: {
-          role: (req.user?.role ?? "") as (typeof Role)[keyof typeof Role],
+          role: (req.user?.role ?? "") as RoleType,
           permissions: { reports: ["viewMargin"] },
         },
       });
@@ -50,7 +53,10 @@ export const reportsRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/operations",
     {
-      preHandler: [requireRoles("OWNER", "TECHNICIAN"), dashboardScope],
+      preHandler: [
+        requirePermission({ reports: ["viewSelf"] }),
+        dashboardScope,
+      ],
       schema: { tags: ["reports"], summary: "Repair operations report" },
     },
     async (req) => {
@@ -67,7 +73,7 @@ export const reportsRoutes: FastifyPluginAsync = async (app) => {
 
       const shopResult = await req.server.auth.api.userHasPermission({
         body: {
-          role: (req.user?.role ?? "") as (typeof Role)[keyof typeof Role],
+          role: (req.user?.role ?? "") as RoleType,
           permissions: { reports: ["viewShop"] },
         },
       });
@@ -84,7 +90,10 @@ export const reportsRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/insights",
     {
-      preHandler: [requireRoles("OWNER"), dashboardScope],
+      preHandler: [
+        requirePermission({ reports: ["viewShop"] }),
+        dashboardScope,
+      ],
       schema: { tags: ["reports"], summary: "Customer insights report" },
     },
     async (req) => {

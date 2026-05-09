@@ -43,7 +43,7 @@ function DesktopCustomersTable({
     phone: string;
   }[];
   isLoading: boolean;
-  t: (key: string) => string;
+  t: (key: string, options?: Record<string, unknown>) => string;
 }) {
   const thCls =
     "px-5 py-4 font-bold text-on-surface-variant text-xs uppercase tracking-wide text-start";
@@ -112,7 +112,7 @@ function MobileCustomerCard({
     name: string;
     phone: string;
   };
-  t: (key: string) => string;
+  t: (key: string, options?: Record<string, unknown>) => string;
 }) {
   return (
     <Link

@@ -103,7 +103,10 @@ export async function createModel(
     return existing;
   }
   try {
-    return await createDeviceRepo(prisma, { brandId, model: input.model });
+    return await createDeviceRepo(prisma, {
+      brand: { connect: { id: brandId } },
+      model: input.model,
+    });
   } catch (err) {
     if (
       err instanceof Prisma.PrismaClientKnownRequestError &&

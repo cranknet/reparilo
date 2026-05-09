@@ -1,3 +1,4 @@
+import type { PrismaClient } from "@generated/client";
 import QRCode from "qrcode";
 import { findShopSettingsUnique } from "../repositories/settings.repository.js";
 import type { DbClient } from "../repositories/types.js";

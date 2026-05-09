@@ -344,7 +344,7 @@ function ModelField({
 >) {
   const modelOutsideRef = useClickOutside(() => setModelFocused(false));
   const [modelFocused, setModelFocused] = useState(false);
-  const showModelDropdown = modelFocused && form.brandId && !form.modelId;
+  const showModelDropdown = modelFocused && !!form.brandId && !form.modelId;
 
   return (
     <div className="relative" ref={modelOutsideRef}>

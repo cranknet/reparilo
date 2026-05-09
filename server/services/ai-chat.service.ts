@@ -35,7 +35,7 @@ export async function listConversations(
       : {}),
   };
 
-  const conversations = await findManyConversations(
+  const conversations = (await findManyConversations(
     prisma,
     where,
     [{ starred: "desc" }, { updatedAt: "desc" }],
@@ -55,7 +55,15 @@ export async function listConversations(
         select: { content: true },
       },
     }
-  );
+  )) as unknown as Array<{
+    id: string;
+    title: string | null;
+    starred: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    _count: { messages: number };
+    messages: Array<{ content: string }>;
+  }>;
 
   const hasMore = conversations.length > limit;
   const items = hasMore ? conversations.slice(0, limit) : conversations;

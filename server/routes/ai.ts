@@ -48,6 +48,7 @@ import {
   getAiSettings,
   getRawAiSettings,
 } from "../services/settings.service.js";
+import { getUserId } from "../utils/request.js";
 import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
@@ -82,7 +83,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
       }
       const result = await listConversations(
         app.prisma,
-        req.user.id,
+        getUserId(req),
         parsed.data
       );
       return await reply.send(result);
@@ -111,7 +112,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
       }
       const conversation = await createConversation(
         app.prisma,
-        req.user.id,
+        getUserId(req),
         parsed.data.title
       );
       return await reply.status(201).send(conversation);
@@ -139,7 +140,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
       }
       const result = await bulkDeleteConversations(
         app.prisma,
-        req.user.id,
+        getUserId(req),
         parsed.data
       );
       return await reply.send(result);
@@ -150,7 +151,6 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     "/chat/stream",
     {
       preHandler: [requireAiEnabled],
-      requestTimeout: 0,
       schema: {
         tags: ["ai"],
         summary: "Stream chat message",
@@ -177,12 +177,12 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
       const rawSettings = await getRawAiSettings(app.prisma);
       const { conversationId, stream } = await streamChat({
         agentName: parsed.data.agentName,
-        conversationId: parsed.data.conversationId,
+        conversationId: parsed.data.conversationId ?? undefined,
         language: parsed.data.language,
         message: parsed.data.message,
         prisma: app.prisma,
         settings: rawSettings as NonNullable<typeof rawSettings>,
-        userId: req.user.id,
+        userId: getUserId(req),
       });
       reply.raw.writeHead(200, {
         "Cache-Control": "no-cache",
@@ -534,20 +534,6 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
   );
 
   app.get(
-    "/settings",
-    {
-      schema: {
-        tags: ["ai"],
-        summary: "Get AI settings",
-      },
-    },
-    async (_req, reply) => {
-      const aiSettings = await getAiSettings(app.prisma);
-      return await reply.send(aiSettings);
-    }
-  );
-
-  app.get(
     "/tools/available",
     {
       schema: {
@@ -576,7 +562,11 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { id } = req.params as { id: string };
-      const conversation = await getConversation(app.prisma, req.user.id, id);
+      const conversation = await getConversation(
+        app.prisma,
+        getUserId(req),
+        id
+      );
       if (!conversation) {
         throw new AppError("CONVERSATION_NOT_FOUND");
       }
@@ -611,7 +601,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
       }
       const updated = await updateConversation(
         app.prisma,
-        req.user.id,
+        getUserId(req),
         id,
         parsed.data
       );
@@ -637,7 +627,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     },
     async (req, reply) => {
       const { id } = req.params as { id: string };
-      const deleted = await deleteConversation(app.prisma, req.user.id, id);
+      const deleted = await deleteConversation(app.prisma, getUserId(req), id);
       if (!deleted) {
         throw new AppError("CONVERSATION_NOT_FOUND");
       }
@@ -672,7 +662,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
       }
       const conversation = await exportConversation(
         app.prisma,
-        req.user.id,
+        getUserId(req),
         id
       );
       if (!conversation) {
@@ -681,7 +671,9 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
       if (parsed.data.format === "json") {
         return await reply.send(conversation);
       }
-      const text = formatConversationText(conversation);
+      const text = formatConversationText(
+        conversation as unknown as ExportedConversation
+      );
       return await reply.type("text/plain").send(text);
     }
   );
@@ -713,7 +705,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
       }
       const result = await listMessages(
         app.prisma,
-        req.user.id,
+        getUserId(req),
         id,
         parsed.data
       );
@@ -751,7 +743,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
       }
       const updated = await updateMessage(
         app.prisma,
-        req.user.id,
+        getUserId(req),
         id,
         messageId,
         parsed.data
@@ -780,7 +772,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
       const { id, messageId } = req.params as { id: string; messageId: string };
       const deleted = await deleteMessage(
         app.prisma,
-        req.user.id,
+        getUserId(req),
         id,
         messageId
       );

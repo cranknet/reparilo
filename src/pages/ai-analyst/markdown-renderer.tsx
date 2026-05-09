@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
+import type { PluggableList } from "unified";
 import "./code-highlight.css";
 
 type MdModule = typeof import("react-markdown");
-type PluginModule =
-  | typeof import("rehype-highlight")
-  | typeof import("remark-gfm");
 
 interface MarkdownRendererProps {
   className?: string;
@@ -17,8 +15,8 @@ export default function MarkdownRenderer({
 }: MarkdownRendererProps) {
   const [mod, setMod] = useState<{
     Markdown: MdModule["default"];
-    remarkPlugins: PluginModule[];
-    rehypePlugins: PluginModule[];
+    remarkPlugins: PluggableList;
+    rehypePlugins: PluggableList;
   } | null>(null);
 
   const [error, setError] = useState(false);
@@ -34,8 +32,8 @@ export default function MarkdownRenderer({
         if (!cancelled) {
           setMod({
             Markdown: md.default,
-            remarkPlugins: [remark.default],
-            rehypePlugins: [rehype.default],
+            remarkPlugins: [remark.default] as PluggableList,
+            rehypePlugins: [rehype.default] as PluggableList,
           });
         }
       })

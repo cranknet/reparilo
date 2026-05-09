@@ -29,14 +29,14 @@ export async function add(
 
   const jobPart = await createPartRepo(prisma, {
     category: input.category,
-    jobId,
-    partId: input.partId ?? null,
+    job: { connect: { id: jobId } },
+    part: input.partId ? { connect: { id: input.partId } } : undefined,
     partName: input.partName,
     quantity: input.quantity,
     supplier: input.supplier ?? null,
     totalCost,
     unitPrice: input.unitPrice,
-    createdById: userId,
+    createdBy: { connect: { id: userId } },
   });
 
   await createAuditLog(prisma, {

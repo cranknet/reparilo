@@ -1,4 +1,4 @@
-import type { AiSettings, PrismaClient } from "@generated/client";
+import type { AiSettings, Prisma, PrismaClient } from "@generated/client";
 import OpenAI from "openai";
 import { decryptSecret, isEncrypted } from "../lib/crypto.js";
 import { assembleSystemPrompt, getToolDefinitions } from "./context.js";
@@ -62,7 +62,7 @@ function emitContent(
 }
 
 function accumulateToolCallDelta(
-  tc: OpenAI.ChatCompletionChunk.ToolCall,
+  tc: OpenAI.ChatCompletionChunk.Choice.Delta.ToolCall,
   currentToolCall: { id: string; name: string; arguments: string } | null,
   toolCalls: ToolCallAccumulator[],
   controller: ReadableStreamDefaultController<Uint8Array>,
@@ -358,7 +358,10 @@ async function handleStreamCycle(
       role: "ASSISTANT",
       content: finalContent,
       agentName,
-      toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+      toolCalls:
+        toolCalls.length > 0
+          ? (toolCalls as unknown as Prisma.InputJsonValue)
+          : undefined,
     },
   });
 

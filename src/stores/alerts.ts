@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import api from "@/lib/api";
 
-interface InAppAlert {
+export interface InAppAlert {
   createdAt: string;
   id: string;
   job?: { id: string; jobCode: string } | null;

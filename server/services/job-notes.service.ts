@@ -34,10 +34,10 @@ export async function add(
 
   const note = await prisma.$transaction(async (tx) => {
     const created = await createNoteRepo(tx, {
-      jobId,
+      job: { connect: { id: jobId } },
       content: input.content,
       isCustomerVisible: input.isCustomerVisible,
-      createdById: userId,
+      createdBy: { connect: { id: userId } },
     });
 
     await createAuditLog(tx, {

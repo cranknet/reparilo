@@ -252,7 +252,7 @@ export async function create(
     prisma,
     { brandId_model: { brandId, model: input.deviceModel } },
     {},
-    { brandId, model: input.deviceModel }
+    { brand: { connect: { id: brandId } }, model: input.deviceModel }
   );
 
   const { accessCode, jobCode } = await generateJobCode(prisma);
@@ -471,7 +471,7 @@ export async function transitionStatus(
   const updated = await jobUpdate(
     prisma,
     id,
-    { status: newStatus, updatedById: userId },
+    { status: newStatus, updatedBy: { connect: { id: userId } } },
     JOB_INCLUDE
   );
 
@@ -602,7 +602,11 @@ export async function lookupByCode(
     return { job: null, jobExists: true };
   }
 
-  const payload = await buildJobLookupPayload(prisma, job.id, job);
+  const payload = await buildJobLookupPayload(
+    prisma,
+    job.id,
+    job as unknown as Parameters<typeof buildJobLookupPayload>[2]
+  );
   return { jobExists: true, job: payload };
 }
 
@@ -615,7 +619,11 @@ export async function lookupByCodeAuth(
     return null;
   }
 
-  return buildJobLookupPayload(prisma, job.id, job);
+  return buildJobLookupPayload(
+    prisma,
+    job.id,
+    job as unknown as Parameters<typeof buildJobLookupPayload>[2]
+  );
 }
 
 const STATUS_TEMPLATE_MAP: Record<string, string> = {

@@ -175,6 +175,7 @@ const rolePermissions: Record<RoleType, Record<string, string[]>> = {
     settings: ["view", "edit"],
     notifications: ["read", "send", "manage"],
     ai: ["access"],
+    dashboard: ["viewOwner", "viewTechnician", "viewFrontDesk"],
     user: [
       "list",
       "get",
@@ -211,6 +212,7 @@ const rolePermissions: Record<RoleType, Record<string, string[]>> = {
     reports: ["viewSelf"],
     notifications: ["read"],
     ai: ["access"],
+    dashboard: ["viewTechnician"],
     user: ["list", "get"],
   },
   FRONT_DESK: {
@@ -218,6 +220,7 @@ const rolePermissions: Record<RoleType, Record<string, string[]>> = {
     jobStatus: ["DELIVERED", "RETURNED", "CANCELLED"],
     customers: ["view", "create", "edit"],
     notifications: ["read", "send"],
+    dashboard: ["viewFrontDesk"],
     user: ["create", "list", "get", "update"],
   },
 };

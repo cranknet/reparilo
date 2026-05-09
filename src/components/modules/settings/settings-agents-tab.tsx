@@ -24,7 +24,7 @@ interface AgentDefinition {
 interface AgentFormData {
   displayName: string;
   enabledHostedTools: string[];
-  handoffKeywords: string[];
+  handoffKeywords: string;
   id?: string;
   instructions: string;
   isActive: boolean;
@@ -38,7 +38,7 @@ interface AgentFormData {
 const EMPTY_FORM: AgentFormData = {
   displayName: "",
   enabledHostedTools: [],
-  handoffKeywords: [],
+  handoffKeywords: "",
   instructions: "",
   isActive: true,
   model: "",

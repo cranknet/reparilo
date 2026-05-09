@@ -28,23 +28,52 @@ vi.mock("@/i18n", () => ({
   default: { t: (key: string) => key },
 }));
 
+import type { Job } from "@shared/types";
 import { useJobsStore } from "../jobs";
 
-function makeJob(overrides: Record<string, unknown> = {}) {
+function makeJob(overrides: Partial<Job> = {}): Job {
   return {
     id: "job-1",
-    status: "RECEIVED",
-    customerName: "John",
-    customerPhone: "123",
-    deviceBrand: "Apple",
-    deviceModel: "iPhone 15",
+    jobCode: "RPR-001",
+    status: "INTAKE",
+    accessCode: "1234",
+    color: null,
+    conditionNotes: null,
     reportedProblem: "Broken screen",
-    estimatedCost: 100,
+    estimatedCost: { toNumber: () => 100 } as unknown as Job["estimatedCost"],
+    estimatedDate: null,
+    depositAmount: null,
+    isWarrantyReturn: false,
+    createdAt: new Date("2025-01-01"),
+    updatedAt: new Date("2025-01-01"),
+    customer: {
+      id: "cust-1",
+      name: "John",
+      phone: "123",
+      email: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    device: {
+      id: "dev-1",
+      brandId: "brand-1",
+      model: "iPhone 15",
+      brand: {
+        id: "brand-1",
+        name: "Apple",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    technician: null,
+    photos: [],
     notes: [],
     partsUsed: [],
     repairs: [],
     ...overrides,
-  };
+  } as Job;
 }
 
 beforeEach(() => {
@@ -156,18 +185,18 @@ describe("useJobsStore", () => {
 
   describe("transitionStatus", () => {
     it("updates job status in list", async () => {
-      const updated = makeJob({ status: "DIAGNOSING" });
+      const updated = makeJob({ status: "IN_REPAIR" });
       useJobsStore.setState({ jobs: [makeJob()] });
       mockPatch.mockResolvedValue({ data: updated });
 
       const result = await act(() =>
-        useJobsStore.getState().transitionStatus("job-1", "DIAGNOSING")
+        useJobsStore.getState().transitionStatus("job-1", "IN_REPAIR")
       );
 
       expect(result).toEqual(updated);
-      expect(useJobsStore.getState().jobs[0].status).toBe("DIAGNOSING");
+      expect(useJobsStore.getState().jobs[0].status).toBe("IN_REPAIR");
       expect(mockPatch).toHaveBeenCalledWith("/jobs/job-1/status", {
-        status: "DIAGNOSING",
+        status: "IN_REPAIR",
         reason: undefined,
       });
     });
@@ -192,7 +221,11 @@ describe("useJobsStore", () => {
 
   describe("updateJob", () => {
     it("patches and updates job in list", async () => {
-      const updated = makeJob({ estimatedCost: 200 });
+      const updated = makeJob({
+        estimatedCost: {
+          toNumber: () => 200,
+        } as unknown as Job["estimatedCost"],
+      });
       useJobsStore.setState({ jobs: [makeJob()] });
       mockPatch.mockResolvedValue({ data: updated });
 
@@ -257,8 +290,14 @@ describe("useJobsStore", () => {
         jobs: [
           makeJob({
             partsUsed: [
-              { id: "part-1", partName: "Screen" },
-              { id: "part-2", partName: "Battery" },
+              {
+                id: "part-1",
+                partName: "Screen",
+              } as unknown as Job["partsUsed"][number],
+              {
+                id: "part-2",
+                partName: "Battery",
+              } as unknown as Job["partsUsed"][number],
             ],
           }),
         ],
@@ -305,8 +344,14 @@ describe("useJobsStore", () => {
         jobs: [
           makeJob({
             repairs: [
-              { id: "repair-1", repairName: "Screen" },
-              { id: "repair-2", repairName: "Battery" },
+              {
+                id: "repair-1",
+                repairName: "Screen",
+              } as unknown as Job["repairs"][number],
+              {
+                id: "repair-2",
+                repairName: "Battery",
+              } as unknown as Job["repairs"][number],
             ],
           }),
         ],
@@ -337,7 +382,7 @@ describe("useJobsStore", () => {
   describe("fetchJobById", () => {
     it("updates existing job in list", async () => {
       useJobsStore.setState({ jobs: [makeJob()] });
-      const updated = makeJob({ status: "DIAGNOSING" });
+      const updated = makeJob({ status: "IN_REPAIR" });
       mockGet.mockResolvedValue({ data: updated });
 
       const result = await act(() =>
@@ -346,7 +391,7 @@ describe("useJobsStore", () => {
 
       expect(result).toEqual(updated);
       expect(useJobsStore.getState().jobs).toHaveLength(1);
-      expect(useJobsStore.getState().jobs[0].status).toBe("DIAGNOSING");
+      expect(useJobsStore.getState().jobs[0].status).toBe("IN_REPAIR");
     });
 
     it("prepends new job when not in list", async () => {
