@@ -1,4 +1,3 @@
-import type { RoleType } from "@shared/constants/roles";
 import { AppError, throwIfError } from "@shared/errors/app-error.js";
 import {
   addJobNoteSchema,
@@ -45,7 +44,7 @@ import {
   remove as removeWaitingPart,
 } from "../services/job-waiting-parts.service.js";
 import { notify } from "../services/notification-dispatch.js";
-import { getUserId } from "../utils/request.js";
+import { getRole, getUserId } from "../utils/request.js";
 import { resolveZodErrors } from "../utils/resolve-validation-messages.js";
 
 const JOB_CODE_RE = /^[A-Za-z0-9-]+$/;
@@ -243,7 +242,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
       }
       const marginResult = await req.server.auth.api.userHasPermission({
         body: {
-          role: (req.user?.role ?? "") as RoleType,
+          role: getRole(req),
           permissions: { reports: ["viewMargin"] },
         },
       });
@@ -394,7 +393,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
 
       const permCheck = await app.auth.api.userHasPermission({
         body: {
-          role: req.user?.role as RoleType,
+          role: getRole(req),
           permissions: { jobStatus: [parsed.data.status] },
         },
       });
@@ -411,7 +410,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         userId,
         notifyCtx,
         {
-          requestingRole: req.user?.role as RoleType,
+          requestingRole: getRole(req),
           reason: parsed.data.reason,
         }
       );

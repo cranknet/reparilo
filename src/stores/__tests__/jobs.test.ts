@@ -234,7 +234,13 @@ describe("useJobsStore", () => {
       );
 
       expect(result).toEqual(updated);
-      expect(useJobsStore.getState().jobs[0].estimatedCost).toBe(200);
+      expect(
+        (
+          useJobsStore.getState().jobs[0].estimatedCost as {
+            toNumber: () => number;
+          }
+        ).toNumber()
+      ).toBe(200);
       expect(mockPatch).toHaveBeenCalledWith("/jobs/job-1", {
         estimatedCost: 200,
       });

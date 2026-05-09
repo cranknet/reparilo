@@ -41,7 +41,55 @@ const svc = vi.hoisted(() => ({
   waitingForPartsCount: vi.fn().mockResolvedValue(0),
 }));
 
+const auth = vi.hoisted(() => ({
+  api: {
+    userHasPermission: vi
+      .fn()
+      .mockImplementation(
+        ({
+          body,
+        }: {
+          body: { role: string; permissions: Record<string, string[]> };
+        }) => {
+          const permissionMap: Record<string, Record<string, string[]>> = {
+            OWNER: {
+              dashboard: ["viewOwner", "viewTechnician", "viewFrontDesk"],
+              reports: ["viewSelf", "viewShop", "viewMargin"],
+              parts: ["viewCost"],
+              jobs: ["view"],
+            },
+            TECHNICIAN: {
+              dashboard: ["viewTechnician"],
+              reports: ["viewSelf"],
+              parts: ["viewCost"],
+              jobs: ["view"],
+            },
+            FRONT_DESK: {
+              dashboard: ["viewFrontDesk"],
+              jobs: ["view"],
+            },
+          };
+          const rolePerms = permissionMap[body.role];
+          if (!rolePerms) {
+            return Promise.resolve({ success: false });
+          }
+          for (const [resource, actions] of Object.entries(body.permissions)) {
+            const allowed = rolePerms[resource];
+            if (!allowed) {
+              return Promise.resolve({ success: false });
+            }
+            if (!actions.every((a: string) => allowed.includes(a))) {
+              return Promise.resolve({ success: false });
+            }
+          }
+          return Promise.resolve({ success: true });
+        }
+      ),
+  },
+}));
+
 vi.mock("../services/dashboard.service.js", () => svc);
+vi.mock("../lib/auth.js", () => ({ createAuth: () => auth }));
 
 function buildApp(user: { id: string; role: string } | null) {
   const app = Fastify();
@@ -62,6 +110,7 @@ function buildApp(user: { id: string; role: string } | null) {
     job: { count: vi.fn().mockResolvedValue(0) },
     shopSettings: { findFirst: vi.fn().mockResolvedValue({ timezone: "UTC" }) },
   } as never);
+  app.decorate("auth", auth);
   app.addHook("onRequest", (req, _r, done) => {
     (req as { user: unknown }).user = user;
     done();

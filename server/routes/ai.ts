@@ -151,6 +151,7 @@ export const aiRoutes: FastifyPluginAsync = async (app) => {
     "/chat/stream",
     {
       preHandler: [requireAiEnabled],
+      requestTimeout: 0,
       schema: {
         tags: ["ai"],
         summary: "Stream chat message",

@@ -8,6 +8,7 @@ import {
   renderLabelHtml,
   renderReceiptHtml,
 } from "../services/receipt.service.js";
+import { getRole } from "../utils/request.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const receiptRoutes: FastifyPluginAsync = async (app) => {
@@ -45,7 +46,7 @@ export const receiptRoutes: FastifyPluginAsync = async (app) => {
 
       const costPerm = await req.server.auth.api.userHasPermission({
         body: {
-          role: req.user?.role as import("@shared/constants/roles").RoleType,
+          role: getRole(req),
           permissions: { parts: ["viewCost"] },
         },
       });
@@ -104,7 +105,7 @@ export const receiptRoutes: FastifyPluginAsync = async (app) => {
 
       const costPerm = await req.server.auth.api.userHasPermission({
         body: {
-          role: req.user?.role as import("@shared/constants/roles").RoleType,
+          role: getRole(req),
           permissions: { parts: ["viewCost"] },
         },
       });

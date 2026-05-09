@@ -1,4 +1,3 @@
-import type { RoleType } from "@shared/constants/roles";
 import { AppError } from "@shared/errors/app-error.js";
 import { reportsQuerySchema } from "@shared/schemas/reports.schema.js";
 import type { FastifyPluginAsync } from "fastify";
@@ -10,6 +9,7 @@ import {
   resolveRange,
   revenueReport,
 } from "../services/reports.service.js";
+import { getRole } from "../utils/request.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const reportsRoutes: FastifyPluginAsync = async (app) => {
@@ -36,7 +36,7 @@ export const reportsRoutes: FastifyPluginAsync = async (app) => {
 
       const marginResult = await req.server.auth.api.userHasPermission({
         body: {
-          role: (req.user?.role ?? "") as RoleType,
+          role: getRole(req),
           permissions: { reports: ["viewMargin"] },
         },
       });
@@ -73,7 +73,7 @@ export const reportsRoutes: FastifyPluginAsync = async (app) => {
 
       const shopResult = await req.server.auth.api.userHasPermission({
         body: {
-          role: (req.user?.role ?? "") as RoleType,
+          role: getRole(req),
           permissions: { reports: ["viewShop"] },
         },
       });
