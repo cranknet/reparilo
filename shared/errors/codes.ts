@@ -136,6 +136,10 @@ export const ERRORS = {
     status: 409,
     message: "errors.return_claim_rework_job_not_delivered",
   },
+  RETURN_CLAIM_REWORK_JOB_REQUIRED: {
+    status: 409,
+    message: "errors.return_claim_rework_job_required",
+  },
   INVALID_CLAIMED_LINE: { status: 400, message: "errors.invalid_claimed_line" },
   REFUND_EXCEEDS_ORIGINAL: {
     status: 400,

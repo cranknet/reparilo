@@ -88,9 +88,7 @@ describe("CreateWizardModal", () => {
       target: { value: "x" },
     });
     fireEvent.click(screen.getByRole("button", { name: WIZARD_NEXT_REGEX }));
-    fireEvent.click(
-      screen.getByRole("button", { name: WIZARD_REJECT_REGEX })
-    );
+    fireEvent.click(screen.getByRole("button", { name: WIZARD_REJECT_REGEX }));
     expect(onClose).toHaveBeenCalled();
     expect(onCreateNewPaidJob).toHaveBeenCalled();
   });

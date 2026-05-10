@@ -26,14 +26,27 @@ const CLAIM_INCLUDE = {
       technicianId: true,
       customer: { select: { id: true, name: true, phone: true } },
       device: { select: { id: true, brand: true, model: true } },
+      repairs: {
+        select: {
+          id: true,
+          repairName: true,
+          category: true,
+          price: true,
+          repair: { select: { warrantyDays: true } },
+        },
+      },
+      partsUsed: {
+        select: {
+          id: true,
+          partName: true,
+          category: true,
+          totalCost: true,
+        },
+      },
     },
   },
   reworkJob: {
-    select: {
-      id: true,
-      jobCode: true,
-      status: true,
-    },
+    select: { id: true, jobCode: true, status: true },
   },
   claimedJobRepair: {
     select: { id: true, repairName: true, category: true, price: true },
@@ -101,10 +114,51 @@ export async function create(
 /* ─── getById ──────────────────────────────────────────────────────────── */
 
 export async function getById(prisma: DbClient, id: string) {
-  return await prisma.returnClaim.findUnique({
+  const claim = await prisma.returnClaim.findUnique({
     where: { id },
     include: CLAIM_INCLUDE,
   });
+  if (!claim) {
+    return null;
+  }
+
+  // Hydrate warranty info: deliveredAt + claimed line's effective warranty days
+  const [shopSettings, deliveredAuditLog] = await Promise.all([
+    prisma.shopSettings.findFirst({ select: { defaultWarrantyDays: true } }),
+    prisma.auditLog.findFirst({
+      where: {
+        jobId: claim.originalJob.id,
+        action: "STATUS_CHANGED",
+        toValue: "DELIVERED",
+      },
+      orderBy: { createdAt: "asc" },
+      select: { createdAt: true },
+    }),
+  ]);
+
+  const defaultDays = shopSettings?.defaultWarrantyDays ?? 30;
+  const claimedRepairId = claim.claimedJobRepair?.id ?? null;
+  const claimedRepair = claim.originalJob.repairs.find(
+    (r) => r.id === claimedRepairId
+  );
+  const claimedLineWarrantyDays =
+    claimedRepair?.repair?.warrantyDays ?? defaultDays;
+
+  const deliveredAt = deliveredAuditLog?.createdAt ?? null;
+  const isInWarrantyAtOpen =
+    deliveredAt === null
+      ? false
+      : (claim.openedAt.getTime() - deliveredAt.getTime()) / 86_400_000 <=
+        claimedLineWarrantyDays;
+
+  return {
+    ...claim,
+    warrantyInfo: {
+      deliveredAt,
+      claimedLineWarrantyDays,
+      isInWarrantyAtOpen,
+    },
+  };
 }
 
 /* ─── list ─────────────────────────────────────────────────────────────── */
@@ -184,40 +238,40 @@ export async function spawnRework(
   claimId: string,
   technicianId: string
 ): Promise<ServiceResult<{ claimId: string; reworkJobId: string }>> {
-  const claim = await prisma.returnClaim.findUnique({
-    where: { id: claimId },
-    select: {
-      id: true,
-      status: true,
-      reworkJobId: true,
-      originalJobId: true,
-      returnReason: true,
-      originalJob: {
-        select: {
-          customerId: true,
-          deviceId: true,
-          device: {
-            select: { brand: { select: { name: true } }, model: true },
+  return await prisma.$transaction(async (tx) => {
+    const claim = await tx.returnClaim.findUnique({
+      where: { id: claimId },
+      select: {
+        id: true,
+        status: true,
+        reworkJobId: true,
+        originalJobId: true,
+        returnReason: true,
+        originalJob: {
+          select: {
+            customerId: true,
+            deviceId: true,
+            device: {
+              select: { brand: { select: { name: true } }, model: true },
+            },
+            customer: { select: { name: true, phone: true } },
           },
-          customer: { select: { name: true, phone: true } },
         },
       },
-    },
-  });
+    });
 
-  if (!claim) {
-    return { error: "RETURN_CLAIM_NOT_FOUND" };
-  }
-  if (claim.status !== "OPEN") {
-    return { error: "RETURN_CLAIM_NOT_OPEN" };
-  }
-  if (claim.reworkJobId) {
-    return { error: "RETURN_CLAIM_HAS_REWORK_JOB" };
-  }
+    if (!claim) {
+      return { error: "RETURN_CLAIM_NOT_FOUND" };
+    }
+    if (claim.status !== "OPEN") {
+      return { error: "RETURN_CLAIM_NOT_OPEN" };
+    }
+    if (claim.reworkJobId) {
+      return { error: "RETURN_CLAIM_HAS_REWORK_JOB" };
+    }
 
-  return await prisma.$transaction(async (tx) => {
     const reworkJobResult = await createJob(
-      tx as DbClient,
+      tx as unknown as PrismaClient,
       {
         customerId: claim.originalJob.customerId,
         customerName: claim.originalJob.customer.name,
@@ -230,7 +284,7 @@ export async function spawnRework(
         warrantyForJobId: claim.originalJobId,
       },
       technicianId,
-      { wsBroadcast: undefined } as never
+      { prisma: tx as unknown as PrismaClient }
     );
 
     if (
@@ -311,7 +365,7 @@ export async function resolve(
 
   if (REWORK_OUTCOMES.has(input.resolutionOutcome)) {
     if (!(claim.reworkJobId && claim.reworkJob)) {
-      return { error: "RETURN_CLAIM_REWORK_JOB_NOT_DELIVERED" };
+      return { error: "RETURN_CLAIM_REWORK_JOB_REQUIRED" };
     }
     if (claim.reworkJob.status !== "DELIVERED") {
       return { error: "RETURN_CLAIM_REWORK_JOB_NOT_DELIVERED" };

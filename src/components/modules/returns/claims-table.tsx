@@ -4,19 +4,17 @@ import type { ReturnClaimListItem } from "@/types/return-claim";
 
 interface Props {
   items: ReturnClaimListItem[];
-  total: number;
-  page: number;
   limit: number;
   onPageChange: (page: number) => void;
+  page: number;
+  total: number;
 }
 
 function ageDays(openedAt: string, resolvedAt: string | null): number {
   const end = resolvedAt ? new Date(resolvedAt) : new Date();
   return Math.max(
     0,
-    Math.floor(
-      (end.getTime() - new Date(openedAt).getTime()) / 86_400_000,
-    ),
+    Math.floor((end.getTime() - new Date(openedAt).getTime()) / 86_400_000)
   );
 }
 
@@ -32,10 +30,10 @@ export default function ClaimsTable({
   if (items.length === 0) {
     return (
       <div className="rounded-lg border border-outline-variant bg-surface-container p-10 text-center">
-        <p className="text-lg font-medium text-on-surface">
+        <p className="font-medium text-lg text-on-surface">
           {t("returns_list_empty_title")}
         </p>
-        <p className="mt-1 text-sm text-on-surface-variant">
+        <p className="mt-1 text-on-surface-variant text-sm">
           {t("returns_list_empty_desc")}
         </p>
       </div>
@@ -68,13 +66,10 @@ export default function ClaimsTable({
         </thead>
         <tbody className="divide-y divide-outline-variant bg-surface">
           {items.map((it) => (
-            <tr key={it.id} className="hover:bg-surface-container">
+            <tr className="hover:bg-surface-container" key={it.id}>
               <td className="px-3 py-2">{fmtDate(it.openedAt)}</td>
               <td className="px-3 py-2">
-                <Link
-                  className="underline"
-                  to={`/jobs/${it.originalJob.id}`}
-                >
+                <Link className="underline" to={`/jobs/${it.originalJob.id}`}>
                   {it.originalJob.jobCode}
                 </Link>
               </td>
@@ -107,22 +102,22 @@ export default function ClaimsTable({
         </tbody>
       </table>
 
-      <nav className="flex items-center justify-between border-t border-outline-variant bg-surface-container px-3 py-2 text-sm">
+      <nav className="flex items-center justify-between border-outline-variant border-t bg-surface-container px-3 py-2 text-sm">
         <span>{`${(page - 1) * limit + 1}–${Math.min(page * limit, total)} / ${total}`}</span>
         <div className="flex gap-2">
           <button
-            type="button"
             className="rounded border border-outline-variant px-2 py-1 disabled:opacity-50"
-            onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
+            onClick={() => onPageChange(page - 1)}
+            type="button"
           >
             ‹
           </button>
           <button
-            type="button"
             className="rounded border border-outline-variant px-2 py-1 disabled:opacity-50"
-            onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages}
+            onClick={() => onPageChange(page + 1)}
+            type="button"
           >
             ›
           </button>

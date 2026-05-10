@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useReturnClaimsList } from "@/hooks/use-return-claims";
-import type { ListClaimsParams } from "@/types/return-claim";
 import ClaimsFilters from "@/components/modules/returns/claims-filters";
 import ClaimsTable from "@/components/modules/returns/claims-table";
+import { useReturnClaimsList } from "@/hooks/use-return-claims";
+import type { ListClaimsParams } from "@/types/return-claim";
 
 export default function ReturnsListPage() {
   const { t } = useTranslation();
@@ -17,7 +17,7 @@ export default function ReturnsListPage() {
   return (
     <div className="space-y-6 p-4 md:p-6">
       <header>
-        <h1 className="text-2xl font-bold text-on-surface">
+        <h1 className="font-bold text-2xl text-on-surface">
           {t("returns_list_title")}
         </h1>
         <p className="mt-1 text-on-surface-variant">
@@ -25,7 +25,7 @@ export default function ReturnsListPage() {
         </p>
       </header>
 
-      <ClaimsFilters value={filters} onChange={setFilters} />
+      <ClaimsFilters onChange={setFilters} value={filters} />
 
       {isLoading ? (
         <div className="rounded-lg border border-outline-variant p-6 text-center text-on-surface-variant">
@@ -34,10 +34,10 @@ export default function ReturnsListPage() {
       ) : (
         <ClaimsTable
           items={data?.items ?? []}
-          total={data?.total ?? 0}
-          page={filters.page ?? 1}
           limit={filters.limit ?? 20}
           onPageChange={(page) => setFilters((f) => ({ ...f, page }))}
+          page={filters.page ?? 1}
+          total={data?.total ?? 0}
         />
       )}
     </div>

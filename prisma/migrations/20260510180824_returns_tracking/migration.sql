@@ -53,6 +53,9 @@ ALTER TABLE "return_claims" ADD CONSTRAINT "return_claims_reworkJobId_fkey"
 ALTER TABLE "return_claims" ADD CONSTRAINT "return_claims_openedById_fkey"
     FOREIGN KEY ("openedById") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
+-- resolvedById uses SET NULL intentionally: when a resolving user is deleted,
+-- the claim record must remain intact (it's a business artifact), but the
+-- resolver reference is simply nulled rather than preventing user deletion.
 ALTER TABLE "return_claims" ADD CONSTRAINT "return_claims_resolvedById_fkey"
     FOREIGN KEY ("resolvedById") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 

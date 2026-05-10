@@ -17,7 +17,7 @@ vi.mock("../notification-dispatch.js", () => ({ notify: vi.fn() }));
 type AnyFn = ReturnType<typeof vi.fn>;
 
 function mockPrisma() {
-  return {
+  const mock = {
     job: { findUnique: vi.fn(), update: vi.fn() } as Record<string, AnyFn>,
     jobRepair: { findUnique: vi.fn() } as Record<string, AnyFn>,
     jobPart: { findUnique: vi.fn() } as Record<string, AnyFn>,
@@ -29,17 +29,25 @@ function mockPrisma() {
       count: vi.fn(),
       update: vi.fn(),
     } as Record<string, AnyFn>,
-    $transaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) =>
-      fn(undefined)
-    ),
+    shopSettings: { findFirst: vi.fn() } as Record<string, AnyFn>,
+    auditLog: { findFirst: vi.fn() } as Record<string, AnyFn>,
+    $transaction: vi.fn() as AnyFn,
   } as unknown as {
     job: Record<string, AnyFn>;
     jobRepair: Record<string, AnyFn>;
     jobPart: Record<string, AnyFn>;
     jobPhoto: Record<string, AnyFn>;
     returnClaim: Record<string, AnyFn>;
+    shopSettings: Record<string, AnyFn>;
+    auditLog: Record<string, AnyFn>;
     $transaction: AnyFn;
   };
+
+  mock.$transaction = vi.fn(async (fn: (tx: unknown) => Promise<unknown>) =>
+    fn(mock)
+  );
+
+  return mock;
 }
 
 describe("create", () => {
@@ -164,10 +172,19 @@ describe("getById", () => {
   });
 
   it("returns claim with relations when found", async () => {
-    const claim = { id: "rc-1", status: "OPEN", originalJobId: "job-1" };
+    const claim = {
+      id: "rc-1",
+      status: "OPEN",
+      originalJob: { id: "job-1", jobCode: "RPR-001", repairs: [] },
+      openedAt: new Date(),
+    };
     prisma.returnClaim.findUnique.mockResolvedValue(claim);
+    prisma.shopSettings.findFirst.mockResolvedValue({
+      defaultWarrantyDays: 30,
+    });
+    prisma.auditLog.findFirst.mockResolvedValue(null);
     const result = await getById(prisma as never, "rc-1");
-    expect(result).toBe(claim);
+    expect(result).toMatchObject({ id: "rc-1" });
     expect(prisma.returnClaim.findUnique).toHaveBeenCalledWith({
       where: { id: "rc-1" },
       include: expect.any(Object),
@@ -386,6 +403,27 @@ describe("resolve", () => {
     );
 
     expect(result).toEqual({ error: "RETURN_CLAIM_FAULT_REQUIRED" });
+  });
+
+  it("returns RETURN_CLAIM_REWORK_JOB_REQUIRED when no rework job exists", async () => {
+    prisma.returnClaim.findUnique.mockResolvedValue({
+      id: "rc-1",
+      status: "OPEN",
+      faultCategory: "WORKMANSHIP",
+      reworkJobId: null,
+      reworkJob: null,
+      originalJobId: "job-1",
+      originalJob: { jobCode: "RPR-001" },
+    });
+
+    const result = await resolve(
+      prisma as never,
+      "rc-1",
+      { resolutionOutcome: "REWORK_FREE" },
+      "user-1"
+    );
+
+    expect(result).toEqual({ error: "RETURN_CLAIM_REWORK_JOB_REQUIRED" });
   });
 
   it("returns RETURN_CLAIM_REWORK_JOB_NOT_DELIVERED when rework job not delivered", async () => {
@@ -652,5 +690,47 @@ describe("removePhoto", () => {
     });
     const result = await removePhoto(prisma as never, "rc-1", "ph-1");
     expect(result).toEqual({ error: "RETURN_CLAIM_NOT_OPEN" });
+  });
+});
+
+describe("getById warranty hydration", () => {
+  let prisma: ReturnType<typeof mockPrisma>;
+
+  beforeEach(() => {
+    prisma = mockPrisma();
+  });
+
+  it("includes deliveredAt + isInWarranty on the claim", async () => {
+    const deliveredAt = new Date("2026-04-01T10:00:00Z");
+    prisma.returnClaim.findUnique.mockResolvedValue({
+      id: "rc-1",
+      status: "OPEN",
+      openedAt: new Date("2026-04-15T10:00:00Z"),
+      originalJob: {
+        id: "job-1",
+        jobCode: "RPR-001",
+        repairs: [
+          { id: "jr-1", repairName: "Screen", repair: { warrantyDays: 60 } },
+          { id: "jr-2", repairName: "Battery", repair: { warrantyDays: null } },
+        ],
+      },
+      claimedJobRepair: { id: "jr-1" },
+      claimedJobPart: null,
+    });
+    prisma.shopSettings.findFirst.mockResolvedValue({
+      defaultWarrantyDays: 30,
+    });
+    prisma.auditLog.findFirst.mockResolvedValue({ createdAt: deliveredAt });
+
+    const result = await getById(prisma as never, "rc-1");
+
+    expect(result).toMatchObject({
+      id: "rc-1",
+      warrantyInfo: {
+        deliveredAt,
+        claimedLineWarrantyDays: 60,
+        isInWarrantyAtOpen: true,
+      },
+    });
   });
 });

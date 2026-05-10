@@ -865,6 +865,26 @@ describe("RBAC Matrix", () => {
     });
 
     describe("PATCH /api/return-claims/:id/triage", () => {
+      it("allows OWNER to triage claims", async () => {
+        const app = buildApp("user-1", Role.OWNER);
+        const res = await app.inject({
+          method: "PATCH",
+          url: "/api/return-claims/rc-1/triage",
+          payload: { faultCategory: "WORKMANSHIP" },
+        });
+        expect(res.statusCode).not.toBe(403);
+      });
+
+      it("allows TECHNICIAN to triage claims", async () => {
+        const app = buildApp("user-1", Role.TECHNICIAN);
+        const res = await app.inject({
+          method: "PATCH",
+          url: "/api/return-claims/rc-1/triage",
+          payload: { faultCategory: "WORKMANSHIP" },
+        });
+        expect(res.statusCode).not.toBe(403);
+      });
+
       it("blocks FRONT_DESK from triaging claims", async () => {
         const app = buildApp("user-1", Role.FRONT_DESK);
         const res = await app.inject({
