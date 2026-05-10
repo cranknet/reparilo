@@ -73,7 +73,7 @@ const PARTS_ALERTS_EMPTY: Array<{
 export default function TechnicianDashboardPage() {
   const { i18n, t } = useTranslation();
   const { metrics, fetchMetrics } = useJobsStore();
-  const { techData, fetchTechnician } = useDashboardStore();
+  const { techData, techLoading, fetchTechnician } = useDashboardStore();
 
   useEffect(() => {
     fetchMetrics().catch(() => {
@@ -179,6 +179,16 @@ export default function TechnicianDashboardPage() {
       threshold: p.reorderLevel,
     }));
   }, [techData?.partsAlerts]);
+
+  if (!techData && techLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <span className="material-symbols-outlined animate-spin text-4xl text-primary">
+          progress_activity
+        </span>
+      </div>
+    );
+  }
 
   return (
     <>

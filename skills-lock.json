@@ -36,6 +36,12 @@
       "sourceType": "github",
       "computedHash": "42877142fcc51dcc6be696349aa7df8887eb29510e2a5868beac913f5f84de31"
     },
+    "code-review": {
+      "source": "coderabbitai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/code-review/SKILL.md",
+      "computedHash": "6d117c3f8797e0c770c6b00a646a07028f3440b5d8042e8f841e88ed1116788f"
+    },
     "colorize": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
@@ -81,7 +87,7 @@
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "skillPath": ".agents/skills/impeccable/SKILL.md",
-      "computedHash": "e320c6a95802882f0748be495150aaafccd2cce59a323d79cb50a3201c3bde75"
+      "computedHash": "15ca2efbf646ed89e85f56470d2a6bbe96268134b7e1e2ce9908ecf3d672119c"
     },
     "layout": {
       "source": "pbakaus/impeccable",

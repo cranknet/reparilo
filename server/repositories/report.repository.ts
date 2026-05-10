@@ -1,14 +1,10 @@
-import type { PrismaClient } from "@generated/client";
 import { Prisma } from "@generated/client";
 import type { DbClient } from "./types.js";
 
 type JobWhereInput = Prisma.JobWhereInput;
 type AuditLogWhereInput = Prisma.AuditLogWhereInput;
 
-export function aggregateJobRevenue(
-  prisma: PrismaClient,
-  where: JobWhereInput
-) {
+export function aggregateJobRevenue(prisma: DbClient, where: JobWhereInput) {
   const statusFilter =
     where.status &&
     typeof where.status === "object" &&
@@ -30,19 +26,21 @@ export function aggregateJobRevenue(
     ${
       where.auditLogs
         ? Prisma.sql`
-    INNER JOIN "audit_logs" al ON al."jobId" = j."id"
-      AND al."action" = 'STATUS_CHANGED'
-      AND al."toValue" IN ('DONE', 'DELIVERED')
-      AND al."createdAt" >= ${
-        (where.auditLogs as { some: { createdAt: { gte: Date } } }).some
-          .createdAt.gte
-      } AND al."createdAt" < ${
-        (where.auditLogs as { some: { createdAt: { lt: Date } } }).some
-          .createdAt.lt
-      }`
-        : Prisma.empty
+    WHERE EXISTS (
+      SELECT 1 FROM "audit_logs" al
+      WHERE al."jobId" = j."id"
+        AND al."action" = 'STATUS_CHANGED'
+        AND al."toValue" IN ('DONE', 'DELIVERED')
+        AND al."createdAt" >= ${
+          (where.auditLogs as { some: { createdAt: { gte: Date } } }).some
+            .createdAt.gte
+        } AND al."createdAt" < ${
+          (where.auditLogs as { some: { createdAt: { lt: Date } } }).some
+            .createdAt.lt
+        }
+    )`
+        : Prisma.sql`WHERE 1=1`
     }
-    WHERE 1=1
     ${
       statusFilter
         ? Prisma.sql`AND j."status" IN (${Prisma.join(statusFilter)})`

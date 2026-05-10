@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Can } from "@/components/modules/can";
+import { useCan } from "@/hooks/use-can";
 import { useJobsStore } from "@/stores/jobs";
 
 interface JobWaitingPartsSectionProps {
@@ -18,6 +19,7 @@ export default function JobWaitingPartsSection({
   const { t } = useTranslation();
   const addWaitingPart = useJobsStore((s) => s.addWaitingPart);
   const removeWaitingPart = useJobsStore((s) => s.removeWaitingPart);
+  const canEdit = useCan({ jobs: ["edit"] });
   const [partName, setPartName] = useState("");
   const [supplier, setSupplier] = useState("");
   const [adding, setAdding] = useState(false);
@@ -72,10 +74,11 @@ export default function JobWaitingPartsSection({
       {!isTerminal && (
         <div className="mb-3 flex flex-col gap-2 sm:flex-row">
           <input
+            aria-label={t("jobs_waiting_parts_part_name")}
             className="flex-1 rounded-lg bg-surface-container-highest px-3 py-2 text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary/30"
             onChange={(e) => setPartName(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === "Enter" && canEdit && partName.trim() && !adding) {
                 handleAdd();
               }
             }}
@@ -84,10 +87,11 @@ export default function JobWaitingPartsSection({
             value={partName}
           />
           <input
+            aria-label={t("jobs_waiting_parts_supplier")}
             className="flex-1 rounded-lg bg-surface-container-highest px-3 py-2 text-on-surface text-sm placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary/30"
             onChange={(e) => setSupplier(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === "Enter" && canEdit && partName.trim() && !adding) {
                 handleAdd();
               }
             }}
@@ -139,16 +143,18 @@ export default function JobWaitingPartsSection({
                 )}
               </div>
               {!isTerminal && (
-                <button
-                  className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
-                  onClick={() => handleRemove(wp.id)}
-                  title={t("jobs_waiting_parts_remove")}
-                  type="button"
-                >
-                  <span className="material-symbols-outlined text-sm">
-                    close
-                  </span>
-                </button>
+                <Can perm={{ jobs: ["edit"] }}>
+                  <button
+                    className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-error-container hover:text-on-error-container"
+                    onClick={() => handleRemove(wp.id)}
+                    title={t("jobs_waiting_parts_remove")}
+                    type="button"
+                  >
+                    <span className="material-symbols-outlined text-sm">
+                      close
+                    </span>
+                  </button>
+                </Can>
               )}
             </div>
           ))}

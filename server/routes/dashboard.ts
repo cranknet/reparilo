@@ -105,7 +105,7 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
         recentActivityForTech(app.prisma, scope.userId, 20),
         avgRepairTimeHours(app.prisma, scope.userId, 30),
         priorityActionsForTech(app.prisma, scope.userId),
-        partsAlertsForTech(app.prisma, 10),
+        partsAlertsForTech(app.prisma, 10, scope.userId),
       ]);
       const myActiveJobs =
         pipeline.INTAKE +

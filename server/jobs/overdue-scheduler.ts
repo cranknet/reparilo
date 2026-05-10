@@ -20,19 +20,25 @@ async function processOverdueJobs(app: FastifyInstance): Promise<void> {
     },
   });
 
-  for (const job of overdue) {
-    await notify(app, {
-      context: { jobCode: job.jobCode },
-      eventName: "job_overdue",
-      jobId: job.id,
-      recipients: { role: Role.OWNER },
-    }).catch(() => {
-      return;
-    });
-    await app.prisma.job.update({
-      data: { lastOverdueAlertAt: new Date() },
-      where: { id: job.id },
-    });
+  const results = await Promise.allSettled(
+    overdue.map((job) =>
+      notify(app, {
+        context: { jobCode: job.jobCode },
+        eventName: "job_overdue",
+        jobId: job.id,
+        recipients: { role: Role.OWNER },
+      }).then(() =>
+        app.prisma.job.update({
+          data: { lastOverdueAlertAt: new Date() },
+          where: { id: job.id },
+        })
+      )
+    )
+  );
+  for (const r of results) {
+    if (r.status === "rejected") {
+      app.log.warn({ err: r.reason }, "failed to send overdue notification");
+    }
   }
 }
 

@@ -141,7 +141,7 @@ export default function QuickIntakeForm() {
                 placeholder="0"
                 step="0.01"
                 type="number"
-                value={estimatedCost || ""}
+                value={estimatedCost}
               />
             </div>
           </div>

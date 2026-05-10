@@ -14,14 +14,22 @@ interface DashboardState {
   fetchFrontDesk: () => Promise<void>;
   fetchTechnician: () => Promise<void>;
   frontDeskData: FrontDeskDashboardDTO | null;
+  frontDeskError: string | null;
+  frontDeskLoading: boolean;
   isLoading: boolean;
   techData: TechnicianDashboardDTO | null;
+  techError: string | null;
+  techLoading: boolean;
 }
 
 export const useDashboardStore = create<DashboardState>((set) => ({
   data: null,
   frontDeskData: null,
+  frontDeskError: null,
+  frontDeskLoading: false,
   techData: null,
+  techError: null,
+  techLoading: false,
   isLoading: false,
   error: null,
 
@@ -37,30 +45,32 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   },
 
   fetchFrontDesk: async () => {
-    set({ isLoading: true, error: null });
+    set({ frontDeskLoading: true, frontDeskError: null });
     try {
       const res = await api.get("/dashboard/front-desk");
       set({
         frontDeskData: res.data as FrontDeskDashboardDTO,
-        isLoading: false,
+        frontDeskLoading: false,
       });
     } catch (err: unknown) {
       set({
-        error: getErrorMessage(err, i18n.t("errors.fetch_front_desk")),
-        isLoading: false,
+        frontDeskData: null,
+        frontDeskError: getErrorMessage(err, i18n.t("errors.fetch_front_desk")),
+        frontDeskLoading: false,
       });
     }
   },
 
   fetchTechnician: async () => {
-    set({ isLoading: true, error: null });
+    set({ techLoading: true, techError: null });
     try {
       const res = await api.get("/dashboard/technician");
-      set({ techData: res.data as TechnicianDashboardDTO, isLoading: false });
+      set({ techData: res.data as TechnicianDashboardDTO, techLoading: false });
     } catch (err: unknown) {
       set({
-        error: getErrorMessage(err, i18n.t("errors.fetch_technician")),
-        isLoading: false,
+        techData: null,
+        techError: getErrorMessage(err, i18n.t("errors.fetch_technician")),
+        techLoading: false,
       });
     }
   },

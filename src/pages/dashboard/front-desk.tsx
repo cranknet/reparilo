@@ -29,7 +29,8 @@ export default function FrontDeskPage() {
   const { i18n: i18nInstance, t } = useTranslation();
   const lang = i18nInstance.language;
   const { jobs, isLoadingJobs, fetchJobs } = useJobsStore();
-  const { frontDeskData, fetchFrontDesk } = useDashboardStore();
+  const { frontDeskData, frontDeskLoading, fetchFrontDesk } =
+    useDashboardStore();
 
   useEffect(() => {
     fetchJobs();
@@ -164,7 +165,7 @@ export default function FrontDeskPage() {
       }));
   }, [frontDeskData?.activeRepairs]);
 
-  if (isLoadingJobs && jobs.length === 0) {
+  if ((frontDeskLoading || isLoadingJobs) && jobs.length === 0) {
     return (
       <div className="flex items-center justify-center py-20">
         <span className="material-symbols-outlined animate-spin text-4xl text-primary">
@@ -236,7 +237,9 @@ export default function FrontDeskPage() {
               },
               {
                 labelKey: "front_desk.completed_today",
-                value: String(frontDeskData?.todayOverview.completedToday ?? 0),
+                value: String(
+                  frontDeskData?.todayOverview?.completedToday ?? 0
+                ),
               },
             ]}
           />

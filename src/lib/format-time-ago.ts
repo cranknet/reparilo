@@ -1,9 +1,15 @@
 import i18n from "@/i18n";
 
 export function formatTimeAgo(date: Date | string): string {
-  const now = Date.now();
   const then = new Date(date).getTime();
+  if (!Number.isFinite(then)) {
+    return "";
+  }
+  const now = Date.now();
   const diffMs = now - then;
+  if (diffMs < 0) {
+    return i18n.t("time_ago.just_now");
+  }
   const diffMin = Math.floor(diffMs / 60_000);
   if (diffMin < 1) {
     return i18n.t("time_ago.just_now");

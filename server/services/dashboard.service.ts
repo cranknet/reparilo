@@ -276,28 +276,34 @@ export async function recentActivityForTech(
   }));
 }
 
-export async function avgRepairTimeHours(
+async function calculateAvgRepairTime(
   prisma: DbClient,
-  userId: string,
+  whereClause: Record<string, unknown>,
   days: number
 ): Promise<number> {
   const since = new Date(Date.now() - days * 86_400_000);
   const rows = await findRepairTimeJobs(prisma, {
     status: JobStatus.DELIVERED,
-    technicianId: userId,
     updatedAt: { gte: since },
+    ...whereClause,
   });
   if (rows.length === 0) {
     return 0;
   }
-  const hours =
-    rows.reduce(
-      (acc, r) => acc + (r.updatedAt.getTime() - r.createdAt.getTime()),
-      0
-    ) /
-    rows.length /
-    3_600_000;
-  return Math.round(hours * 10) / 10;
+  const totalHours = rows.reduce(
+    (sum, j) =>
+      sum + (j.updatedAt.getTime() - j.createdAt.getTime()) / 3_600_000,
+    0
+  );
+  return Math.round((totalHours / rows.length) * 10) / 10;
+}
+
+export async function avgRepairTimeHours(
+  prisma: DbClient,
+  userId: string,
+  days: number
+): Promise<number> {
+  return await calculateAvgRepairTime(prisma, { technicianId: userId }, days);
 }
 
 export async function avgRepairTimeHoursShop(
@@ -305,23 +311,7 @@ export async function avgRepairTimeHoursShop(
   scope: Scope,
   days: number
 ): Promise<number> {
-  const since = new Date(Date.now() - days * 86_400_000);
-  const rows = await findRepairTimeJobs(prisma, {
-    ...scopeWhere(scope),
-    status: JobStatus.DELIVERED,
-    updatedAt: { gte: since },
-  });
-  if (rows.length === 0) {
-    return 0;
-  }
-  const hours =
-    rows.reduce(
-      (acc, r) => acc + (r.updatedAt.getTime() - r.createdAt.getTime()),
-      0
-    ) /
-    rows.length /
-    3_600_000;
-  return Math.round(hours * 10) / 10;
+  return await calculateAvgRepairTime(prisma, scopeWhere(scope), days);
 }
 
 export async function priorityActionsForTech(
@@ -536,7 +526,8 @@ export async function waitingForPartsCount(
 
 export async function partsAlertsForTech(
   prisma: DbClient,
-  limit: number
+  limit: number,
+  _userId?: string
 ): Promise<
   Array<{
     id: string;
