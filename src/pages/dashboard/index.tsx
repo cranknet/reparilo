@@ -136,17 +136,26 @@ function MetricsGrid({
     if (!(canViewShop && data)) {
       return;
     }
+    let cancelled = false;
     api
       .get("/reports/returns?range=month")
       .then((res) => {
+        if (cancelled) {
+          return;
+        }
         const cost = res.data?.summary?.netWarrantyCost;
         if (typeof cost === "number" && cost > 0) {
           setWarrantyCost(cost);
         }
       })
       .catch(() => {
-        setWarrantyCost(null);
+        if (!cancelled) {
+          setWarrantyCost(null);
+        }
       });
+    return () => {
+      cancelled = true;
+    };
   }, [canViewShop, data]);
 
   const revenueChangePct = data?.revenueChangePct ?? 0;
@@ -225,7 +234,7 @@ function MetricsGrid({
         {warrantyCost !== null && (
           <p className="mt-1 text-on-surface-variant text-xs">
             {t("dashboard_page.warranty_cost_inline", {
-              amount: warrantyCost.toLocaleString(),
+              amount: String(warrantyCost),
             })}
           </p>
         )}

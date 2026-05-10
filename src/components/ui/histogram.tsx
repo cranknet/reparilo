@@ -4,14 +4,19 @@ interface HistogramBar {
 }
 
 interface HistogramProps {
+  ariaLabel?: string;
   bars: HistogramBar[];
 }
 
-export function Histogram({ bars }: HistogramProps) {
+export function Histogram({ ariaLabel, bars }: HistogramProps) {
   const maxCount = Math.max(...bars.map((b) => b.count), 1);
 
   return (
-    <div className="flex items-end gap-2" role="img">
+    <div
+      aria-label={ariaLabel ?? "Histogram"}
+      className="flex items-end gap-2"
+      role="img"
+    >
       {bars.map((bar) => {
         const heightPct = (bar.count / maxCount) * 100;
         return (
@@ -23,7 +28,8 @@ export function Histogram({ bars }: HistogramProps) {
               className="w-full rounded-t-md bg-tertiary transition-all"
               role="presentation"
               style={{
-                height: `${Math.max(heightPct, bar.count > 0 ? 4 : 0)}px`,
+                height: `${heightPct}%`,
+                minHeight: bar.count > 0 ? "4px" : "0",
               }}
               title={`${bar.label}: ${bar.count}`}
             />

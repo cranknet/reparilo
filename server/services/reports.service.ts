@@ -642,8 +642,9 @@ async function computeTimeToReturn(
   for (const claim of claimsWithDelivery) {
     const deliveryDate = claim.originalJob.auditLogs[0]?.createdAt;
     if (deliveryDate) {
-      const days =
+      const rawDays =
         (claim.openedAt.getTime() - deliveryDate.getTime()) / 86_400_000;
+      const days = Math.max(0, rawDays);
       totalTimeToReturn += days;
       timeToReturnCount++;
       ttrBuckets[ttrBucket(days)]++;
@@ -655,8 +656,9 @@ async function computeTimeToReturn(
   for (const claim of prevClaimsWithDelivery) {
     const deliveryDate = claim.originalJob.auditLogs[0]?.createdAt;
     if (deliveryDate) {
-      prevTotalTimeToReturn +=
+      const rawDays =
         (claim.openedAt.getTime() - deliveryDate.getTime()) / 86_400_000;
+      prevTotalTimeToReturn += Math.max(0, rawDays);
       prevTimeToReturnCount++;
     }
   }

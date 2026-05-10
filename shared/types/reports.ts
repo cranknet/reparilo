@@ -102,7 +102,7 @@ export interface ReturnByRepairRow {
 
 export interface ReturnByTechnicianRow {
   claimsCount: number;
-  dominantFault: string;
+  dominantFault?: string;
   jobsDelivered: number;
   returnRate: number;
   technicianId: string;
