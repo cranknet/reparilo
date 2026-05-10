@@ -160,6 +160,12 @@ async function seedNotificationTemplates() {
       isDefault: true,
     },
     {
+      name: "return_claim_resolved",
+      channel: "IN_APP" as const,
+      body: "Return claim resolved for job {{jobCode}}: {{outcome}}",
+      isDefault: true,
+    },
+    {
       name: "job_created",
       channel: "WHATSAPP" as const,
       body: "Hello {{customerName}}, your repair {{jobCode}} has been registered at {{shopName}}. You can track it at {{shopName}}/tracking/{{jobCode}}",
