@@ -155,7 +155,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## General Rules
 
-- Sync `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` on any update — use `cp`
+- `AGENTS.md` and `GEMINI.md` are symlinks to `CLAUDE.md` — edit only `CLAUDE.md`
 - The project uses ultracite for code quality and formatting. use bun run check or bun run fix to fix any lint warnings.
 - For Impeccable detector use bunx impeccable --json "File".
 - The project uses Bun for package management and runtime. Use `bun install`, `bun add`, `bun run`, and `bunx` instead of pnpm/npm/npx.
