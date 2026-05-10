@@ -77,3 +77,49 @@ export interface InsightsReportDTO {
   summary: InsightsSummary;
   topCustomers: TopCustomerRow[];
 }
+
+export interface ReturnsSummary {
+  avgTimeToReturnChangePercent?: number;
+  avgTimeToReturnDays: number;
+  netWarrantyCost: number;
+  netWarrantyCostChangePercent?: number;
+  totalReturns: number;
+  totalReturnsChangePercent?: number;
+  warrantyReturnRate?: number;
+  warrantyReturnRateChangePercent?: number;
+}
+
+export interface FaultCategoryRow {
+  count: number;
+  faultCategory: string;
+}
+
+export interface ReturnByRepairRow {
+  count: number;
+  faults: FaultCategoryRow[];
+  repairName: string;
+}
+
+export interface ReturnByTechnicianRow {
+  claimsCount: number;
+  dominantFault: string;
+  jobsDelivered: number;
+  returnRate: number;
+  technicianId: string;
+  technicianName: string;
+}
+
+export type TtrBucket = "0-7d" | "8-30d" | "31-60d" | "61-90d" | "90d+";
+
+export interface TtrDistributionRow {
+  bucket: TtrBucket;
+  count: number;
+}
+
+export interface ReturnsReportDTO {
+  byFaultCategory: FaultCategoryRow[];
+  byRepairType: ReturnByRepairRow[];
+  byTechnician: ReturnByTechnicianRow[];
+  summary: ReturnsSummary;
+  ttrDistribution: TtrDistributionRow[];
+}

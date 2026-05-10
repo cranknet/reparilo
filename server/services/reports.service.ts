@@ -5,14 +5,17 @@ import type { Scope } from "@shared/types/dashboard";
 import type {
   InsightsReportDTO,
   OperationsReportDTO,
+  ReturnsReportDTO,
   RevenueReportDTO,
   TimeRangePreset,
+  TtrBucket,
 } from "@shared/types/reports";
 import {
   aggregateJobDeposits,
   aggregateJobRevenue,
   countJobs,
   countJobsSimple,
+  countReturnClaims,
   findAuditLogsForStatus,
   findCustomersByIds,
   findOutstandingJobs,
@@ -263,21 +266,18 @@ export async function operationsReport(
 
   let warrantyReturnRate: number | undefined;
   if (includeShopWide) {
-    const [warrantyCount, totalCount] = await Promise.all([
-      countJobs(db, {
-        isWarrantyReturn: true,
-        status: { in: completedStatuses },
-        auditLogs: { some: completedInWindow },
-      }),
+    const claimFilter = {
+      openedAt: { gte: range.start, lt: range.end },
+    };
+    const [claimCount, totalCount] = await Promise.all([
+      countReturnClaims(db, claimFilter),
       countJobs(db, {
         status: { in: completedStatuses },
         auditLogs: { some: completedInWindow },
       }),
     ]);
     warrantyReturnRate =
-      totalCount > 0
-        ? Math.round((warrantyCount / totalCount) * 10_000) / 100
-        : 0;
+      totalCount > 0 ? Math.round((claimCount / totalCount) * 10_000) / 100 : 0;
   }
 
   const topRepairsRaw = await groupJobRepairs(db, {
@@ -437,5 +437,388 @@ export async function insightsReport(
       totalJobs,
     },
     topCustomers,
+  };
+}
+
+function changePercent(current: number, previous: number): number | undefined {
+  if (previous === 0) {
+    return;
+  }
+  return Math.round(((current - previous) / previous) * 10_000) / 100;
+}
+
+const TTR_BUCKET_MAP: Record<string, TtrBucket> = {
+  "0-7d": "0-7d",
+  "8-30d": "8-30d",
+  "31-60d": "31-60d",
+  "61-90d": "61-90d",
+  "90d+": "90d+",
+};
+
+function ttrBucket(days: number): TtrBucket {
+  if (days <= 7) {
+    return "0-7d";
+  }
+  if (days <= 30) {
+    return "8-30d";
+  }
+  if (days <= 60) {
+    return "31-60d";
+  }
+  if (days <= 90) {
+    return "61-90d";
+  }
+  return "90d+";
+}
+
+async function computeShopWideReturnsMetrics(
+  db: DbClient,
+  range: DateRange,
+  prev: DateRange,
+  claimRangeFilter: Record<string, unknown>,
+  claimPrevFilter: Record<string, unknown>,
+  totalReturns: number,
+  prevTotalReturns: number
+): Promise<{
+  warrantyReturnRate: number;
+  warrantyReturnRateChangePercent: number | undefined;
+  netWarrantyCost: number;
+  netWarrantyCostChangePercent: number | undefined;
+}> {
+  const completedStatuses: JobStatus[] = ["DONE", "DELIVERED"];
+  const completedInWindow = {
+    action: AuditAction.STATUS_CHANGED,
+    toValue: { in: completedStatuses as string[] },
+    createdAt: { gte: range.start, lt: range.end },
+  };
+  const completedInPrevWindow = {
+    action: AuditAction.STATUS_CHANGED,
+    toValue: { in: completedStatuses as string[] },
+    createdAt: { gte: prev.start, lt: prev.end },
+  };
+
+  const [deliveredJobs, prevDeliveredJobs] = await Promise.all([
+    countJobs(db, {
+      status: { in: completedStatuses },
+      auditLogs: { some: completedInWindow },
+    }),
+    countJobs(db, {
+      status: { in: completedStatuses },
+      auditLogs: { some: completedInPrevWindow },
+    }),
+  ]);
+
+  const warrantyReturnRate =
+    deliveredJobs > 0
+      ? Math.round((totalReturns / deliveredJobs) * 10_000) / 100
+      : 0;
+
+  const prevWarrantyReturnRate =
+    prevDeliveredJobs > 0
+      ? Math.round((prevTotalReturns / prevDeliveredJobs) * 10_000) / 100
+      : 0;
+
+  const warrantyReturnRateChangePercent = changePercent(
+    warrantyReturnRate,
+    prevWarrantyReturnRate
+  );
+
+  const [refundAgg, prevRefundAgg, reworkPartsAgg, prevReworkPartsAgg] =
+    await Promise.all([
+      db.returnClaim.aggregate({
+        _sum: { refundAmount: true, partialChargeAmount: true },
+        where: claimRangeFilter,
+      }),
+      db.returnClaim.aggregate({
+        _sum: { refundAmount: true, partialChargeAmount: true },
+        where: claimPrevFilter,
+      }),
+      db.jobPart.aggregate({
+        _sum: { totalCost: true },
+        where: {
+          job: {
+            isWarrantyReturn: true,
+            auditLogs: { some: completedInWindow },
+          },
+        },
+      }),
+      db.jobPart.aggregate({
+        _sum: { totalCost: true },
+        where: {
+          job: {
+            isWarrantyReturn: true,
+            auditLogs: { some: completedInPrevWindow },
+          },
+        },
+      }),
+    ]);
+
+  const rawCost =
+    toMoney(Number(refundAgg._sum.refundAmount ?? 0)) +
+    toMoney(Number(reworkPartsAgg._sum.totalCost ?? 0)) -
+    toMoney(Number(refundAgg._sum.partialChargeAmount ?? 0));
+  const netWarrantyCost = toMoney(rawCost);
+
+  const prevRawCost =
+    toMoney(Number(prevRefundAgg._sum.refundAmount ?? 0)) +
+    toMoney(Number(prevReworkPartsAgg._sum.totalCost ?? 0)) -
+    toMoney(Number(prevRefundAgg._sum.partialChargeAmount ?? 0));
+  const prevNetWarrantyCost = toMoney(prevRawCost);
+  const netWarrantyCostChangePercent = changePercent(
+    netWarrantyCost,
+    prevNetWarrantyCost
+  );
+
+  return {
+    warrantyReturnRate,
+    warrantyReturnRateChangePercent,
+    netWarrantyCost,
+    netWarrantyCostChangePercent,
+  };
+}
+
+interface TtrResult {
+  avgDays: number;
+  buckets: Record<TtrBucket, number>;
+  prevAvgDays: number;
+}
+
+async function computeTimeToReturn(
+  db: DbClient,
+  claimRangeFilter: Record<string, unknown>,
+  claimPrevFilter: Record<string, unknown>
+): Promise<TtrResult> {
+  const [claimsWithDelivery, prevClaimsWithDelivery] = await Promise.all([
+    db.returnClaim.findMany({
+      where: claimRangeFilter,
+      select: {
+        openedAt: true,
+        originalJob: {
+          select: {
+            auditLogs: {
+              where: {
+                action: "STATUS_CHANGED" as AuditAction,
+                toValue: { in: ["DELIVERED"] },
+              },
+              select: { createdAt: true },
+              orderBy: { createdAt: "desc" as const },
+              take: 1,
+            },
+          },
+        },
+      },
+    }),
+    db.returnClaim.findMany({
+      where: claimPrevFilter,
+      select: {
+        openedAt: true,
+        originalJob: {
+          select: {
+            auditLogs: {
+              where: {
+                action: "STATUS_CHANGED" as AuditAction,
+                toValue: { in: ["DELIVERED"] },
+              },
+              select: { createdAt: true },
+              orderBy: { createdAt: "desc" as const },
+              take: 1,
+            },
+          },
+        },
+      },
+    }),
+  ]);
+
+  let totalTimeToReturn = 0;
+  let timeToReturnCount = 0;
+  const ttrBuckets: Record<TtrBucket, number> = {
+    "0-7d": 0,
+    "8-30d": 0,
+    "31-60d": 0,
+    "61-90d": 0,
+    "90d+": 0,
+  };
+
+  for (const claim of claimsWithDelivery) {
+    const deliveryDate = claim.originalJob.auditLogs[0]?.createdAt;
+    if (deliveryDate) {
+      const days =
+        (claim.openedAt.getTime() - deliveryDate.getTime()) / 86_400_000;
+      totalTimeToReturn += days;
+      timeToReturnCount++;
+      ttrBuckets[ttrBucket(days)]++;
+    }
+  }
+
+  let prevTotalTimeToReturn = 0;
+  let prevTimeToReturnCount = 0;
+  for (const claim of prevClaimsWithDelivery) {
+    const deliveryDate = claim.originalJob.auditLogs[0]?.createdAt;
+    if (deliveryDate) {
+      prevTotalTimeToReturn +=
+        (claim.openedAt.getTime() - deliveryDate.getTime()) / 86_400_000;
+      prevTimeToReturnCount++;
+    }
+  }
+
+  const avgDays =
+    timeToReturnCount > 0
+      ? Math.round((totalTimeToReturn / timeToReturnCount) * 10) / 10
+      : 0;
+
+  const prevAvgDays =
+    prevTimeToReturnCount > 0
+      ? Math.round((prevTotalTimeToReturn / prevTimeToReturnCount) * 10) / 10
+      : 0;
+
+  return { avgDays, prevAvgDays, buckets: ttrBuckets };
+}
+
+async function computeByRepairType(
+  db: DbClient,
+  claimRangeFilter: Record<string, unknown>
+): Promise<ReturnsReportDTO["byRepairType"]> {
+  const repairFaultRows = await db.returnClaim.groupBy({
+    by: ["claimedJobRepairId", "faultCategory"],
+    where: {
+      ...claimRangeFilter,
+      claimedJobRepairId: { not: null },
+      faultCategory: { not: null },
+    },
+    _count: { _all: true },
+  });
+
+  const repairMap = new Map<
+    string,
+    { repairName: string; count: number; faults: Map<string, number> }
+  >();
+  const repairIds = new Set(
+    repairFaultRows.map((r) => r.claimedJobRepairId).filter(Boolean) as string[]
+  );
+
+  if (repairIds.size > 0) {
+    const repairs = await db.jobRepair.findMany({
+      where: { id: { in: [...repairIds] } },
+      select: { id: true, repairName: true },
+    });
+    const repairNameMap = new Map(repairs.map((r) => [r.id, r.repairName]));
+
+    for (const row of repairFaultRows) {
+      const id = row.claimedJobRepairId as string;
+      const name = repairNameMap.get(id) ?? "Unknown";
+      const fault = row.faultCategory as string;
+      const cnt = typeof row._count === "object" ? (row._count._all ?? 0) : 0;
+
+      let entry = repairMap.get(id);
+      if (!entry) {
+        entry = { repairName: name, count: 0, faults: new Map() };
+        repairMap.set(id, entry);
+      }
+      entry.count += cnt;
+      entry.faults.set(fault, cnt);
+    }
+  }
+
+  return [...repairMap.values()]
+    .map((r) => ({
+      repairName: r.repairName,
+      count: r.count,
+      faults: [...r.faults.entries()].map(([faultCategory, count]) => ({
+        faultCategory,
+        count,
+      })),
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+}
+
+export async function returnsReport(
+  prisma: PrismaClient,
+  scope: Scope,
+  range: DateRange
+): Promise<ReturnsReportDTO> {
+  const prev = previousRange(range);
+  const db = prisma as unknown as DbClient;
+  const includeShopWide = scope.role !== Role.TECHNICIAN;
+
+  const claimRangeFilter = { openedAt: { gte: range.start, lt: range.end } };
+  const claimPrevFilter = { openedAt: { gte: prev.start, lt: prev.end } };
+
+  const [totalReturns, prevTotalReturns] = await Promise.all([
+    countReturnClaims(db, claimRangeFilter),
+    countReturnClaims(db, claimPrevFilter),
+  ]);
+
+  let warrantyReturnRate: number | undefined;
+  let warrantyReturnRateChangePercent: number | undefined;
+  let netWarrantyCost = 0;
+  let netWarrantyCostChangePercent: number | undefined;
+
+  if (includeShopWide) {
+    const shopMetrics = await computeShopWideReturnsMetrics(
+      db,
+      range,
+      prev,
+      claimRangeFilter,
+      claimPrevFilter,
+      totalReturns,
+      prevTotalReturns
+    );
+    warrantyReturnRate = shopMetrics.warrantyReturnRate;
+    warrantyReturnRateChangePercent =
+      shopMetrics.warrantyReturnRateChangePercent;
+    netWarrantyCost = shopMetrics.netWarrantyCost;
+    netWarrantyCostChangePercent = shopMetrics.netWarrantyCostChangePercent;
+  }
+
+  const ttr = await computeTimeToReturn(db, claimRangeFilter, claimPrevFilter);
+  const avgTimeToReturnChangePercent = changePercent(
+    ttr.avgDays,
+    ttr.prevAvgDays
+  );
+
+  const faultRows = await db.returnClaim.groupBy({
+    by: ["faultCategory"],
+    where: { ...claimRangeFilter, faultCategory: { not: null } },
+    _count: { _all: true },
+  });
+
+  const byFaultCategory = faultRows
+    .filter((r) => r.faultCategory !== null)
+    .map((r) => ({
+      faultCategory: r.faultCategory as string,
+      count: typeof r._count === "object" ? (r._count._all ?? 0) : 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  const [byRepairType, byTechnician]: [
+    ReturnsReportDTO["byRepairType"],
+    ReturnsReportDTO["byTechnician"],
+  ] = includeShopWide
+    ? [await computeByRepairType(db, claimRangeFilter), []]
+    : [[], []];
+
+  const ttrDistribution: ReturnsReportDTO["ttrDistribution"] = (
+    Object.keys(TTR_BUCKET_MAP) as TtrBucket[]
+  ).map((bucket) => ({
+    bucket,
+    count: ttr.buckets[bucket],
+  }));
+
+  return {
+    byFaultCategory,
+    byRepairType,
+    byTechnician,
+    summary: {
+      avgTimeToReturnChangePercent,
+      avgTimeToReturnDays: ttr.avgDays,
+      netWarrantyCost,
+      netWarrantyCostChangePercent,
+      totalReturns,
+      totalReturnsChangePercent: changePercent(totalReturns, prevTotalReturns),
+      warrantyReturnRate,
+      warrantyReturnRateChangePercent,
+    },
+    ttrDistribution,
   };
 }

@@ -1,5 +1,5 @@
 import type { JobStatusType } from "@shared/constants";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import AiCallout from "@/components/modules/dashboard/ai-callout";
 import FinancialTrend from "@/components/modules/dashboard/financial-trend";
@@ -8,6 +8,7 @@ import OverdueJobs from "@/components/modules/dashboard/overdue-jobs";
 import MetricCard from "@/components/ui/metric-card";
 import { useCan } from "@/hooks/use-can";
 import { useReturnClaimsList } from "@/hooks/use-return-claims";
+import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth";
 import { useDashboardStore } from "@/stores/dashboard";
 import { useSettingsStore } from "@/stores/settings";
@@ -128,6 +129,25 @@ function MetricsGrid({
   const { t } = useTranslation();
   const prevMonthName = usePrevMonthName();
   const canViewReturns = useCan({ returns: ["viewSelf"] });
+  const canViewShop = useCan({ returns: ["viewShop"] });
+  const [warrantyCost, setWarrantyCost] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!(canViewShop && data)) {
+      return;
+    }
+    api
+      .get("/reports/returns?range=month")
+      .then((res) => {
+        const cost = res.data?.summary?.netWarrantyCost;
+        if (typeof cost === "number" && cost > 0) {
+          setWarrantyCost(cost);
+        }
+      })
+      .catch(() => {
+        setWarrantyCost(null);
+      });
+  }, [canViewShop, data]);
 
   const revenueChangePct = data?.revenueChangePct ?? 0;
   const marginChange = data?.avgProfitMarginChange ?? 0;
@@ -201,6 +221,13 @@ function MetricsGrid({
             {formatPct(revenueChangePct)}%{" "}
             {t("dashboard_page.vs_last_month_short")}
           </div>
+        )}
+        {warrantyCost !== null && (
+          <p className="mt-1 text-on-surface-variant text-xs">
+            {t("dashboard_page.warranty_cost_inline", {
+              amount: warrantyCost.toLocaleString(),
+            })}
+          </p>
         )}
       </MetricCard>
 

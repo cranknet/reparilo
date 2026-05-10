@@ -3,6 +3,7 @@ import type { DbClient } from "./types.js";
 
 type JobWhereInput = Prisma.JobWhereInput;
 type AuditLogWhereInput = Prisma.AuditLogWhereInput;
+type ReturnClaimWhereInput = Prisma.ReturnClaimWhereInput;
 
 export function aggregateJobRevenue(prisma: DbClient, where: JobWhereInput) {
   const statusFilter =
@@ -230,4 +231,11 @@ export function queryRawProfitMargin(
           : Prisma.empty
       }
   `;
+}
+
+export function countReturnClaims(
+  prisma: DbClient,
+  where: ReturnClaimWhereInput
+) {
+  return prisma.returnClaim.count({ where });
 }

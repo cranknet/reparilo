@@ -7,6 +7,7 @@ import {
   insightsReport,
   operationsReport,
   resolveRange,
+  returnsReport,
   revenueReport,
 } from "../services/reports.service.js";
 import { getRole } from "../utils/request.js";
@@ -109,6 +110,31 @@ export const reportsRoutes: FastifyPluginAsync = async (app) => {
       const range = resolveRange(q.range, q.from, q.to, scope.shopTz);
 
       return await insightsReport(app.prisma, scope, range);
+    }
+  );
+
+  app.get(
+    "/returns",
+    {
+      preHandler: [
+        requirePermission({ returns: ["viewSelf"] }),
+        dashboardScope,
+      ],
+      schema: { tags: ["reports"], summary: "Returns analytics report" },
+    },
+    async (req) => {
+      // biome-ignore lint/style/noNonNullAssertion: set by dashboardScope preHandler
+      const scope = req.dashboardScope!;
+      const parsed = reportsQuerySchema.safeParse(req.query);
+      if (!parsed.success) {
+        throw new AppError("VALIDATION_ERROR", {
+          issues: parsed.error.issues,
+        });
+      }
+      const q = parsed.data;
+      const range = resolveRange(q.range, q.from, q.to, scope.shopTz);
+
+      return await returnsReport(app.prisma, scope, range);
     }
   );
 };

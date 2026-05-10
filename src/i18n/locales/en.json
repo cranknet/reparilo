@@ -477,7 +477,8 @@
     "vs_month": "vs. {{month}}",
     "vs_last_month_short": "MoM",
     "active_jobs_tooltip": "Jobs currently in intake, repair, on hold, or waiting for parts",
-    "revenue_tooltip": "Total revenue from delivered jobs this month vs. the previous month"
+    "revenue_tooltip": "Total revenue from delivered jobs this month vs. the previous month",
+    "warranty_cost_inline": "Warranty cost this month: {{amount}}"
   },
   "date": "Date",
   "date_short": "{{val, date}}",
@@ -1237,7 +1238,27 @@
     "phone": "Phone",
     "revenueColumn": "Revenue",
     "lastVisit": "Last Visit",
-    "avgSpend": "Avg Spend"
+    "avgSpend": "Avg Spend",
+    "returns": "Returns",
+    "totalReturns": "Total Returns",
+    "netWarrantyCost": "Net Warranty Cost",
+    "avgTimeToReturn": "Avg Time to Return",
+    "days": "days",
+    "faultCategory": "Fault Category",
+    "byRepairType": "Returns by Repair Type",
+    "byTechnician": "Returns by Technician",
+    "technician": "Technician",
+    "jobsDelivered": "Jobs Delivered",
+    "claimsCount": "Claims",
+    "returnRate": "Return Rate",
+    "dominantFault": "Dominant Fault",
+    "ttrDistribution": "Time to Return",
+    "ttr_0_7d": "0–7 days",
+    "ttr_8_30d": "8–30 days",
+    "ttr_31_60d": "31–60 days",
+    "ttr_61_90d": "61–90 days",
+    "ttr_90d_plus": "90+ days",
+    "warrantyCostFootnote": "Excludes labor cost (not tracked)"
   },
   "repair_modal": {
     "title": "Add New Service",

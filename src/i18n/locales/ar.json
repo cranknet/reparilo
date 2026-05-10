@@ -477,7 +477,8 @@
     "vs_month": "مقابل {{month}}",
     "vs_last_month_short": "أم",
     "active_jobs_tooltip": "الوظائف قيد الاستلام حاليًا أو الإصلاح أو الانتظار أو انتظار قطع الغيار",
-    "revenue_tooltip": "إجمالي الإيرادات من الوظائف المسلمة هذا الشهر مقابل الشهر السابق"
+    "revenue_tooltip": "إجمالي الإيرادات من الوظائف المسلمة هذا الشهر مقابل الشهر السابق",
+    "warranty_cost_inline": "تكلفة الضمان هذا الشهر: {{amount}}"
   },
   "date": "تاريخ",
   "date_short": "{{val, date}}",
@@ -1231,7 +1232,27 @@
     "phone": "هاتف",
     "revenueColumn": "ربح",
     "lastVisit": "الزيارة الأخيرة",
-    "avgSpend": "متوسط ​​الإنفاق"
+    "avgSpend": "متوسط ​​الإنفاق",
+    "returns": "المرتجعات",
+    "totalReturns": "إجمالي العوائد",
+    "netWarrantyCost": "صافي تكلفة الضمان",
+    "avgTimeToReturn": "متوسط ​​وقت العودة",
+    "days": "أيام",
+    "faultCategory": "فئة الخطأ",
+    "byRepairType": "الإرجاع حسب نوع الإصلاح",
+    "byTechnician": "يعود بواسطة فني",
+    "technician": "فني",
+    "jobsDelivered": "تم تسليم الوظائف",
+    "claimsCount": "المطالبات",
+    "returnRate": "معدل العودة",
+    "dominantFault": "خطأ المهيمن",
+    "ttrDistribution": "وقت العودة",
+    "ttr_0_7d": "0-7 أيام",
+    "ttr_8_30d": "8-30 يومًا",
+    "ttr_31_60d": "31-60 يوما",
+    "ttr_61_90d": "61-90 يومًا",
+    "ttr_90d_plus": "أكثر من 90 يومًا",
+    "warrantyCostFootnote": "لا يشمل تكلفة العمالة (غير متتبعة)"
   },
   "repair_modal": {
     "title": "إضافة خدمة جديدة",

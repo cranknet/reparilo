@@ -477,7 +477,8 @@
     "vs_month": "contre {{month}}",
     "vs_last_month_short": "Maman",
     "active_jobs_tooltip": "Emplois actuellement en attente, en réparation, en attente ou en attente de pièces",
-    "revenue_tooltip": "Revenu total des tâches livrées ce mois-ci par rapport au mois précédent"
+    "revenue_tooltip": "Revenu total des tâches livrées ce mois-ci par rapport au mois précédent",
+    "warranty_cost_inline": "Coût de la garantie ce mois-ci : {{amount}}"
   },
   "date": "Date",
   "date_short": "{{val, date}}",
@@ -1231,7 +1232,27 @@
     "phone": "Téléphone",
     "revenueColumn": "Revenu",
     "lastVisit": "Dernière visite",
-    "avgSpend": "Dépense moyenne"
+    "avgSpend": "Dépense moyenne",
+    "returns": "Retours",
+    "totalReturns": "Rendements totaux",
+    "netWarrantyCost": "Coût net de la garantie",
+    "avgTimeToReturn": "Temps moyen de retour",
+    "days": "jours",
+    "faultCategory": "Catégorie de défaut",
+    "byRepairType": "Retours par type de réparation",
+    "byTechnician": "Retours par technicien",
+    "technician": "Technicien",
+    "jobsDelivered": "Emplois livrés",
+    "claimsCount": "Réclamations",
+    "returnRate": "Taux de retour",
+    "dominantFault": "Faute dominante",
+    "ttrDistribution": "Il est temps de revenir",
+    "ttr_0_7d": "0 à 7 jours",
+    "ttr_8_30d": "8 à 30 jours",
+    "ttr_31_60d": "31 à 60 jours",
+    "ttr_61_90d": "61 à 90 jours",
+    "ttr_90d_plus": "90+ jours",
+    "warrantyCostFootnote": "Exclut le coût de la main d'œuvre (non suivi)"
   },
   "repair_modal": {
     "title": "Ajouter un nouveau service",

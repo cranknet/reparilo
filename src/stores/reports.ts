@@ -1,6 +1,7 @@
 import type {
   InsightsReportDTO,
   OperationsReportDTO,
+  ReturnsReportDTO,
   RevenueReportDTO,
   TimeRangePreset,
 } from "@shared/types/reports";
@@ -13,10 +14,12 @@ interface ReportsState {
   customTo: string | null;
   fetchInsights: () => Promise<void>;
   fetchOperations: () => Promise<void>;
+  fetchReturns: () => Promise<void>;
   fetchRevenue: () => Promise<void>;
   insights: { data?: InsightsReportDTO; loading: boolean; error?: string };
   operations: { data?: OperationsReportDTO; loading: boolean; error?: string };
   range: TimeRangePreset;
+  returns: { data?: ReturnsReportDTO; loading: boolean; error?: string };
   revenue: { data?: RevenueReportDTO; loading: boolean; error?: string };
   setCustomRange: (from: string, to: string) => void;
   setRange: (range: TimeRangePreset) => void;
@@ -36,6 +39,7 @@ export const useReportsStore = create<ReportsState>((set, get) => ({
   revenue: { loading: false },
   operations: { loading: false },
   insights: { loading: false },
+  returns: { loading: false },
 
   setRange: (range) => set({ range, customFrom: null, customTo: null }),
   setCustomRange: (from, to) => set({ customFrom: from, customTo: to }),
@@ -90,6 +94,25 @@ export const useReportsStore = create<ReportsState>((set, get) => ({
       set({
         insights: {
           ...get().insights,
+          loading: false,
+          error: getErrorMessage(err, i18n.t("errors.fetch_reports")),
+        },
+      });
+    }
+  },
+
+  fetchReturns: async () => {
+    set({ returns: { ...get().returns, loading: true, error: undefined } });
+    try {
+      const q = queryParams(get());
+      const res = await api.get(`/reports/returns${q}`);
+      set({
+        returns: { data: res.data as ReturnsReportDTO, loading: false },
+      });
+    } catch (err: unknown) {
+      set({
+        returns: {
+          ...get().returns,
           loading: false,
           error: getErrorMessage(err, i18n.t("errors.fetch_reports")),
         },
