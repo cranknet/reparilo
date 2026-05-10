@@ -1,11 +1,10 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 import { useCan } from "@/hooks/use-can";
-import {
-  useDeleteClaimPhoto,
-  useUploadClaimPhoto,
-} from "@/hooks/use-return-claims";
+import { deleteClaimPhoto, uploadClaimPhoto } from "@/lib/api-return-claims";
 import type { PhotoStage, ReturnClaimDetail } from "@/types/return-claim";
 
 interface Props {
@@ -17,10 +16,9 @@ const STAGES: PhotoStage[] = ["RETURN_INTAKE", "RETURN_RESOLUTION"];
 export default function ClaimPhotosSection({ claim }: Props) {
   const { t } = useTranslation();
   const canEdit = useCan({ returns: ["edit"] });
-  const upload = useUploadClaimPhoto(claim.id);
-  const remove = useDeleteClaimPhoto(claim.id);
   const intakeRef = useRef<HTMLInputElement>(null);
   const resolutionRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   const photosByStage: Record<PhotoStage, typeof claim.photos> = {
     RETURN_INTAKE: claim.photos.filter((p) => p.stage === "RETURN_INTAKE"),
@@ -30,15 +28,23 @@ export default function ClaimPhotosSection({ claim }: Props) {
   };
 
   const handleUpload = async (stage: PhotoStage, file: File) => {
-    await upload.mutateAsync({ file, stage });
-    toast.success(t("returns_toast_photo_added"));
+    setUploading(true);
+    try {
+      await uploadClaimPhoto(claim.id, { file, stage });
+      toast.success(t("returns_toast_photo_added"));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemove = async (photoId: string) => {
+    await deleteClaimPhoto(claim.id, photoId);
+    toast.success(t("returns_toast_photo_removed"));
   };
 
   return (
-    <section className="space-y-4 rounded-lg border border-outline-variant bg-surface-container p-4">
-      <h2 className="font-medium text-on-surface">
-        {t("returns_photos_title")}
-      </h2>
+    <section className="space-y-4 rounded-2xl bg-surface-container-low p-5">
+      <h2 className="font-bold text-on-surface">{t("returns_photos_title")}</h2>
 
       {STAGES.map((stage) => {
         const ref = stage === "RETURN_INTAKE" ? intakeRef : resolutionRef;
@@ -66,13 +72,16 @@ export default function ClaimPhotosSection({ claim }: Props) {
                     ref={ref}
                     type="file"
                   />
-                  <button
-                    className="rounded border border-outline-variant px-2.5 py-1 text-xs"
+                  <Button
+                    disabled={uploading}
+                    icon="add_a_photo"
                     onClick={() => ref.current?.click()}
+                    size="sm"
                     type="button"
+                    variant="ghost"
                   >
                     {t("returns_photos_add")}
-                  </button>
+                  </Button>
                 </>
               )}
             </div>
@@ -89,7 +98,7 @@ export default function ClaimPhotosSection({ claim }: Props) {
                   <div className="relative" key={p.id}>
                     <img
                       alt=""
-                      className="aspect-square w-full rounded object-cover"
+                      className="aspect-square w-full rounded-xl object-cover"
                       height={128}
                       src={`/api/uploads/${p.path}`}
                       width={128}
@@ -97,16 +106,11 @@ export default function ClaimPhotosSection({ claim }: Props) {
                     {canEdit && claim.status === "OPEN" && (
                       <button
                         aria-label="remove"
-                        className="absolute top-1 right-1 rounded-full bg-error p-1 text-on-error"
-                        onClick={async () => {
-                          await remove.mutateAsync(p.id);
-                          toast.success(t("returns_toast_photo_removed"));
-                        }}
+                        className="absolute top-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-error text-on-error"
+                        onClick={() => handleRemove(p.id)}
                         type="button"
                       >
-                        <span className="material-symbols-outlined text-xs">
-                          close
-                        </span>
+                        <Icon name="close" size="sm" />
                       </button>
                     )}
                   </div>

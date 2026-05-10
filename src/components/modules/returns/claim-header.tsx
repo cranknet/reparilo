@@ -20,9 +20,9 @@ export default function ClaimHeader({ claim }: Props) {
         ← {t("returns_detail_back")}
       </Link>
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="font-bold text-2xl">
+        <h2 className="font-extrabold font-headline text-2xl text-on-surface tracking-tight md:text-3xl">
           {t("returns_detail_title", { id: claim.id })}
-        </h1>
+        </h2>
         <span
           className={
             claim.status === "OPEN"

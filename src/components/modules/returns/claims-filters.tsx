@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
 import type { ListClaimsParams } from "@/types/return-claim";
 
 interface Props {
@@ -14,15 +15,18 @@ export default function ClaimsFilters({ value, onChange }: Props) {
     v: ListClaimsParams[K]
   ) => onChange({ ...value, [key]: v, page: 1 });
 
+  const selectCls =
+    "rounded-xl border-none bg-surface-container-highest px-4 py-3.5 text-sm outline-none transition-all focus:bg-surface-container-lowest focus-visible:ring-2 focus-visible:ring-primary";
+
   return (
-    <div className="flex flex-wrap items-end gap-3 rounded-lg border border-outline-variant bg-surface-container p-4">
+    <div className="mb-5 flex flex-wrap items-end gap-3">
       <label className="flex flex-col text-sm">
-        <span className="mb-1 text-on-surface-variant">
+        <span className="mb-1 font-medium text-on-surface-variant text-xs uppercase tracking-wide">
           {t("returns_filter_status")}
         </span>
         <select
           aria-label={t("returns_filter_status")}
-          className="rounded border border-outline-variant bg-surface px-2 py-1.5"
+          className={selectCls}
           onChange={(e) =>
             set(
               "status",
@@ -38,12 +42,12 @@ export default function ClaimsFilters({ value, onChange }: Props) {
       </label>
 
       <label className="flex flex-col text-sm">
-        <span className="mb-1 text-on-surface-variant">
+        <span className="mb-1 font-medium text-on-surface-variant text-xs uppercase tracking-wide">
           {t("returns_filter_fault")}
         </span>
         <select
           aria-label={t("returns_filter_fault")}
-          className="rounded border border-outline-variant bg-surface px-2 py-1.5"
+          className={selectCls}
           onChange={(e) =>
             set(
               "faultCategory",
@@ -64,12 +68,12 @@ export default function ClaimsFilters({ value, onChange }: Props) {
       </label>
 
       <label className="flex flex-col text-sm">
-        <span className="mb-1 text-on-surface-variant">
+        <span className="mb-1 font-medium text-on-surface-variant text-xs uppercase tracking-wide">
           {t("returns_filter_outcome")}
         </span>
         <select
           aria-label={t("returns_filter_outcome")}
-          className="rounded border border-outline-variant bg-surface px-2 py-1.5"
+          className={selectCls}
           onChange={(e) =>
             set(
               "resolutionOutcome",
@@ -96,12 +100,12 @@ export default function ClaimsFilters({ value, onChange }: Props) {
       </label>
 
       <label className="flex flex-col text-sm">
-        <span className="mb-1 text-on-surface-variant">
+        <span className="mb-1 font-medium text-on-surface-variant text-xs uppercase tracking-wide">
           {t("returns_filter_from")}
         </span>
         <input
           aria-label={t("returns_filter_from")}
-          className="rounded border border-outline-variant bg-surface px-2 py-1.5"
+          className={selectCls}
           onChange={(e) =>
             set(
               "from",
@@ -116,12 +120,12 @@ export default function ClaimsFilters({ value, onChange }: Props) {
       </label>
 
       <label className="flex flex-col text-sm">
-        <span className="mb-1 text-on-surface-variant">
+        <span className="mb-1 font-medium text-on-surface-variant text-xs uppercase tracking-wide">
           {t("returns_filter_to")}
         </span>
         <input
           aria-label={t("returns_filter_to")}
-          className="rounded border border-outline-variant bg-surface px-2 py-1.5"
+          className={selectCls}
           onChange={(e) =>
             set(
               "to",
@@ -135,13 +139,14 @@ export default function ClaimsFilters({ value, onChange }: Props) {
         />
       </label>
 
-      <button
-        className="rounded border border-outline-variant bg-surface px-3 py-1.5 text-sm hover:bg-surface-container-high"
+      <Button
         onClick={() => onChange({ page: 1, limit: 20 })}
+        size="sm"
         type="button"
+        variant="ghost"
       >
         {t("returns_filter_clear")}
-      </button>
+      </Button>
     </div>
   );
 }

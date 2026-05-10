@@ -2,8 +2,13 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useCan } from "@/hooks/use-can";
-import { useResolveClaim, useSpawnRework } from "@/hooks/use-return-claims";
+import {
+  resolveClaim as resolveClaimApi,
+  spawnRework as spawnReworkApi,
+} from "@/lib/api-return-claims";
 import type { ReturnClaimDetail } from "@/types/return-claim";
 
 interface Props {
@@ -15,17 +20,17 @@ export default function ResolutionSection({ claim }: Props) {
   const navigate = useNavigate();
   const canRework = useCan({ returns: ["resolveRework"] });
   const canRefund = useCan({ returns: ["resolveRefund"] });
-  const spawnRework = useSpawnRework(claim.id);
-  const resolveClaim = useResolveClaim(claim.id);
 
-  const [partialCharge, setPartialCharge] = useState<string>("");
-  const [refundAmount, setRefundAmount] = useState<string>("");
+  const [partialCharge, setPartialCharge] = useState("");
+  const [refundAmount, setRefundAmount] = useState("");
   const [path, setPath] = useState<"rework" | "refund">("rework");
+  const [isSpawning, setSpawning] = useState(false);
+  const [isResolving, setResolving] = useState(false);
 
   if (claim.status === "RESOLVED") {
     return (
-      <section className="rounded-lg border border-outline-variant bg-surface-container p-4">
-        <h2 className="font-medium text-on-surface">
+      <section className="rounded-2xl bg-surface-container-low p-5">
+        <h2 className="font-bold text-on-surface">
           {t("returns_resolution_title")}
         </h2>
         <p className="mt-2 text-on-surface">
@@ -48,9 +53,33 @@ export default function ResolutionSection({ claim }: Props) {
 
   const faultMissing = !claim.faultCategory;
 
+  const handleSpawnRework = async () => {
+    setSpawning(true);
+    try {
+      const r = await spawnReworkApi(claim.id);
+      toast.success(t("returns_toast_rework_spawned"));
+      navigate(`/jobs/${r.reworkJobId}`);
+    } finally {
+      setSpawning(false);
+    }
+  };
+
+  const handleResolve = async (
+    outcome: string,
+    extra?: Record<string, unknown>
+  ) => {
+    setResolving(true);
+    try {
+      await resolveClaimApi(claim.id, { resolutionOutcome: outcome, ...extra });
+      toast.success(t("returns_toast_resolved"));
+    } finally {
+      setResolving(false);
+    }
+  };
+
   return (
-    <section className="space-y-4 rounded-lg border border-outline-variant bg-surface-container p-4">
-      <h2 className="font-medium text-on-surface">
+    <section className="space-y-4 rounded-2xl bg-surface-container-low p-5">
+      <h2 className="font-bold text-on-surface">
         {t("returns_resolution_title")}
       </h2>
       <p className="text-on-surface-variant text-sm">
@@ -58,38 +87,38 @@ export default function ResolutionSection({ claim }: Props) {
       </p>
 
       <div className="flex gap-2">
-        <button
-          className={`rounded px-3 py-1.5 text-sm ${path === "rework" ? "bg-primary text-on-primary" : "border border-outline-variant"}`}
+        <Button
           onClick={() => setPath("rework")}
+          size="sm"
           type="button"
+          variant={path === "rework" ? "primary" : "ghost"}
         >
           {t("returns_resolution_path_rework")}
-        </button>
-        <button
-          className={`rounded px-3 py-1.5 text-sm ${path === "refund" ? "bg-primary text-on-primary" : "border border-outline-variant"}`}
+        </Button>
+        <Button
           disabled={!canRefund}
           onClick={() => setPath("refund")}
+          size="sm"
           type="button"
+          variant={path === "refund" ? "primary" : "ghost"}
         >
           {t("returns_resolution_path_refund")}
-        </button>
+        </Button>
       </div>
 
       {path === "rework" && (
         <div className="space-y-3">
           {!claim.reworkJob && (
-            <button
-              className="rounded bg-primary px-3 py-1.5 text-on-primary text-sm disabled:opacity-50"
-              disabled={!canRework || faultMissing || spawnRework.isPending}
-              onClick={async () => {
-                const r = await spawnRework.mutateAsync();
-                toast.success(t("returns_toast_rework_spawned"));
-                navigate(`/jobs/${r.reworkJobId}`);
-              }}
+            <Button
+              disabled={!canRework || faultMissing || isSpawning}
+              loading={isSpawning}
+              onClick={handleSpawnRework}
+              size="sm"
               type="button"
+              variant="primary"
             >
               {t("returns_resolution_spawn_rework")}
-            </button>
+            </Button>
           )}
 
           {claim.reworkJob && claim.reworkJob.status !== "DELIVERED" && (
@@ -106,49 +135,46 @@ export default function ResolutionSection({ claim }: Props) {
               <p className="text-sm">
                 {t("returns_resolution_rework_delivered")}
               </p>
-              <button
-                className="rounded bg-primary px-3 py-1.5 text-on-primary text-sm disabled:opacity-50"
-                disabled={!canRework || faultMissing || resolveClaim.isPending}
-                onClick={async () => {
-                  await resolveClaim.mutateAsync({
-                    resolutionOutcome: "REWORK_FREE",
-                  });
-                  toast.success(t("returns_toast_resolved"));
-                }}
+              <Button
+                disabled={!canRework || faultMissing || isResolving}
+                loading={isResolving}
+                onClick={() => handleResolve("REWORK_FREE")}
+                size="sm"
                 type="button"
+                variant="primary"
               >
                 {t("returns_resolution_resolve_rework_free")}
-              </button>
+              </Button>
 
               <div className="flex items-center gap-2">
-                <input
-                  aria-label={t("returns_resolution_partial_charge_label")}
-                  className="w-32 rounded border border-outline-variant bg-surface px-2 py-1.5 text-sm"
-                  min={1}
-                  onChange={(e) => setPartialCharge(e.target.value)}
-                  type="number"
-                  value={partialCharge}
-                />
-                <button
-                  className="rounded bg-primary px-3 py-1.5 text-on-primary text-sm disabled:opacity-50"
-                  disabled={
-                    !canRework || faultMissing || resolveClaim.isPending
-                  }
-                  onClick={async () => {
+                <div className="w-40">
+                  <Input
+                    aria-label={t("returns_resolution_partial_charge_label")}
+                    min={1}
+                    onChange={(e) => setPartialCharge(e.target.value)}
+                    placeholder={t("returns_resolution_partial_charge_label")}
+                    type="number"
+                    value={partialCharge}
+                  />
+                </div>
+                <Button
+                  disabled={!canRework || faultMissing || isResolving}
+                  loading={isResolving}
+                  onClick={() => {
                     const amount = Number(partialCharge);
                     if (!Number.isFinite(amount) || amount <= 0) {
                       return;
                     }
-                    await resolveClaim.mutateAsync({
-                      resolutionOutcome: "REWORK_PARTIAL_CHARGE",
+                    handleResolve("REWORK_PARTIAL_CHARGE", {
                       partialChargeAmount: amount,
                     });
-                    toast.success(t("returns_toast_resolved"));
                   }}
+                  size="sm"
                   type="button"
+                  variant="secondary"
                 >
                   {t("returns_resolution_resolve_rework_partial")}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -156,51 +182,43 @@ export default function ResolutionSection({ claim }: Props) {
       )}
 
       {path === "refund" && canRefund && (
-        <div className="flex items-center gap-2">
-          <input
-            aria-label={t("returns_resolution_refund_amount_label")}
-            className="w-32 rounded border border-outline-variant bg-surface px-2 py-1.5 text-sm"
-            min={1}
-            onChange={(e) => setRefundAmount(e.target.value)}
-            type="number"
-            value={refundAmount}
-          />
-          <button
-            className="rounded bg-primary px-3 py-1.5 text-on-primary text-sm disabled:opacity-50"
-            disabled={faultMissing || resolveClaim.isPending}
-            onClick={async () => {
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="w-40">
+            <Input
+              aria-label={t("returns_resolution_refund_amount_label")}
+              min={1}
+              onChange={(e) => setRefundAmount(e.target.value)}
+              placeholder={t("returns_resolution_refund_amount_label")}
+              type="number"
+              value={refundAmount}
+            />
+          </div>
+          <Button
+            disabled={faultMissing || isResolving}
+            loading={isResolving}
+            onClick={() => {
               const amount = Number(refundAmount);
               if (!Number.isFinite(amount) || amount <= 0) {
                 return;
               }
-              await resolveClaim.mutateAsync({
-                resolutionOutcome: "REFUND_PARTIAL",
-                refundAmount: amount,
-              });
-              toast.success(t("returns_toast_resolved"));
+              handleResolve("REFUND_PARTIAL", { refundAmount: amount });
             }}
+            size="sm"
             type="button"
+            variant="secondary"
           >
             {t("returns_resolution_resolve_refund_partial")}
-          </button>
-          <button
-            className="rounded bg-primary px-3 py-1.5 text-on-primary text-sm disabled:opacity-50"
-            disabled={faultMissing || resolveClaim.isPending}
-            onClick={async () => {
-              const amount = Number(refundAmount);
-              if (!Number.isFinite(amount) || amount <= 0) {
-                return;
-              }
-              await resolveClaim.mutateAsync({
-                resolutionOutcome: "REFUND_FULL",
-                refundAmount: amount,
-              });
-              toast.success(t("returns_toast_resolved"));
-            }}
+          </Button>
+          <Button
+            disabled={faultMissing || isResolving}
+            loading={isResolving}
+            onClick={() => handleResolve("REFUND_FULL")}
+            size="sm"
             type="button"
+            variant="primary"
           >
             {t("returns_resolution_resolve_refund_full")}
-          </button>
+          </Button>
         </div>
       )}
     </section>

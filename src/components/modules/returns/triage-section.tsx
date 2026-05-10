@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { useCan } from "@/hooks/use-can";
-import { useTriageClaim } from "@/hooks/use-return-claims";
+import { triageClaim } from "@/lib/api-return-claims";
 import type { FaultCategory, ReturnClaimDetail } from "@/types/return-claim";
 
 interface Props {
@@ -18,10 +19,10 @@ const OPTIONS: FaultCategory[] = [
 export default function TriageSection({ claim }: Props) {
   const { t } = useTranslation();
   const canTriage = useCan({ returns: ["triage"] });
-  const triage = useTriageClaim(claim.id);
   const [selected, setSelected] = useState<FaultCategory | null>(
     claim.faultCategory
   );
+  const [isSaving, setSaving] = useState(false);
 
   if (claim.status === "RESOLVED") {
     return null;
@@ -31,15 +32,18 @@ export default function TriageSection({ claim }: Props) {
     if (!selected) {
       return;
     }
-    await triage.mutateAsync({ faultCategory: selected });
-    toast.success(t("returns_triage_saved"));
+    setSaving(true);
+    try {
+      await triageClaim(claim.id, { faultCategory: selected });
+      toast.success(t("returns_triage_saved"));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <section className="rounded-lg border border-outline-variant bg-surface-container p-4">
-      <h2 className="font-medium text-on-surface">
-        {t("returns_triage_title")}
-      </h2>
+    <section className="rounded-2xl bg-surface-container-low p-5">
+      <h2 className="font-bold text-on-surface">{t("returns_triage_title")}</h2>
       <p className="mt-1 text-on-surface-variant text-sm">
         {t("returns_triage_help")}
       </p>
@@ -59,18 +63,21 @@ export default function TriageSection({ claim }: Props) {
         ))}
       </fieldset>
 
-      <button
-        className="mt-3 rounded bg-primary px-3 py-1.5 text-on-primary text-sm disabled:opacity-50"
+      <Button
+        className="mt-3"
         disabled={
           !(canTriage && selected) ||
-          triage.isPending ||
+          isSaving ||
           selected === claim.faultCategory
         }
+        loading={isSaving}
         onClick={onSave}
+        size="sm"
         type="button"
+        variant="primary"
       >
         {t("returns_triage_save")}
-      </button>
+      </Button>
     </section>
   );
 }

@@ -1,18 +1,52 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 import ClaimHeader from "@/components/modules/returns/claim-header";
 import ClaimPhotosSection from "@/components/modules/returns/claim-photos-section";
 import ResolutionSection from "@/components/modules/returns/resolution-section";
 import TriageSection from "@/components/modules/returns/triage-section";
-import { useReturnClaim } from "@/hooks/use-return-claims";
+import { fetchReturnClaim } from "@/lib/api-return-claims";
+import type { ReturnClaimDetail } from "@/types/return-claim";
 
 export default function ReturnDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
-  const { data: claim, isLoading } = useReturnClaim(id);
+  const [claim, setClaim] = useState<ReturnClaimDetail | null>(null);
+  const [isLoading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) {
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    fetchReturnClaim(id)
+      .then((data) => {
+        if (!cancelled) {
+          setClaim(data);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setClaim(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   if (isLoading || !claim) {
-    return <div className="p-6">{t("loading")}</div>;
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
   }
 
   const claimedLine =
@@ -31,11 +65,11 @@ export default function ReturnDetailPage() {
   };
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <>
       <ClaimHeader claim={claim} />
 
-      <section className="rounded-lg border border-outline-variant bg-surface-container p-4">
-        <h2 className="font-medium text-on-surface">{getClaimedLineLabel()}</h2>
+      <section className="rounded-2xl bg-surface-container-low p-5">
+        <h2 className="font-bold text-on-surface">{getClaimedLineLabel()}</h2>
         <p className="mt-1 text-on-surface">{claimedLine}</p>
         <h3 className="mt-3 font-medium text-on-surface-variant text-sm">
           {t("returns_detail_customer_complaint")}
@@ -48,6 +82,6 @@ export default function ReturnDetailPage() {
       <TriageSection claim={claim} />
       <ResolutionSection claim={claim} />
       <ClaimPhotosSection claim={claim} />
-    </div>
+    </>
   );
 }
