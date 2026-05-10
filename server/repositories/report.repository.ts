@@ -208,7 +208,7 @@ export function findCustomersByIds(prisma: DbClient, ids: string[]) {
 }
 
 export function queryRawProfitMargin(
-  prisma: PrismaClient,
+  prisma: DbClient,
   rangeStart: Date,
   rangeEnd: Date,
   isTechnician: boolean,

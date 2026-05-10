@@ -20,21 +20,27 @@ async function processOverdueJobs(app: FastifyInstance): Promise<void> {
     },
   });
 
-  const results = await Promise.allSettled(
-    overdue.map((job) =>
-      notify(app, {
-        context: { jobCode: job.jobCode },
-        eventName: "job_overdue",
-        jobId: job.id,
-        recipients: { role: Role.OWNER },
-      }).then(() =>
-        app.prisma.job.update({
-          data: { lastOverdueAlertAt: new Date() },
-          where: { id: job.id },
-        })
+  const BATCH_SIZE = 5;
+  const results: PromiseSettledResult<void>[] = [];
+  for (let i = 0; i < overdue.length; i += BATCH_SIZE) {
+    const batch = overdue.slice(i, i + BATCH_SIZE);
+    const batchResults = await Promise.allSettled(
+      batch.map((job) =>
+        notify(app, {
+          context: { jobCode: job.jobCode },
+          eventName: "job_overdue",
+          jobId: job.id,
+          recipients: { role: Role.OWNER },
+        }).then(() =>
+          app.prisma.job.update({
+            data: { lastOverdueAlertAt: new Date() },
+            where: { id: job.id },
+          })
+        )
       )
-    )
-  );
+    );
+    results.push(...batchResults);
+  }
   for (const r of results) {
     if (r.status === "rejected") {
       app.log.warn({ err: r.reason }, "failed to send overdue notification");

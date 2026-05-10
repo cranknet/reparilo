@@ -137,7 +137,12 @@ export default function QuickIntakeForm() {
                 className="w-full rounded-xl border-none bg-surface-container-highest px-4 py-3 transition-all focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary"
                 id="quick-intake-cost"
                 min={0}
-                onChange={(e) => setEstimatedCost(Number(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setEstimatedCost(
+                    val === "" ? 0 : Number.parseFloat(val) || 0
+                  );
+                }}
                 placeholder="0"
                 step="0.01"
                 type="number"

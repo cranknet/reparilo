@@ -19,8 +19,10 @@ interface OutboxEntry {
   error: string | null;
   id: string;
   jobId: string | null;
+  nextRetryAt: Date | null;
   recipientPhone: string;
   renderedBody: string;
+  retryCount: number;
   status: OutboxStatus;
   templateName: string;
 }
@@ -82,62 +84,69 @@ export async function processOutbox(prisma: DbClient): Promise<void> {
     const countryCode = shopSettings?.countryCode ?? "DZ";
 
     for (const entry of pending) {
-      if (entry.channel === "WHATSAPP") {
-        const result = await sendWhatsApp(
-          config,
-          entry.recipientPhone,
-          entry.renderedBody,
-          countryCode
-        );
-        if (result.success) {
+      try {
+        if (entry.channel === "WHATSAPP") {
+          const result = await sendWhatsApp(
+            config,
+            entry.recipientPhone,
+            entry.renderedBody,
+            countryCode
+          );
+          if (result.success) {
+            await updateOutboxEntry(
+              prisma,
+              { id: entry.id },
+              {
+                error: null,
+                sentAt: new Date(),
+                status: OutboxStatus.SENT,
+              }
+            );
+          } else {
+            const currentRetries = entry.retryCount ?? 0;
+            if (currentRetries < MAX_RETRIES) {
+              const nextRetry = new Date(
+                Date.now() +
+                  BACKOFF_MS[Math.min(currentRetries, BACKOFF_MS.length - 1)]
+              );
+              await updateOutboxEntry(
+                prisma,
+                { id: entry.id },
+                {
+                  error: result.error,
+                  nextRetryAt: nextRetry,
+                  retryCount: currentRetries + 1,
+                  status: OutboxStatus.QUEUED,
+                }
+              );
+            } else {
+              await updateOutboxEntry(
+                prisma,
+                { id: entry.id },
+                {
+                  error: result.error,
+                  status: OutboxStatus.FAILED,
+                }
+              );
+            }
+          }
+        } else {
+          logger.warn(
+            `Outbox: unexpected channel "${entry.channel}" for entry ${entry.id} — marking FAILED`
+          );
           await updateOutboxEntry(
             prisma,
             { id: entry.id },
             {
-              error: null,
-              sentAt: new Date(),
-              status: OutboxStatus.SENT,
+              error: `Unsupported channel: ${entry.channel}`,
+              status: OutboxStatus.FAILED,
             }
           );
-        } else {
-          const currentRetries = entry.retryCount ?? 0;
-          if (currentRetries < MAX_RETRIES) {
-            const nextRetry = new Date(
-              Date.now() +
-                BACKOFF_MS[Math.min(currentRetries, BACKOFF_MS.length - 1)]
-            );
-            await updateOutboxEntry(
-              prisma,
-              { id: entry.id },
-              {
-                error: result.error,
-                nextRetryAt: nextRetry,
-                retryCount: currentRetries + 1,
-                status: OutboxStatus.QUEUED,
-              }
-            );
-          } else {
-            await updateOutboxEntry(
-              prisma,
-              { id: entry.id },
-              {
-                error: result.error,
-                status: OutboxStatus.FAILED,
-              }
-            );
-          }
         }
-      } else {
+      } catch (err) {
         logger.warn(
-          `Outbox: unexpected channel "${entry.channel}" for entry ${entry.id} — marking FAILED`
-        );
-        await updateOutboxEntry(
-          prisma,
-          { id: entry.id },
-          {
-            error: `Unsupported channel: ${entry.channel}`,
-            status: OutboxStatus.FAILED,
-          }
+          { err, entryId: entry.id },
+          "Outbox: failed to process entry"
         );
       }
     }

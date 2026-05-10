@@ -169,8 +169,9 @@ export async function executeQueryDatabase(
     return { success: false, data: "SQL comments are not allowed" };
   }
 
-  if (trimmed.includes("'")) {
-    return { success: false, data: "String literals are not allowed" };
+  const unbalancedQuotes = (trimmed.match(/'/g) ?? []).length % 2 !== 0;
+  if (unbalancedQuotes) {
+    return { success: false, data: "Unbalanced string literals in query" };
   }
 
   if (!SELECT_ONLY_REGEX.test(trimmed)) {
