@@ -7,7 +7,6 @@ import JobPipeline from "@/components/modules/dashboard/job-pipeline";
 import OverdueJobs from "@/components/modules/dashboard/overdue-jobs";
 import MetricCard from "@/components/ui/metric-card";
 import { useCan } from "@/hooks/use-can";
-import { useReturnClaimsList } from "@/hooks/use-return-claims";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth";
 import { useDashboardStore } from "@/stores/dashboard";
@@ -445,10 +444,24 @@ export default function DashboardPage() {
   const userName = useAuthStore((s) => s.user?.name || s.user?.username || "");
   const { data, fetchDashboard, isLoading } = useDashboardStore();
   const canCreateJob = useCan({ jobs: ["create"] });
-  const { data: returnsData } = useReturnClaimsList({
-    status: "OPEN",
-    limit: 1,
-  });
+  const [openReturnsCount, setOpenReturnsCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get("/return-claims", { params: { status: "OPEN", limit: 1 } })
+      .then((res) => {
+        if (!cancelled) {
+          setOpenReturnsCount(res.data?.total ?? 0);
+        }
+      })
+      .catch(() => {
+        setOpenReturnsCount(0);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const aiSettings = useSettingsStore((s) => s.aiSettings);
   const fetchAiSettings = useSettingsStore((s) => s.fetchAiSettings);
@@ -502,7 +515,7 @@ export default function DashboardPage() {
           benchUtilization={benchUtilization}
           completedToday={completedToday}
           data={data}
-          openReturnsCount={returnsData?.total ?? 0}
+          openReturnsCount={openReturnsCount}
           pipelineTotal={pipelineTotal}
         />
       )}
