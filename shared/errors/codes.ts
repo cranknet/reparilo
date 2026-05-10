@@ -118,6 +118,41 @@ export const ERRORS = {
 
   // ── Server ─────────────────────────────────────────────────────────────
   INTERNAL_ERROR: { status: 500, message: "errors.internal_error" },
+
+  // ── Returns ────────────────────────────────────────────────────────────
+  RETURN_CLAIM_NOT_FOUND: {
+    status: 404,
+    message: "errors.return_claim_not_found",
+  },
+  RETURN_CLAIM_NOT_OPEN: {
+    status: 409,
+    message: "errors.return_claim_not_open",
+  },
+  RETURN_CLAIM_FAULT_REQUIRED: {
+    status: 400,
+    message: "errors.return_claim_fault_required",
+  },
+  RETURN_CLAIM_REWORK_JOB_NOT_DELIVERED: {
+    status: 409,
+    message: "errors.return_claim_rework_job_not_delivered",
+  },
+  INVALID_CLAIMED_LINE: { status: 400, message: "errors.invalid_claimed_line" },
+  REFUND_EXCEEDS_ORIGINAL: {
+    status: 400,
+    message: "errors.refund_exceeds_original",
+  },
+  ORIGINAL_JOB_NOT_DELIVERED: {
+    status: 409,
+    message: "errors.original_job_not_delivered",
+  },
+  REWORK_JOB_HAS_OPEN_CLAIM: {
+    status: 409,
+    message: "errors.rework_job_has_open_claim",
+  },
+  RETURN_CLAIM_HAS_REWORK_JOB: {
+    status: 409,
+    message: "errors.return_claim_has_rework_job",
+  },
 } as const;
 
 export type ErrorCode = keyof typeof ERRORS;

@@ -630,6 +630,15 @@
 
     "internal_error": "An unexpected error occurred",
     "fetch_reports": "Failed to load reports",
+    "return_claim_not_found": "Return claim not found",
+    "return_claim_not_open": "This return claim is already resolved",
+    "return_claim_fault_required": "Set the fault category before resolving the claim",
+    "return_claim_rework_job_not_delivered": "The rework job must be delivered before resolving the claim",
+    "invalid_claimed_line": "Selected repair or part doesn't belong to the original job",
+    "refund_exceeds_original": "Refund amount cannot exceed the original payment",
+    "original_job_not_delivered": "The original job must be delivered to file a return",
+    "rework_job_has_open_claim": "Cannot cancel a rework job while its return claim is open",
+    "return_claim_has_rework_job": "This return claim already has a rework job",
     "generic": "Something went wrong"
   },
   "failed_to_create_part": "Failed to create part",
