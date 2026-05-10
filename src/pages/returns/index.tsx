@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import ClaimsFilters from "@/components/modules/returns/claims-filters";
 import ClaimsTable from "@/components/modules/returns/claims-table";
-import { useReturnClaimsList } from "@/hooks/use-return-claims";
-import type { ListClaimsParams } from "@/types/return-claim";
+import { fetchReturnClaims } from "@/lib/api-return-claims";
+import type {
+  ListClaimsParams,
+  ListClaimsResponse,
+} from "@/types/return-claim";
 
 export default function ReturnsListPage() {
   const { t } = useTranslation();
@@ -12,7 +15,24 @@ export default function ReturnsListPage() {
     page: 1,
     limit: 20,
   });
-  const { data, isLoading } = useReturnClaimsList(filters);
+  const [data, setData] = useState<ListClaimsResponse | null>(null);
+  const [isLoading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetchReturnClaims(filters);
+      setData(res);
+    } catch {
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return (
     <div className="space-y-6 p-4 md:p-6">

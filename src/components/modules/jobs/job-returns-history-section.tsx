@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import { useReturnClaimsList } from "@/hooks/use-return-claims";
+import { fetchReturnClaims } from "@/lib/api-return-claims";
+import type { ListClaimsResponse } from "@/types/return-claim";
 
 interface Props {
   jobId: string;
@@ -8,7 +10,25 @@ interface Props {
 
 export default function JobReturnsHistorySection({ jobId }: Props) {
   const { t } = useTranslation();
-  const { data } = useReturnClaimsList({ originalJobId: jobId, limit: 50 });
+  const [data, setData] = useState<ListClaimsResponse | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchReturnClaims({ originalJobId: jobId, limit: 50 })
+      .then((res) => {
+        if (!cancelled) {
+          setData(res);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setData(null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [jobId]);
 
   if (!data || data.items.length === 0) {
     return (
