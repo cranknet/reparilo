@@ -106,7 +106,7 @@ export default function ClaimsFilters({ value, onChange }: Props) {
             set(
               "from",
               e.target.value
-                ? new Date(e.target.value).toISOString()
+                ? new Date(`${e.target.value}T00:00:00.000Z`).toISOString()
                 : undefined
             )
           }
@@ -126,7 +126,7 @@ export default function ClaimsFilters({ value, onChange }: Props) {
             set(
               "to",
               e.target.value
-                ? new Date(e.target.value).toISOString()
+                ? new Date(`${e.target.value}T00:00:00.000Z`).toISOString()
                 : undefined
             )
           }
