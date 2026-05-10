@@ -22,7 +22,7 @@ interface OutboxEntry {
   nextRetryAt: Date | null;
   recipientPhone: string;
   renderedBody: string;
-  retryCount: number;
+  retryCount: number | null;
   status: OutboxStatus;
   templateName: string;
 }
@@ -81,6 +81,7 @@ async function handleRetry(
       { id: entryId },
       {
         error: errorMessage,
+        nextRetryAt: null,
         status: OutboxStatus.FAILED,
       }
     );
@@ -135,7 +136,14 @@ async function processEntry(
   } catch (err) {
     logger.warn({ err, entryId: entry.id }, "Outbox: failed to process entry");
     const msg = err instanceof Error ? err.message : String(err);
-    await handleRetry(prisma, entry.id, entry.retryCount ?? 0, msg);
+    try {
+      await handleRetry(prisma, entry.id, entry.retryCount ?? 0, msg);
+    } catch (retryErr) {
+      logger.error(
+        { err: retryErr, entryId: entry.id },
+        "Outbox: failed to handle retry"
+      );
+    }
   }
 }
 
