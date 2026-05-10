@@ -47,6 +47,29 @@ enum PartCategory {
   OTHER
 }
 
+enum FaultCategory {
+  WORKMANSHIP
+  DEFECTIVE_PART
+  MISDIAGNOSIS
+}
+
+enum ResolutionOutcome {
+  REWORK_FREE
+  REWORK_PARTIAL_CHARGE
+  REFUND_PARTIAL
+  REFUND_FULL
+}
+
+enum ReturnClaimStatus {
+  OPEN
+  RESOLVED
+}
+
+enum PhotoStage {
+  RETURN_INTAKE
+  RETURN_RESOLUTION
+}
+
 enum RepairCategory {
   HARDWARE
   SOFTWARE
@@ -106,37 +129,39 @@ enum AiMessageFeedback {
 // ─────────────────────────────────────────────
 
 model User {
-  id              String    @id @default(cuid())
-  name            String    @default("")
-  username        String   @unique
-  displayUsername String?
-  email           String    @unique
-  emailVerified   Boolean   @default(false)
-  image           String?
-  password        String?
-  role            Role
-  isActive        Boolean   @default(true)
-  mustChangePassword Boolean @default(false)
+  id                  String    @id @default(cuid())
+  name                String    @default("")
+  username            String    @unique
+  displayUsername     String?
+  email               String    @unique
+  emailVerified       Boolean   @default(false)
+  image               String?
+  password            String?
+  role                Role
+  isActive            Boolean   @default(true)
+  mustChangePassword  Boolean   @default(false)
   failedLoginAttempts Int       @default(0)
-  lockedUntil        DateTime?  @db.Timestamptz
-  banned          Boolean   @default(false)
-  banReason       String?
-  banExpires      DateTime? @db.Timestamptz
-  createdAt       DateTime  @default(now()) @db.Timestamptz
-  updatedAt       DateTime  @updatedAt      @db.Timestamptz
+  lockedUntil         DateTime? @db.Timestamptz
+  banned              Boolean   @default(false)
+  banReason           String?
+  banExpires          DateTime? @db.Timestamptz
+  createdAt           DateTime  @default(now()) @db.Timestamptz
+  updatedAt           DateTime  @updatedAt @db.Timestamptz
 
-  assignedJobs   Job[]           @relation("AssignedTechnician")
-  createdJobs    Job[]           @relation("CreatedBy")
-  updatedJobs    Job[]           @relation("UpdatedBy")
-  notes          JobNote[]
-  jobParts       JobPart[]
-  jobRepairs     JobRepair[]
-   auditLogs      AuditLog[]
-   conversations  AiConversation[]
-   sessions       Session[]
-  accounts       Account[]
-  verifications  Verification[]
-  inAppNotifications InAppNotification[]
+  assignedJobs         Job[]               @relation("AssignedTechnician")
+  createdJobs          Job[]               @relation("CreatedBy")
+  updatedJobs          Job[]               @relation("UpdatedBy")
+  notes                JobNote[]
+  jobParts             JobPart[]
+  jobRepairs           JobRepair[]
+  auditLogs            AuditLog[]
+  conversations        AiConversation[]
+  sessions             Session[]
+  accounts             Account[]
+  verifications        Verification[]
+  inAppNotifications   InAppNotification[]
+  returnClaimsOpened   ReturnClaim[]       @relation("ReturnClaimOpenedBy")
+  returnClaimsResolved ReturnClaim[]       @relation("ReturnClaimResolvedBy")
 
   @@map("users")
 }
@@ -159,7 +184,7 @@ model Account {
   scope                 String?
   password              String?
   createdAt             DateTime  @default(now()) @db.Timestamptz
-  updatedAt             DateTime  @updatedAt      @db.Timestamptz
+  updatedAt             DateTime  @updatedAt @db.Timestamptz
 
   @@unique([providerId, accountId])
   @@index([userId])
@@ -176,9 +201,9 @@ model Customer {
   phone     String   @unique
   email     String?
   createdAt DateTime @default(now()) @db.Timestamptz
-  updatedAt DateTime @updatedAt      @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
 
-  jobs      Job[]
+  jobs Job[]
 
   @@index([email])
   @@map("customers")
@@ -195,10 +220,10 @@ model Device {
   model     String
   category  String?
   createdAt DateTime @default(now()) @db.Timestamptz
-  updatedAt DateTime @updatedAt      @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
 
-  brand     Brand @relation(fields: [brandId], references: [id], onDelete: Restrict)
-  jobs      Job[]
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  jobs  Job[]
 
   @@unique([brandId, model])
   @@index([brandId])
@@ -213,9 +238,9 @@ model Brand {
   id        String   @id @default(cuid())
   name      String   @unique
   createdAt DateTime @default(now()) @db.Timestamptz
-  updatedAt DateTime @updatedAt      @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
 
-  devices   Device[]
+  devices Device[]
 
   @@map("brands")
 }
@@ -242,51 +267,55 @@ model JobCounter {
 // ─────────────────────────────────────────────
 
 model Job {
-  id         String    @id @default(cuid())
-  jobCode    String    @unique
+  id         String @id @default(cuid())
+  jobCode    String @unique
   accessCode String
 
-  customerId      String
-  customer        Customer  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
 
-  deviceId        String
-  device          Device    @relation(fields: [deviceId], references: [id], onDelete: Restrict)
-  color           String?
+  deviceId String
+  device   Device  @relation(fields: [deviceId], references: [id], onDelete: Restrict)
+  color    String?
 
-  reportedProblem String   @db.Text
-  conditionNotes  String?  @db.Text
+  reportedProblem String    @db.Text
+  conditionNotes  String?   @db.Text
   status          JobStatus @default(INTAKE)
 
-  estimatedCost   Decimal   @db.Decimal(10, 2)
-  depositAmount   Decimal?  @db.Decimal(10, 2)
+  estimatedCost Decimal  @db.Decimal(10, 2)
+  depositAmount Decimal? @db.Decimal(10, 2)
 
-  estimatedDate   DateTime? @db.Date
-  createdAt       DateTime  @default(now()) @db.Timestamptz
-  updatedAt       DateTime  @updatedAt      @db.Timestamptz
+  estimatedDate DateTime? @db.Date
+  createdAt     DateTime  @default(now()) @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @db.Timestamptz
 
   lastOverdueAlertAt DateTime? @db.Timestamptz
 
-   isWarrantyReturn Boolean  @default(false)
+  isWarrantyReturn Boolean @default(false)
   warrantyForJobId String?
-  warrantyForJob   Job?     @relation("WarrantyReturn", fields: [warrantyForJobId], references: [id], onDelete: SetNull)
-  warrantyReturns  Job[]    @relation("WarrantyReturn")
+  warrantyForJob   Job?    @relation("WarrantyReturn", fields: [warrantyForJobId], references: [id], onDelete: SetNull)
+  warrantyReturns  Job[]   @relation("WarrantyReturn")
 
-  createdById     String
-  createdBy       User      @relation("CreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  updatedById     String?
-  updatedBy       User?     @relation("UpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdById String
+  createdBy   User    @relation("CreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedById String?
+  updatedBy   User?   @relation("UpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
 
-  technicianId    String?
-  technician      User?     @relation("AssignedTechnician", fields: [technicianId], references: [id], onDelete: SetNull)
+  technicianId String?
+  technician   User?   @relation("AssignedTechnician", fields: [technicianId], references: [id], onDelete: SetNull)
 
-  photos          JobPhoto[]
-  notes           JobNote[]
-  partsUsed       JobPart[]
-  partsWaiting    JobPartsWaiting[]
-  repairs         JobRepair[]
-  auditLogs       AuditLog[]
-  notifications   NotificationOutbox[]
+  photos             JobPhoto[]
+  notes              JobNote[]
+  partsUsed          JobPart[]
+  partsWaiting       JobPartsWaiting[]
+  repairs            JobRepair[]
+  auditLogs          AuditLog[]
+  notifications      NotificationOutbox[]
   inAppNotifications InAppNotification[]
+
+  // ── Return claims ────────────────────────────────────────────────────
+  returnClaimsAgainst ReturnClaim[] @relation("OriginalJobReturnClaims")
+  reworkClaim         ReturnClaim?  @relation("ReworkJobReturnClaim")
 
   @@index([customerId])
   @@index([deviceId])
@@ -308,13 +337,17 @@ model Job {
 // ─────────────────────────────────────────────
 
 model JobPhoto {
-  id        String   @id @default(cuid())
-  jobId     String
-  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  path      String
-  createdAt DateTime @default(now()) @db.Timestamptz
+  id            String       @id @default(cuid())
+  jobId         String
+  job           Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  path          String
+  stage         PhotoStage? // null = legacy/general
+  returnClaimId String?
+  returnClaim   ReturnClaim? @relation(fields: [returnClaimId], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now()) @db.Timestamptz
 
   @@index([jobId])
+  @@index([returnClaimId])
   @@map("job_photos")
 }
 
@@ -357,18 +390,18 @@ model JobPartsWaiting {
 // ─────────────────────────────────────────────
 
 model PartsCatalog {
-  id           String       @id @default(cuid())
-  name         String
-  category     PartCategory
-  defaultPrice Decimal      @db.Decimal(10, 2)
-  supplier       String?
-  stockQuantity  Int          @default(0)
-  reorderLevel   Int          @default(0)
-  isActive       Boolean      @default(true)
-  createdAt      DateTime     @default(now()) @db.Timestamptz
-  updatedAt      DateTime     @updatedAt      @db.Timestamptz
+  id            String       @id @default(cuid())
+  name          String
+  category      PartCategory
+  defaultPrice  Decimal      @db.Decimal(10, 2)
+  supplier      String?
+  stockQuantity Int          @default(0)
+  reorderLevel  Int          @default(0)
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now()) @db.Timestamptz
+  updatedAt     DateTime     @updatedAt @db.Timestamptz
 
-  jobParts       JobPart[]
+  jobParts JobPart[]
 
   @@index([name])
   @@index([category])
@@ -382,23 +415,25 @@ model PartsCatalog {
 // ─────────────────────────────────────────────
 
 model JobPart {
-  id          String        @id @default(cuid())
-  jobId       String
-  job         Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  id    String @id @default(cuid())
+  jobId String
+  job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
-  partId      String?
-  part        PartsCatalog? @relation(fields: [partId], references: [id], onDelete: SetNull)
+  partId String?
+  part   PartsCatalog? @relation(fields: [partId], references: [id], onDelete: SetNull)
 
-  partName    String
-  category    PartCategory
-  unitPrice   Decimal       @db.Decimal(10, 2)
-  quantity    Int           @default(1)
-  supplier    String?
-  totalCost   Decimal       @db.Decimal(10, 2)
+  partName  String
+  category  PartCategory
+  unitPrice Decimal      @db.Decimal(10, 2)
+  quantity  Int          @default(1)
+  supplier  String?
+  totalCost Decimal      @db.Decimal(10, 2)
 
   createdById String
-  createdBy   User          @relation(fields: [createdById], references: [id], onDelete: Restrict)
-  createdAt   DateTime      @default(now()) @db.Timestamptz
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  returnClaims ReturnClaim[]
 
   @@index([jobId])
   @@map("job_parts")
@@ -414,10 +449,11 @@ model RepairCatalog {
   category     RepairCategory
   defaultPrice Decimal        @db.Decimal(10, 2)
   isActive     Boolean        @default(true)
+  warrantyDays Int? // null = inherit ShopSettings.defaultWarrantyDays
   createdAt    DateTime       @default(now()) @db.Timestamptz
-  updatedAt    DateTime       @updatedAt      @db.Timestamptz
+  updatedAt    DateTime       @updatedAt @db.Timestamptz
 
-  jobRepairs   JobRepair[]
+  jobRepairs JobRepair[]
 
   @@map("repair_catalog")
 }
@@ -429,24 +465,80 @@ model RepairCatalog {
 // ─────────────────────────────────────────────
 
 model JobRepair {
-  id          String          @id @default(cuid())
-  jobId       String
-  job         Job             @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  id    String @id @default(cuid())
+  jobId String
+  job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
-  repairId    String?
-  repair      RepairCatalog?  @relation(fields: [repairId], references: [id], onDelete: SetNull)
+  repairId String?
+  repair   RepairCatalog? @relation(fields: [repairId], references: [id], onDelete: SetNull)
 
-  repairName  String
-  category    RepairCategory
-  price       Decimal         @db.Decimal(10, 2)
+  repairName String
+  category   RepairCategory
+  price      Decimal        @db.Decimal(10, 2)
 
   createdById String
-  createdBy   User            @relation(fields: [createdById], references: [id], onDelete: Restrict)
-  createdAt   DateTime        @default(now()) @db.Timestamptz
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  returnClaims ReturnClaim[]
 
   @@unique([jobId, repairId])
   @@index([jobId])
   @@map("job_repairs")
+}
+
+// ─────────────────────────────────────────────
+// RETURN CLAIMS
+// A claim is a customer's complaint about a delivered repair.
+// Lifecycle: OPEN -> RESOLVED. Resolution outcomes:
+//   REWORK_FREE / REWORK_PARTIAL_CHARGE -> spawns rework Job (reworkJobId set)
+//   REFUND_PARTIAL / REFUND_FULL -> no Job spawned, refundAmount set
+// See docs/superpowers/specs/2026-05-10-returns-and-photo-evidence-design.md
+// ─────────────────────────────────────────────
+
+model ReturnClaim {
+  id String @id @default(cuid())
+
+  originalJobId String
+  originalJob   Job    @relation("OriginalJobReturnClaims", fields: [originalJobId], references: [id], onDelete: Restrict)
+
+  claimedJobRepairId String?
+  claimedJobRepair   JobRepair? @relation(fields: [claimedJobRepairId], references: [id], onDelete: SetNull)
+
+  claimedJobPartId String?
+  claimedJobPart   JobPart? @relation(fields: [claimedJobPartId], references: [id], onDelete: SetNull)
+
+  returnReason String @db.Text
+
+  faultCategory       FaultCategory?
+  resolutionOutcome   ResolutionOutcome?
+  partialChargeAmount Decimal?           @db.Decimal(10, 2)
+  refundAmount        Decimal?           @db.Decimal(10, 2)
+
+  reworkJobId String? @unique
+  reworkJob   Job?    @relation("ReworkJobReturnClaim", fields: [reworkJobId], references: [id], onDelete: SetNull)
+
+  status     ReturnClaimStatus @default(OPEN)
+  openedAt   DateTime          @default(now()) @db.Timestamptz
+  resolvedAt DateTime?         @db.Timestamptz
+
+  openedById   String
+  openedBy     User    @relation("ReturnClaimOpenedBy", fields: [openedById], references: [id], onDelete: Restrict)
+  resolvedById String?
+  resolvedBy   User?   @relation("ReturnClaimResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  photos JobPhoto[]
+
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  @@index([originalJobId])
+  @@index([status])
+  @@index([faultCategory])
+  @@index([resolutionOutcome])
+  @@index([openedAt])
+  @@index([openedById])
+  @@map("return_claims")
 }
 
 // ─────────────────────────────────────────────
@@ -487,7 +579,7 @@ model NotificationTemplate {
   body      String        @db.Text
   isDefault Boolean       @default(false)
   createdAt DateTime      @default(now()) @db.Timestamptz
-  updatedAt DateTime      @updatedAt      @db.Timestamptz
+  updatedAt DateTime      @updatedAt @db.Timestamptz
 
   @@unique([name, channel])
   @@index([channel])
@@ -506,7 +598,7 @@ model NotificationOutbox {
   channel        NotifyChannel
   recipientPhone String
   renderedBody   String        @db.Text
-  status         OutboxStatus @default(QUEUED)
+  status         OutboxStatus  @default(QUEUED)
   error          String?       @db.Text
   retryCount     Int           @default(0)
   nextRetryAt    DateTime?     @db.Timestamptz
@@ -554,7 +646,7 @@ model AiSettings {
   enabled         Boolean  @default(false)
   maxTokens       Int?     @default(4096)
   createdAt       DateTime @default(now()) @db.Timestamptz
-  updatedAt       DateTime @updatedAt      @db.Timestamptz
+  updatedAt       DateTime @updatedAt @db.Timestamptz
 
   @@map("ai_settings")
 }
@@ -571,7 +663,7 @@ model AiConversation {
   starred   Boolean     @default(false)
   messages  AiMessage[]
   createdAt DateTime    @default(now()) @db.Timestamptz
-  updatedAt DateTime    @updatedAt      @db.Timestamptz
+  updatedAt DateTime    @updatedAt @db.Timestamptz
 
   @@index([userId, updatedAt])
   @@index([userId, starred])
@@ -579,16 +671,16 @@ model AiConversation {
 }
 
 model AiMessage {
-  id             String           @id @default(cuid())
+  id             String             @id @default(cuid())
   conversationId String
-  conversation   AiConversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversation   AiConversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   role           AiRole
-  content        String           @db.Text
+  content        String             @db.Text
   agentName      String?
   toolCalls      Json?
-  pinned         Boolean          @default(false)
+  pinned         Boolean            @default(false)
   feedback       AiMessageFeedback?
-  createdAt      DateTime         @default(now()) @db.Timestamptz
+  createdAt      DateTime           @default(now()) @db.Timestamptz
 
   @@index([conversationId, createdAt])
   @@map("ai_messages")
@@ -599,20 +691,20 @@ model AiMessage {
 // ─────────────────────────────────────────────
 
 model AiAgentDefinition {
-  id                String   @id @default(cuid())
-  name              String   @unique
-  displayName       String
-  instructions      String   @default("") @db.Text
-  model             String?
-  temperature      Float?
-  toolNames         String[] @default([])
-  handoffKeywords   String[] @default([])
-  isActive          Boolean  @default(true)
-  isBuiltIn         Boolean  @default(false)
+  id                 String   @id @default(cuid())
+  name               String   @unique
+  displayName        String
+  instructions       String   @default("") @db.Text
+  model              String?
+  temperature        Float?
+  toolNames          String[] @default([])
+  handoffKeywords    String[] @default([])
+  isActive           Boolean  @default(true)
+  isBuiltIn          Boolean  @default(false)
   enabledHostedTools String[] @default([])
-  vectorStoreId     String?
-  createdAt         DateTime @default(now()) @db.Timestamptz
-  updatedAt         DateTime @updatedAt      @db.Timestamptz
+  vectorStoreId      String?
+  createdAt          DateTime @default(now()) @db.Timestamptz
+  updatedAt          DateTime @updatedAt @db.Timestamptz
 
   @@index([isActive])
   @@map("ai_agent_definitions")
@@ -629,7 +721,7 @@ model AiMemory {
   source    String   @default("manual")
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now()) @db.Timestamptz
-  updatedAt DateTime @updatedAt      @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
 
   @@map("ai_memories")
 }
@@ -644,7 +736,7 @@ model AiInstruction {
   tags      String[] @default([])
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now()) @db.Timestamptz
-  updatedAt DateTime @updatedAt      @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
 
   @@map("ai_instructions")
 }
@@ -655,21 +747,22 @@ model AiInstruction {
 // ─────────────────────────────────────────────
 
 model ShopSettings {
-  id            String   @id
-  shopName      String   @default("")
-  logoPath      String?
-  address       String?
-  phone         String?
-  countryCode   String   @default("DZ")
-  currency      String   @default("DZD")
-  timezone      String?  // IANA name, e.g. "Africa/Algiers". Null -> env TZ fallback.
-  receiptFooter String?  @db.Text
+  id                        String   @id
+  shopName                  String   @default("")
+  logoPath                  String?
+  address                   String?
+  phone                     String?
+  countryCode               String   @default("DZ")
+  currency                  String   @default("DZD")
+  defaultWarrantyDays       Int      @default(30)
+  timezone                  String? // IANA name, e.g. "Africa/Algiers". Null -> env TZ fallback.
+  receiptFooter             String?  @db.Text
   whatsappApiTokenEncrypted String?
-  whatsappBusinessId         String?
-  whatsappPhoneNumberId      String?
-  whatsappEnabled            Boolean @default(false)
-  createdAt     DateTime @default(now()) @db.Timestamptz
-  updatedAt     DateTime @updatedAt      @db.Timestamptz
+  whatsappBusinessId        String?
+  whatsappPhoneNumberId     String?
+  whatsappEnabled           Boolean  @default(false)
+  createdAt                 DateTime @default(now()) @db.Timestamptz
+  updatedAt                 DateTime @updatedAt @db.Timestamptz
 
   @@map("shop_settings")
 }
@@ -679,16 +772,16 @@ model ShopSettings {
 // ─────────────────────────────────────────────
 
 model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String   @unique
-  expiresAt DateTime @db.Timestamptz
-  ipAddress String?
-  userAgent String?
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token          String   @unique
+  expiresAt      DateTime @db.Timestamptz
+  ipAddress      String?
+  userAgent      String?
   impersonatedBy String?
-  createdAt DateTime @default(now()) @db.Timestamptz
-  updatedAt DateTime @updatedAt      @db.Timestamptz
+  createdAt      DateTime @default(now()) @db.Timestamptz
+  updatedAt      DateTime @updatedAt @db.Timestamptz
 
   @@index([userId])
   @@index([token])
