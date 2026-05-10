@@ -185,16 +185,16 @@ export default function CustomersPage() {
       {!showEmptyCatalog && (
         <section aria-label={t("customers")}>
           <h3 className="sr-only">{t("customers")}</h3>
-          <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="rounded-xl bg-surface-container-low p-4">
+          <div className="mb-6 grid gap-4 sm:grid-cols-[1.5fr_1fr]">
+            <div className="rounded-2xl bg-surface-container-low p-5">
               <p className="font-medium text-on-surface-variant text-xs uppercase tracking-wide">
                 {t("total_customers")}
               </p>
-              <p className="mt-1 font-extrabold font-headline text-2xl text-on-surface">
+              <p className="mt-1 font-extrabold font-headline text-4xl text-on-surface">
                 {totalCount}
               </p>
             </div>
-            <div className="rounded-xl bg-surface-container-low p-4">
+            <div className="rounded-2xl bg-surface-container p-5">
               <p className="font-medium text-on-surface-variant text-xs uppercase tracking-wide">
                 {t("customers_with_jobs")}
               </p>
@@ -236,6 +236,13 @@ export default function CustomersPage() {
           <p className="mt-1 text-on-surface-variant text-sm">
             {t("no_customers_found_desc")}
           </p>
+          <button
+            className="mt-5 min-h-11 rounded-xl bg-surface-container-high px-5 font-bold text-on-surface-variant text-sm transition-colors hover:bg-surface-container-highest"
+            onClick={() => setSearch("")}
+            type="button"
+          >
+            {t("clear_filters")}
+          </button>
         </div>
       )}
 

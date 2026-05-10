@@ -9,6 +9,7 @@ import { useAlertsStore } from "@/stores/alerts";
 import { useSettingsStore } from "@/stores/settings";
 
 type FilterType = "all" | "unread" | "read";
+type NotificationMode = "alerts" | "outbox" | "setup";
 
 export default function NotificationsPage() {
   const { t } = useTranslation();
@@ -29,6 +30,7 @@ export default function NotificationsPage() {
     fetchOutboxLogs,
   } = useSettingsStore();
   const [outboxLoaded, setOutboxLoaded] = useState(false);
+  const [mode, setMode] = useState<NotificationMode>("alerts");
 
   useEffect(() => {
     if (!initialized) {
@@ -98,27 +100,55 @@ export default function NotificationsPage() {
         </p>
       </div>
 
-      <AlertList
-        alerts={alerts}
-        filter={filter}
-        onDelete={handleDelete}
-        onFilterChange={setFilter}
-        onMarkAllRead={handleMarkAllRead}
-        onNavigate={handleNavigate}
-        unreadCount={unreadCount}
-      />
+      <div className="mb-6 grid gap-3 sm:grid-cols-3">
+        {(
+          [
+            ["alerts", t("notifications"), unreadCount],
+            ["outbox", t("notification_outbox"), null],
+            ["setup", t("whatsapp_settings"), null],
+          ] as const
+        ).map(([key, label, count]) => (
+          <button
+            className={`min-h-16 rounded-2xl px-4 text-start transition-colors focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
+              mode === key
+                ? "bg-primary-fixed text-primary"
+                : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container"
+            }`}
+            key={key}
+            onClick={() => setMode(key)}
+            type="button"
+          >
+            <span className="block font-bold text-sm">{label}</span>
+            {count !== null && (
+              <span className="mt-1 block text-xs">
+                {t("noti_filter_unread")}: {count}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
 
-      <div className="mt-10">
+      {mode === "alerts" && (
+        <AlertList
+          alerts={alerts}
+          filter={filter}
+          onDelete={handleDelete}
+          onFilterChange={setFilter}
+          onMarkAllRead={handleMarkAllRead}
+          onNavigate={handleNavigate}
+          unreadCount={unreadCount}
+        />
+      )}
+
+      {mode === "setup" && (
         <ChannelSettings
           onFetchWhatsAppSettings={fetchWhatsAppSettings}
           onSaveWhatsAppSettings={saveWhatsAppSettings}
           whatsAppSettings={whatsAppSettings}
         />
-      </div>
+      )}
 
-      <div className="mt-10">
-        <OutboxLog />
-      </div>
+      {mode === "outbox" && <OutboxLog />}
     </>
   );
 }

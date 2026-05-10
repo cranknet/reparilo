@@ -1,18 +1,11 @@
 import { Icon } from "@/components/ui/icon";
 
-type ButtonVariant =
-  | "primary"
-  | "primary-gradient"
-  | "secondary"
-  | "ghost"
-  | "destructive";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive";
 type ButtonSize = "sm" | "md" | "lg";
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
-    "bg-primary text-on-primary shadow-md hover:bg-primary-container active:scale-[0.98]",
-  "primary-gradient":
-    "atelier-gradient text-on-primary shadow-md hover:opacity-90 active:scale-[0.98]",
+    "bg-primary text-on-primary hover:bg-primary-container active:scale-[0.98]",
   secondary:
     "bg-surface-container-highest text-on-secondary-fixed-variant hover:bg-surface-container active:scale-[0.98]",
   ghost:
@@ -21,9 +14,9 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
-  sm: "px-3 py-2 text-xs",
-  md: "px-5 py-2.5 text-sm",
-  lg: "px-8 py-3 text-base",
+  sm: "min-h-11 px-3 py-2 text-xs",
+  md: "min-h-11 px-5 py-2.5 text-sm",
+  lg: "min-h-12 px-8 py-3 text-base",
 };
 
 const ICON_SIZE: Record<ButtonSize, "sm" | "md"> = {
@@ -54,9 +47,9 @@ export function Button({
   return (
     <button
       className={[
-        "flex items-center justify-center gap-2 rounded-xl font-bold font-headline transition-all disabled:cursor-not-allowed disabled:opacity-60",
+        "flex items-center justify-center gap-2 rounded-xl font-bold font-headline transition-all focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
         VARIANT_CLASSES[variant],
-        iconOnly ? "aspect-square p-0" : SIZE_CLASSES[size],
+        iconOnly ? "aspect-square min-h-11 min-w-11 p-0" : SIZE_CLASSES[size],
         className,
       ]
         .filter(Boolean)

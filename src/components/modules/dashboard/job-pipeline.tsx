@@ -25,7 +25,7 @@ export default function JobPipeline({
   );
 
   return (
-    <div className="h-full rounded-xl bg-surface-container-low p-6 ring-1 ring-surface-container-low/50 transition-all">
+    <div className="h-full rounded-xl bg-surface-container-low p-6 transition-all">
       <h3 className="mb-6 flex items-center gap-2 font-bold font-headline text-lg text-on-surface">
         <span className="material-symbols-outlined">account_tree</span>
         {t("repair_status_board")}
@@ -33,9 +33,9 @@ export default function JobPipeline({
       <div className="space-y-3">
         {PIPELINE_ITEMS_ACCENT.map(({ status, color, descriptionKey }) => (
           <button
-            className={`flex w-full cursor-pointer items-center justify-between rounded-lg p-3 text-start transition-all hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
+            className={`flex min-h-16 w-full cursor-pointer items-center justify-between rounded-xl p-3 text-start transition-all hover:bg-surface-container focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
               status === JobStatus.IN_REPAIR
-                ? "bg-surface-container-highest ring-1 ring-surface-container-low"
+                ? "bg-surface-container-highest"
                 : ""
             }`}
             key={status}
@@ -59,7 +59,7 @@ export default function JobPipeline({
           </button>
         ))}
       </div>
-      <div className="mt-8 rounded-xl bg-primary-fixed p-4 ring-1 ring-primary/20 transition-all">
+      <div className="mt-8 rounded-xl bg-primary-fixed p-4 transition-all">
         <div className="mb-2 flex items-center justify-between">
           <p className="font-bold text-primary text-xs uppercase">
             {t("bench_usage")}

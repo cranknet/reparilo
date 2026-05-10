@@ -915,11 +915,11 @@ export default function PartsCatalogPage() {
         <section aria-label={t("inventory_value")}>
           <h3 className="sr-only">{t("inventory_value")}</h3>
           <div className={`mb-6 grid gap-4 ${metricGridCols}`}>
-            <div className="rounded-xl bg-surface-container-low p-4">
+            <div className="rounded-2xl bg-surface-container-low p-5 md:col-span-2">
               <p className="font-medium text-on-surface-variant text-xs uppercase tracking-wide">
                 {t("total_parts")}
               </p>
-              <p className="mt-1 font-extrabold font-headline text-2xl text-on-surface">
+              <p className="mt-1 font-extrabold font-headline text-4xl text-on-surface">
                 {totalCount}
               </p>
             </div>
@@ -1013,6 +1013,16 @@ export default function PartsCatalogPage() {
           <p className="mt-1 text-on-surface-variant text-sm">
             {t("try_different_search")}
           </p>
+          <button
+            className="mt-5 min-h-11 rounded-xl bg-surface-container-high px-5 font-bold text-on-surface-variant text-sm transition-colors hover:bg-surface-container-highest"
+            onClick={() => {
+              setSearch("");
+              setActiveFilter("ALL");
+            }}
+            type="button"
+          >
+            {t("clear_filters")}
+          </button>
         </div>
       )}
 

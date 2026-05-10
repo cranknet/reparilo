@@ -10,6 +10,7 @@ import { Link } from "react-router";
 import { toast } from "sonner";
 import AgentSelector from "@/components/modules/ai-analyst/agent-selector";
 import ChatEmptyState from "@/components/modules/ai-analyst/chat-empty-state";
+import { Button } from "@/components/ui/button";
 import { useModalEffects } from "@/hooks/use-modal-effects";
 import api, { fetchCsrfToken } from "@/lib/api";
 import { useAiChatStore } from "@/stores/ai-chat";
@@ -149,7 +150,7 @@ const MessageBubble = React.memo(function MessageBubble({
     return (
       <div className="flex justify-end gap-3">
         <div className="flex max-w-[80%] flex-col items-end space-y-1.5 sm:max-w-[70%]">
-          <article className="rounded-2xl rounded-se-sm bg-gradient-to-br from-primary to-surface-tint px-4 py-3 text-on-primary text-sm leading-relaxed shadow-md">
+          <article className="rounded-2xl rounded-se-sm bg-primary px-4 py-3 text-on-primary text-sm leading-relaxed">
             {message.content}
           </article>
           <span className="me-1 font-bold text-on-surface-variant text-xs uppercase tracking-wider">
@@ -203,7 +204,7 @@ function ToolCallAccordion({ toolCalls }: { toolCalls: ToolCallEvent[] }) {
   return (
     <div className="ms-13 w-fit overflow-hidden rounded-lg border border-outline-variant bg-surface-container-low text-xs">
       <button
-        className="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-surface-container-high"
+        className="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-surface-container-high focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         onClick={() => setIsOpen((prev) => !prev)}
         type="button"
       >
@@ -300,7 +301,7 @@ const MessageExtras = React.memo(function MessageExtras({
                   </span>
                 )}
               <button
-                className="rounded-lg border border-outline-variant px-3 py-1 font-medium text-on-surface-variant text-xs transition-colors hover:bg-surface-container-high"
+                className="rounded-lg border border-outline-variant px-3 py-1 font-medium text-on-surface-variant text-xs transition-colors hover:bg-surface-container-high focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 onClick={() => onRetry(message.id)}
                 type="button"
               >
@@ -333,7 +334,7 @@ function AgentSwitchDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface/70 p-4 backdrop-blur-sm">
       <div
         className="w-full max-w-sm rounded-2xl bg-surface-container-high p-6 shadow-xl"
         ref={dialogRef}
@@ -346,19 +347,15 @@ function AgentSwitchDialog({
         </p>
         <div className="flex justify-end gap-2">
           <button
-            className="rounded-xl px-4 py-2 font-bold text-on-surface-variant text-sm transition-colors hover:bg-surface-container-highest"
+            className="rounded-xl px-4 py-2 font-bold text-on-surface-variant text-sm transition-colors hover:bg-surface-container-highest focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             onClick={onCancel}
             type="button"
           >
             {t("cancel")}
           </button>
-          <button
-            className="rounded-xl bg-primary px-4 py-2 font-bold text-on-primary text-sm transition-colors hover:opacity-90"
-            onClick={onConfirm}
-            type="button"
-          >
+          <Button onClick={onConfirm} size="sm">
             {t("confirm")}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -384,7 +381,7 @@ function NewConversationDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface/70 p-4 backdrop-blur-sm">
       <div
         className="w-full max-w-sm rounded-2xl bg-surface-container-high p-6 shadow-xl"
         ref={dialogRef}
@@ -397,19 +394,15 @@ function NewConversationDialog({
         </p>
         <div className="flex justify-end gap-2">
           <button
-            className="rounded-xl px-4 py-2 font-bold text-on-surface-variant text-sm transition-colors hover:bg-surface-container-highest"
+            className="rounded-xl px-4 py-2 font-bold text-on-surface-variant text-sm transition-colors hover:bg-surface-container-highest focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             onClick={onCancel}
             type="button"
           >
             {t("cancel")}
           </button>
-          <button
-            className="rounded-xl bg-primary px-4 py-2 font-bold text-on-primary text-sm transition-colors hover:opacity-90"
-            onClick={onConfirm}
-            type="button"
-          >
+          <Button onClick={onConfirm} size="sm">
             {t("confirm")}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -949,11 +942,11 @@ function ChatInterface({ agentEnabled = true }: ChatInterfaceProps) {
       className="flex min-h-0 flex-1 flex-col overflow-hidden"
       data-conversation-id={conversationId ?? undefined}
     >
-      <div className="flex shrink-0 items-center justify-between gap-2 border-outline-variant border-b px-4 py-2">
+      <div className="flex shrink-0 items-center justify-between gap-2 bg-surface-container-low px-4 py-2">
         <div className="flex min-w-0 items-center gap-2">
           <button
             aria-label={t("ai_agent_open_panel")}
-            className="shrink-0 rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container-highest lg:hidden"
+            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl text-on-surface-variant transition-colors hover:bg-surface-container-highest focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:hidden"
             onClick={() => setMobileSheetOpen(true)}
             type="button"
           >
@@ -966,7 +959,7 @@ function ChatInterface({ agentEnabled = true }: ChatInterfaceProps) {
         <div className="flex shrink-0 items-center gap-1">
           <Link
             aria-label={t("ai_agent_open_settings")}
-            className="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container-highest hover:text-primary"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-on-surface-variant transition-colors hover:bg-surface-container-highest hover:text-primary"
             to="/settings?tab=ai"
           >
             <span className="material-symbols-outlined text-xl">settings</span>
@@ -974,7 +967,7 @@ function ChatInterface({ agentEnabled = true }: ChatInterfaceProps) {
           {hasMessages && (
             <button
               aria-label={t("ai_agent_copy_conversation")}
-              className="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container-highest hover:text-primary"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-on-surface-variant transition-colors hover:bg-surface-container-highest hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               onClick={handleCopyConversation}
               type="button"
             >
@@ -986,7 +979,7 @@ function ChatInterface({ agentEnabled = true }: ChatInterfaceProps) {
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center justify-between gap-2 border-outline-variant border-b px-4 py-2">
+      <div className="flex shrink-0 items-center justify-between gap-2 bg-surface-container px-4 py-2">
         <AgentSelector
           agentName={agentName}
           agentOptions={agentOptions}
@@ -1081,23 +1074,26 @@ function ChatInterface({ agentEnabled = true }: ChatInterfaceProps) {
               value={input}
             />
             {isTyping ? (
-              <button
+              <Button
                 aria-label={t("ai_agent_stop")}
-                className="flex shrink-0 items-center justify-center rounded-xl border border-outline-variant p-3 text-on-surface-variant transition-colors hover:bg-surface-container-high"
+                className="shrink-0"
+                icon="stop"
+                iconOnly
                 onClick={handleStop}
+                size="md"
                 type="button"
-              >
-                <span className="material-symbols-outlined text-xl">stop</span>
-              </button>
+                variant="ghost"
+              />
             ) : (
-              <button
+              <Button
                 aria-label={t("ai_agent_send")}
-                className="flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-surface-tint p-3 text-on-primary shadow-lg shadow-primary/20 transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                className="shrink-0"
                 disabled={!(input.trim() && agentEnabled)}
+                icon="send"
+                iconOnly
+                size="md"
                 type="submit"
-              >
-                <span className="material-symbols-outlined text-xl">send</span>
-              </button>
+              />
             )}
           </form>
           {!isTyping && agentEnabled && (

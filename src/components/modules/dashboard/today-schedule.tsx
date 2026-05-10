@@ -22,35 +22,46 @@ export default function TodaySchedule({ items }: TodayScheduleProps) {
       <h3 className="mb-6 font-bold font-headline text-lg text-on-surface">
         {t("tech_dashboard.today_schedule")}
       </h3>
-      <div className="relative space-y-6 before:absolute before:top-2 before:bottom-2 before:left-[11px] before:w-px before:bg-outline-variant/50">
-        {items.map((item) => (
-          <div className="relative pl-10" key={item.id}>
+      {items.length === 0 ? (
+        <div className="rounded-xl bg-surface-container-lowest p-5 text-on-surface-variant text-sm">
+          {t("no_jobs_found")}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item) => (
             <div
-              className={`absolute top-1 left-0 h-6 w-6 rounded-full ${STATUS_COLORS[item.status] ?? "bg-outline-variant"} border-4 border-surface-container-low`}
-            />
-            <div className="flex items-center justify-between rounded-xl bg-surface-container-lowest p-4 transition-colors hover:bg-surface-container">
-              <div>
-                <p className="font-black text-primary text-xs">{item.time}</p>
-                <h5 className="mt-1 font-bold text-sm">
-                  {item.device}{" "}
-                  <span className="font-normal text-on-surface-variant text-xs">
-                    — {item.customerName}
-                  </span>
-                </h5>
-                <p className="mt-1 text-on-surface-variant text-xs">
-                  {t("job_id")}: {item.id} &bull; {item.repairType}
-                </p>
+              className="flex items-center justify-between rounded-xl bg-surface-container-lowest p-4 transition-colors hover:bg-surface-container"
+              key={item.id}
+            >
+              <div className="flex items-start gap-3">
+                <span
+                  aria-hidden="true"
+                  className={`mt-1 h-3 w-3 rounded-full ${STATUS_COLORS[item.status] ?? "bg-outline-variant"}`}
+                />
+                <div>
+                  <p className="font-black text-primary text-xs">{item.time}</p>
+                  <h5 className="mt-1 font-bold text-sm">
+                    {item.device}{" "}
+                    <span className="font-normal text-on-surface-variant text-xs">
+                      / {item.customerName}
+                    </span>
+                  </h5>
+                  <p className="mt-1 text-on-surface-variant text-xs">
+                    {t("job_id")}: {item.id} &bull; {item.repairType}
+                  </p>
+                </div>
               </div>
               <button
-                className="rounded-full bg-secondary/10 px-3 py-1 font-black text-secondary text-xs uppercase tracking-tighter transition-colors hover:bg-secondary hover:text-white"
+                className="min-h-11 cursor-not-allowed rounded-xl bg-secondary/10 px-4 font-black text-secondary text-xs uppercase tracking-tighter opacity-50"
+                disabled
                 type="button"
               >
                 {t("tech_dashboard.update")}
               </button>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

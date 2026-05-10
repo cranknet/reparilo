@@ -67,7 +67,7 @@ function DashboardHeader({
 
       <div className="flex w-full flex-wrap gap-3 sm:w-auto">
         <button
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-primary to-primary-container px-4 py-2.5 font-bold font-headline text-sm text-white shadow-lg shadow-primary/20 transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none md:px-8"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-bold font-headline text-sm text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none md:px-8"
           disabled={!canCreateJob}
           onClick={() => openIntakeModal()}
           type="button"
@@ -98,7 +98,7 @@ function EmptyStateBanner({ canCreateJob }: { canCreateJob: boolean }) {
         {t("dashboard_page.empty_description")}
       </p>
       <button
-        className="mt-5 rounded-xl bg-primary px-6 py-2.5 font-bold text-sm text-white transition-all hover:opacity-90"
+        className="mt-5 rounded-xl bg-primary px-6 py-2.5 font-bold text-sm text-white transition-all hover:bg-primary-container hover:text-on-primary-container"
         disabled={!canCreateJob}
         onClick={() => openIntakeModal()}
         type="button"

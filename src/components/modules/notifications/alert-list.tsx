@@ -69,10 +69,7 @@ export default function AlertList({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-extrabold font-headline text-lg text-on-surface tracking-tight">
-          {t("notifications")}
-        </h3>
+      <div className="mb-4 flex items-center justify-end">
         {unreadCount > 0 && (
           <button
             className="flex min-h-11 items-center gap-2 rounded-xl px-4 py-2 font-semibold text-primary text-sm transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"

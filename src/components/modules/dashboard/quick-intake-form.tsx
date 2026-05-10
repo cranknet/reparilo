@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
 import { useJobsStore } from "@/stores/jobs";
 
 export default function QuickIntakeForm() {
@@ -38,10 +39,10 @@ export default function QuickIntakeForm() {
   };
 
   return (
-    <div className="overflow-hidden rounded-xl border-primary border-t-4 bg-surface-container-lowest shadow-premium">
+    <div className="overflow-hidden rounded-xl bg-surface-container-lowest shadow-premium">
       <button
         aria-expanded={expanded}
-        className="flex w-full items-center justify-between p-6 text-start"
+        className="flex min-h-16 w-full items-center justify-between bg-primary-fixed/60 p-6 text-start transition-colors hover:bg-primary-fixed focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         onClick={() => setExpanded(!expanded)}
         type="button"
       >
@@ -167,15 +168,16 @@ export default function QuickIntakeForm() {
               value={reportedProblem}
             />
           </div>
-          <button
-            className="mt-2 w-full rounded-xl bg-gradient-to-br from-primary to-primary-container py-4 font-bold text-white shadow-premium transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          <Button
+            className="mt-2 w-full"
             disabled={isCreating}
-            type="submit"
+            loading={isCreating}
+            size="lg"
           >
             {isCreating
               ? t("front_desk.creating_job")
               : t("intake.start_repair")}
-          </button>
+          </Button>
         </form>
       )}
     </div>

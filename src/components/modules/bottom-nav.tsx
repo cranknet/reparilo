@@ -239,7 +239,7 @@ function FabButton({
         className={`-mt-7 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-95 motion-reduce:active:scale-100 ${
           disabled
             ? "bg-surface-container-highest opacity-50"
-            : "bg-gradient-to-br from-primary to-surface-tint"
+            : "bg-primary text-on-primary"
         }`}
       >
         <span

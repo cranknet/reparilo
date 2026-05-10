@@ -36,9 +36,12 @@ export default function SettingsPage() {
   const { t } = useTranslation();
   const baseId = useId();
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<SettingsTab>(
-    () => (searchParams.get("tab") as SettingsTab) || "ai"
-  );
+  const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
+    const requestedTab = searchParams.get("tab") as SettingsTab | null;
+    return requestedTab && TAB_KEYS.includes(requestedTab)
+      ? requestedTab
+      : "shop";
+  });
   const [saving, setSaving] = useState(false);
   const [editingTemplate, setEditingTemplate] =
     useState<NotificationTemplate | null>(null);
@@ -186,9 +189,9 @@ export default function SettingsPage() {
             <button
               aria-controls={panelId(key)}
               aria-selected={activeTab === key}
-              className={`flex flex-col items-center gap-0.5 rounded-xl px-1 py-2.5 text-center transition-all lg:flex-row lg:gap-2.5 lg:px-4 lg:py-3 lg:text-start ${
+              className={`flex min-h-16 flex-col items-center gap-0.5 rounded-xl px-1 py-2.5 text-center transition-all lg:min-h-12 lg:flex-row lg:gap-2.5 lg:px-4 lg:py-3 lg:text-start ${
                 activeTab === key
-                  ? "bg-primary/10 font-bold text-primary"
+                  ? "bg-primary-fixed font-bold text-primary"
                   : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
               }`}
               id={tabId(key)}

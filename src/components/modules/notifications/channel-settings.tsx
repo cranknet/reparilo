@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
 import type { useSettingsStore } from "@/stores/settings";
 
 interface ChannelSettingsProps {
@@ -109,14 +110,25 @@ export default function ChannelSettings({
         {whatsAppForm.enabled && (
           <div className="mt-5 space-y-4">
             <div>
-              <label
-                className="mb-1.5 block font-medium text-on-surface text-sm"
-                htmlFor="wa-business-id"
-              >
-                {t("whatsapp_business_id")}
-              </label>
+              <div className="flex items-center gap-2">
+                <label
+                  className="mb-1.5 block font-medium text-on-surface text-sm"
+                  htmlFor="wa-business-id"
+                >
+                  {t("whatsapp_business_id")}
+                </label>
+                <span
+                  className="material-symbols-outlined mb-1.5 cursor-help text-on-surface-variant text-xs"
+                  title={t(
+                    "whatsapp_business_id_help",
+                    "Your WhatsApp Business Account ID from Meta Business Manager"
+                  )}
+                >
+                  help
+                </span>
+              </div>
               <input
-                className="w-full rounded-xl bg-surface-container px-4 py-2.5 text-on-surface text-sm outline outline-1 outline-outline-variant focus:outline-2 focus:outline-primary"
+                className="min-h-11 w-full rounded-xl bg-surface-container px-4 py-2.5 text-on-surface text-sm outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary"
                 id="wa-business-id"
                 onChange={(e) =>
                   setWhatsAppForm((f) => ({
@@ -129,14 +141,25 @@ export default function ChannelSettings({
               />
             </div>
             <div>
-              <label
-                className="mb-1.5 block font-medium text-on-surface text-sm"
-                htmlFor="wa-phone-id"
-              >
-                {t("whatsapp_phone_number_id")}
-              </label>
+              <div className="flex items-center gap-2">
+                <label
+                  className="mb-1.5 block font-medium text-on-surface text-sm"
+                  htmlFor="wa-phone-id"
+                >
+                  {t("whatsapp_phone_number_id")}
+                </label>
+                <span
+                  className="material-symbols-outlined mb-1.5 cursor-help text-on-surface-variant text-xs"
+                  title={t(
+                    "whatsapp_phone_id_help",
+                    "Your registered phone number ID from WhatsApp Business API"
+                  )}
+                >
+                  help
+                </span>
+              </div>
               <input
-                className="w-full rounded-xl bg-surface-container px-4 py-2.5 text-on-surface text-sm outline outline-1 outline-outline-variant focus:outline-2 focus:outline-primary"
+                className="min-h-11 w-full rounded-xl bg-surface-container px-4 py-2.5 text-on-surface text-sm outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary"
                 id="wa-phone-id"
                 onChange={(e) =>
                   setWhatsAppForm((f) => ({
@@ -149,15 +172,26 @@ export default function ChannelSettings({
               />
             </div>
             <div>
-              <label
-                className="mb-1.5 block font-medium text-on-surface text-sm"
-                htmlFor="wa-api-token"
-              >
-                {t("whatsapp_api_token")}
-              </label>
+              <div className="flex items-center gap-2">
+                <label
+                  className="mb-1.5 block font-medium text-on-surface text-sm"
+                  htmlFor="wa-api-token"
+                >
+                  {t("whatsapp_api_token")}
+                </label>
+                <span
+                  className="material-symbols-outlined mb-1.5 cursor-help text-on-surface-variant text-xs"
+                  title={t(
+                    "whatsapp_api_token_help",
+                    "Your permanent access token from Meta Developers dashboard"
+                  )}
+                >
+                  help
+                </span>
+              </div>
               <input
                 autoComplete="off"
-                className="w-full rounded-xl bg-surface-container px-4 py-2.5 text-on-surface text-sm outline outline-1 outline-outline-variant focus:outline-2 focus:outline-primary"
+                className="min-h-11 w-full rounded-xl bg-surface-container px-4 py-2.5 text-on-surface text-sm outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary"
                 id="wa-api-token"
                 onChange={(e) =>
                   setWhatsAppForm((f) => ({ ...f, apiToken: e.target.value }))
@@ -167,14 +201,15 @@ export default function ChannelSettings({
                 value={whatsAppForm.apiToken}
               />
             </div>
-            <button
-              className="flex min-h-11 items-center gap-2 rounded-xl bg-primary px-6 py-2.5 font-semibold text-on-primary text-sm transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-50"
+            <Button
+              className="flex min-h-11"
               disabled={whatsAppSaving}
+              loading={whatsAppSaving}
               onClick={handleWhatsAppSave}
-              type="button"
+              size="sm"
             >
               {whatsAppSaving ? t("settings_saving") : t("save_changes")}
-            </button>
+            </Button>
           </div>
         )}
       </div>

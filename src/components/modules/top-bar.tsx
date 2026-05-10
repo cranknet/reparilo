@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
 import { useCan } from "@/hooks/use-can";
 import { useWs } from "@/hooks/use-ws";
 import { useAlertsStore } from "@/stores/alerts";
@@ -81,7 +82,7 @@ export default function TopBar() {
         <div className="relative" ref={dropdownRef}>
           <button
             aria-label={t("notifications")}
-            className="relative rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary"
+            className="relative flex min-h-11 min-w-11 items-center justify-center rounded-xl text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             onClick={handleToggleAlerts}
             type="button"
           >
@@ -133,15 +134,15 @@ export default function TopBar() {
           )}
         </div>
         <div className="hidden h-8 w-px bg-outline-variant md:block" />
-        <button
-          className={`hidden items-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-br from-primary to-surface-tint px-3 py-2 font-semibold text-on-primary text-xs shadow-md transition-transform hover:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 md:flex md:px-4 md:text-sm ${canCreateJob ? "" : "cursor-not-allowed opacity-50"}`}
+        <Button
+          className="hidden md:flex"
           disabled={!canCreateJob}
+          icon="add_circle"
           onClick={() => openIntakeModal()}
-          type="button"
+          size="sm"
         >
-          <span className="material-symbols-outlined">add_circle</span>
           {t("new_checkin")}
-        </button>
+        </Button>
       </div>
     </header>
   );

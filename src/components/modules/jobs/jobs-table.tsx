@@ -1,6 +1,6 @@
 import { DEVICE_ICONS } from "@shared/constants";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { StatusBadge } from "@/components/ui/status-badge";
 import JobActionsMenu from "./job-actions-menu";
 import type { JobRow } from "./jobs-shared";
@@ -20,7 +20,6 @@ export default function JobsTable({
   onToggleSelectAll,
 }: JobsTableProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
   const allSelected =
     jobs.length > 0 && jobs.every((j) => selectedIds.has(j.rawJob?.id ?? j.id));
@@ -33,18 +32,21 @@ export default function JobsTable({
           <thead>
             <tr className="bg-surface-container-low">
               <th className="w-12 p-4">
-                <input
-                  aria-label={t("select_all")}
-                  checked={allSelected}
-                  className="h-4 w-4 rounded border-outline-variant accent-primary"
-                  onChange={onToggleSelectAll}
-                  ref={(el) => {
-                    if (el) {
-                      el.indeterminate = someSelected && !allSelected;
-                    }
-                  }}
-                  type="checkbox"
-                />
+                <label className="flex min-h-11 min-w-11 items-center justify-center rounded-xl hover:bg-surface-container-high">
+                  <span className="sr-only">{t("select_all")}</span>
+                  <input
+                    aria-label={t("select_all")}
+                    checked={allSelected}
+                    className="h-5 w-5 rounded border-outline-variant accent-primary"
+                    onChange={onToggleSelectAll}
+                    ref={(el) => {
+                      if (el) {
+                        el.indeterminate = someSelected && !allSelected;
+                      }
+                    }}
+                    type="checkbox"
+                  />
+                </label>
               </th>
               <th className="hidden p-4 font-body font-bold text-on-surface-variant text-xs uppercase tracking-wide md:table-cell">
                 {t("job_id")}
@@ -72,32 +74,24 @@ export default function JobsTable({
               const isSelected = selectedIds.has(jobId);
               return (
                 <tr
-                  className={`cursor-pointer transition-colors hover:bg-surface-container-low focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-inset ${isSelected ? "bg-primary-container/20" : ""}`}
+                  className={`transition-colors hover:bg-surface-container-low ${isSelected ? "bg-primary-container/20" : ""}`}
                   key={job.id}
-                  onClick={() => navigate(`/jobs/${jobId}`)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      navigate(`/jobs/${jobId}`);
-                    }
-                  }}
-                  tabIndex={0}
                 >
                   <td className="p-4">
-                    <input
-                      aria-label={`${t("select")} ${job.id}`}
-                      checked={isSelected}
-                      className="h-4 w-4 rounded border-outline-variant accent-primary"
-                      onChange={() => onToggleSelect(jobId)}
-                      onClick={(e) => e.stopPropagation()}
-                      onKeyDown={(e) => e.stopPropagation()}
-                      type="checkbox"
-                    />
+                    <label className="flex min-h-11 min-w-11 items-center justify-center rounded-xl hover:bg-surface-container-high">
+                      <span className="sr-only">{`${t("select")} ${job.id}`}</span>
+                      <input
+                        aria-label={`${t("select")} ${job.id}`}
+                        checked={isSelected}
+                        className="h-5 w-5 rounded border-outline-variant accent-primary"
+                        onChange={() => onToggleSelect(jobId)}
+                        type="checkbox"
+                      />
+                    </label>
                   </td>
                   <td className="hidden p-4 md:table-cell">
                     <Link
                       className="font-bold font-headline text-primary text-xs tracking-tight hover:underline lg:text-sm"
-                      onClick={(e) => e.stopPropagation()}
                       to={`/jobs/${jobId}`}
                     >
                       {job.id}
@@ -105,8 +99,7 @@ export default function JobsTable({
                   </td>
                   <td className="p-4">
                     <Link
-                      className="block"
-                      onClick={(e) => e.stopPropagation()}
+                      className="block rounded-xl focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
                       to={`/jobs/${jobId}`}
                     >
                       <div className="flex items-center gap-3">
@@ -145,16 +138,7 @@ export default function JobsTable({
                     </div>
                   </td>
                   <td className="p-4">
-                    <button
-                      className="inline-block cursor-default text-start"
-                      onClick={(e) => e.stopPropagation()}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.stopPropagation();
-                        }
-                      }}
-                      type="button"
-                    >
+                    <div className="inline-block text-start">
                       {job.rawJob ? (
                         <TechnicianSelect
                           currentTechnicianId={job.rawJob.technician?.id}
@@ -167,7 +151,7 @@ export default function JobsTable({
                           {t("unassigned")}
                         </span>
                       )}
-                    </button>
+                    </div>
                   </td>
                   <td className="p-4 text-end">
                     <JobActionsMenu job={job} />

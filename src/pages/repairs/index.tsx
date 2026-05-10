@@ -79,7 +79,7 @@ function RepairListEmpty({ onClearFilters }: { onClearFilters: () => void }) {
         {t("no_repairs_found_desc")}
       </p>
       <button
-        className="mt-6 rounded-xl bg-surface-container-high px-5 py-2.5 font-bold font-headline text-on-surface-variant text-sm transition-all hover:bg-surface-container-highest"
+        className="mt-6 min-h-11 rounded-xl bg-surface-container-high px-5 font-bold font-headline text-on-surface-variant text-sm transition-all hover:bg-surface-container-highest"
         onClick={onClearFilters}
         type="button"
       >
@@ -298,8 +298,8 @@ export default function RepairsPage() {
           <p className="mt-1 font-medium text-on-surface-variant text-sm md:text-base">
             {t("repair_services_subtitle")}
           </p>
-          <div className="mt-3 flex gap-6">
-            <div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl bg-surface-container-low p-4">
               <span className="block font-medium text-on-surface-variant text-xs uppercase tracking-wide">
                 {t("total_services")}
               </span>
@@ -307,7 +307,7 @@ export default function RepairsPage() {
                 {repairItems.length}
               </span>
             </div>
-            <div>
+            <div className="rounded-2xl bg-surface-container-low p-4">
               <span className="block font-medium text-on-surface-variant text-xs uppercase tracking-wide">
                 {t("most_popular")}
               </span>
@@ -315,7 +315,7 @@ export default function RepairsPage() {
                 {t(`repair_category.${topCategory}`)}
               </span>
             </div>
-            <div>
+            <div className="rounded-2xl bg-surface-container-low p-4">
               <span className="block font-medium text-on-surface-variant text-xs uppercase tracking-wide">
                 {t("avg_price")}
               </span>
@@ -374,7 +374,13 @@ export default function RepairsPage() {
       <div className="mb-6">
         {isLoading && <RepairListLoading />}
         {!isLoading && sorted.length === 0 && (
-          <RepairListEmpty onClearFilters={() => setActiveCategory("ALL")} />
+          <RepairListEmpty
+            onClearFilters={() => {
+              setActiveCategory("ALL");
+              setSearchQuery("");
+              setActiveSort("recently_added");
+            }}
+          />
         )}
         {!isLoading && sorted.length > 0 && (
           <RepairListContent

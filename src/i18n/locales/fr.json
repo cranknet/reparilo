@@ -5,6 +5,7 @@
   "activate_part": "Activer",
   "activate_repair": "Activer",
   "active": "Actif",
+  "active_filters_summary": "Recherche : {{search}} {{group}} {{status}}",
   "active_jobs": "Travaux actifs",
   "active_suppliers": "Fournisseurs actifs",
   "add_customer": "Ajouter un client",

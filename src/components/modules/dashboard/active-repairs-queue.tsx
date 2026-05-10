@@ -1,5 +1,6 @@
 import type { JobStatusType } from "@shared/constants";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import { STATUS_CHIP_STYLES, STATUS_DOT_COLORS } from "@/lib/status-colors";
 
 interface RepairJob {
@@ -36,9 +37,10 @@ export default function ActiveRepairsQueue({ jobs }: ActiveRepairsQueueProps) {
       ) : (
         <div className="space-y-4">
           {jobs.map((job) => (
-            <div
-              className="cursor-pointer overflow-hidden rounded-xl bg-surface-container-lowest shadow-premium transition-colors hover:bg-surface-container-low"
+            <Link
+              className="block overflow-hidden rounded-xl bg-surface-container-lowest shadow-premium transition-colors hover:bg-surface-container-low focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
               key={job.id}
+              to={`/jobs/${job.id}`}
             >
               <div className="p-5">
                 <div className="mb-4 flex items-start justify-between">
@@ -62,7 +64,7 @@ export default function ActiveRepairsQueue({ jobs }: ActiveRepairsQueueProps) {
                     {t(`status.${job.status}`)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between border-outline-variant/5 border-t pt-4">
+                <div className="flex items-center justify-between rounded-xl bg-surface-container-low p-4">
                   <div>
                     <p className="font-bold text-on-surface-variant text-xs uppercase">
                       {job.status === "DONE" || job.status === "DELIVERED"
@@ -81,16 +83,16 @@ export default function ActiveRepairsQueue({ jobs }: ActiveRepairsQueueProps) {
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
-      <button
-        className="w-full text-center font-bold text-primary text-xs transition-all hover:underline"
-        type="button"
+      <Link
+        className="flex min-h-11 w-full items-center justify-center rounded-xl bg-surface-container-low font-bold text-primary text-sm transition-colors hover:bg-surface-container"
+        to="/jobs"
       >
         {t("front_desk.view_all_repairs")}
-      </button>
+      </Link>
     </div>
   );
 }

@@ -75,7 +75,7 @@ function useConversations(_refreshKey: number) {
 
   useEffect(() => {
     const el = sentinelRef.current;
-    if (!(el && hasMore)) {
+    if (!(el && hasMore) || typeof IntersectionObserver === "undefined") {
       return;
     }
     const observer = new IntersectionObserver(
@@ -103,12 +103,14 @@ function useConversations(_refreshKey: number) {
 
 function PanelHeader({
   collapsed,
+  closeButtonRef,
   onCloseMobile,
   onNewConversation,
   search,
   onSearchChange,
 }: {
   collapsed: boolean;
+  closeButtonRef?: React.RefObject<HTMLButtonElement | null>;
   onCloseMobile: () => void;
   onNewConversation: () => void;
   search: string;
@@ -139,6 +141,7 @@ function PanelHeader({
             aria-label={t("close")}
             className="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container-highest lg:hidden"
             onClick={onCloseMobile}
+            ref={closeButtonRef}
             type="button"
           >
             <span className="material-symbols-outlined text-xl">close</span>
@@ -279,6 +282,7 @@ export default function ConversationHistoryPanel() {
   const refreshKey = useAiChatStore((s) => s.refreshKey);
   const activeId = useAiChatStore((s) => s.activeConversationId);
   const panelOpen = useAiChatStore((s) => s.panelOpen);
+  const mobileSheetOpen = useAiChatStore((s) => s.mobileSheetOpen);
   const collapsed = useAiChatStore((s) => s.panelCollapsed);
   const panelWidth = useAiChatStore((s) => s.panelWidth);
   const setActiveId = useAiChatStore((s) => s.setActiveConversationId);
@@ -287,6 +291,22 @@ export default function ConversationHistoryPanel() {
   const togglePanel = useAiChatStore((s) => s.togglePanel);
   const setMobileSheetOpen = useAiChatStore((s) => s.setMobileSheetOpen);
   const createNewConversation = useAiChatStore((s) => s.createNewConversation);
+
+  const mobileCloseRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!mobileSheetOpen) {
+      return;
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setMobileSheetOpen(false);
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    mobileCloseRef.current?.focus();
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [mobileSheetOpen, setMobileSheetOpen]);
 
   const { conversations, loading, search, sentinelRef, setSearch } =
     useConversations(refreshKey);
@@ -382,11 +402,11 @@ export default function ConversationHistoryPanel() {
     [activeId, handleDelete, handleRename, handleSelect, handleToggleStar]
   );
 
-  if (!panelOpen) {
+  if (!(panelOpen || mobileSheetOpen)) {
     return null;
   }
 
-  if (collapsed) {
+  if (collapsed && !mobileSheetOpen) {
     return (
       <CollapsedStrip
         activeId={activeId}
@@ -401,6 +421,39 @@ export default function ConversationHistoryPanel() {
 
   return (
     <>
+      {mobileSheetOpen && (
+        <div className="fixed inset-0 z-50 bg-surface/70 p-3 backdrop-blur-sm lg:hidden">
+          <aside
+            aria-label={t("ai_history_title")}
+            aria-modal="true"
+            className="ms-auto flex h-full w-full max-w-sm flex-col rounded-3xl bg-surface-container-low shadow-2xl"
+            role="dialog"
+          >
+            <PanelHeader
+              closeButtonRef={mobileCloseRef}
+              collapsed={false}
+              onCloseMobile={() => {
+                setMobileSheetOpen(false);
+              }}
+              onNewConversation={handleNew}
+              onSearchChange={setSearch}
+              search={search}
+            />
+            {conversations.length === 0 && !loading ? (
+              <EmptyPanel />
+            ) : (
+              <div className="flex-1 overflow-y-auto p-2">
+                <ConversationGroupList
+                  conversations={conversations}
+                  renderItem={renderItem}
+                />
+                {hasMoreSentinel(loading, conversations, sentinelRef)}
+              </div>
+            )}
+          </aside>
+        </div>
+      )}
+
       <aside
         className="group relative hidden shrink-0 flex-col bg-surface-container-low lg:flex"
         style={{ width: `${panelWidth}px` }}
@@ -426,7 +479,7 @@ export default function ConversationHistoryPanel() {
             {hasMoreSentinel(loading, conversations, sentinelRef)}
           </div>
         )}
-        <div className="shrink-0 border-outline-variant/50 border-t p-2">
+        <div className="shrink-0 bg-surface-container p-2">
           <button
             aria-label={t("ai_history_collapse")}
             className="w-full rounded-lg p-2 text-on-surface-variant text-xs transition-colors hover:bg-surface-container-highest"
@@ -454,7 +507,7 @@ export default function ConversationHistoryPanel() {
       />
 
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface/70 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl bg-surface-container-high p-6 shadow-xl">
             <h3 className="mb-2 font-bold text-lg text-on-surface">
               {t("ai_history_delete_title")}

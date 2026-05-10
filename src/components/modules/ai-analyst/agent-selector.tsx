@@ -29,7 +29,7 @@ export default function AgentSelector({
           <button
             className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 font-semibold text-sm transition-all ${
               isSelected
-                ? "bg-primary text-on-primary shadow-md shadow-primary/20"
+                ? "bg-primary text-on-primary"
                 : "border border-outline-variant bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-high"
             }`}
             key={agent.name}
@@ -38,7 +38,7 @@ export default function AgentSelector({
                 onAgentSwitch(agent.name);
               }
             }}
-            title={agent.description}
+            title={agent.description || agent.displayName}
             type="button"
           >
             {isSelected && (

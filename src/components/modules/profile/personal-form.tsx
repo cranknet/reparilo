@@ -119,7 +119,7 @@ export function PersonalForm({
       </form>
 
       {isDirty && (
-        <div className="flex justify-end gap-3 border-surface-container-high border-t pt-4">
+        <div className="flex justify-end gap-3 rounded-2xl bg-surface-container-low p-3">
           <Button onClick={onCancel} size="sm" type="button" variant="ghost">
             {t("profile_cancel_edit")}
           </Button>

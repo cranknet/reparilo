@@ -19,7 +19,7 @@ import { useUsersStore } from "@/stores/users";
 
 type ProfileTab = "personal" | "security" | "activity";
 
-const DEFAULT_TAB: ProfileTab = "activity";
+const DEFAULT_TAB: ProfileTab = "personal";
 
 const TAB_IDS: Record<ProfileTab, string> = {
   personal: "profile-tab-personal",

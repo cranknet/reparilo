@@ -96,7 +96,7 @@ export function ProfileSidebar({
         {t(`role.${role}`)}
       </div>
 
-      <div className="mt-6 grid w-full grid-cols-2 gap-4 border-surface-container-high border-t pt-6">
+      <div className="mt-6 grid w-full grid-cols-2 gap-4 rounded-2xl bg-surface-container-low p-4">
         {statsLoading ? (
           <>
             <StatSkeleton />
@@ -131,7 +131,7 @@ export function ProfileSidebar({
       </div>
 
       {isSelf && (
-        <div className="mt-6 flex items-center justify-center gap-4 border-surface-container-high border-t pt-6">
+        <div className="mt-6 flex items-center justify-center gap-4 rounded-2xl bg-surface-container-low p-4">
           <button
             className="flex min-h-[44px] items-center gap-2 font-semibold text-primary text-sm transition-colors hover:underline"
             onClick={triggerFileInput}

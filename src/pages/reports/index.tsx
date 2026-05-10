@@ -41,7 +41,9 @@ export default function ReportsPage() {
     return tabs;
   }, [canViewShop, canViewSelf]);
 
-  const [activeTab, setActiveTab] = useState<TabKey>(visibleTabs[0]);
+  const [activeTab, setActiveTab] = useState<TabKey | null>(
+    visibleTabs[0] ?? null
+  );
 
   useEffect(() => {
     if (!range) {
@@ -59,21 +61,55 @@ export default function ReportsPage() {
   }, [activeTab, range, fetchRevenue, fetchOperations, fetchInsights]);
 
   useEffect(() => {
-    if (!visibleTabs.includes(activeTab) && visibleTabs.length > 0) {
+    if (
+      !(activeTab && visibleTabs.includes(activeTab)) &&
+      visibleTabs.length > 0
+    ) {
       setActiveTab(visibleTabs[0]);
     }
+    if (visibleTabs.length === 0) {
+      setActiveTab(null);
+    }
   }, [visibleTabs, activeTab]);
+
+  if (visibleTabs.length === 0) {
+    return (
+      <div className="rounded-3xl bg-surface-container-low p-8 text-center">
+        <span
+          aria-hidden="true"
+          className="material-symbols-outlined text-5xl text-on-surface-variant/40"
+        >
+          lock
+        </span>
+        <h1 className="mt-4 font-black font-headline text-2xl text-on-surface">
+          {t("reports.title")}
+        </h1>
+        <p className="mx-auto mt-2 max-w-md text-on-surface-variant text-sm">
+          {t("errors.forbidden")}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="font-black font-headline text-2xl text-on-surface">
-          {t("reports.title")}
-        </h1>
+        <div>
+          <h1 className="font-black font-headline text-2xl text-on-surface">
+            {t("reports.title")}
+          </h1>
+          <p className="mt-1 text-on-surface-variant text-sm">
+            DZD /{" "}
+            {t(
+              RANGE_OPTIONS.find((option) => option.key === range)?.label ??
+                "reports.30d"
+            )}
+          </p>
+        </div>
         <div className="flex gap-1 rounded-xl bg-surface-container-low p-1">
           {RANGE_OPTIONS.map(({ key, label }) => (
             <button
-              className={`rounded-lg px-3 py-1.5 font-medium text-sm transition-colors ${
+              className={`min-h-11 rounded-lg px-4 font-medium text-sm transition-colors ${
                 range === key
                   ? "bg-surface-container-lowest text-primary shadow-sm"
                   : "text-on-surface-variant hover:text-primary"
@@ -92,7 +128,7 @@ export default function ReportsPage() {
         <div className="flex gap-1 rounded-xl bg-surface-container-low p-1">
           {visibleTabs.map((tab) => (
             <button
-              className={`rounded-lg px-4 py-2 font-medium text-sm transition-colors ${
+              className={`min-h-11 rounded-lg px-4 font-medium text-sm transition-colors ${
                 activeTab === tab
                   ? "bg-surface-container-lowest text-primary shadow-sm"
                   : "text-on-surface-variant hover:text-primary"

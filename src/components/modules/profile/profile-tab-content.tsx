@@ -204,7 +204,7 @@ export function ProfileTabContent({
             {t("reset_password_title")}
           </Button>
         </div>
-        <div className="border-surface-container-high border-t" />
+        <div className="h-2 rounded-full bg-surface-container-low" />
         {sessionsLoading ? (
           <SessionSkeleton />
         ) : (
@@ -234,7 +234,7 @@ export function ProfileTabContent({
           onSuccessChange={setPasswordSuccess}
           success={passwordSuccess}
         />
-        <div className="border-surface-container-high border-t" />
+        <div className="h-2 rounded-full bg-surface-container-low" />
         {sessionsLoading ? (
           <SessionSkeleton />
         ) : (

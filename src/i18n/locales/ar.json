@@ -5,6 +5,7 @@
   "activate_part": "فعل",
   "activate_repair": "فعل",
   "active": "نشط",
+  "active_filters_summary": "البحث: {{search}} {{group}} {{status}}",
   "active_jobs": "أعمال نشطة",
   "active_suppliers": "الموردين النشطين",
   "add_customer": "إضافة العميل",

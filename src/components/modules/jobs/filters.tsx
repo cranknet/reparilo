@@ -47,7 +47,7 @@ export default function UnifiedJobsFilter({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
         <div className="relative w-full sm:w-64 sm:shrink-0">
           <span className="material-symbols-outlined absolute start-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">
             search
@@ -62,7 +62,7 @@ export default function UnifiedJobsFilter({
           />
         </div>
         <div
-          className="flex items-center gap-1.5 overflow-x-auto"
+          className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           <button
@@ -95,8 +95,7 @@ export default function UnifiedJobsFilter({
           ))}
 
           {activeGroup !== "ALL" && (
-            <>
-              <span className="mx-1 h-5 w-px bg-outline-variant" />
+            <div className="col-span-2 flex flex-wrap gap-2 rounded-2xl bg-surface-container-low p-2 sm:ms-1 sm:w-full lg:w-auto">
               {activeSubStatuses.map((s) => (
                 <button
                   className={[
@@ -112,7 +111,7 @@ export default function UnifiedJobsFilter({
                   {t(`status.${s}`)} {metrics?.[s] ?? 0}
                 </button>
               ))}
-            </>
+            </div>
           )}
         </div>
       </div>

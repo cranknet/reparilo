@@ -17,8 +17,10 @@ export default function UnsavedChangesBar({
 
   return (
     <div
-      className={`overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] ${
-        visible ? "mt-4 max-h-24 opacity-100" : "max-h-0 opacity-0"
+      className={`sticky bottom-4 z-30 overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] ${
+        visible
+          ? "mt-4 max-h-24 opacity-100"
+          : "pointer-events-none max-h-0 opacity-0"
       }`}
     >
       <div className="flex flex-col gap-3 rounded-2xl bg-surface-container-low px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -27,7 +29,7 @@ export default function UnsavedChangesBar({
         </span>
         <div className="flex gap-3">
           <button
-            className="rounded-xl px-4 py-2 font-semibold text-on-surface-variant text-sm transition-colors hover:bg-surface-container"
+            className="min-h-11 rounded-xl px-4 font-semibold text-on-surface-variant text-sm transition-colors hover:bg-surface-container"
             onClick={onCancel}
             type="button"
           >

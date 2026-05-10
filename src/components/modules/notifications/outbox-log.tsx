@@ -44,7 +44,7 @@ export default function OutboxLog() {
       <h3 className="font-extrabold font-headline text-lg text-on-surface tracking-tight">
         {t("notification_outbox")}
       </h3>
-      <div className="mt-4 overflow-x-auto rounded-2xl bg-surface-container-low">
+      <div className="mt-4 rounded-2xl bg-surface-container-low p-3">
         {outboxLogs.length === 0 ? (
           <div className="py-12 text-center">
             <span className="material-symbols-outlined text-4xl text-on-surface-variant/30">
@@ -55,77 +55,43 @@ export default function OutboxLog() {
             </p>
           </div>
         ) : (
-          <table className="w-full text-start text-sm">
-            <thead>
-              <tr className="border-outline-variant/50 border-b">
-                <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
-                  {t("template_name")}
-                </th>
-                <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
-                  {t("customer_phone")}
-                </th>
-                <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
-                  {t("status_label")}
-                </th>
-                <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
-                  {t("channel")}
-                </th>
-                <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
-                  {t("details")}
-                </th>
-                <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
-                  {t("date")}
-                </th>
-                <th className="px-4 py-3 font-semibold text-on-surface-variant text-xs uppercase">
-                  {t("actions")}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {outboxLogs.map((log) => (
-                <tr
-                  className="border-outline-variant/30 border-b last:border-0 hover:bg-surface-container-high/40"
-                  key={log.id}
-                >
-                  <td className="px-4 py-3 text-on-surface">
-                    {log.templateName}
-                  </td>
-                  <td className="px-4 py-3 text-on-surface-variant">
-                    {log.recipientPhone}
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusBadge status={log.status} />
-                  </td>
-                  <td className="px-4 py-3 text-on-surface-variant">
-                    {log.channel}
-                  </td>
-                  <td className="px-4 py-3">
-                    {log.error && (
-                      <span className="text-error text-xs">{log.error}</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-on-surface-variant text-xs">
-                    {new Date(log.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3">
-                    {log.status === "QUEUED" && (
-                      <button
-                        aria-label={t("cancel")}
-                        className="flex items-center gap-1 rounded-xl bg-error/10 px-3 py-1.5 font-medium text-error text-xs transition-colors hover:bg-error/20 focus-visible:outline-2 focus-visible:outline-error focus-visible:outline-offset-2"
-                        onClick={() => handleCancel(log.id)}
-                        type="button"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">
-                          cancel
-                        </span>
-                        {t("cancel")}
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="space-y-3">
+            {outboxLogs.map((log) => (
+              <article
+                className="rounded-2xl bg-surface-container-lowest p-4 transition-colors hover:bg-surface-container"
+                key={log.id}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-bold text-on-surface text-sm">
+                      {log.templateName}
+                    </p>
+                    <p className="mt-1 text-on-surface-variant text-xs">
+                      {log.recipientPhone} / {log.channel}
+                    </p>
+                  </div>
+                  <StatusBadge status={log.status} />
+                </div>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-on-surface-variant text-xs">
+                  <span>{new Date(log.createdAt).toLocaleString()}</span>
+                  {log.error && <span className="text-error">{log.error}</span>}
+                  {log.status === "QUEUED" && (
+                    <button
+                      aria-label={t("cancel")}
+                      className="flex min-h-11 items-center gap-1 rounded-xl bg-error/10 px-4 font-medium text-error text-xs transition-colors hover:bg-error/20 focus-visible:outline-2 focus-visible:outline-error focus-visible:outline-offset-2"
+                      onClick={() => handleCancel(log.id)}
+                      type="button"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">
+                        cancel
+                      </span>
+                      {t("cancel")}
+                    </button>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
         )}
       </div>
     </div>
