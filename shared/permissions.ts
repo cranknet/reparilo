@@ -123,7 +123,15 @@ export const ownerRole = ac.newRole({
   notifications: ["read", "send", "manage"],
   ai: ["access"],
   dashboard: ["viewOwner", "viewTechnician", "viewFrontDesk"],
-  returns: ["create", "edit", "triage", "resolveRework", "resolveRefund", "viewSelf", "viewShop"],
+  returns: [
+    "create",
+    "edit",
+    "triage",
+    "resolveRework",
+    "resolveRefund",
+    "viewSelf",
+    "viewShop",
+  ],
 });
 
 export const technicianRole = ac.newRole({
