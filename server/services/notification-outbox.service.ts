@@ -103,35 +103,56 @@ async function processEntry(
         countryCode
       );
       if (result.success) {
-        await updateOutboxEntry(
-          prisma,
-          { id: entry.id },
-          {
-            error: null,
-            sentAt: new Date(),
-            status: OutboxStatus.SENT,
-          }
-        );
+        try {
+          await updateOutboxEntry(
+            prisma,
+            { id: entry.id },
+            {
+              error: null,
+              sentAt: new Date(),
+              status: OutboxStatus.SENT,
+            }
+          );
+        } catch (dbErr) {
+          logger.error(
+            { err: dbErr, entryId: entry.id },
+            "Outbox: failed to mark entry as SENT after successful send"
+          );
+        }
       } else {
-        await handleRetry(
-          prisma,
-          entry.id,
-          entry.retryCount ?? 0,
-          result.error ?? "Unknown error"
-        );
+        try {
+          await handleRetry(
+            prisma,
+            entry.id,
+            entry.retryCount ?? 0,
+            result.error ?? "Unknown error"
+          );
+        } catch (retryDbErr) {
+          logger.error(
+            { err: retryDbErr, entryId: entry.id },
+            "Outbox: failed to update retry state after failed send"
+          );
+        }
       }
     } else {
       logger.warn(
         `Outbox: unexpected channel "${entry.channel}" for entry ${entry.id} — marking FAILED`
       );
-      await updateOutboxEntry(
-        prisma,
-        { id: entry.id },
-        {
-          error: `Unsupported channel: ${entry.channel}`,
-          status: OutboxStatus.FAILED,
-        }
-      );
+      try {
+        await updateOutboxEntry(
+          prisma,
+          { id: entry.id },
+          {
+            error: `Unsupported channel: ${entry.channel}`,
+            status: OutboxStatus.FAILED,
+          }
+        );
+      } catch (dbErr) {
+        logger.error(
+          { err: dbErr, entryId: entry.id },
+          "Outbox: failed to mark unsupported channel entry as FAILED"
+        );
+      }
     }
   } catch (err) {
     logger.warn({ err, entryId: entry.id }, "Outbox: failed to process entry");
