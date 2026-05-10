@@ -176,6 +176,7 @@ const rolePermissions: Record<RoleType, Record<string, string[]>> = {
     notifications: ["read", "send", "manage"],
     ai: ["access"],
     dashboard: ["viewOwner", "viewTechnician", "viewFrontDesk"],
+    returns: ["create", "edit", "triage", "resolveRework", "resolveRefund", "viewSelf", "viewShop"],
     user: [
       "list",
       "get",
@@ -213,6 +214,7 @@ const rolePermissions: Record<RoleType, Record<string, string[]>> = {
     notifications: ["read"],
     ai: ["access"],
     dashboard: ["viewTechnician"],
+    returns: ["create", "edit", "triage", "resolveRework", "viewSelf"],
     user: ["list", "get"],
   },
   FRONT_DESK: {
@@ -221,6 +223,7 @@ const rolePermissions: Record<RoleType, Record<string, string[]>> = {
     customers: ["view", "create", "edit"],
     notifications: ["read", "send"],
     dashboard: ["viewFrontDesk"],
+    returns: ["create", "edit", "viewSelf"],
     user: ["create", "list", "get", "update"],
   },
 };

@@ -58,6 +58,16 @@ export const statement = {
   ai: ["access"] as const,
 
   dashboard: ["viewOwner", "viewTechnician", "viewFrontDesk"] as const,
+
+  returns: [
+    "create",
+    "edit",
+    "triage",
+    "resolveRework",
+    "resolveRefund",
+    "viewSelf",
+    "viewShop",
+  ] as const,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -113,6 +123,7 @@ export const ownerRole = ac.newRole({
   notifications: ["read", "send", "manage"],
   ai: ["access"],
   dashboard: ["viewOwner", "viewTechnician", "viewFrontDesk"],
+  returns: ["create", "edit", "triage", "resolveRework", "resolveRefund", "viewSelf", "viewShop"],
 });
 
 export const technicianRole = ac.newRole({
@@ -138,6 +149,7 @@ export const technicianRole = ac.newRole({
   // No settings
   ai: ["access"],
   dashboard: ["viewTechnician"],
+  returns: ["create", "edit", "triage", "resolveRework", "viewSelf"],
 });
 
 export const frontDeskRole = ac.newRole({
@@ -156,6 +168,7 @@ export const frontDeskRole = ac.newRole({
   notifications: ["read", "send"],
   // No ai
   dashboard: ["viewFrontDesk"],
+  returns: ["create", "edit", "viewSelf"],
 });
 
 // ---------------------------------------------------------------------------
