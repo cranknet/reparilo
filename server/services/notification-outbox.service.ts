@@ -55,6 +55,90 @@ export async function queueNotification(
   });
 }
 
+async function handleRetry(
+  prisma: DbClient,
+  entryId: string,
+  currentRetries: number,
+  errorMessage: string
+): Promise<void> {
+  if (currentRetries < MAX_RETRIES) {
+    const nextRetry = new Date(
+      Date.now() + BACKOFF_MS[Math.min(currentRetries, BACKOFF_MS.length - 1)]
+    );
+    await updateOutboxEntry(
+      prisma,
+      { id: entryId },
+      {
+        error: errorMessage,
+        nextRetryAt: nextRetry,
+        retryCount: currentRetries + 1,
+        status: OutboxStatus.QUEUED,
+      }
+    );
+  } else {
+    await updateOutboxEntry(
+      prisma,
+      { id: entryId },
+      {
+        error: errorMessage,
+        status: OutboxStatus.FAILED,
+      }
+    );
+  }
+}
+
+async function processEntry(
+  prisma: DbClient,
+  entry: OutboxEntry,
+  config: { apiToken: string; businessId: string; phoneNumberId: string },
+  countryCode: string
+): Promise<void> {
+  try {
+    if (entry.channel === "WHATSAPP") {
+      const result = await sendWhatsApp(
+        config,
+        entry.recipientPhone,
+        entry.renderedBody,
+        countryCode
+      );
+      if (result.success) {
+        await updateOutboxEntry(
+          prisma,
+          { id: entry.id },
+          {
+            error: null,
+            sentAt: new Date(),
+            status: OutboxStatus.SENT,
+          }
+        );
+      } else {
+        await handleRetry(
+          prisma,
+          entry.id,
+          entry.retryCount ?? 0,
+          result.error ?? "Unknown error"
+        );
+      }
+    } else {
+      logger.warn(
+        `Outbox: unexpected channel "${entry.channel}" for entry ${entry.id} — marking FAILED`
+      );
+      await updateOutboxEntry(
+        prisma,
+        { id: entry.id },
+        {
+          error: `Unsupported channel: ${entry.channel}`,
+          status: OutboxStatus.FAILED,
+        }
+      );
+    }
+  } catch (err) {
+    logger.warn({ err, entryId: entry.id }, "Outbox: failed to process entry");
+    const msg = err instanceof Error ? err.message : String(err);
+    await handleRetry(prisma, entry.id, entry.retryCount ?? 0, msg);
+  }
+}
+
 export async function processOutbox(prisma: DbClient): Promise<void> {
   if (isProcessing) {
     return;
@@ -84,71 +168,7 @@ export async function processOutbox(prisma: DbClient): Promise<void> {
     const countryCode = shopSettings?.countryCode ?? "DZ";
 
     for (const entry of pending) {
-      try {
-        if (entry.channel === "WHATSAPP") {
-          const result = await sendWhatsApp(
-            config,
-            entry.recipientPhone,
-            entry.renderedBody,
-            countryCode
-          );
-          if (result.success) {
-            await updateOutboxEntry(
-              prisma,
-              { id: entry.id },
-              {
-                error: null,
-                sentAt: new Date(),
-                status: OutboxStatus.SENT,
-              }
-            );
-          } else {
-            const currentRetries = entry.retryCount ?? 0;
-            if (currentRetries < MAX_RETRIES) {
-              const nextRetry = new Date(
-                Date.now() +
-                  BACKOFF_MS[Math.min(currentRetries, BACKOFF_MS.length - 1)]
-              );
-              await updateOutboxEntry(
-                prisma,
-                { id: entry.id },
-                {
-                  error: result.error,
-                  nextRetryAt: nextRetry,
-                  retryCount: currentRetries + 1,
-                  status: OutboxStatus.QUEUED,
-                }
-              );
-            } else {
-              await updateOutboxEntry(
-                prisma,
-                { id: entry.id },
-                {
-                  error: result.error,
-                  status: OutboxStatus.FAILED,
-                }
-              );
-            }
-          }
-        } else {
-          logger.warn(
-            `Outbox: unexpected channel "${entry.channel}" for entry ${entry.id} — marking FAILED`
-          );
-          await updateOutboxEntry(
-            prisma,
-            { id: entry.id },
-            {
-              error: `Unsupported channel: ${entry.channel}`,
-              status: OutboxStatus.FAILED,
-            }
-          );
-        }
-      } catch (err) {
-        logger.warn(
-          { err, entryId: entry.id },
-          "Outbox: failed to process entry"
-        );
-      }
+      await processEntry(prisma, entry, config, countryCode);
     }
   } finally {
     isProcessing = false;
@@ -215,8 +235,10 @@ export async function getOutboxLogs(
     error: e.error,
     id: e.id,
     jobId: e.jobId,
+    nextRetryAt: e.nextRetryAt,
     renderedBody: e.renderedBody,
     recipientPhone: e.recipientPhone,
+    retryCount: e.retryCount,
     status: e.status,
     templateName: e.templateName,
   }));
