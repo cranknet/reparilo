@@ -23,8 +23,8 @@ const FrontDeskPage = lazy(() => import("@/pages/dashboard/front-desk"));
 const TechnicianDashboardPage = lazy(
   () => import("@/pages/dashboard/technician")
 );
-const JobsPage = lazy(() => import("@/pages/jobs"));
-const JobDetailPage = lazy(() => import("@/pages/jobs/detail"));
+const ReturnsListPage = lazy(() => import("@/pages/returns"));
+const ReturnDetailPage = lazy(() => import("@/pages/returns/detail"));
 const NotificationsPage = lazy(() => import("@/pages/notifications"));
 const PartsCatalogPage = lazy(() => import("@/pages/parts"));
 const ProfilePage = lazy(() => import("@/pages/profile"));
@@ -122,6 +122,24 @@ export default function App() {
               }
               path="/jobs/:id"
             />
+            <Route element={<RequirePermission perm={{ returns: ["viewSelf"] }} />}>
+              <Route
+                element={
+                  <DashboardLayout>
+                    <ReturnsListPage />
+                  </DashboardLayout>
+                }
+                path="/returns"
+              />
+              <Route
+                element={
+                  <DashboardLayout>
+                    <ReturnDetailPage />
+                  </DashboardLayout>
+                }
+                path="/returns/:id"
+              />
+            </Route>
             <Route
               element={<RequirePermission perm={{ notifications: ["read"] }} />}
             >
