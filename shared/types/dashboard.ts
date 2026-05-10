@@ -64,6 +64,12 @@ export interface TechnicianDashboardDTO {
   avgRepairTimeHours: number;
   completedToday: number;
   myActiveJobs: number;
+  partsAlerts: Array<{
+    id: string;
+    name: string;
+    stockQuantity: number;
+    reorderLevel: number;
+  }>;
   pipeline: Record<JobStatus, number>;
   priorityActions: {
     jobsNeedingStatusUpdate: number;
@@ -111,6 +117,7 @@ export interface PickupReadyDTO {
 
 export interface FrontDeskDashboardDTO {
   activeRepairs: ActiveRepairDTO[];
+  avgRepairTimeHours: number;
   pickupReady: PickupReadyDTO[];
   priorityAlerts: PriorityAlertDTO[];
   todayOverview: {

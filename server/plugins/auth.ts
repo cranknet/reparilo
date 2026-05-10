@@ -10,6 +10,7 @@ import {
   isAccountLocked,
   resetFailedAttempts,
 } from "../services/account-lockout.service.js";
+import { logger } from "../utils/logger.js";
 
 async function auditSignIn(
   auth: Auth,
@@ -29,8 +30,8 @@ async function auditSignIn(
       });
       await resetFailedAttempts(prisma, session.user.id);
     }
-  } catch {
-    // Audit failure should not block sign-in
+  } catch (error) {
+    logger.warn({ err: error }, "Audit sign-in failure");
   }
 }
 
@@ -80,8 +81,8 @@ async function handleFailedSignIn(
     if (user) {
       await incrementFailedAttempt(prisma, user.id);
     }
-  } catch {
-    // Lockout increment failure should not block the response
+  } catch (error) {
+    logger.warn({ err: error }, "Failed sign-in lockout tracking error");
   }
 }
 

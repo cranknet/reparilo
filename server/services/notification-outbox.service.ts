@@ -26,6 +26,8 @@ interface OutboxEntry {
 }
 
 const POLL_INTERVAL_MS = 5000;
+const MAX_RETRIES = 3;
+const BACKOFF_MS = [60_000, 300_000, 900_000];
 let intervalRef: ReturnType<typeof setInterval> | null = null;
 let isProcessing = false;
 
@@ -59,7 +61,10 @@ export async function processOutbox(prisma: DbClient): Promise<void> {
   try {
     const pending = await findManyOutboxEntries(
       prisma,
-      { status: OutboxStatus.QUEUED },
+      {
+        status: OutboxStatus.QUEUED,
+        OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: new Date() } }],
+      },
       { createdAt: "asc" },
       10
     );
@@ -73,22 +78,55 @@ export async function processOutbox(prisma: DbClient): Promise<void> {
       return;
     }
 
+    const shopSettings = await findShopSettingsUnique(prisma);
+    const countryCode = shopSettings?.countryCode ?? "DZ";
+
     for (const entry of pending) {
       if (entry.channel === "WHATSAPP") {
         const result = await sendWhatsApp(
           config,
           entry.recipientPhone,
-          entry.renderedBody
+          entry.renderedBody,
+          countryCode
         );
-        await updateOutboxEntry(
-          prisma,
-          { id: entry.id },
-          {
-            error: result.error,
-            sentAt: result.success ? new Date() : null,
-            status: result.success ? OutboxStatus.SENT : OutboxStatus.FAILED,
+        if (result.success) {
+          await updateOutboxEntry(
+            prisma,
+            { id: entry.id },
+            {
+              error: null,
+              sentAt: new Date(),
+              status: OutboxStatus.SENT,
+            }
+          );
+        } else {
+          const currentRetries = entry.retryCount ?? 0;
+          if (currentRetries < MAX_RETRIES) {
+            const nextRetry = new Date(
+              Date.now() +
+                BACKOFF_MS[Math.min(currentRetries, BACKOFF_MS.length - 1)]
+            );
+            await updateOutboxEntry(
+              prisma,
+              { id: entry.id },
+              {
+                error: result.error,
+                nextRetryAt: nextRetry,
+                retryCount: currentRetries + 1,
+                status: OutboxStatus.QUEUED,
+              }
+            );
+          } else {
+            await updateOutboxEntry(
+              prisma,
+              { id: entry.id },
+              {
+                error: result.error,
+                status: OutboxStatus.FAILED,
+              }
+            );
           }
-        );
+        }
       } else {
         logger.warn(
           `Outbox: unexpected channel "${entry.channel}" for entry ${entry.id} — marking FAILED`

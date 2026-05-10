@@ -2,7 +2,7 @@ import { PartCategory } from "@shared/constants";
 import { z } from "zod";
 
 export const createPartSchema = z.object({
-  name: z.string().min(1, "validations.part_name_required"),
+  name: z.string().min(1, { error: "validations.part_name_required" }),
   category: z.enum([
     PartCategory.SCREEN,
     PartCategory.BATTERY,
@@ -17,9 +17,11 @@ export const createPartSchema = z.object({
   ]),
   defaultPrice: z
     .number()
-    .min(0, "validations.price_positive")
+    .min(0, { error: "validations.price_positive" })
     .max(99_999_999.99),
   supplier: z.string().optional(),
+  stockQuantity: z.number().int().min(0).optional(),
+  reorderLevel: z.number().int().min(0).optional(),
 });
 
 export const updatePartSchema = z.object({
@@ -41,6 +43,8 @@ export const updatePartSchema = z.object({
   defaultPrice: z.number().min(0).max(99_999_999.99).optional(),
   supplier: z.string().optional(),
   isActive: z.boolean().optional(),
+  stockQuantity: z.number().int().min(0).optional(),
+  reorderLevel: z.number().int().min(0).optional(),
 });
 
 export const listPartsQuerySchema = z.object({

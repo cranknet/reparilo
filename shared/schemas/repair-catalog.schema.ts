@@ -2,7 +2,7 @@ import { RepairCategory } from "@shared/constants";
 import { z } from "zod";
 
 export const createRepairSchema = z.object({
-  name: z.string().min(1, "validations.repair_name_required"),
+  name: z.string().min(1, { error: "validations.repair_name_required" }),
   category: z.enum([
     RepairCategory.HARDWARE,
     RepairCategory.SOFTWARE,
@@ -11,7 +11,7 @@ export const createRepairSchema = z.object({
   ]),
   defaultPrice: z
     .number()
-    .min(0, "validations.price_positive")
+    .min(0, { error: "validations.price_positive" })
     .max(99_999_999.99),
 });
 

@@ -37,23 +37,30 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   },
 
   fetchFrontDesk: async () => {
+    set({ isLoading: true, error: null });
     try {
       const res = await api.get("/dashboard/front-desk");
-      set({ frontDeskData: res.data as FrontDeskDashboardDTO });
+      set({
+        frontDeskData: res.data as FrontDeskDashboardDTO,
+        isLoading: false,
+      });
     } catch (err: unknown) {
       set({
         error: getErrorMessage(err, i18n.t("errors.fetch_front_desk")),
+        isLoading: false,
       });
     }
   },
 
   fetchTechnician: async () => {
+    set({ isLoading: true, error: null });
     try {
       const res = await api.get("/dashboard/technician");
-      set({ techData: res.data as TechnicianDashboardDTO });
+      set({ techData: res.data as TechnicianDashboardDTO, isLoading: false });
     } catch (err: unknown) {
       set({
         error: getErrorMessage(err, i18n.t("errors.fetch_technician")),
+        isLoading: false,
       });
     }
   },

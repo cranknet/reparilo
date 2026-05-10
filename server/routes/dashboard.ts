@@ -6,9 +6,11 @@ import {
   activeRepairsQueue,
   avgProfitMargin,
   avgRepairTimeHours,
+  avgRepairTimeHoursShop,
   completedTodayCount,
   financialTrend,
   overdueJobs,
+  partsAlertsForTech,
   pickupReady,
   pipelineCounts,
   priorityActionsForTech,
@@ -94,6 +96,7 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
         recentActivity,
         repairTime,
         priorityActions,
+        partsAlerts,
       ] = await Promise.all([
         pipelineCounts(app.prisma, techScope),
         waitingForPartsCount(app.prisma, scope.userId),
@@ -102,6 +105,7 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
         recentActivityForTech(app.prisma, scope.userId, 20),
         avgRepairTimeHours(app.prisma, scope.userId, 30),
         priorityActionsForTech(app.prisma, scope.userId),
+        partsAlertsForTech(app.prisma, 10),
       ]);
       const myActiveJobs =
         pipeline.INTAKE +
@@ -117,6 +121,7 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
         todaySchedule,
         recentActivity,
         priorityActions,
+        partsAlerts,
       };
     }
   );
@@ -135,14 +140,17 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
       const scope = req.dashboardScope!;
       const now = new Date();
       const today = todayRange(scope.shopTz, now);
-      const [activeRepairs, overview, alerts, ready] = await Promise.all([
-        activeRepairsQueue(app.prisma, scope, today, 20),
-        todayOverview(app.prisma, scope, today),
-        priorityAlerts(app.prisma, scope, 5),
-        pickupReady(app.prisma, scope, 10),
-      ]);
+      const [activeRepairs, overview, alerts, ready, repairTime] =
+        await Promise.all([
+          activeRepairsQueue(app.prisma, scope, today, 20),
+          todayOverview(app.prisma, scope, today),
+          priorityAlerts(app.prisma, scope, 5),
+          pickupReady(app.prisma, scope, 10),
+          avgRepairTimeHoursShop(app.prisma, scope, 30),
+        ]);
       return {
         activeRepairs,
+        avgRepairTimeHours: repairTime,
         todayOverview: overview,
         priorityAlerts: alerts,
         pickupReady: ready,

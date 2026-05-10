@@ -1,4 +1,5 @@
 import type { AiSettings, Prisma, PrismaClient } from "@generated/client";
+import { AppError } from "@shared/errors/app-error.js";
 import OpenAI from "openai";
 import { decryptSecret, isEncrypted } from "../lib/crypto.js";
 import { assembleSystemPrompt, getToolDefinitions } from "./context.js";
@@ -207,9 +208,7 @@ export async function streamChat(params: StreamParams): Promise<StreamResult> {
 
   const apiKey = resolveApiKey(settings);
   if (!(apiKey && settings.endpointUrl)) {
-    throw new Error(
-      "AI is not configured. Please set up your API key and endpoint."
-    );
+    throw new AppError("AI_NOT_CONFIGURED");
   }
 
   const resolvedAgentName = agentName ?? "general_assistant";

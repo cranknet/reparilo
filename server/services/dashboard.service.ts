@@ -1,4 +1,7 @@
-import { type AuditAction, type JobStatus, Prisma } from "@generated/client";
+import { type AuditAction, Prisma } from "@generated/client";
+import type { JobStatusType } from "@shared/constants/job-statuses";
+import { JobStatus } from "@shared/constants/job-statuses";
+import { Role } from "@shared/constants/roles";
 import type {
   ActiveRepairDTO,
   ActivityItemDTO,
@@ -16,6 +19,7 @@ import {
   countWaitingForParts,
   findActiveRepairs,
   findDeliveredJobs,
+  findLowStockParts,
   findOverdueJobs,
   findPickupReady,
   findRepairTimeJobs,
@@ -31,35 +35,35 @@ import type { DbClient } from "../repositories/types.js";
 import type { DateRange } from "../utils/time-range.js";
 import { toMoney } from "../utils/time-range.js";
 
-const ALL_STATUSES: JobStatus[] = [
-  "CANCELLED",
-  "DELIVERED",
-  "DONE",
-  "IN_REPAIR",
-  "INTAKE",
-  "ON_HOLD",
-  "RETURNED",
-  "WAITING_FOR_PARTS",
+const ALL_STATUSES: JobStatusType[] = [
+  JobStatus.CANCELLED,
+  JobStatus.DELIVERED,
+  JobStatus.DONE,
+  JobStatus.IN_REPAIR,
+  JobStatus.INTAKE,
+  JobStatus.ON_HOLD,
+  JobStatus.RETURNED,
+  JobStatus.WAITING_FOR_PARTS,
 ];
 
-const DASHBOARD_ACTIVE_STATUSES: JobStatus[] = [
-  "IN_REPAIR",
-  "INTAKE",
-  "ON_HOLD",
-  "WAITING_FOR_PARTS",
+const DASHBOARD_ACTIVE_STATUSES: JobStatusType[] = [
+  JobStatus.IN_REPAIR,
+  JobStatus.INTAKE,
+  JobStatus.ON_HOLD,
+  JobStatus.WAITING_FOR_PARTS,
 ];
 
 function scopeWhere(scope: Scope) {
-  return scope.role === "TECHNICIAN" ? { technicianId: scope.userId } : {};
+  return scope.role === Role.TECHNICIAN ? { technicianId: scope.userId } : {};
 }
 
 export async function pipelineCounts(
   prisma: DbClient,
   scope: Scope
-): Promise<Record<JobStatus, number>> {
+): Promise<Record<JobStatusType, number>> {
   const groups = await jobGroupByStatus(prisma, scopeWhere(scope));
   const counts = Object.fromEntries(ALL_STATUSES.map((s) => [s, 0])) as Record<
-    JobStatus,
+    JobStatusType,
     number
   >;
   for (const g of groups) {
@@ -73,7 +77,14 @@ export async function activeJobsCount(
   scope: Scope
 ): Promise<number> {
   return await jobCount(prisma, {
-    status: { in: ["INTAKE", "IN_REPAIR", "ON_HOLD", "WAITING_FOR_PARTS"] },
+    status: {
+      in: [
+        JobStatus.INTAKE,
+        JobStatus.IN_REPAIR,
+        JobStatus.ON_HOLD,
+        JobStatus.WAITING_FOR_PARTS,
+      ],
+    },
     ...scopeWhere(scope),
   });
 }
@@ -85,7 +96,7 @@ export async function completedTodayCount(
 ): Promise<number> {
   return await jobCount(prisma, {
     ...scopeWhere(scope),
-    status: "DELIVERED",
+    status: JobStatus.DELIVERED,
     updatedAt: { gte: today.start, lt: today.end },
   });
 }
@@ -99,7 +110,7 @@ async function revenueAndCost(
     prisma,
     range.start,
     range.end,
-    scope.role === "TECHNICIAN"
+    scope.role === Role.TECHNICIAN
       ? Prisma.sql`AND j."technicianId" = ${scope.userId}`
       : Prisma.empty
   );
@@ -142,7 +153,7 @@ export async function financialTrend(
     prisma,
     days,
     scope.shopTz,
-    scope.role === "TECHNICIAN"
+    scope.role === Role.TECHNICIAN
       ? Prisma.sql`AND j."technicianId" = ${scope.userId}`
       : Prisma.empty
   );
@@ -191,7 +202,7 @@ export async function warrantyReturnsOpen(
     {
       ...scopeWhere(scope),
       isWarrantyReturn: true,
-      status: { notIn: ["DELIVERED", "CANCELLED"] },
+      status: { notIn: [JobStatus.DELIVERED, JobStatus.CANCELLED] },
     },
     { createdAt: "desc" },
     limit
@@ -272,8 +283,32 @@ export async function avgRepairTimeHours(
 ): Promise<number> {
   const since = new Date(Date.now() - days * 86_400_000);
   const rows = await findRepairTimeJobs(prisma, {
-    status: "DELIVERED",
+    status: JobStatus.DELIVERED,
     technicianId: userId,
+    updatedAt: { gte: since },
+  });
+  if (rows.length === 0) {
+    return 0;
+  }
+  const hours =
+    rows.reduce(
+      (acc, r) => acc + (r.updatedAt.getTime() - r.createdAt.getTime()),
+      0
+    ) /
+    rows.length /
+    3_600_000;
+  return Math.round(hours * 10) / 10;
+}
+
+export async function avgRepairTimeHoursShop(
+  prisma: DbClient,
+  scope: Scope,
+  days: number
+): Promise<number> {
+  const since = new Date(Date.now() - days * 86_400_000);
+  const rows = await findRepairTimeJobs(prisma, {
+    ...scopeWhere(scope),
+    status: JobStatus.DELIVERED,
     updatedAt: { gte: since },
   });
   if (rows.length === 0) {
@@ -300,7 +335,7 @@ export async function priorityActionsForTech(
   const staleThreshold = new Date(Date.now() - 24 * 3_600_000);
   const [stale, overdue, waiting] = await Promise.all([
     jobCount(prisma, {
-      status: "IN_REPAIR",
+      status: JobStatus.IN_REPAIR,
       technicianId: userId,
       updatedAt: { lt: staleThreshold },
     }),
@@ -309,7 +344,10 @@ export async function priorityActionsForTech(
       status: { in: [...DASHBOARD_ACTIVE_STATUSES] },
       technicianId: userId,
     }),
-    jobCount(prisma, { status: "WAITING_FOR_PARTS", technicianId: userId }),
+    jobCount(prisma, {
+      status: JobStatus.WAITING_FOR_PARTS,
+      technicianId: userId,
+    }),
   ]);
   return {
     jobsNeedingStatusUpdate: stale,
@@ -331,7 +369,7 @@ export async function activeRepairsQueue(
       OR: [
         { status: { in: [...DASHBOARD_ACTIVE_STATUSES] } },
         {
-          status: "DELIVERED",
+          status: JobStatus.DELIVERED,
           updatedAt: { gte: today.start, lt: today.end },
         },
       ],
@@ -369,7 +407,7 @@ export async function todayOverview(
     }),
     jobCount(prisma, {
       ...scopeWhere(scope),
-      status: "DELIVERED",
+      status: JobStatus.DELIVERED,
       updatedAt: { gte: today.start, lt: today.end },
     }),
     findTodayIntakes(
@@ -377,7 +415,7 @@ export async function todayOverview(
       {
         ...scopeWhere(scope),
         createdAt: { gte: today.start, lt: today.end },
-        status: "INTAKE",
+        status: JobStatus.INTAKE,
       },
       { createdAt: "desc" },
       3
@@ -402,7 +440,7 @@ export async function pickupReady(
 ): Promise<PickupReadyDTO[]> {
   const rows = await findPickupReady(
     prisma,
-    { ...scopeWhere(scope), status: "DONE" },
+    { ...scopeWhere(scope), status: JobStatus.DONE },
     { updatedAt: "desc" },
     limit
   );
@@ -438,7 +476,7 @@ export async function priorityAlerts(
       {
         ...scopeWhere(scope),
         isWarrantyReturn: true,
-        status: { notIn: ["DELIVERED", "CANCELLED"] },
+        status: { notIn: [JobStatus.DELIVERED, JobStatus.CANCELLED] },
       },
       {
         customer: { select: { name: true } },
@@ -451,7 +489,7 @@ export async function priorityAlerts(
     ),
     findDeliveredJobs(
       prisma,
-      { ...scopeWhere(scope), status: "DONE" },
+      { ...scopeWhere(scope), status: JobStatus.DONE },
       {
         customer: { select: { name: true } },
         id: true,
@@ -494,4 +532,18 @@ export async function waitingForPartsCount(
   userId: string
 ): Promise<number> {
   return await countWaitingForParts(prisma, userId);
+}
+
+export async function partsAlertsForTech(
+  prisma: DbClient,
+  limit: number
+): Promise<
+  Array<{
+    id: string;
+    name: string;
+    stockQuantity: number;
+    reorderLevel: number;
+  }>
+> {
+  return await findLowStockParts(prisma, limit);
 }

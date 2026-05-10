@@ -16,6 +16,7 @@ export type Job = Prisma.JobGetPayload<{
         createdBy: { select: { id: true; name: true; username: true } };
       };
     };
+    partsWaiting: true;
     partsUsed: true;
     repairs: true;
   };

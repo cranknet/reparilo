@@ -224,3 +224,22 @@ export function countWaitingForParts(prisma: DbClient, userId: string) {
     where: { technicianId: userId, status: "WAITING_FOR_PARTS" },
   });
 }
+
+interface LowStockPartRow {
+  id: string;
+  name: string;
+  reorderLevel: number;
+  stockQuantity: number;
+}
+
+export function findLowStockParts(prisma: DbClient, take: number) {
+  return prisma.$queryRaw<LowStockPartRow[]>(
+    Prisma.sql`SELECT id, name, "stockQuantity", "reorderLevel"
+      FROM parts_catalog
+      WHERE "stockQuantity" <= "reorderLevel"
+        AND "reorderLevel" > 0
+        AND "isActive" = true
+      ORDER BY "stockQuantity" ASC
+      LIMIT ${take}`
+  );
+}

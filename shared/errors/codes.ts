@@ -107,7 +107,9 @@ export const ERRORS = {
   },
   INVALID_TECHNICIAN: { status: 400, message: "errors.invalid_technician" },
   AI_DISABLED: { status: 400, message: "errors.ai_disabled" },
+  AI_NOT_CONFIGURED: { status: 400, message: "errors.ai_not_configured" },
   NO_SHOP_PHONE: { status: 400, message: "errors.no_shop_phone" },
+  JOB_CODE_OVERFLOW: { status: 500, message: "errors.job_code_overflow" },
   OUTBOX_NOT_QUEUED: { status: 409, message: "errors.outbox_not_queued" },
   BUILTIN_AGENT_DELETE: {
     status: 403,

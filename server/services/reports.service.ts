@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@generated/client";
 import { AuditAction, type JobStatus } from "@generated/client";
+import { Role } from "@shared/constants/roles";
 import type { Scope } from "@shared/types/dashboard";
 import type {
   InsightsReportDTO,
@@ -29,7 +30,7 @@ import type { DateRange } from "../utils/time-range.js";
 import { monthRange, todayRange, toMoney } from "../utils/time-range.js";
 
 function scopeWhere(scope: Scope) {
-  return scope.role === "TECHNICIAN" ? { technicianId: scope.userId } : {};
+  return scope.role === Role.TECHNICIAN ? { technicianId: scope.userId } : {};
 }
 
 export function resolveRange(
@@ -94,7 +95,7 @@ export async function revenueReport(
 
   const [currentRevenue, depositSum, outstandingRows, prevRevenue] =
     await Promise.all([
-      aggregateJobRevenue(db, {
+      aggregateJobRevenue(prisma, {
         ...scopeFilter,
         status: { in: ["DONE", "DELIVERED"] as JobStatus[] },
         auditLogs: { some: completedInWindow },
@@ -107,16 +108,16 @@ export async function revenueReport(
         ...scopeFilter,
         status: { in: ["DONE", "DELIVERED"] as JobStatus[] },
       }),
-      aggregateJobRevenue(db, {
+      aggregateJobRevenue(prisma, {
         ...scopeFilter,
         status: { in: ["DONE", "DELIVERED"] as JobStatus[] },
         auditLogs: { some: completedInPrevWindow },
       }),
     ]);
 
-  const totalRevenue = toMoney(currentRevenue._sum.estimatedCost);
+  const totalRevenue = toMoney(Number(currentRevenue[0]?.revenue ?? 0));
   const totalDeposits = toMoney(depositSum._sum.depositAmount);
-  const prevTotalRevenue = toMoney(prevRevenue._sum.estimatedCost);
+  const prevTotalRevenue = toMoney(Number(prevRevenue[0]?.revenue ?? 0));
 
   let outstandingBalance = 0;
   let outstandingJobCount = 0;
@@ -142,8 +143,8 @@ export async function revenueReport(
       prisma,
       range.start,
       range.end,
-      scope.role === "TECHNICIAN",
-      scope.role === "TECHNICIAN" ? scope.userId : undefined
+      scope.role === Role.TECHNICIAN,
+      scope.role === Role.TECHNICIAN ? scope.userId : undefined
     );
     const cost = toMoney(Number(costRows[0]?.cost ?? 0));
     avgProfitMargin =

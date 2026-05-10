@@ -1,3 +1,4 @@
+import { COUNTRY_DIAL_CODES } from "@shared/constants/countries.js";
 import { decryptSecret, isEncrypted } from "../lib/crypto.js";
 
 interface WhatsAppConfig {
@@ -14,13 +15,14 @@ interface SendResult {
 export async function sendWhatsApp(
   config: WhatsAppConfig,
   to: string,
-  message: string
+  message: string,
+  countryCode?: string
 ): Promise<SendResult> {
   const url = `https://graph.facebook.com/v21.0/${config.phoneNumberId}/messages`;
   const payload = {
     messaging_product: "whatsapp",
     recipient_type: "individual",
-    to: formatPhone(to),
+    to: formatPhone(to, countryCode),
     type: "text",
     text: { body: message },
   };
@@ -79,12 +81,18 @@ export function decryptWhatsAppConfig(encrypted: {
   };
 }
 
-function formatPhone(phone: string): string {
-  // NOTE: Currently only handles Algerian numbers (strips leading 0, adds 213 prefix).
-  // International numbers passed as-is. Consider E.164 validation for multi-country support.
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("0")) {
-    return `213${digits.slice(1)}`;
+export function formatPhone(phone: string, countryCode?: string): string {
+  const trimmed = phone.trim();
+  if (trimmed.startsWith("+")) {
+    return trimmed;
   }
-  return digits;
+  const digits = trimmed.replace(/\D/g, "");
+  const dialCode =
+    countryCode && COUNTRY_DIAL_CODES[countryCode]
+      ? COUNTRY_DIAL_CODES[countryCode]
+      : "213";
+  if (digits.startsWith("0")) {
+    return `+${dialCode}${digits.slice(1)}`;
+  }
+  return `+${digits}`;
 }

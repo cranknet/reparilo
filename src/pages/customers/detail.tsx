@@ -1,7 +1,7 @@
 import type { JobStatusType } from "@shared/constants";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useCustomersStore } from "@/stores/customers";
 
@@ -51,12 +51,12 @@ export default function CustomerDetailPage() {
           error
         </span>
         <p className="mt-3 font-medium text-on-surface-variant">{error}</p>
-        <a
+        <Link
           className="mt-4 text-primary text-sm hover:underline"
-          href="/customers"
+          to="/customers"
         >
           {t("back_to_customers")}
-        </a>
+        </Link>
       </div>
     );
   }
@@ -82,13 +82,13 @@ export default function CustomerDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <a
+        <Link
           className="flex items-center gap-2 text-on-surface-variant text-sm hover:text-primary"
-          href="/customers"
+          to="/customers"
         >
           <span className="material-symbols-outlined text-lg">arrow_back</span>
           {t("back_to_customers")}
-        </a>
+        </Link>
       </div>
 
       <div className="rounded-xl bg-surface-container-low p-6">
@@ -190,10 +190,10 @@ export default function CustomerDetailPage() {
         ) : (
           <div className="space-y-2">
             {currentCustomer.jobs.map((job) => (
-              <a
+              <Link
                 className="flex items-center justify-between rounded-xl bg-surface-container-low p-4 transition-colors hover:bg-surface-container"
-                href={`/jobs/${job.id}`}
                 key={job.id}
+                to={`/jobs/${job.id}`}
               >
                 <div>
                   <p className="font-bold text-on-surface text-sm">
@@ -209,7 +209,7 @@ export default function CustomerDetailPage() {
                   </span>
                   <StatusBadge status={job.status as JobStatusType} />
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         )}

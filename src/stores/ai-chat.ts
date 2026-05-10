@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import api from "@/lib/api";
 
 const STORAGE_KEY_OPEN = "ai-chat-panel";
 const STORAGE_KEY_WIDTH = "ai-chat-panel-width";
@@ -8,6 +9,7 @@ const DEFAULT_PANEL_WIDTH = 280;
 
 interface AiChatState {
   activeConversationId: string | null;
+  bulkDeleteConversations: (ids: string[]) => Promise<void>;
   createNewConversation: () => void;
   getDraft: (conversationId: string) => string;
   initFromStorage: () => void;
@@ -29,6 +31,15 @@ const drafts = new Map<string, string>();
 
 export const useAiChatStore = create<AiChatState>((set, get) => ({
   activeConversationId: null,
+  bulkDeleteConversations: async (ids) => {
+    await api.post("/ai/bulk-delete", { ids });
+    set((s) => ({
+      activeConversationId: ids.includes(s.activeConversationId ?? "")
+        ? null
+        : s.activeConversationId,
+      refreshKey: s.refreshKey + 1,
+    }));
+  },
   createNewConversation: () => set({ activeConversationId: null }),
   getDraft: (conversationId) => drafts.get(conversationId) ?? "",
   initFromStorage: () => {

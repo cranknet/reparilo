@@ -1,51 +1,37 @@
 import { INACTIVE_STATUSES } from "@shared/constants/job-statuses";
+import { Role } from "@shared/constants/roles";
 import type { FastifyInstance } from "fastify";
 import { notify } from "../services/notification-dispatch.js";
 
-const alerted = new Set<string>();
-const MAX_ALERTED = 10_000;
 const INTERVAL_MS = 15 * 60 * 1000;
+const RE_ALERT_MS = 24 * 60 * 60 * 1000;
 
 async function processOverdueJobs(app: FastifyInstance): Promise<void> {
+  const cutoff = new Date(Date.now() - RE_ALERT_MS);
   const overdue = await app.prisma.job.findMany({
     select: { id: true, jobCode: true },
     where: {
       estimatedDate: { lt: new Date() },
       status: { notIn: INACTIVE_STATUSES },
+      OR: [
+        { lastOverdueAlertAt: null },
+        { lastOverdueAlertAt: { lt: cutoff } },
+      ],
     },
   });
 
-  const overdueIds = new Set(overdue.map((j) => j.id));
-
-  for (const id of alerted) {
-    if (!overdueIds.has(id)) {
-      alerted.delete(id);
-    }
-  }
-
-  if (alerted.size > MAX_ALERTED) {
-    const iter = alerted.values();
-    const toRemove = alerted.size - MAX_ALERTED;
-    for (let i = 0; i < toRemove; i++) {
-      const { value, done } = iter.next();
-      if (!done && value !== undefined) {
-        alerted.delete(value);
-      }
-    }
-  }
-
   for (const job of overdue) {
-    if (alerted.has(job.id)) {
-      continue;
-    }
-    alerted.add(job.id);
-    notify(app, {
+    await notify(app, {
       context: { jobCode: job.jobCode },
       eventName: "job_overdue",
       jobId: job.id,
-      recipients: { role: "OWNER" },
+      recipients: { role: Role.OWNER },
     }).catch(() => {
-      /* fire-and-forget */
+      return;
+    });
+    await app.prisma.job.update({
+      data: { lastOverdueAlertAt: new Date() },
+      where: { id: job.id },
     });
   }
 }
@@ -66,6 +52,5 @@ export function startOverdueScheduler(app: FastifyInstance): () => void {
 
   return () => {
     clearInterval(handle);
-    alerted.clear();
   };
 }

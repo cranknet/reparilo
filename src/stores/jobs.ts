@@ -1,5 +1,11 @@
 import type { JobStatusType } from "@shared/constants";
-import type { Job, JobNote, JobPart, JobRepair } from "@shared/types";
+import type {
+  Job,
+  JobNote,
+  JobPart,
+  JobPartsWaiting,
+  JobRepair,
+} from "@shared/types";
 import { create } from "zustand";
 import i18n from "@/i18n";
 import api, { getErrorMessage } from "@/lib/api";
@@ -34,6 +40,11 @@ interface JobsState {
       price: number;
     }
   ) => Promise<JobRepair>;
+  addWaitingPart: (
+    jobId: string,
+    partName: string,
+    supplier?: string
+  ) => Promise<JobPartsWaiting>;
   clearError: () => void;
   createJob: (data: {
     customerEmail?: string;
@@ -70,6 +81,7 @@ interface JobsState {
     search?: string;
   }) => Promise<void>;
   fetchMetrics: () => Promise<void>;
+  fetchNotes: (jobId: string) => Promise<JobNote[]>;
   isCreatingJob: boolean;
   isLoadingJobs: boolean;
   isLoadingMetrics: boolean;
@@ -78,6 +90,7 @@ interface JobsState {
   nextCursor: string | null;
   removePart: (jobId: string, partId: string) => Promise<void>;
   removeRepair: (jobId: string, repairId: string) => Promise<void>;
+  removeWaitingPart: (jobId: string, waitingId: string) => Promise<void>;
   totalCount: number;
   transitionStatus: (
     id: string,
@@ -194,6 +207,44 @@ export const useJobsStore = create<JobsState>((set) => ({
     }
   },
 
+  fetchNotes: async (jobId) => {
+    set({ error: null });
+    try {
+      const res = await api.get(`/jobs/${jobId}/notes`);
+      const notes = res.data as JobNote[];
+      set((state) => ({
+        jobs: state.jobs.map((j) => (j.id === jobId ? { ...j, notes } : j)),
+      }));
+      return notes;
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, i18n.t("errors.fetch_notes"));
+      set({ error: message });
+      throw new Error(message);
+    }
+  },
+
+  addWaitingPart: async (jobId, partName, supplier) => {
+    set({ error: null });
+    try {
+      const res = await api.post(`/jobs/${jobId}/waiting-parts`, {
+        partName,
+        supplier,
+      });
+      set((state) => ({
+        jobs: state.jobs.map((j) =>
+          j.id === jobId
+            ? { ...j, partsWaiting: [...(j.partsWaiting ?? []), res.data] }
+            : j
+        ),
+      }));
+      return res.data as JobPartsWaiting;
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, i18n.t("errors.add_waiting_part"));
+      set({ error: message });
+      throw new Error(message);
+    }
+  },
+
   addPart: async (jobId, data) => {
     set({ error: null });
     try {
@@ -268,6 +319,31 @@ export const useJobsStore = create<JobsState>((set) => ({
       }));
     } catch (err: unknown) {
       const message = getErrorMessage(err, i18n.t("errors.remove_repair"));
+      set({ error: message });
+    }
+  },
+
+  removeWaitingPart: async (jobId, waitingId) => {
+    set({ error: null });
+    try {
+      await api.delete(`/jobs/${jobId}/waiting-parts/${waitingId}`);
+      set((state) => ({
+        jobs: state.jobs.map((j) =>
+          j.id === jobId
+            ? {
+                ...j,
+                partsWaiting: (j.partsWaiting ?? []).filter(
+                  (wp) => wp.id !== waitingId
+                ),
+              }
+            : j
+        ),
+      }));
+    } catch (err: unknown) {
+      const message = getErrorMessage(
+        err,
+        i18n.t("errors.remove_waiting_part")
+      );
       set({ error: message });
     }
   },

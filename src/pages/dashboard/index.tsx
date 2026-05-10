@@ -42,6 +42,13 @@ export default function DashboardPage() {
     pipelineCounts.WAITING_FOR_PARTS;
   const completedToday = data?.completedToday ?? 0;
 
+  const totalPipeline = Object.values(pipelineCounts).reduce(
+    (sum, c) => sum + c,
+    0
+  );
+  const benchUtilization =
+    totalPipeline > 0 ? Math.round((activeJobs / totalPipeline) * 100) : 0;
+
   return (
     <>
       <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
@@ -77,19 +84,27 @@ export default function DashboardPage() {
           value={String(activeJobs)}
         >
           <div className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
-            <div className="h-full w-3/4 bg-primary" />
+            <div
+              className="h-full bg-primary"
+              style={{ width: `${Math.min(100, benchUtilization)}%` }}
+            />
           </div>
         </MetricCard>
 
         <MetricCard
-          detail={`${t("target")}: 15`}
+          detail={t("completed_today")}
           icon="check_circle"
           iconColor="text-on-secondary-container"
           label={t("completed_today")}
           value={String(completedToday)}
         >
           <div className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
-            <div className="h-full w-4/5 bg-on-secondary-container" />
+            <div
+              className="h-full bg-on-secondary-container"
+              style={{
+                width: `${Math.min(100, totalPipeline > 0 ? Math.round((completedToday / totalPipeline) * 100) : 0)}%`,
+              }}
+            />
           </div>
         </MetricCard>
 
@@ -138,7 +153,10 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-12 md:gap-8">
         <div className="md:col-span-12 lg:col-span-4">
-          <JobPipeline benchCapacity={82} counts={pipelineCounts} />
+          <JobPipeline
+            benchCapacity={benchUtilization}
+            counts={pipelineCounts}
+          />
         </div>
 
         <div className="space-y-8 md:col-span-12 lg:col-span-5">

@@ -52,7 +52,7 @@ describe("sendWhatsApp", () => {
 
     const call = mocks.fetch.mock.calls[0];
     const body = JSON.parse(call[1].body);
-    expect(body.to).toBe("213555123456");
+    expect(body.to).toBe("+213555123456");
   });
 
   it("passes international numbers as-is", async () => {
@@ -62,7 +62,7 @@ describe("sendWhatsApp", () => {
 
     const call = mocks.fetch.mock.calls[0];
     const body = JSON.parse(call[1].body);
-    expect(body.to).toBe("33612345678");
+    expect(body.to).toBe("+33612345678");
   });
 
   it("returns error when API responds with non-200 status", async () => {

@@ -6,6 +6,7 @@ import {
   COMPLETED_STATUSES,
   INACTIVE_STATUSES,
   JOB_STATUS_FLOW,
+  JobStatus,
 } from "@shared/constants/job-statuses";
 import type { RoleType } from "@shared/constants/roles";
 import { Role } from "@shared/constants/roles";
@@ -333,7 +334,7 @@ export async function create(
     },
     eventName: "job_created",
     jobId: job.id,
-    recipients: { role: "OWNER" },
+    recipients: { role: Role.OWNER },
   }).catch(() => {
     /* fire-and-forget */
   });
@@ -450,7 +451,7 @@ export async function transitionStatus(
   }
 
   if (
-    newStatus === "CANCELLED" &&
+    newStatus === JobStatus.CANCELLED &&
     options?.requestingRole === Role.FRONT_DESK
   ) {
     const check = canFrontDeskCancel(job, userId);
@@ -496,7 +497,7 @@ export async function transitionStatus(
       },
       eventName: templateName,
       jobId: id,
-      recipients: { role: "OWNER" },
+      recipients: { role: Role.OWNER },
     }).catch(() => {
       /* fire-and-forget */
     });
@@ -626,14 +627,15 @@ export async function lookupByCodeAuth(
   );
 }
 
-const STATUS_TEMPLATE_MAP: Record<string, string> = {
-  WAITING_FOR_PARTS: "job_waiting_parts",
-  IN_REPAIR: "job_in_repair",
-  ON_HOLD: "job_on_hold",
-  DONE: "job_done",
-  DELIVERED: "job_delivered",
-  RETURNED: "job_returned",
-  CANCELLED: "job_cancelled",
+const STATUS_TEMPLATE_MAP: Record<JobStatusType, string> = {
+  [JobStatus.WAITING_FOR_PARTS]: "job_waiting_parts",
+  [JobStatus.IN_REPAIR]: "job_in_repair",
+  [JobStatus.ON_HOLD]: "job_on_hold",
+  [JobStatus.DONE]: "job_done",
+  [JobStatus.DELIVERED]: "job_delivered",
+  [JobStatus.RETURNED]: "job_returned",
+  [JobStatus.CANCELLED]: "job_cancelled",
+  [JobStatus.INTAKE]: "",
 };
 
 export function getJobHistory(prisma: PrismaClient, jobId: string) {

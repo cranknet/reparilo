@@ -180,6 +180,7 @@ model Customer {
 
   jobs      Job[]
 
+  @@index([email])
   @@map("customers")
 }
 
@@ -192,6 +193,7 @@ model Device {
   id        String   @id @default(cuid())
   brandId   String
   model     String
+  category  String?
   createdAt DateTime @default(now()) @db.Timestamptz
   updatedAt DateTime @updatedAt      @db.Timestamptz
 
@@ -262,7 +264,9 @@ model Job {
   createdAt       DateTime  @default(now()) @db.Timestamptz
   updatedAt       DateTime  @updatedAt      @db.Timestamptz
 
-  isWarrantyReturn Boolean  @default(false)
+  lastOverdueAlertAt DateTime? @db.Timestamptz
+
+   isWarrantyReturn Boolean  @default(false)
   warrantyForJobId String?
   warrantyForJob   Job?     @relation("WarrantyReturn", fields: [warrantyForJobId], references: [id], onDelete: SetNull)
   warrantyReturns  Job[]    @relation("WarrantyReturn")
@@ -357,14 +361,17 @@ model PartsCatalog {
   name         String
   category     PartCategory
   defaultPrice Decimal      @db.Decimal(10, 2)
-  supplier     String?
-  isActive     Boolean      @default(true)
-  createdAt    DateTime     @default(now()) @db.Timestamptz
-  updatedAt    DateTime     @updatedAt      @db.Timestamptz
+  supplier       String?
+  stockQuantity  Int          @default(0)
+  reorderLevel   Int          @default(0)
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now()) @db.Timestamptz
+  updatedAt      DateTime     @updatedAt      @db.Timestamptz
 
-  jobParts     JobPart[]
+  jobParts       JobPart[]
 
   @@index([name])
+  @@index([category])
   @@map("parts_catalog")
 }
 
@@ -501,10 +508,13 @@ model NotificationOutbox {
   renderedBody   String        @db.Text
   status         OutboxStatus @default(QUEUED)
   error          String?       @db.Text
+  retryCount     Int           @default(0)
+  nextRetryAt    DateTime?     @db.Timestamptz
   createdAt      DateTime      @default(now()) @db.Timestamptz
   sentAt         DateTime?     @db.Timestamptz
 
   @@index([status, createdAt])
+  @@index([status, nextRetryAt])
   @@map("notification_outbox")
 }
 
@@ -525,6 +535,7 @@ model InAppNotification {
 
   @@index([userId, readAt])
   @@index([readAt, createdAt])
+  @@index([userId, type])
   @@map("in_app_notifications")
 }
 
@@ -541,6 +552,7 @@ model AiSettings {
   model           String?
   temperature     Float    @default(0.7)
   enabled         Boolean  @default(false)
+  maxTokens       Int?     @default(4096)
   createdAt       DateTime @default(now()) @db.Timestamptz
   updatedAt       DateTime @updatedAt      @db.Timestamptz
 
@@ -602,6 +614,7 @@ model AiAgentDefinition {
   createdAt         DateTime @default(now()) @db.Timestamptz
   updatedAt         DateTime @updatedAt      @db.Timestamptz
 
+  @@index([isActive])
   @@map("ai_agent_definitions")
 }
 

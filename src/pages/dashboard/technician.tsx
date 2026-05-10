@@ -7,6 +7,7 @@ import RecentActivity from "@/components/modules/dashboard/recent-activity";
 import TechJobPipeline from "@/components/modules/dashboard/tech-job-pipeline";
 import TodaySchedule from "@/components/modules/dashboard/today-schedule";
 import MetricCard from "@/components/ui/metric-card";
+import { formatTimeAgo } from "@/lib/format-time-ago";
 import { useDashboardStore } from "@/stores/dashboard";
 import { useJobsStore } from "@/stores/jobs";
 
@@ -62,24 +63,6 @@ const ACTION_ICON_MAP: Record<
   },
 };
 
-function formatTimeAgo(dateStr: string): string {
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diffMin = Math.floor((now - then) / 60_000);
-  if (diffMin < 1) {
-    return "just now";
-  }
-  if (diffMin < 60) {
-    return `${diffMin}m ago`;
-  }
-  const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) {
-    return `${diffH}h ago`;
-  }
-  return `${Math.floor(diffH / 24)}d ago`;
-}
-
-// TODO: Parts alerts require a stock/inventory API (no API yet)
 const PARTS_ALERTS_EMPTY: Array<{
   name: string;
   quantity: number;
@@ -88,7 +71,7 @@ const PARTS_ALERTS_EMPTY: Array<{
 }> = [];
 
 export default function TechnicianDashboardPage() {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const { metrics, fetchMetrics } = useJobsStore();
   const { techData, fetchTechnician } = useDashboardStore();
 
@@ -114,6 +97,12 @@ export default function TechnicianDashboardPage() {
     techData?.waitingForParts ?? metrics?.WAITING_FOR_PARTS ?? 0;
   const avgRepairTime = techData?.avgRepairTimeHours ?? 0;
 
+  const totalPipeline = techData?.pipeline
+    ? Object.values(techData.pipeline).reduce((sum, c) => sum + c, 0)
+    : 0;
+  const workloadPct =
+    totalPipeline > 0 ? Math.round((activeJobs / totalPipeline) * 100) : 0;
+
   // Map real schedule data from API
   const scheduleItems = useMemo(() => {
     if (!techData?.todaySchedule) {
@@ -126,13 +115,13 @@ export default function TechnicianDashboardPage() {
       repairType: s.repairSummary,
       status: s.status,
       time: s.estimatedDate
-        ? new Date(s.estimatedDate).toLocaleTimeString(undefined, {
+        ? new Date(s.estimatedDate).toLocaleTimeString(i18n.language, {
             hour: "2-digit",
             minute: "2-digit",
           })
         : "—",
     }));
-  }, [techData?.todaySchedule]);
+  }, [techData?.todaySchedule, i18n.language]);
 
   // Map real activity data from API
   const activityItems = useMemo(() => {
@@ -179,6 +168,18 @@ export default function TechnicianDashboardPage() {
     ].filter((a) => a.count > 0);
   }, [techData?.priorityActions]);
 
+  const partsAlertItems = useMemo(() => {
+    if (!techData?.partsAlerts) {
+      return PARTS_ALERTS_EMPTY;
+    }
+    return techData.partsAlerts.map((p) => ({
+      name: p.name,
+      quantity: p.stockQuantity,
+      stockLevel: p.reorderLevel * 2,
+      threshold: p.reorderLevel,
+    }));
+  }, [techData?.partsAlerts]);
+
   return (
     <>
       <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
@@ -224,22 +225,30 @@ export default function TechnicianDashboardPage() {
           value={String(activeJobs)}
         >
           <div className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
-            <div className="h-full w-2/3 bg-primary" />
+            <div
+              className="h-full bg-primary"
+              style={{ width: `${Math.min(100, workloadPct)}%` }}
+            />
           </div>
           <span className="mt-2 block font-bold text-primary text-xs">
-            66% {t("tech_dashboard.workload")}
+            {workloadPct}% {t("tech_dashboard.workload")}
           </span>
         </MetricCard>
 
         <MetricCard
-          detail={`${t("target")}: 7`}
+          detail={t("completed_today")}
           icon="check_circle"
           iconColor="text-on-secondary-container"
           label={t("completed_today")}
           value={String(completedToday)}
         >
           <div className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
-            <div className="h-full w-3/5 bg-on-secondary-container" />
+            <div
+              className="h-full bg-on-secondary-container"
+              style={{
+                width: `${Math.min(100, totalPipeline > 0 ? Math.round((completedToday / totalPipeline) * 100) : 0)}%`,
+              }}
+            />
           </div>
         </MetricCard>
 
@@ -263,7 +272,7 @@ export default function TechnicianDashboardPage() {
         </MetricCard>
 
         <MetricCard
-          detail={`${t("target")}: 2h`}
+          detail={`${avgRepairTime}${t("tech_dashboard.avg_repair_time_unit")}`}
           icon="timer"
           iconColor="text-primary-container"
           label={t("tech_dashboard.avg_repair_time")}
@@ -284,8 +293,8 @@ export default function TechnicianDashboardPage() {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-12 md:gap-8">
         <div className="md:col-span-12 lg:col-span-4">
           <TechJobPipeline
-            benchCapacity={50}
-            benchTotal={4}
+            benchCapacity={workloadPct}
+            benchTotal={totalPipeline}
             benchUsed={activeJobs}
             counts={pipelineCounts}
           />
@@ -298,7 +307,7 @@ export default function TechnicianDashboardPage() {
 
         <div className="space-y-6 md:col-span-12 lg:col-span-3">
           <PriorityActions actions={priorityActions} />
-          <PartsAlert items={PARTS_ALERTS_EMPTY} />
+          <PartsAlert items={partsAlertItems} />
         </div>
       </div>
     </>

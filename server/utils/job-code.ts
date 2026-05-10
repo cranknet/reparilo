@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import type { PrismaClient } from "@generated/client";
+import { AppError } from "@shared/errors/app-error.js";
 
 const MAX_SEQ = 999_999;
 
@@ -17,9 +18,7 @@ export async function generateJobCode(prisma: PrismaClient): Promise<{
   });
 
   if (counter.lastSeq > MAX_SEQ) {
-    throw new Error(
-      `Job sequence overflow: ${counter.lastSeq} exceeds ${MAX_SEQ} for year ${year}`
-    );
+    throw new AppError("JOB_CODE_OVERFLOW");
   }
 
   const seq = counter.lastSeq.toString().padStart(6, "0");

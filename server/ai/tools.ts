@@ -1,5 +1,9 @@
 import type { PrismaClient } from "@generated/client";
 import { Prisma } from "@generated/client";
+import { logger } from "../utils/logger.js";
+
+const SQL_COMMENT_REGEX = /--|\/\*/;
+const LIMIT_REGEX = /\bLIMIT\s+\d+/i;
 
 interface ToolResult {
   data: string;
@@ -78,7 +82,8 @@ export async function executeGetSchema(
          ORDER BY ordinal_position`
       );
       results[table] = columns;
-    } catch {
+    } catch (error) {
+      logger.warn({ err: error, table }, "AI schema lookup failed");
       results[table] = { error: `Table '${table}' not found` };
     }
   }
@@ -150,7 +155,7 @@ export async function executeQueryDatabase(
   prisma: PrismaClient,
   sql: string
 ): Promise<ToolResult> {
-  const trimmed = sql.trim();
+  let trimmed = sql.trim().replace(/\s+/g, " ");
 
   if (trimmed.length > MAX_QUERY_LENGTH) {
     return { success: false, data: "Query exceeds maximum allowed length" };
@@ -158,6 +163,14 @@ export async function executeQueryDatabase(
 
   if (trimmed.includes(";")) {
     return { success: false, data: "Only single statements are allowed" };
+  }
+
+  if (SQL_COMMENT_REGEX.test(trimmed)) {
+    return { success: false, data: "SQL comments are not allowed" };
+  }
+
+  if (trimmed.includes("'")) {
+    return { success: false, data: "String literals are not allowed" };
   }
 
   if (!SELECT_ONLY_REGEX.test(trimmed)) {
@@ -193,8 +206,12 @@ export async function executeQueryDatabase(
     return { success: false, data: tableError };
   }
 
+  if (!LIMIT_REGEX.test(stripped)) {
+    trimmed = `${stripped} LIMIT 100`;
+  }
+
   try {
-    const result = await prisma.$queryRawUnsafe(stripped);
+    const result = await prisma.$queryRawUnsafe(trimmed);
     return { success: true, data: JSON.stringify(result) };
   } catch (err) {
     return {

@@ -32,6 +32,7 @@ export const updateShopSettingsSchema = z
     currency: z.string().optional(),
     receiptFooter: z.string().optional(),
     countryCode: z.string().optional(),
+    timezone: z.string().min(1).optional(),
   })
   .refine(
     (data) =>
@@ -40,13 +41,14 @@ export const updateShopSettingsSchema = z
       data.phone !== undefined ||
       data.currency !== undefined ||
       data.receiptFooter !== undefined ||
-      data.countryCode !== undefined,
+      data.countryCode !== undefined ||
+      data.timezone !== undefined,
     { message: "validations.at_least_one_field" }
   );
 
 export const updateNotificationTemplateSchema = z.object({
   name: z.string().min(1),
-  channel: z.enum(["WHATSAPP"]),
+  channel: z.enum(["WHATSAPP", "IN_APP"]),
   body: z.string().min(1),
   isDefault: z.boolean().optional(),
 });

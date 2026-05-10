@@ -6,22 +6,26 @@ import { toast } from "sonner";
 import { Can } from "@/components/modules/can";
 import EditCustomerDialog from "@/components/modules/customers/edit-customer-dialog";
 import CostSummary from "@/components/modules/jobs/cost-summary";
+import JobNotesSection from "@/components/modules/jobs/job-notes-section";
 import JobPartsSection from "@/components/modules/jobs/job-parts-section";
 import JobPhotosSection from "@/components/modules/jobs/job-photos-section";
 import JobRepairsSection from "@/components/modules/jobs/job-repairs-section";
+import JobWaitingPartsSection from "@/components/modules/jobs/job-waiting-parts-section";
 import StatusHistoryTimeline from "@/components/modules/jobs/status-history-timeline";
 import StatusPopover from "@/components/modules/jobs/status-popover";
 import TechnicianSelect from "@/components/modules/jobs/technician-select";
-import { formatDzd } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 import { useJobsStore } from "@/stores/jobs";
+import { useSettingsStore } from "@/stores/settings";
 
-function fmt(n: number): string {
-  return `${formatDzd(n)} DZD`;
+function fmt(n: number, currency: string): string {
+  return `${formatCurrency(n, currency)} ${currency}`;
 }
 
 export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
+  const currency = useSettingsStore((s) => s.shopSettings?.currency ?? "DZD");
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,12 +40,20 @@ export default function JobDetailPage() {
     try {
       const data = await useJobsStore.getState().fetchJobById(id);
       setJob(data);
+      useJobsStore
+        .getState()
+        .fetchNotes(id)
+        .catch(() => {
+          /* non-critical */
+        });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to load job");
+      setError(
+        err instanceof Error ? err.message : t("jobs.detail.load_error")
+      );
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     fetchJob();
@@ -84,7 +96,7 @@ export default function JobDetailPage() {
           error
         </span>
         <p className="mt-2 font-body text-error text-sm">
-          {error ?? "Job not found"}
+          {error ?? t("jobs.detail.not_found")}
         </p>
         <div className="mt-4 flex items-center justify-center gap-3">
           <Link
@@ -169,7 +181,8 @@ export default function JobDetailPage() {
               {fmt(
                 typeof job.estimatedCost === "number"
                   ? job.estimatedCost
-                  : Number(job.estimatedCost ?? 0)
+                  : Number(job.estimatedCost ?? 0),
+                currency
               )}
             </p>
           </div>
@@ -298,6 +311,16 @@ export default function JobDetailPage() {
         <div className="mt-3">
           <JobRepairsSection job={job} onChanged={() => fetchJob()} />
         </div>
+      </div>
+
+      {/* ── Waiting parts ── */}
+      <div className="mt-8 rounded-2xl bg-surface-container p-6">
+        <JobWaitingPartsSection job={job} onChanged={() => fetchJob()} />
+      </div>
+
+      {/* ── Notes ── */}
+      <div className="mt-8 rounded-2xl bg-surface-container p-6">
+        <JobNotesSection job={job} onChanged={() => fetchJob()} />
       </div>
 
       <div className="mt-8">

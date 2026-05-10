@@ -1,3 +1,13 @@
+export const COUNTRY_DIAL_CODES: Record<string, string> = {
+  DZ: "213",
+  FR: "33",
+  US: "1",
+  GB: "44",
+  DE: "49",
+  TN: "216",
+  MA: "212",
+};
+
 export const COUNTRIES = [
   { code: "DZ", label: "DZ — Algeria" },
   { code: "FR", label: "FR — France" },

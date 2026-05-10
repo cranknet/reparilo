@@ -5,11 +5,55 @@ import type { DbClient } from "./types.js";
 type JobWhereInput = Prisma.JobWhereInput;
 type AuditLogWhereInput = Prisma.AuditLogWhereInput;
 
-export function aggregateJobRevenue(prisma: DbClient, where: JobWhereInput) {
-  return prisma.job.aggregate({
-    _sum: { estimatedCost: true },
-    where,
-  });
+export function aggregateJobRevenue(
+  prisma: PrismaClient,
+  where: JobWhereInput
+) {
+  const statusFilter =
+    where.status &&
+    typeof where.status === "object" &&
+    "in" in (where.status as object)
+      ? (where.status as { in: string[] }).in
+      : undefined;
+
+  const technicianFilter = where.technicianId ?? undefined;
+
+  return prisma.$queryRaw<{ revenue: string }[]>`
+    SELECT COALESCE(SUM(
+      COALESCE(r_total.repair_sum, 0) + COALESCE(p_total.parts_sum, 0)
+    ), 0)::text AS revenue
+    FROM "jobs" j
+    LEFT JOIN (SELECT "jobId", SUM("price") AS repair_sum FROM "job_repairs" GROUP BY "jobId") r_total
+      ON r_total."jobId" = j."id"
+    LEFT JOIN (SELECT "jobId", SUM("totalCost") AS parts_sum FROM "job_parts" GROUP BY "jobId") p_total
+      ON p_total."jobId" = j."id"
+    ${
+      where.auditLogs
+        ? Prisma.sql`
+    INNER JOIN "audit_logs" al ON al."jobId" = j."id"
+      AND al."action" = 'STATUS_CHANGED'
+      AND al."toValue" IN ('DONE', 'DELIVERED')
+      AND al."createdAt" >= ${
+        (where.auditLogs as { some: { createdAt: { gte: Date } } }).some
+          .createdAt.gte
+      } AND al."createdAt" < ${
+        (where.auditLogs as { some: { createdAt: { lt: Date } } }).some
+          .createdAt.lt
+      }`
+        : Prisma.empty
+    }
+    WHERE 1=1
+    ${
+      statusFilter
+        ? Prisma.sql`AND j."status" IN (${Prisma.join(statusFilter)})`
+        : Prisma.empty
+    }
+    ${
+      technicianFilter
+        ? Prisma.sql`AND j."technicianId" = ${technicianFilter}`
+        : Prisma.empty
+    }
+  `;
 }
 
 export function aggregateJobDeposits(prisma: DbClient, where: JobWhereInput) {
@@ -25,6 +69,8 @@ export function findOutstandingJobs(prisma: DbClient, where: JobWhereInput) {
     select: {
       estimatedCost: true,
       depositAmount: true,
+      partsUsed: { select: { totalCost: true } },
+      repairs: { select: { price: true } },
     },
   });
 }

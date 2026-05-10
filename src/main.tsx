@@ -1,6 +1,5 @@
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { I18nextProvider } from "react-i18next";
@@ -11,21 +10,6 @@ import { ErrorBoundary } from "./components/error-boundary";
 import i18n from "./i18n";
 import "./app.css";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      retry: 1,
-    },
-  },
-});
-
-// Expose queryClient for error-boundary reset (dev only)
-if (import.meta.env.DEV) {
-  (window as unknown as Record<string, unknown>).__reactQueryClient =
-    queryClient;
-}
-
 const rootElement = document.getElementById("root");
 if (!rootElement) {
   throw new Error("Root element not found");
@@ -34,14 +18,12 @@ if (!rootElement) {
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <I18nextProvider i18n={i18n}>
-          <BrowserRouter>
-            <App />
-            <Toaster closeButton position="bottom-right" richColors />
-          </BrowserRouter>
-        </I18nextProvider>
-      </QueryClientProvider>
+      <I18nextProvider i18n={i18n}>
+        <BrowserRouter>
+          <App />
+          <Toaster closeButton position="bottom-right" richColors />
+        </BrowserRouter>
+      </I18nextProvider>
     </ErrorBoundary>
   </React.StrictMode>
 );

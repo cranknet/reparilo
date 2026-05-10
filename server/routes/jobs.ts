@@ -1,3 +1,4 @@
+import { Role } from "@shared/constants/roles";
 import { AppError, throwIfError } from "@shared/errors/app-error.js";
 import {
   addJobNoteSchema,
@@ -319,7 +320,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
           },
           eventName: "warranty_return_created",
           jobId: result.id,
-          recipients: { role: "OWNER" },
+          recipients: { role: Role.OWNER },
         }).catch(() => {
           /* fire-and-forget */
         });

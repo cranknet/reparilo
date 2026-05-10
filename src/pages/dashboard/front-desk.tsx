@@ -11,33 +11,13 @@ import QuickIntakeForm from "@/components/modules/dashboard/quick-intake-form";
 import QuickStatsChips from "@/components/modules/dashboard/quick-stats-chips";
 import TodayOverview from "@/components/modules/dashboard/today-overview";
 import WaitingCustomers from "@/components/modules/dashboard/waiting-customers";
+import { formatTimeAgo } from "@/lib/format-time-ago";
 import { useDashboardStore } from "@/stores/dashboard";
 import { useJobsStore } from "@/stores/jobs";
 
-/** Format a date as a relative time string (e.g. "5m ago", "2h ago") */
-function timeAgo(date: Date | string): string {
-  const now = Date.now();
-  const then = new Date(date).getTime();
-  const diffMs = now - then;
-  const diffMin = Math.floor(diffMs / 60_000);
-  if (diffMin < 1) {
-    return "just now";
-  }
-  if (diffMin < 60) {
-    return `${diffMin}m ago`;
-  }
-  const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) {
-    return `${diffH}h ago`;
-  }
-  const diffD = Math.floor(diffH / 24);
-  return `${diffD}d ago`;
-}
-
-/** Format a date for display as an estimated completion or completed-at string */
-function formatDate(date: Date | string): string {
+function formatDate(date: Date | string, locale: string): string {
   const d = new Date(date);
-  return d.toLocaleDateString(undefined, {
+  return d.toLocaleDateString(locale, {
     month: "short",
     day: "numeric",
     hour: "numeric",
@@ -46,7 +26,8 @@ function formatDate(date: Date | string): string {
 }
 
 export default function FrontDeskPage() {
-  const { t } = useTranslation();
+  const { i18n: i18nInstance, t } = useTranslation();
+  const lang = i18nInstance.language;
   const { jobs, isLoadingJobs, fetchJobs } = useJobsStore();
   const { frontDeskData, fetchFrontDesk } = useDashboardStore();
 
@@ -69,15 +50,15 @@ export default function FrontDeskPage() {
         customerName: j.customer.name,
         status: j.status,
         estimatedCompletion: j.estimatedDate
-          ? formatDate(j.estimatedDate)
+          ? formatDate(j.estimatedDate, lang)
           : undefined,
         completedAt:
           COMPLETED_STATUSES.includes(j.status) && j.updatedAt
-            ? timeAgo(j.updatedAt)
+            ? formatTimeAgo(j.updatedAt)
             : undefined,
-        technician: j.technician?.name ?? "Unassigned",
+        technician: j.technician?.name ?? t("front_desk.unassigned"),
       }));
-  }, [jobs]);
+  }, [jobs, lang, t]);
 
   // Recent intakes: latest 3 jobs with INTAKE status
   const recentIntakes = useMemo(
@@ -93,7 +74,7 @@ export default function FrontDeskPage() {
           id: j.jobCode,
           device: `${j.device.brand?.name ?? ""} ${j.device.model}`,
           status: j.status,
-          timeAgo: timeAgo(j.createdAt),
+          timeAgo: formatTimeAgo(j.createdAt),
         })),
     [jobs]
   );
@@ -248,8 +229,15 @@ export default function FrontDeskPage() {
           <WaitingCustomers customers={waitingCustomers} />
           <QuickStatsChips
             stats={[
-              { labelKey: "front_desk.mttr", value: "2.4", unit: "h" },
-              { labelKey: "front_desk.csat", value: "4.9" },
+              {
+                labelKey: "front_desk.mttr",
+                value: String(frontDeskData?.avgRepairTimeHours ?? 0),
+                unit: "h",
+              },
+              {
+                labelKey: "front_desk.completed_today",
+                value: String(frontDeskData?.todayOverview.completedToday ?? 0),
+              },
             ]}
           />
         </div>

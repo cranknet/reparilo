@@ -219,7 +219,8 @@ function LookupForm({
       <footer className="mt-auto w-full bg-surface-container-high py-8">
         <div className="flex w-full flex-col items-center gap-2 text-center">
           <span className="font-body text-on-surface-variant text-xs tracking-wider">
-            © 2026 Reparilo. All rights reserved.
+            © {new Date().getFullYear()} Reparilo.{" "}
+            {t("tracking_all_rights_reserved")}
           </span>
         </div>
       </footer>
@@ -569,7 +570,8 @@ function StatusView({
       <footer className="mt-auto w-full bg-surface-container-high py-8">
         <div className="flex w-full flex-col items-center gap-2 text-center">
           <span className="font-body text-on-surface-variant text-xs tracking-wider">
-            © 2026 Reparilo. All rights reserved.
+            © {new Date().getFullYear()} Reparilo.{" "}
+            {t("tracking_all_rights_reserved")}
           </span>
         </div>
       </footer>
@@ -579,7 +581,8 @@ function StatusView({
 
 function mapJobToTrackingData(
   data: Record<string, unknown>,
-  t: (key: string, options?: Record<string, unknown>) => string
+  t: (key: string, options?: Record<string, unknown>) => string,
+  locale: string
 ): TrackingData {
   const shop = data.shop as {
     name: string;
@@ -593,7 +596,7 @@ function mapJobToTrackingData(
     return {
       ...tr,
       date: dateStr,
-      formattedDate: new Date(dateStr).toLocaleDateString(undefined, {
+      formattedDate: new Date(dateStr).toLocaleDateString(locale, {
         month: "short",
         day: "numeric",
       }),
@@ -602,12 +605,12 @@ function mapJobToTrackingData(
 
   const createdAtStr = data.createdAt as string;
   const formattedReceivedDate = new Date(createdAtStr).toLocaleDateString(
-    undefined,
+    locale,
     { month: "short", day: "numeric" }
   );
 
   const estimatedCompletion = data.estimatedDate
-    ? new Date(data.estimatedDate as string).toLocaleDateString(undefined, {
+    ? new Date(data.estimatedDate as string).toLocaleDateString(locale, {
         month: "short",
         day: "numeric",
         year: "numeric",
@@ -625,12 +628,12 @@ function mapJobToTrackingData(
     createdAt: createdAtStr,
     formattedReceivedDate,
     customerName: (data.customer as { name: string })?.name ?? "",
-    shopName: shop?.name ?? "Reparilo",
+    shopName: shop?.name ?? t("app_name"),
     shopPhone: shop?.phone ?? "",
     shopAddress: shop?.address ?? "",
     statusTransitions,
     fetchedAt: now,
-    formattedFetchedTime: new Date(now).toLocaleTimeString(undefined, {
+    formattedFetchedTime: new Date(now).toLocaleTimeString(locale, {
       hour: "2-digit",
       minute: "2-digit",
     }),
@@ -639,7 +642,7 @@ function mapJobToTrackingData(
 
 export default function TrackingPage() {
   const { jobCode } = useParams<{ jobCode?: string }>();
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [trackedJob, setTrackedJob] = useState<TrackingData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -651,6 +654,8 @@ export default function TrackingPage() {
   const pollingRef = useRef<ReturnType<typeof setInterval>>(null);
   const tRef = useRef(t);
   tRef.current = t;
+  const localeRef = useRef(i18n.language);
+  localeRef.current = i18n.language;
 
   const fetchJob = useCallback(
     async (code: string, phone4: string, silent = false) => {
@@ -662,7 +667,9 @@ export default function TrackingPage() {
         const res = await api.get(
           `/jobs/lookup?code=${encodeURIComponent(code)}&phone4=${encodeURIComponent(phone4)}`
         );
-        setTrackedJob(mapJobToTrackingData(res.data, tRef.current));
+        setTrackedJob(
+          mapJobToTrackingData(res.data, tRef.current, localeRef.current)
+        );
         setLastSearchParams({ code, phone4 });
       } catch (err: unknown) {
         const status =
@@ -690,7 +697,9 @@ export default function TrackingPage() {
       setError(null);
       try {
         const res = await api.get(`/jobs/by-code/${encodeURIComponent(code)}`);
-        setTrackedJob(mapJobToTrackingData(res.data, tRef.current));
+        setTrackedJob(
+          mapJobToTrackingData(res.data, tRef.current, localeRef.current)
+        );
         setLastSearchParams({ code, phone4: "" });
       } catch {
         setError(tRef.current("tracking_job_not_found"));

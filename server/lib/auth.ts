@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@generated/client";
+import { Role } from "@shared/constants/roles";
 import { ac, roles } from "@shared/permissions";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
@@ -57,8 +58,8 @@ export function createAuth(prisma: PrismaClient) {
               toValue: `Password reset for ${user.email}`,
             },
           });
-        } catch {
-          logger.error("[auth] Failed to audit password reset");
+        } catch (error) {
+          logger.error({ err: error }, "[auth] Failed to audit password reset");
         }
       },
     },
@@ -74,7 +75,7 @@ export function createAuth(prisma: PrismaClient) {
         role: {
           type: "string",
           required: true,
-          defaultValue: "FRONT_DESK",
+          defaultValue: Role.FRONT_DESK,
           input: false,
         },
         isActive: {
@@ -100,7 +101,7 @@ export function createAuth(prisma: PrismaClient) {
     plugins: [
       username(),
       admin({
-        adminRoles: ["OWNER"],
+        adminRoles: [Role.OWNER],
         ac,
         roles,
       }),
