@@ -8,6 +8,7 @@ import { notificationsRoutes } from "../routes/notifications.js";
 import { partsRoutes } from "../routes/parts.js";
 import { receiptRoutes } from "../routes/receipts.js";
 import { repairCatalogRoutes } from "../routes/repairs.js";
+import { returnClaimsRoutes } from "../routes/return-claims.js";
 import { settingsRoutes } from "../routes/settings.js";
 import { usersRoutes } from "../routes/users.js";
 
@@ -118,6 +119,18 @@ vi.mock("../services/avatar.service.js", () => ({
   deleteAvatar: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("../services/return-claim.service.js", () => ({
+  create: vi.fn().mockResolvedValue({ id: "rc-1" }),
+  getById: vi.fn().mockResolvedValue({ id: "rc-1", status: "OPEN" }),
+  list: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, limit: 20 }),
+  triage: vi.fn().mockResolvedValue({ id: "rc-1" }),
+  spawnRework: vi.fn().mockResolvedValue({ claimId: "rc-1", reworkJobId: "r-1" }),
+  detachRework: vi.fn().mockResolvedValue({ id: "rc-1" }),
+  resolve: vi.fn().mockResolvedValue({ id: "rc-1", status: "RESOLVED" }),
+  uploadPhoto: vi.fn().mockResolvedValue({ id: "ph-1", path: "/x.jpg" }),
+  removePhoto: vi.fn().mockResolvedValue({ removed: true }),
+}));
+
 // Real requirePermission that checks permissions against our defined roles
 vi.mock("../middlewares/rbac.js", () => ({
   requirePermission:
@@ -176,7 +189,15 @@ const rolePermissions: Record<RoleType, Record<string, string[]>> = {
     notifications: ["read", "send", "manage"],
     ai: ["access"],
     dashboard: ["viewOwner", "viewTechnician", "viewFrontDesk"],
-    returns: ["create", "edit", "triage", "resolveRework", "resolveRefund", "viewSelf", "viewShop"],
+    returns: [
+      "create",
+      "edit",
+      "triage",
+      "resolveRework",
+      "resolveRefund",
+      "viewSelf",
+      "viewShop",
+    ],
     user: [
       "list",
       "get",
@@ -329,6 +350,7 @@ function buildApp(userId: string | null, role: RoleType | null = null) {
   app.register(settingsRoutes, { prefix: "/api/settings" });
   app.register(notificationsRoutes, { prefix: "/api/notifications" });
   app.register(receiptRoutes, { prefix: "/api/receipts" });
+  app.register(returnClaimsRoutes, { prefix: "/api/return-claims" });
 
   return app;
 }
@@ -771,6 +793,84 @@ describe("RBAC Matrix", () => {
           url: "/api/receipts/job-1/receipt",
         });
         expect(res.statusCode).not.toBe(403);
+      });
+    });
+  });
+
+  describe("Return Claims Routes", () => {
+    describe("POST /api/return-claims", () => {
+      it("OWNER can create claims", async () => {
+        const app = buildApp("user-1", Role.OWNER);
+        const res = await app.inject({
+          method: "POST",
+          url: "/api/return-claims",
+          payload: { originalJobId: "job-1", returnReason: "test" },
+        });
+        expect(res.statusCode).not.toBe(403);
+      });
+
+      it("TECHNICIAN can create claims", async () => {
+        const app = buildApp("user-1", Role.TECHNICIAN);
+        const res = await app.inject({
+          method: "POST",
+          url: "/api/return-claims",
+          payload: { originalJobId: "job-1", returnReason: "test" },
+        });
+        expect(res.statusCode).not.toBe(403);
+      });
+
+      it("FRONT_DESK can create claims", async () => {
+        const app = buildApp("user-1", Role.FRONT_DESK);
+        const res = await app.inject({
+          method: "POST",
+          url: "/api/return-claims",
+          payload: { originalJobId: "job-1", returnReason: "test" },
+        });
+        expect(res.statusCode).not.toBe(403);
+      });
+    });
+
+    describe("PATCH /api/return-claims/:id/resolve", () => {
+      it("allows TECHNICIAN to resolve REWORK_FREE", async () => {
+        const app = buildApp("user-1", Role.TECHNICIAN);
+        const res = await app.inject({
+          method: "PATCH",
+          url: "/api/return-claims/rc-1/resolve",
+          payload: { resolutionOutcome: "REWORK_FREE" },
+        });
+        expect(res.statusCode).not.toBe(403);
+      });
+
+      it("blocks TECHNICIAN from resolving REFUND_FULL", async () => {
+        const app = buildApp("user-1", Role.TECHNICIAN);
+        const res = await app.inject({
+          method: "PATCH",
+          url: "/api/return-claims/rc-1/resolve",
+          payload: { resolutionOutcome: "REFUND_FULL", refundAmount: 100 },
+        });
+        expect(res.statusCode).toBe(403);
+      });
+
+      it("allows OWNER to resolve REFUND_FULL", async () => {
+        const app = buildApp("user-1", Role.OWNER);
+        const res = await app.inject({
+          method: "PATCH",
+          url: "/api/return-claims/rc-1/resolve",
+          payload: { resolutionOutcome: "REFUND_FULL", refundAmount: 100 },
+        });
+        expect(res.statusCode).not.toBe(403);
+      });
+    });
+
+    describe("PATCH /api/return-claims/:id/triage", () => {
+      it("blocks FRONT_DESK from triaging claims", async () => {
+        const app = buildApp("user-1", Role.FRONT_DESK);
+        const res = await app.inject({
+          method: "PATCH",
+          url: "/api/return-claims/rc-1/triage",
+          payload: { faultCategory: "WORKMANSHIP" },
+        });
+        expect(res.statusCode).toBe(403);
       });
     });
   });
