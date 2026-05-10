@@ -460,6 +460,17 @@ export async function transitionStatus(
     }
   }
 
+  // Block cancellation if this job is a rework Job whose claim is still OPEN
+  if (newStatus === JobStatus.CANCELLED && job.isWarrantyReturn) {
+    const claim = await prisma.returnClaim.findUnique({
+      where: { reworkJobId: job.id },
+      select: { id: true, status: true },
+    });
+    if (claim && claim.status === "OPEN") {
+      return { error: "REWORK_JOB_HAS_OPEN_CLAIM" as const };
+    }
+  }
+
   const allowed = JOB_STATUS_FLOW[job.status as JobStatusType] ?? [];
   if (!allowed.includes(newStatus)) {
     return {

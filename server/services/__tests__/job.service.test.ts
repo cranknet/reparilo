@@ -66,6 +66,10 @@ function mockPrisma(
       findUnique: vi.fn().mockResolvedValue(null),
       ...((overrides as Record<string, unknown>).shopSettings || {}),
     },
+    returnClaim: {
+      findUnique: vi.fn(),
+      ...((overrides as Record<string, unknown>).returnClaim || {}),
+    },
     $transaction: vi.fn((callback: (client: typeof mock) => Promise<unknown>) =>
       callback(mock)
     ),
@@ -911,5 +915,32 @@ describe("transitionStatus", () => {
     );
 
     expect(result).not.toHaveProperty("error");
+  });
+
+  it("returns REWORK_JOB_HAS_OPEN_CLAIM when cancelling a rework job whose claim is OPEN", async () => {
+    (prisma.job.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "rework-1",
+      status: "IN_REPAIR",
+      isWarrantyReturn: true,
+      createdById: "user-1",
+    });
+    (
+      prisma.returnClaim.findUnique as ReturnType<typeof vi.fn>
+    ).mockResolvedValue({
+      id: "rc-1",
+      status: "OPEN",
+      reworkJobId: "rework-1",
+    });
+
+    const result = await transitionStatus(
+      prisma,
+      "rework-1",
+      "CANCELLED",
+      "user-1",
+      mockNotifyCtx,
+      { requestingRole: Role.TECHNICIAN }
+    );
+
+    expect(result).toEqual({ error: "REWORK_JOB_HAS_OPEN_CLAIM" });
   });
 });
