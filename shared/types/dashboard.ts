@@ -33,10 +33,14 @@ export interface WarrantyReturnDTO {
 export interface OwnerDashboardDTO {
   activeJobs: number;
   avgProfitMargin: number;
+  avgProfitMarginChange: number;
+  avgProfitMarginPrev: number;
   completedToday: number;
   financialTrend: FinancialTrendPoint[];
   overdueJobs: OverdueJobDTO[];
   pipeline: Record<JobStatus, number>;
+  revenueChangePct: number;
+  revenuePrevMonth: number;
   revenueThisMonth: number;
   warrantyReturns: WarrantyReturnDTO[];
 }

@@ -144,6 +144,59 @@ export async function avgProfitMargin(
   return Math.round(((revenue - cost) / revenue) * 100) / 100;
 }
 
+export async function revenueAndMarginComparison(
+  prisma: DbClient,
+  scope: Scope,
+  currentMonth: DateRange,
+  prevMonth: DateRange
+): Promise<{
+  avgProfitMarginChange: number;
+  avgProfitMarginPrev: number;
+  avgProfitMarginThis: number;
+  revenueChangePct: number;
+  revenuePrevMonth: number;
+  revenueThisMonth: number;
+}> {
+  const [current, prev] = await Promise.all([
+    revenueAndCost(prisma, scope, currentMonth),
+    revenueAndCost(prisma, scope, prevMonth),
+  ]);
+
+  const revenueThisMonth = current.revenue;
+  const revenuePrevMonth = prev.revenue;
+  const avgProfitMarginThis =
+    current.revenue === 0
+      ? 0
+      : Math.round(((current.revenue - current.cost) / current.revenue) * 100) /
+        100;
+  const avgProfitMarginPrev =
+    prev.revenue === 0
+      ? 0
+      : Math.round(((prev.revenue - prev.cost) / prev.revenue) * 100) / 100;
+
+  let revenueChangePct: number;
+  if (revenuePrevMonth === 0) {
+    revenueChangePct = revenueThisMonth > 0 ? 100 : 0;
+  } else {
+    revenueChangePct = Math.round(
+      ((revenueThisMonth - revenuePrevMonth) / revenuePrevMonth) * 100
+    );
+  }
+
+  const avgProfitMarginChange = Math.round(
+    (avgProfitMarginThis - avgProfitMarginPrev) * 100
+  );
+
+  return {
+    avgProfitMarginChange,
+    avgProfitMarginPrev,
+    avgProfitMarginThis,
+    revenueChangePct,
+    revenuePrevMonth,
+    revenueThisMonth,
+  };
+}
+
 export async function financialTrend(
   prisma: DbClient,
   scope: Scope,

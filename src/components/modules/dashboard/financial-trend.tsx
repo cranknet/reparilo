@@ -13,7 +13,12 @@ interface FinancialTrendProps {
 export default function FinancialTrend({ data }: FinancialTrendProps) {
   const { t, i18n } = useTranslation();
 
-  const maxVal = Math.max(...data.flatMap((d) => [d.revenue, d.cost]), 1);
+  const allZero =
+    data.length === 0 || data.every((d) => d.revenue === 0 && d.cost === 0);
+
+  const maxVal = allZero
+    ? 1
+    : Math.max(...data.flatMap((d) => [d.revenue, d.cost]), 1);
 
   const LOCALES: Record<string, string> = {
     ar: "ar-DZ",
@@ -48,26 +53,38 @@ export default function FinancialTrend({ data }: FinancialTrendProps) {
           </div>
         </div>
       </div>
-      <div className="flex h-48 items-end gap-1 px-2 sm:gap-2">
-        {data.map((day) => (
-          <div
-            className="flex flex-1 flex-col justify-end gap-1"
-            key={day.date}
-          >
+
+      {allZero ? (
+        <div className="flex h-48 flex-col items-center justify-center text-center">
+          <span className="material-symbols-outlined mb-2 text-3xl text-surface-variant">
+            bar_chart
+          </span>
+          <p className="text-on-surface-variant text-sm">
+            {t("financial_trend_empty")}
+          </p>
+        </div>
+      ) : (
+        <div className="flex h-48 items-end gap-1 px-2 sm:gap-2">
+          {data.map((day) => (
             <div
-              className="w-full rounded-t bg-outline-variant/40 transition-all duration-500"
-              style={{ height: `${(day.cost / maxVal) * 100}%` }}
-            />
-            <div
-              className="w-full rounded-t bg-primary transition-all duration-500"
-              style={{ height: `${(day.revenue / maxVal) * 100}%` }}
-            />
-            <span className="mt-2 text-center font-bold text-[8px] text-on-surface-variant uppercase sm:text-[9px]">
-              {formatDay(day.date)}
-            </span>
-          </div>
-        ))}
-      </div>
+              className="flex flex-1 flex-col justify-end gap-1"
+              key={day.date}
+            >
+              <div
+                className="w-full rounded-t bg-outline-variant/40 transition-all duration-500"
+                style={{ height: `${(day.cost / maxVal) * 100}%` }}
+              />
+              <div
+                className="w-full rounded-t bg-primary transition-all duration-500"
+                style={{ height: `${(day.revenue / maxVal) * 100}%` }}
+              />
+              <span className="mt-2 text-center font-bold text-[8px] text-on-surface-variant uppercase sm:text-[9px]">
+                {formatDay(day.date)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

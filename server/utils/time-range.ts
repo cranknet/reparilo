@@ -78,6 +78,15 @@ export function monthRange(tz: string, now: Date = new Date()): DateRange {
   return { start, end };
 }
 
+export function prevMonthRange(tz: string, now: Date = new Date()): DateRange {
+  const { year, month } = zonedParts(tz, now);
+  const prevY = month === 1 ? year - 1 : year;
+  const prevM = month === 1 ? 12 : month - 1;
+  const start = utcFromZonedYmd(tz, prevY, prevM, 1);
+  const end = utcFromZonedYmd(tz, year, month, 1);
+  return { start, end };
+}
+
 export function toMoney(d: Prisma.Decimal | number | null | undefined): number {
   if (d === null || d === undefined) {
     return 0;

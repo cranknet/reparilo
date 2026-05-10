@@ -1,5 +1,6 @@
 import type { JobStatusType } from "@shared/constants";
 import { JobStatus } from "@shared/constants";
+import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { PIPELINE_ITEMS_ACCENT } from "@/lib/pipeline-items";
@@ -16,9 +17,12 @@ export default function JobPipeline({
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const handleStatusClick = (status: JobStatusType) => {
-    navigate(`/jobs?status=${status}`);
-  };
+  const handleStatusClick = useCallback(
+    (status: JobStatusType) => {
+      navigate(`/jobs?status=${status}`);
+    },
+    [navigate]
+  );
 
   return (
     <div className="h-full rounded-xl bg-surface-container-low p-6 ring-1 ring-surface-container-low/50 transition-all">
@@ -29,7 +33,7 @@ export default function JobPipeline({
       <div className="space-y-3">
         {PIPELINE_ITEMS_ACCENT.map(({ status, color, descriptionKey }) => (
           <button
-            className={`flex w-full cursor-pointer items-center justify-between rounded-lg p-3 text-start transition-all hover:bg-surface-container-low ${
+            className={`flex w-full cursor-pointer items-center justify-between rounded-lg p-3 text-start transition-all hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 ${
               status === JobStatus.IN_REPAIR
                 ? "bg-surface-container-highest ring-1 ring-surface-container-low"
                 : ""

@@ -4,7 +4,6 @@ import { requirePermission } from "../middlewares/rbac.js";
 import {
   activeJobsCount,
   activeRepairsQueue,
-  avgProfitMargin,
   avgRepairTimeHours,
   avgRepairTimeHoursShop,
   completedTodayCount,
@@ -16,13 +15,13 @@ import {
   priorityActionsForTech,
   priorityAlerts,
   recentActivityForTech,
-  revenueThisMonth,
+  revenueAndMarginComparison,
   todayOverview,
   todayScheduleForTech,
   waitingForPartsCount,
   warrantyReturnsOpen,
 } from "../services/dashboard.service.js";
-import { monthRange, todayRange } from "../utils/time-range.js";
+import { monthRange, prevMonthRange, todayRange } from "../utils/time-range.js";
 
 // biome-ignore lint/suspicious/useAwait: FastifyPluginAsync requires async
 export const dashboardRoutes: FastifyPluginAsync = async (app) => {
@@ -41,12 +40,12 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
       const now = new Date();
       const today = todayRange(scope.shopTz, now);
       const month = monthRange(scope.shopTz, now);
+      const prevMonth = prevMonthRange(scope.shopTz, now);
       const [
         pipeline,
         activeJobs,
         completedToday,
-        revenue,
-        margin,
+        comparison,
         trend,
         overdue,
         warranty,
@@ -54,8 +53,7 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
         pipelineCounts(app.prisma, scope),
         activeJobsCount(app.prisma, scope),
         completedTodayCount(app.prisma, scope, today),
-        revenueThisMonth(app.prisma, scope, month),
-        avgProfitMargin(app.prisma, scope, month),
+        revenueAndMarginComparison(app.prisma, scope, month, prevMonth),
         financialTrend(app.prisma, scope, 7),
         overdueJobs(app.prisma, scope, 10),
         warrantyReturnsOpen(app.prisma, scope, 5),
@@ -64,8 +62,12 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
         pipeline,
         activeJobs,
         completedToday,
-        revenueThisMonth: revenue,
-        avgProfitMargin: margin,
+        revenueThisMonth: comparison.revenueThisMonth,
+        revenuePrevMonth: comparison.revenuePrevMonth,
+        revenueChangePct: comparison.revenueChangePct,
+        avgProfitMargin: comparison.avgProfitMarginThis,
+        avgProfitMarginPrev: comparison.avgProfitMarginPrev,
+        avgProfitMarginChange: comparison.avgProfitMarginChange,
         financialTrend: trend,
         overdueJobs: overdue,
         warrantyReturns: warranty,

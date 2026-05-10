@@ -6,6 +6,7 @@ interface MetricCardProps {
   icon: string;
   iconColor?: string;
   label: string;
+  labelTooltip?: string;
   onClick?: () => void;
   unit?: string;
   value: string;
@@ -18,12 +19,16 @@ export function MetricCard({
   detail,
   icon: _icon,
   iconColor: _iconColor,
+  labelTooltip,
   children,
   onClick,
 }: MetricCardProps) {
   const inner = (
     <>
-      <p className="font-medium text-on-surface-variant text-xs uppercase tracking-wide">
+      <p
+        className="font-medium text-on-surface-variant text-xs uppercase tracking-wide"
+        title={labelTooltip}
+      >
         {label}
       </p>
       <div className="mt-1 flex items-baseline gap-2">
