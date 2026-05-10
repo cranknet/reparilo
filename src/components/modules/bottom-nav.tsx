@@ -62,6 +62,12 @@ const MORE_ITEMS: NavItem[] = [
     to: "/parts",
   },
   {
+    icon: "undo",
+    labelKey: "returns_nav_label",
+    perm: { returns: ["viewSelf"] },
+    to: "/returns",
+  },
+  {
     icon: "notifications",
     labelKey: "notifications",
     perm: { notifications: ["read"] },

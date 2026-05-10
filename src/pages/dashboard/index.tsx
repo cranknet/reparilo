@@ -7,6 +7,7 @@ import JobPipeline from "@/components/modules/dashboard/job-pipeline";
 import OverdueJobs from "@/components/modules/dashboard/overdue-jobs";
 import MetricCard from "@/components/ui/metric-card";
 import { useCan } from "@/hooks/use-can";
+import { useReturnClaimsList } from "@/hooks/use-return-claims";
 import { useAuthStore } from "@/stores/auth";
 import { useDashboardStore } from "@/stores/dashboard";
 import { useSettingsStore } from "@/stores/settings";
@@ -115,15 +116,18 @@ function MetricsGrid({
   completedToday,
   pipelineTotal,
   data,
+  openReturnsCount,
 }: {
   activeJobs: number;
   benchUtilization: number;
   completedToday: number;
   pipelineTotal: number;
   data: ReturnType<typeof useDashboardStore>["data"];
+  openReturnsCount: number;
 }) {
   const { t } = useTranslation();
   const prevMonthName = usePrevMonthName();
+  const canViewReturns = useCan({ returns: ["viewSelf"] });
 
   const revenueChangePct = data?.revenueChangePct ?? 0;
   const marginChange = data?.avgProfitMarginChange ?? 0;
@@ -222,6 +226,15 @@ function MetricsGrid({
           </span>
         )}
       </MetricCard>
+
+      {canViewReturns && (
+        <MetricCard
+          detail={t("returns_dashboard_open_card_subtitle")}
+          icon="undo"
+          label={t("returns_dashboard_open_card_title")}
+          value={String(openReturnsCount)}
+        />
+      )}
     </div>
   );
 }
@@ -396,6 +409,10 @@ export default function DashboardPage() {
   const userName = useAuthStore((s) => s.user?.name || s.user?.username || "");
   const { data, fetchDashboard, isLoading } = useDashboardStore();
   const canCreateJob = useCan({ jobs: ["create"] });
+  const { data: returnsData } = useReturnClaimsList({
+    status: "OPEN",
+    limit: 1,
+  });
 
   const aiSettings = useSettingsStore((s) => s.aiSettings);
   const fetchAiSettings = useSettingsStore((s) => s.fetchAiSettings);
@@ -449,6 +466,7 @@ export default function DashboardPage() {
           benchUtilization={benchUtilization}
           completedToday={completedToday}
           data={data}
+          openReturnsCount={returnsData?.total ?? 0}
           pipelineTotal={pipelineTotal}
         />
       )}
