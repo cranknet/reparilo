@@ -124,7 +124,9 @@ vi.mock("../services/return-claim.service.js", () => ({
   getById: vi.fn().mockResolvedValue({ id: "rc-1", status: "OPEN" }),
   list: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, limit: 20 }),
   triage: vi.fn().mockResolvedValue({ id: "rc-1" }),
-  spawnRework: vi.fn().mockResolvedValue({ claimId: "rc-1", reworkJobId: "r-1" }),
+  spawnRework: vi
+    .fn()
+    .mockResolvedValue({ claimId: "rc-1", reworkJobId: "r-1" }),
   detachRework: vi.fn().mockResolvedValue({ id: "rc-1" }),
   resolve: vi.fn().mockResolvedValue({ id: "rc-1", status: "RESOLVED" }),
   uploadPhoto: vi.fn().mockResolvedValue({ id: "ph-1", path: "/x.jpg" }),
