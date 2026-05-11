@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { I18nextProvider } from "react-i18next";
 import { MemoryRouter } from "react-router";
@@ -12,32 +11,27 @@ const WIZARD_NEXT_REGEX = /next/i;
 const WIZARD_REJECT_REGEX = /not a warranty case|returns_wizard_reject/i;
 
 function wrap(ui: React.ReactElement) {
-  const qc = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
   return render(
-    <QueryClientProvider client={qc}>
-      <MemoryRouter>
-        <I18nextProvider i18n={i18n}>{ui}</I18nextProvider>
-      </MemoryRouter>
-    </QueryClientProvider>
+    <MemoryRouter>
+      <I18nextProvider i18n={i18n}>{ui}</I18nextProvider>
+    </MemoryRouter>
   );
 }
 
 const fakeJob = {
+  customer: { id: "c1", name: "John" },
   id: "job-1",
   jobCode: "RPR-001",
-  customer: { id: "c1", name: "John" },
+  parts: [],
   repairs: [
     {
+      daysSinceDelivered: 5,
       id: "jr-1",
+      kind: "repair" as const,
       name: "Screen",
       warrantyDays: 30,
-      daysSinceDelivered: 5,
-      kind: "repair" as const,
     },
   ],
-  parts: [],
 };
 
 describe("CreateWizardModal", () => {

@@ -1,7 +1,7 @@
 import type { Customer, Job } from "@shared/types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import { Can } from "@/components/modules/can";
 import EditCustomerDialog from "@/components/modules/customers/edit-customer-dialog";
@@ -10,10 +10,12 @@ import JobNotesSection from "@/components/modules/jobs/job-notes-section";
 import JobPartsSection from "@/components/modules/jobs/job-parts-section";
 import JobPhotosSection from "@/components/modules/jobs/job-photos-section";
 import JobRepairsSection from "@/components/modules/jobs/job-repairs-section";
+import JobReturnsHistorySection from "@/components/modules/jobs/job-returns-history-section";
 import JobWaitingPartsSection from "@/components/modules/jobs/job-waiting-parts-section";
 import StatusHistoryTimeline from "@/components/modules/jobs/status-history-timeline";
 import StatusPopover from "@/components/modules/jobs/status-popover";
 import TechnicianSelect from "@/components/modules/jobs/technician-select";
+import CreateWizardModal from "@/components/modules/returns/create-wizard-modal";
 import { formatCurrency } from "@/lib/format";
 import { useJobsStore } from "@/stores/jobs";
 import { useSettingsStore } from "@/stores/settings";
@@ -33,6 +35,8 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditCustomer, setShowEditCustomer] = useState(false);
+  const [showReturnWizard, setShowReturnWizard] = useState(false);
+  const navigate = useNavigate();
 
   const fetchJob = useCallback(async () => {
     if (!id) {
@@ -81,6 +85,45 @@ export default function JobDetailPage() {
     },
     [job]
   );
+
+  const wizardJob = useMemo(() => {
+    if (!job || job.status !== "DELIVERED") {
+      return null;
+    }
+    const lastDelivered = job.statusHistory?.find(
+      (h) => h.status === "DELIVERED"
+    );
+    const deliveredAt = lastDelivered
+      ? new Date(lastDelivered.createdAt)
+      : null;
+    const daysSince = deliveredAt
+      ? Math.floor((Date.now() - deliveredAt.getTime()) / 86_400_000)
+      : null;
+    const defaultWarranty =
+      useSettingsStore.getState().shopSettings?.defaultWarrantyDays ?? 0;
+
+    return {
+      customer: { id: job.customer?.id ?? "", name: job.customer?.name ?? "" },
+      id: job.id,
+      jobCode: job.jobCode,
+      parts: (job.partsUsed ?? []).map((p) => ({
+        daysSinceDelivered: daysSince,
+        id: p.id,
+        kind: "part" as const,
+        name: p.partName,
+        warrantyDays: defaultWarranty,
+      })),
+      repairs: (job.repairs ?? []).map((r) => ({
+        daysSinceDelivered: daysSince,
+        id: r.id,
+        kind: "repair" as const,
+        name: r.repairName,
+        warrantyDays:
+          (r.repair as { warrantyDays: number | null } | null)?.warrantyDays ??
+          defaultWarranty,
+      })),
+    };
+  }, [job]);
 
   if (loading) {
     return (
@@ -246,6 +289,20 @@ export default function JobDetailPage() {
             <span className="material-symbols-outlined text-[18px]">label</span>
             {t("jobs_detail_print_label")}
           </button>
+          <Can perm={{ returns: ["create"] }}>
+            {job.status === "DELIVERED" && (
+              <button
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl px-2 text-on-surface-variant text-sm transition-colors hover:bg-surface-container-high hover:text-on-surface"
+                onClick={() => setShowReturnWizard(true)}
+                type="button"
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  assignment_return
+                </span>
+                {t("returns_file_button")}
+              </button>
+            )}
+          </Can>
         </div>
       </div>
 
@@ -326,6 +383,13 @@ export default function JobDetailPage() {
         <JobNotesSection job={job} onChanged={() => fetchJob()} />
       </div>
 
+      {/* ── Returns history ── */}
+      {job.status === "DELIVERED" && (
+        <div className="mt-8 rounded-2xl bg-surface-container p-6">
+          <JobReturnsHistorySection jobId={job.id} />
+        </div>
+      )}
+
       <div className="mt-8">
         <CostSummary
           deposit={deposit}
@@ -342,6 +406,17 @@ export default function JobDetailPage() {
           onClose={() => setShowEditCustomer(false)}
           onSaved={handleCustomerSaved}
           open={showEditCustomer}
+        />
+      )}
+
+      {wizardJob && (
+        <CreateWizardModal
+          onClose={() => setShowReturnWizard(false)}
+          onCreateNewPaidJob={() => {
+            navigate("/jobs/new");
+          }}
+          open={showReturnWizard}
+          originalJob={wizardJob}
         />
       )}
     </div>
