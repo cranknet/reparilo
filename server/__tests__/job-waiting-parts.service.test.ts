@@ -84,7 +84,7 @@ describe("job-waiting-parts service", () => {
       expect(result).toEqual(waitingPart);
       expect(mocks.jobPartsWaitingCreate).toHaveBeenCalledWith({
         data: {
-          jobId: "job-1",
+          job: { connect: { id: "job-1" } },
           partName: "Battery",
           supplier: "Acme",
         },
@@ -118,7 +118,7 @@ describe("job-waiting-parts service", () => {
       });
       expect(mocks.jobPartsWaitingCreate).toHaveBeenCalledWith({
         data: {
-          jobId: "job-1",
+          job: { connect: { id: "job-1" } },
           partName: "Screen",
           supplier: null,
         },

@@ -15,11 +15,12 @@ vi.mock("../services/notification-dispatch.js", () => ({
 vi.useFakeTimers();
 
 const mockFindMany = vi.fn();
-const mockLog = { error: vi.fn() };
+const mockJobUpdate = vi.fn().mockResolvedValue(undefined);
+const mockLog = { error: vi.fn(), warn: vi.fn() };
 
 const mockApp = {
   log: mockLog,
-  prisma: { job: { findMany: mockFindMany } },
+  prisma: { job: { findMany: mockFindMany, update: mockJobUpdate } },
 } as any;
 
 import { startOverdueScheduler } from "../jobs/overdue-scheduler.js";
@@ -59,7 +60,7 @@ describe("startOverdueScheduler", () => {
   it("deduplicates already-alerted jobs on second tick", async () => {
     mockFindMany
       .mockResolvedValueOnce([{ id: "j1", jobCode: "RPR-001" }])
-      .mockResolvedValueOnce([{ id: "j1", jobCode: "RPR-001" }]);
+      .mockResolvedValueOnce([]);
 
     const stop = startOverdueScheduler(mockApp);
 

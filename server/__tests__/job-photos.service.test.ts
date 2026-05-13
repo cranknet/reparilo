@@ -84,7 +84,10 @@ describe("job-photos service", () => {
       expect(mocks.mkdir).toHaveBeenCalled();
       expect(mocks.writeFile).toHaveBeenCalled();
       expect(mocks.jobPhotoCreate).toHaveBeenCalledWith({
-        data: { jobId: "job-1", path: "job-photos/job-1/test-uuid.jpg" },
+        data: {
+          job: { connect: { id: "job-1" } },
+          path: "job-photos/job-1/test-uuid.jpg",
+        },
       });
       expect(mocks.auditLogCreate).toHaveBeenCalledWith(
         mockPrisma,

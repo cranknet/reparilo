@@ -7,11 +7,13 @@ import { dashboardRoutes } from "../routes/dashboard.js";
 const svc = vi.hoisted(() => ({
   activeRepairsQueue: vi.fn().mockResolvedValue([]),
   activeJobsCount: vi.fn().mockResolvedValue(1),
-  avgProfitMargin: vi.fn().mockResolvedValue(0),
   avgRepairTimeHours: vi.fn().mockResolvedValue(0),
+  avgRepairTimeHoursShop: vi.fn().mockResolvedValue(0),
   completedTodayCount: vi.fn().mockResolvedValue(0),
   financialTrend: vi.fn().mockResolvedValue([]),
   overdueJobs: vi.fn().mockResolvedValue([]),
+  partsAlertsForTech: vi.fn().mockResolvedValue([]),
+  pickupReady: vi.fn().mockResolvedValue([]),
   pipelineCounts: vi.fn().mockResolvedValue({
     CANCELLED: 0,
     DELIVERED: 0,
@@ -22,7 +24,6 @@ const svc = vi.hoisted(() => ({
     RETURNED: 0,
     WAITING_FOR_PARTS: 0,
   }),
-  pickupReady: vi.fn().mockResolvedValue([]),
   priorityActionsForTech: vi.fn().mockResolvedValue({
     jobsNeedingStatusUpdate: 0,
     overdueCount: 0,
@@ -30,7 +31,14 @@ const svc = vi.hoisted(() => ({
   }),
   priorityAlerts: vi.fn().mockResolvedValue([]),
   recentActivityForTech: vi.fn().mockResolvedValue([]),
-  revenueThisMonth: vi.fn().mockResolvedValue(0),
+  revenueAndMarginComparison: vi.fn().mockResolvedValue({
+    avgProfitMarginChange: 0,
+    avgProfitMarginPrev: 0,
+    avgProfitMarginThis: 0,
+    revenueChangePct: 0,
+    revenuePrevMonth: 0,
+    revenueThisMonth: 0,
+  }),
   todayOverview: vi.fn().mockResolvedValue({
     completedToday: 0,
     recentIntakes: [],

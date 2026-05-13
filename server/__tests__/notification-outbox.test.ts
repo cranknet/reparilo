@@ -2,10 +2,10 @@ import { OutboxStatus } from "@generated/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  outboxCreate: vi.fn(),
-  outboxFindMany: vi.fn(),
-  outboxUpdate: vi.fn(),
-  shopSettingsFindUnique: vi.fn(),
+  createOutboxEntry: vi.fn(),
+  findManyOutboxEntries: vi.fn(),
+  findShopSettingsUnique: vi.fn(),
+  updateOutboxEntry: vi.fn(),
   sendWhatsApp: vi.fn(),
   decryptWhatsAppConfig: vi.fn(),
 }));
@@ -22,16 +22,18 @@ vi.mock("../services/notification-sender.js", () => ({
   decryptWhatsAppConfig: mocks.decryptWhatsAppConfig,
 }));
 
-const prisma = {
-  notificationOutbox: {
-    create: mocks.outboxCreate,
-    findMany: mocks.outboxFindMany,
-    update: mocks.outboxUpdate,
-  },
-  shopSettings: {
-    findUnique: mocks.shopSettingsFindUnique,
-  },
-} as any;
+vi.mock("../repositories/notification.repository.js", () => ({
+  createOutboxEntry: mocks.createOutboxEntry,
+  findManyOutboxEntries: mocks.findManyOutboxEntries,
+  findOutboxEntryById: vi.fn(),
+  updateOutboxEntry: mocks.updateOutboxEntry,
+}));
+
+vi.mock("../repositories/settings.repository.js", () => ({
+  findShopSettingsUnique: mocks.findShopSettingsUnique,
+}));
+
+const prisma = {} as any;
 
 import {
   getOutboxLogs,
@@ -45,7 +47,7 @@ describe("queueNotification", () => {
   });
 
   it("creates an outbox entry with QUEUED status", async () => {
-    mocks.outboxCreate.mockResolvedValue({ id: "out-1" });
+    mocks.createOutboxEntry.mockResolvedValue({ id: "out-1" });
 
     await queueNotification(prisma, {
       templateName: "job-ready",
@@ -55,20 +57,18 @@ describe("queueNotification", () => {
       templateBody: "Hello {{name}}, job {{jobCode}} is ready.",
     });
 
-    expect(mocks.outboxCreate).toHaveBeenCalledWith({
-      data: {
-        channel: "WHATSAPP",
-        jobId: null,
-        recipientPhone: "05551234567",
-        renderedBody: "Hello Ahmed, job RPR-001 is ready.",
-        status: OutboxStatus.QUEUED,
-        templateName: "job-ready",
-      },
+    expect(mocks.createOutboxEntry).toHaveBeenCalledWith(prisma, {
+      channel: "WHATSAPP",
+      job: undefined,
+      recipientPhone: "05551234567",
+      renderedBody: "Hello Ahmed, job RPR-001 is ready.",
+      status: OutboxStatus.QUEUED,
+      templateName: "job-ready",
     });
   });
 
   it("passes jobId when provided", async () => {
-    mocks.outboxCreate.mockResolvedValue({ id: "out-2" });
+    mocks.createOutboxEntry.mockResolvedValue({ id: "out-2" });
 
     await queueNotification(prisma, {
       jobId: "job-42",
@@ -79,9 +79,10 @@ describe("queueNotification", () => {
       templateBody: "Your repair is done.",
     });
 
-    expect(mocks.outboxCreate).toHaveBeenCalledWith(
+    expect(mocks.createOutboxEntry).toHaveBeenCalledWith(
+      prisma,
       expect.objectContaining({
-        data: expect.objectContaining({ jobId: "job-42" }),
+        job: { connect: { id: "job-42" } },
       })
     );
   });
@@ -93,34 +94,41 @@ describe("processOutbox", () => {
   });
 
   it("sends pending WHATSAPP entries and updates to SENT", async () => {
-    mocks.outboxFindMany.mockResolvedValue([
+    mocks.findManyOutboxEntries.mockResolvedValue([
       {
         id: "out-1",
         channel: "WHATSAPP",
         recipientPhone: "05551234567",
         renderedBody: "Hello Ahmed, job RPR-001 is ready.",
+        retryCount: 0,
       },
     ]);
-    mocks.shopSettingsFindUnique.mockResolvedValue({
-      whatsappApiTokenEncrypted: "enc-token",
-      whatsappBusinessId: "biz-1",
-      whatsappPhoneNumberId: "phone-1",
-    });
+    mocks.findShopSettingsUnique
+      .mockResolvedValueOnce({
+        whatsappApiTokenEncrypted: "enc-token",
+        whatsappBusinessId: "biz-1",
+        whatsappPhoneNumberId: "phone-1",
+      })
+      .mockResolvedValueOnce({ countryCode: "DZ" });
     mocks.decryptWhatsAppConfig.mockReturnValue({
       apiToken: "decrypted-token",
       businessId: "biz-1",
       phoneNumberId: "phone-1",
     });
     mocks.sendWhatsApp.mockResolvedValue({ success: true });
-    mocks.outboxUpdate.mockResolvedValue({ id: "out-1" });
+    mocks.updateOutboxEntry.mockResolvedValue({ id: "out-1" });
 
     await processOutbox(prisma);
 
-    expect(mocks.outboxFindMany).toHaveBeenCalledWith({
-      where: { status: OutboxStatus.QUEUED },
-      orderBy: { createdAt: "asc" },
-      take: 10,
-    });
+    expect(mocks.findManyOutboxEntries).toHaveBeenCalledWith(
+      prisma,
+      {
+        status: OutboxStatus.QUEUED,
+        OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: expect.any(Date) } }],
+      },
+      { createdAt: "asc" },
+      10
+    );
     expect(mocks.sendWhatsApp).toHaveBeenCalledWith(
       {
         apiToken: "decrypted-token",
@@ -128,32 +136,37 @@ describe("processOutbox", () => {
         phoneNumberId: "phone-1",
       },
       "05551234567",
-      "Hello Ahmed, job RPR-001 is ready."
+      "Hello Ahmed, job RPR-001 is ready.",
+      "DZ"
     );
-    expect(mocks.outboxUpdate).toHaveBeenCalledWith({
-      where: { id: "out-1" },
-      data: {
-        error: undefined,
+    expect(mocks.updateOutboxEntry).toHaveBeenCalledWith(
+      prisma,
+      { id: "out-1" },
+      {
+        error: null,
         sentAt: expect.any(Date),
         status: OutboxStatus.SENT,
-      },
-    });
+      }
+    );
   });
 
-  it("updates to FAILED when send fails and records error", async () => {
-    mocks.outboxFindMany.mockResolvedValue([
+  it("retries with backoff when send fails on first attempt", async () => {
+    mocks.findManyOutboxEntries.mockResolvedValue([
       {
         id: "out-2",
         channel: "WHATSAPP",
         recipientPhone: "05551234567",
         renderedBody: "Hello",
+        retryCount: 0,
       },
     ]);
-    mocks.shopSettingsFindUnique.mockResolvedValue({
-      whatsappApiTokenEncrypted: "enc-token",
-      whatsappBusinessId: "biz-1",
-      whatsappPhoneNumberId: "phone-1",
-    });
+    mocks.findShopSettingsUnique
+      .mockResolvedValueOnce({
+        whatsappApiTokenEncrypted: "enc-token",
+        whatsappBusinessId: "biz-1",
+        whatsappPhoneNumberId: "phone-1",
+      })
+      .mockResolvedValueOnce({ countryCode: "DZ" });
     mocks.decryptWhatsAppConfig.mockReturnValue({
       apiToken: "decrypted-token",
       businessId: "biz-1",
@@ -166,53 +179,57 @@ describe("processOutbox", () => {
 
     await processOutbox(prisma);
 
-    expect(mocks.outboxUpdate).toHaveBeenCalledWith({
-      where: { id: "out-2" },
-      data: {
+    expect(mocks.updateOutboxEntry).toHaveBeenCalledWith(
+      prisma,
+      { id: "out-2" },
+      {
         error: "WhatsApp API 403: Invalid token",
-        sentAt: null,
-        status: OutboxStatus.FAILED,
-      },
-    });
+        nextRetryAt: expect.any(Date),
+        retryCount: 1,
+        status: OutboxStatus.QUEUED,
+      }
+    );
   });
 
   it("does nothing when no pending entries exist", async () => {
-    mocks.outboxFindMany.mockResolvedValue([]);
+    mocks.findManyOutboxEntries.mockResolvedValue([]);
 
     await processOutbox(prisma);
 
-    expect(mocks.shopSettingsFindUnique).not.toHaveBeenCalled();
+    expect(mocks.findShopSettingsUnique).not.toHaveBeenCalled();
     expect(mocks.sendWhatsApp).not.toHaveBeenCalled();
-    expect(mocks.outboxUpdate).not.toHaveBeenCalled();
+    expect(mocks.updateOutboxEntry).not.toHaveBeenCalled();
   });
 
   it("does nothing when WhatsApp config is missing", async () => {
-    mocks.outboxFindMany.mockResolvedValue([
+    mocks.findManyOutboxEntries.mockResolvedValue([
       {
         id: "out-4",
         channel: "WHATSAPP",
         recipientPhone: "05551234567",
         renderedBody: "Hello",
+        retryCount: 0,
       },
     ]);
-    mocks.shopSettingsFindUnique.mockResolvedValue(null);
+    mocks.findShopSettingsUnique.mockResolvedValue(null);
 
     await processOutbox(prisma);
 
     expect(mocks.sendWhatsApp).not.toHaveBeenCalled();
-    expect(mocks.outboxUpdate).not.toHaveBeenCalled();
+    expect(mocks.updateOutboxEntry).not.toHaveBeenCalled();
   });
 
   it("does nothing when decryptWhatsAppConfig returns null", async () => {
-    mocks.outboxFindMany.mockResolvedValue([
+    mocks.findManyOutboxEntries.mockResolvedValue([
       {
         id: "out-5",
         channel: "WHATSAPP",
         recipientPhone: "05551234567",
         renderedBody: "Hello",
+        retryCount: 0,
       },
     ]);
-    mocks.shopSettingsFindUnique.mockResolvedValue({
+    mocks.findShopSettingsUnique.mockResolvedValue({
       whatsappApiTokenEncrypted: "enc-token",
       whatsappBusinessId: "biz-1",
       whatsappPhoneNumberId: "phone-1",
@@ -222,7 +239,7 @@ describe("processOutbox", () => {
     await processOutbox(prisma);
 
     expect(mocks.sendWhatsApp).not.toHaveBeenCalled();
-    expect(mocks.outboxUpdate).not.toHaveBeenCalled();
+    expect(mocks.updateOutboxEntry).not.toHaveBeenCalled();
   });
 });
 
@@ -234,26 +251,30 @@ describe("getOutboxLogs", () => {
   it("returns outbox entries ordered by createdAt desc", async () => {
     const now = new Date();
     const earlier = new Date(now.getTime() - 60_000);
-    mocks.outboxFindMany.mockResolvedValue([
+    mocks.findManyOutboxEntries.mockResolvedValue([
       {
-        id: "out-2",
         channel: "WHATSAPP",
         createdAt: now,
         error: null,
+        id: "out-2",
         jobId: "job-2",
+        nextRetryAt: null,
         recipientPhone: "05551111111",
         renderedBody: "Recent",
+        retryCount: 0,
         status: OutboxStatus.SENT,
         templateName: "job-ready",
       },
       {
-        id: "out-1",
         channel: "WHATSAPP",
         createdAt: earlier,
         error: "Send failed: rate limited",
+        id: "out-1",
         jobId: null,
+        nextRetryAt: null,
         recipientPhone: "05550000000",
         renderedBody: "Older",
+        retryCount: 3,
         status: OutboxStatus.FAILED,
         templateName: "job-delayed",
       },
@@ -261,11 +282,12 @@ describe("getOutboxLogs", () => {
 
     const logs = await getOutboxLogs(prisma);
 
-    expect(mocks.outboxFindMany).toHaveBeenCalledWith({
-      orderBy: { createdAt: "desc" },
-      take: 50,
-      where: {},
-    });
+    expect(mocks.findManyOutboxEntries).toHaveBeenCalledWith(
+      prisma,
+      {},
+      { createdAt: "desc" },
+      50
+    );
     expect(logs).toHaveLength(2);
     expect(logs[0]).toEqual({
       channel: "WHATSAPP",
@@ -273,8 +295,10 @@ describe("getOutboxLogs", () => {
       error: null,
       id: "out-2",
       jobId: "job-2",
+      nextRetryAt: null,
       renderedBody: "Recent",
       recipientPhone: "05551111111",
+      retryCount: 0,
       status: OutboxStatus.SENT,
       templateName: "job-ready",
     });
@@ -284,22 +308,25 @@ describe("getOutboxLogs", () => {
       error: "Send failed: rate limited",
       id: "out-1",
       jobId: null,
+      nextRetryAt: null,
       renderedBody: "Older",
       recipientPhone: "05550000000",
+      retryCount: 3,
       status: OutboxStatus.FAILED,
       templateName: "job-delayed",
     });
   });
 
   it("respects custom limit", async () => {
-    mocks.outboxFindMany.mockResolvedValue([]);
+    mocks.findManyOutboxEntries.mockResolvedValue([]);
 
     await getOutboxLogs(prisma, 10);
 
-    expect(mocks.outboxFindMany).toHaveBeenCalledWith({
-      orderBy: { createdAt: "desc" },
-      take: 10,
-      where: {},
-    });
+    expect(mocks.findManyOutboxEntries).toHaveBeenCalledWith(
+      prisma,
+      {},
+      { createdAt: "desc" },
+      10
+    );
   });
 });

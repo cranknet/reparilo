@@ -10,8 +10,8 @@ function renderWithI18n(ui: React.ReactElement) {
   return render(<I18nextProvider i18n={i18n}>{ui}</I18nextProvider>);
 }
 
-const IN_WARRANTY_REGEX = /returns_warranty_in_remaining/i;
-const OUT_WARRANTY_REGEX = /returns_warranty_out_past/i;
+const IN_WARRANTY_REGEX = /In warranty \(20d remaining\)/i;
+const OUT_WARRANTY_REGEX = /Out of warranty \(15d past\)/i;
 
 describe("WarrantyBadge", () => {
   it("shows in-warranty span when daysSinceDelivered <= warrantyDays", () => {

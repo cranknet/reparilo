@@ -43,7 +43,6 @@ export default defineConfig({
           if (!pkg) return;
           const chunks: Record<string, string[]> = {
             "vendor-react": ["react", "react-dom", "react-router"],
-            "vendor-tanstack": ["@tanstack/react-query"],
             "vendor-ui": ["sonner"],
             "vendor-i18n": ["i18next", "react-i18next", "i18next-browser-languagedetector"],
           };
