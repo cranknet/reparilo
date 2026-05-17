@@ -493,7 +493,6 @@ model JobRepair {
 // Lifecycle: OPEN -> RESOLVED. Resolution outcomes:
 //   REWORK_FREE / REWORK_PARTIAL_CHARGE -> spawns rework Job (reworkJobId set)
 //   REFUND_PARTIAL / REFUND_FULL -> no Job spawned, refundAmount set
-// See docs/superpowers/specs/2026-05-10-returns-and-photo-evidence-design.md
 // ─────────────────────────────────────────────
 
 model ReturnClaim {
