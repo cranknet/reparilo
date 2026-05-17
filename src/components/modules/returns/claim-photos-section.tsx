@@ -1,3 +1,4 @@
+import type { PhotoStage } from "@generated/enums";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -5,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { useCan } from "@/hooks/use-can";
 import { deleteClaimPhoto, uploadClaimPhoto } from "@/lib/api-return-claims";
-import type { PhotoStage, ReturnClaimDetail } from "@/types/return-claim";
+import type { ReturnClaimDetail } from "@/types/return-claim";
 
 interface Props {
   claim: ReturnClaimDetail;

@@ -1,9 +1,9 @@
-export type {
+import type {
   FaultCategory,
   PhotoStage,
   ResolutionOutcome,
   ReturnClaimStatus,
-} from "@shared/types/return-claim";
+} from "@generated/enums";
 
 export interface ClaimWarrantyInfo {
   claimedLineWarrantyDays: number;

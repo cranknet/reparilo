@@ -1,8 +1,8 @@
+import type { PhotoStage } from "@generated/enums";
 import api from "@/lib/api";
 import type {
   ListClaimsParams,
   ListClaimsResponse,
-  PhotoStage,
   ReturnClaimDetail,
 } from "@/types/return-claim";
 

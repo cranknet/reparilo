@@ -1,10 +1,11 @@
+import type { FaultCategory } from "@generated/enums";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useCan } from "@/hooks/use-can";
 import { triageClaim } from "@/lib/api-return-claims";
-import type { FaultCategory, ReturnClaimDetail } from "@/types/return-claim";
+import type { ReturnClaimDetail } from "@/types/return-claim";
 
 interface Props {
   claim: ReturnClaimDetail;

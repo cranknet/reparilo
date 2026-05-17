@@ -1,10 +1,8 @@
-export type {
+import type {
   FaultCategory,
-  PhotoStage,
   ResolutionOutcome,
-  ReturnClaim,
   ReturnClaimStatus,
-} from "@prisma/client";
+} from "@generated/enums";
 
 export interface ReturnClaimSummary {
   ageDays: number;
