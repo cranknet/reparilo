@@ -1,0 +1,35 @@
+version: 2
+
+updates:
+  # NPM ecosystem reads package.json directly and works with bun.lock.
+  # Keep this as "npm" unless Dependabot's native bun support is verified
+  # against the current bun lockfile version.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Africa/Algiers"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    labels:
+      - "dependencies"
+    groups:
+      # Group minor + patch updates to cut PR noise.
+      # Majors stay as individual PRs so they get proper review.
+      production-minor-patch:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+      development-minor-patch:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Pin Bun to the version in engines.bun — bumps must be intentional.
+      - dependency-name: "bun"
