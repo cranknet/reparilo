@@ -19,8 +19,22 @@ android/
 .worktrees/
 coverage/
 .DS_Store
+
+# AI agent tooling — local-only, not part of the project
 .agents/
 .gemini/
 .claude/
 .opencode/
 .specify/
+.cursor/
+.windsurf/
+.aider*
+skills-lock.json
+opencode.json
+AGENTS.md
+GEMINI.md
+src/CLAUDE.md
+
+# Agent-generated planning artifacts and Spec Kit output
+docs/superpowers/
+specs/
