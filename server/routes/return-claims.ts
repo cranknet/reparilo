@@ -1,4 +1,5 @@
 import { AppError, throwIfError } from "@shared/errors/app-error.js";
+import type { PermissionCheck } from "@shared/permissions";
 import {
   createReturnClaimSchema,
   listReturnClaimsQuerySchema,
@@ -181,15 +182,15 @@ export const returnClaimsRoutes: FastifyPluginAsync = async (app) => {
     "/:id/resolve",
     {
       preHandler: [
-        async (req) => {
+        async (req, reply) => {
           const body = req.body as { resolutionOutcome?: string };
           const isRefund =
             body.resolutionOutcome === "REFUND_PARTIAL" ||
             body.resolutionOutcome === "REFUND_FULL";
           const perm = isRefund
-            ? { returns: ["resolveRefund"] as const }
-            : { returns: ["resolveRework"] as const };
-          await requirePermission(perm)(req);
+            ? { returns: ["resolveRefund"] }
+            : { returns: ["resolveRework"] };
+          await requirePermission(perm as PermissionCheck)(req, reply);
         },
       ],
       schema: {

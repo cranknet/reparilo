@@ -118,7 +118,7 @@ function buildApp(user: { id: string; role: string } | null) {
     job: { count: vi.fn().mockResolvedValue(0) },
     shopSettings: { findFirst: vi.fn().mockResolvedValue({ timezone: "UTC" }) },
   } as never);
-  app.decorate("auth", auth);
+  app.decorate("auth", auth as never);
   app.addHook("onRequest", (req, _r, done) => {
     (req as { user: unknown }).user = user;
     done();

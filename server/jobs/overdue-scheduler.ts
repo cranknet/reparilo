@@ -21,7 +21,7 @@ async function processOverdueJobs(app: FastifyInstance): Promise<void> {
   });
 
   const BATCH_SIZE = 5;
-  const results: PromiseSettledResult<void>[] = [];
+  const results: PromiseSettledResult<unknown>[] = [];
   for (let i = 0; i < overdue.length; i += BATCH_SIZE) {
     const batch = overdue.slice(i, i + BATCH_SIZE);
     const batchResults = await Promise.allSettled(

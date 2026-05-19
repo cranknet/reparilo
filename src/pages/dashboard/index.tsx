@@ -1,4 +1,5 @@
 import type { JobStatusType } from "@shared/constants";
+import type { OwnerDashboardDTO } from "@shared/types/dashboard";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import AiCallout from "@/components/modules/dashboard/ai-callout";
@@ -122,7 +123,7 @@ function MetricsGrid({
   benchUtilization: number;
   completedToday: number;
   pipelineTotal: number;
-  data: ReturnType<typeof useDashboardStore>["data"];
+  data: OwnerDashboardDTO | null;
   openReturnsCount: number;
 }) {
   const { t } = useTranslation();
@@ -282,7 +283,7 @@ function DashboardDataGrid({
 }: {
   benchUtilization: number;
   pipelineCounts: Record<JobStatusType, number>;
-  data: NonNullable<ReturnType<typeof useDashboardStore>["data"]>;
+  data: OwnerDashboardDTO;
   isAiEnabled: boolean;
 }) {
   const { t } = useTranslation();

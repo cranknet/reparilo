@@ -375,6 +375,7 @@ describe("detachRework", () => {
     expect(prisma.returnClaim.update).toHaveBeenCalledWith({
       where: { id: "rc-1" },
       data: { reworkJobId: null },
+      select: { id: true, reworkJobId: true },
     });
     expect(result).toMatchObject({ id: "rc-1", reworkJobId: null });
   });

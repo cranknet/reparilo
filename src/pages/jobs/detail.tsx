@@ -90,12 +90,8 @@ export default function JobDetailPage() {
     if (!job || job.status !== "DELIVERED") {
       return null;
     }
-    const lastDelivered = job.statusHistory?.find(
-      (h) => h.status === "DELIVERED"
-    );
-    const deliveredAt = lastDelivered
-      ? new Date(lastDelivered.createdAt)
-      : null;
+    const deliveredAt =
+      job.status === "DELIVERED" ? new Date(job.updatedAt) : null;
     const daysSince = deliveredAt
       ? Math.floor((Date.now() - deliveredAt.getTime()) / 86_400_000)
       : null;
@@ -118,9 +114,7 @@ export default function JobDetailPage() {
         id: r.id,
         kind: "repair" as const,
         name: r.repairName,
-        warrantyDays:
-          (r.repair as { warrantyDays: number | null } | null)?.warrantyDays ??
-          defaultWarranty,
+        warrantyDays: defaultWarranty,
       })),
     };
   }, [job]);

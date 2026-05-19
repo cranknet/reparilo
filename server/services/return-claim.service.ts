@@ -238,7 +238,7 @@ export async function spawnRework(
   claimId: string,
   technicianId: string
 ): Promise<ServiceResult<{ claimId: string; reworkJobId: string }>> {
-  return await prisma.$transaction(async (tx) => {
+  return (await prisma.$transaction(async (tx) => {
     const claim = await tx.returnClaim.findUnique({
       where: { id: claimId },
       select: {
@@ -303,7 +303,7 @@ export async function spawnRework(
     });
 
     return { claimId, reworkJobId };
-  });
+  })) as ServiceResult<{ claimId: string; reworkJobId: string }>;
 }
 
 /* ─── detachRework ─────────────────────────────────────────────────────── */
@@ -323,10 +323,11 @@ export async function detachRework(
     return { error: "RETURN_CLAIM_NOT_OPEN" };
   }
 
-  return await prisma.returnClaim.update({
+  return (await prisma.returnClaim.update({
     where: { id: claimId },
     data: { reworkJobId: null },
-  });
+    select: { id: true, reworkJobId: true },
+  })) as ServiceResult<{ id: string; reworkJobId: null }>;
 }
 
 /* ─── resolve ──────────────────────────────────────────────────────────── */
