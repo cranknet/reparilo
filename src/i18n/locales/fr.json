@@ -1385,7 +1385,7 @@
     "update_job_status": "Mettre à jour l'état du travail",
     "update_status": "Mettre à jour l'état",
     "my_performance": "Ma performance",
-    "repair_port_cleaning": "Nettoyage portuaire",
+    "repair_port_cleaning": "Nettoyage du port de charge",
     "kanban_pool": "Pool non attribué",
     "kanban_intake": "Admission",
     "kanban_in_repair": "En cours",
@@ -1402,7 +1402,7 @@
     "labor_hours_label": "Veuillez saisir le temps réel passé sur cette réparation (en heures) :",
     "labor_hours_placeholder": "par exemple, 1,5",
     "daily_goal": "Objectif quotidien",
-    "daily_goal_subtitle": "Réparation terminée aujourd'hui",
+    "daily_goal_subtitle": "Réparations terminées aujourd'hui",
     "daily_goal_progress": "{{completed}}/{{target}} tâches terminées",
     "daily_goal_achieved": "Objectif quotidien atteint ! ",
     "daily_goal_keep_going": "Continuez pour atteindre votre objectif !"
