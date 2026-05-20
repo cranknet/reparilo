@@ -633,7 +633,7 @@ export async function getKanbanJobsForTech(
       ? `${j.device.brand.name} ${j.device.model}`
       : "Unknown Device",
     reportedProblem: j.reportedProblem,
-    status: j.status as JobStatus,
+    status: j.status as JobStatusType,
     estimatedDate: j.estimatedDate ? j.estimatedDate.toISOString() : null,
     actualLaborHours: j.actualLaborHours ? Number(j.actualLaborHours) : null,
     holdReason: j.holdReason,
