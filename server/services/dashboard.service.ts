@@ -6,6 +6,7 @@ import type {
   ActiveRepairDTO,
   ActivityItemDTO,
   FinancialTrendPoint,
+  KanbanJobDTO,
   OverdueJobDTO,
   PickupReadyDTO,
   PriorityAlertDTO,
@@ -19,6 +20,7 @@ import {
   countWaitingForParts,
   findActiveRepairs,
   findDeliveredJobs,
+  findKanbanJobs,
   findLowStockParts,
   findOverdueJobs,
   findPickupReady,
@@ -590,4 +592,55 @@ export async function partsAlertsForTech(
   }>
 > {
   return await findLowStockParts(prisma, limit);
+}
+
+export async function getKanbanJobsForTech(
+  prisma: DbClient,
+  userId: string
+): Promise<{ poolJobs: KanbanJobDTO[]; myJobs: KanbanJobDTO[] }> {
+  const pool = await findKanbanJobs(prisma, {
+    status: {
+      in: [
+        JobStatus.INTAKE,
+        JobStatus.WAITING_FOR_PARTS,
+        JobStatus.IN_REPAIR,
+        JobStatus.ON_HOLD,
+      ],
+    },
+    technicianId: null,
+  });
+
+  const my = await findKanbanJobs(prisma, {
+    status: {
+      in: [
+        JobStatus.INTAKE,
+        JobStatus.WAITING_FOR_PARTS,
+        JobStatus.IN_REPAIR,
+        JobStatus.ON_HOLD,
+        JobStatus.DONE,
+      ],
+    },
+    technicianId: userId,
+  });
+
+  const mapJob = (
+    j: Awaited<ReturnType<typeof findKanbanJobs>>[number]
+  ): KanbanJobDTO => ({
+    id: j.id,
+    jobCode: j.jobCode,
+    customerName: j.customer?.name || "Unknown",
+    device: j.device
+      ? `${j.device.brand.name} ${j.device.model}`
+      : "Unknown Device",
+    reportedProblem: j.reportedProblem,
+    status: j.status as JobStatus,
+    estimatedDate: j.estimatedDate ? j.estimatedDate.toISOString() : null,
+    actualLaborHours: j.actualLaborHours ? Number(j.actualLaborHours) : null,
+    holdReason: j.holdReason,
+  });
+
+  return {
+    poolJobs: pool.map(mapJob),
+    myJobs: my.map(mapJob),
+  };
 }

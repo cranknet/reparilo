@@ -289,6 +289,9 @@ model Job {
   createdAt     DateTime  @default(now()) @db.Timestamptz
   updatedAt     DateTime  @updatedAt @db.Timestamptz
 
+  actualLaborHours Decimal? @db.Decimal(10, 2)
+  holdReason       String?  @db.Text
+
   lastOverdueAlertAt DateTime? @db.Timestamptz
 
   isWarrantyReturn Boolean @default(false)

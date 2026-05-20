@@ -70,6 +70,7 @@ export const transitionStatusSchema = z
       JobStatus.CANCELLED,
     ]),
     reason: z.string().trim().max(500).optional(),
+    actualLaborHours: z.number().positive().optional().nullable(),
   })
   .superRefine((val, ctx) => {
     const requiresReason =
@@ -79,6 +80,17 @@ export const transitionStatusSchema = z
         code: z.ZodIssueCode.custom,
         path: ["reason"],
         message: "validations.reason_required",
+      });
+    }
+
+    if (
+      val.status === JobStatus.DONE &&
+      (val.actualLaborHours === undefined || val.actualLaborHours === null)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["actualLaborHours"],
+        message: "validations.labor_hours_required",
       });
     }
   });

@@ -243,3 +243,14 @@ export function findLowStockParts(prisma: DbClient, take: number) {
       LIMIT ${take}`
   );
 }
+
+export function findKanbanJobs(prisma: DbClient, where: Prisma.JobWhereInput) {
+  return prisma.job.findMany({
+    where,
+    include: {
+      customer: { select: { name: true } },
+      device: { select: { model: true, brand: { select: { name: true } } } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}

@@ -8,6 +8,7 @@ import {
   avgRepairTimeHoursShop,
   completedTodayCount,
   financialTrend,
+  getKanbanJobsForTech,
   overdueJobs,
   partsAlertsForTech,
   pickupReady,
@@ -99,6 +100,7 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
         repairTime,
         priorityActions,
         partsAlerts,
+        kanbanJobs,
       ] = await Promise.all([
         pipelineCounts(app.prisma, techScope),
         waitingForPartsCount(app.prisma, scope.userId),
@@ -108,6 +110,7 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
         avgRepairTimeHours(app.prisma, scope.userId, 30),
         priorityActionsForTech(app.prisma, scope.userId),
         partsAlertsForTech(app.prisma, 10, scope.userId),
+        getKanbanJobsForTech(app.prisma, scope.userId),
       ]);
       const myActiveJobs =
         pipeline.INTAKE +
@@ -124,6 +127,8 @@ export const dashboardRoutes: FastifyPluginAsync = async (app) => {
         recentActivity,
         priorityActions,
         partsAlerts,
+        poolJobs: kanbanJobs.poolJobs,
+        myJobs: kanbanJobs.myJobs,
       };
     }
   );

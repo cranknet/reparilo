@@ -95,7 +95,8 @@ interface JobsState {
   transitionStatus: (
     id: string,
     status: JobStatusType,
-    reason?: string
+    reason?: string,
+    actualLaborHours?: number
   ) => Promise<Job>;
   updateJob: (id: string, data: Record<string, unknown>) => Promise<Job>;
 }
@@ -171,10 +172,14 @@ export const useJobsStore = create<JobsState>((set) => ({
     }
   },
 
-  transitionStatus: async (id, status, reason) => {
+  transitionStatus: async (id, status, reason, actualLaborHours) => {
     set({ error: null });
     try {
-      const res = await api.patch(`/jobs/${id}/status`, { status, reason });
+      const res = await api.patch(`/jobs/${id}/status`, {
+        status,
+        reason,
+        actualLaborHours,
+      });
       const updated = res.data as Job;
       set((state) => ({
         jobs: state.jobs.map((j) => (j.id === id ? updated : j)),

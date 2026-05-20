@@ -47,6 +47,7 @@ const svc = vi.hoisted(() => ({
   todayScheduleForTech: vi.fn().mockResolvedValue([]),
   warrantyReturnsOpen: vi.fn().mockResolvedValue([]),
   waitingForPartsCount: vi.fn().mockResolvedValue(0),
+  getKanbanJobsForTech: vi.fn().mockResolvedValue({ poolJobs: [], myJobs: [] }),
 }));
 
 const auth = vi.hoisted(() => ({

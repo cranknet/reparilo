@@ -5,6 +5,7 @@ import PartsAlert from "@/components/modules/dashboard/parts-alert";
 import PriorityActions from "@/components/modules/dashboard/priority-actions";
 import RecentActivity from "@/components/modules/dashboard/recent-activity";
 import TechJobPipeline from "@/components/modules/dashboard/tech-job-pipeline";
+import TechnicianKanban from "@/components/modules/dashboard/technician-kanban";
 import TodaySchedule from "@/components/modules/dashboard/today-schedule";
 import MetricCard from "@/components/ui/metric-card";
 import { formatTimeAgo } from "@/lib/format-time-ago";
@@ -246,20 +247,30 @@ export default function TechnicianDashboardPage() {
         </MetricCard>
 
         <MetricCard
-          detail={t("completed_today")}
-          icon="check_circle"
-          iconColor="text-on-secondary-container"
-          label={t("completed_today")}
-          value={String(completedToday)}
+          detail={
+            completedToday >= 5
+              ? t("tech_dashboard.daily_goal_achieved")
+              : t("tech_dashboard.daily_goal_keep_going")
+          }
+          icon="emoji_events"
+          iconColor="text-tertiary"
+          label={t("tech_dashboard.daily_goal")}
+          value={`${completedToday}/5`}
         >
           <div className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
             <div
-              className="h-full bg-on-secondary-container"
+              className="h-full bg-tertiary"
               style={{
-                width: `${Math.min(100, totalPipeline > 0 ? Math.round((completedToday / totalPipeline) * 100) : 0)}%`,
+                width: `${Math.min(100, Math.round((completedToday / 5) * 100))}%`,
               }}
             />
           </div>
+          <span className="mt-2 block font-bold text-tertiary text-xs">
+            {t("tech_dashboard.daily_goal_progress", {
+              completed: completedToday,
+              target: 5,
+            })}
+          </span>
         </MetricCard>
 
         <MetricCard
@@ -298,6 +309,10 @@ export default function TechnicianDashboardPage() {
             ))}
           </div>
         </MetricCard>
+      </div>
+
+      <div className="mb-10">
+        <TechnicianKanban />
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-12 md:gap-8">

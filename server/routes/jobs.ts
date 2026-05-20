@@ -413,6 +413,7 @@ export const jobRoutes: FastifyPluginAsync = async (app) => {
         {
           requestingRole: getRole(req),
           reason: parsed.data.reason,
+          actualLaborHours: parsed.data.actualLaborHours ?? undefined,
         }
       );
       if (!result) {

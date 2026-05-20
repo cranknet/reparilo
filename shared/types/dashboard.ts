@@ -64,10 +64,23 @@ export interface ActivityItemDTO {
   toValue: string | null;
 }
 
+export interface KanbanJobDTO {
+  actualLaborHours: number | null;
+  customerName: string;
+  device: string;
+  estimatedDate: string | null;
+  holdReason: string | null;
+  id: string;
+  jobCode: string;
+  reportedProblem: string;
+  status: JobStatus;
+}
+
 export interface TechnicianDashboardDTO {
   avgRepairTimeHours: number;
   completedToday: number;
   myActiveJobs: number;
+  myJobs: KanbanJobDTO[];
   partsAlerts: Array<{
     id: string;
     name: string;
@@ -75,6 +88,7 @@ export interface TechnicianDashboardDTO {
     reorderLevel: number;
   }>;
   pipeline: Record<JobStatus, number>;
+  poolJobs: KanbanJobDTO[];
   priorityActions: {
     jobsNeedingStatusUpdate: number;
     overdueCount: number;

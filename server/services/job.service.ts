@@ -437,37 +437,63 @@ function canFrontDeskCancel(
   return { ok: true };
 }
 
+async function validateCancellation(
+  prisma: PrismaClient,
+  job: NonNullable<Awaited<ReturnType<typeof findUniqueSimple>>>,
+  userId: string,
+  requestingRole?: RoleType
+): Promise<{ ok: boolean; error?: string }> {
+  if (requestingRole === Role.FRONT_DESK) {
+    const check = canFrontDeskCancel(job, userId);
+    if (!check.ok) {
+      return { ok: false, error: check.reason };
+    }
+  }
+
+  if (job.isWarrantyReturn) {
+    const claim = await prisma.returnClaim.findUnique({
+      where: { reworkJobId: job.id },
+      select: { id: true, status: true },
+    });
+    if (claim && claim.status === "OPEN") {
+      return { ok: false, error: "REWORK_JOB_HAS_OPEN_CLAIM" };
+    }
+  }
+
+  return { ok: true };
+}
+
 export async function transitionStatus(
   prisma: PrismaClient,
   id: string,
   newStatus: JobStatusType,
   userId: string,
   notifyCtx: NotifyContext,
-  options?: { reason?: string; requestingRole: RoleType }
+  options?: {
+    reason?: string;
+    requestingRole: RoleType;
+    actualLaborHours?: number;
+  }
 ) {
   const job = await findUniqueSimple(prisma, id);
   if (!job) {
     return null;
   }
 
-  if (
-    newStatus === JobStatus.CANCELLED &&
-    options?.requestingRole === Role.FRONT_DESK
-  ) {
-    const check = canFrontDeskCancel(job, userId);
-    if (!check.ok) {
-      return { error: check.reason };
-    }
-  }
-
-  // Block cancellation if this job is a rework Job whose claim is still OPEN
-  if (newStatus === JobStatus.CANCELLED && job.isWarrantyReturn) {
-    const claim = await prisma.returnClaim.findUnique({
-      where: { reworkJobId: job.id },
-      select: { id: true, status: true },
-    });
-    if (claim && claim.status === "OPEN") {
-      return { error: "REWORK_JOB_HAS_OPEN_CLAIM" as const };
+  if (newStatus === JobStatus.CANCELLED) {
+    const cancelCheck = await validateCancellation(
+      prisma,
+      job,
+      userId,
+      options?.requestingRole
+    );
+    if (!cancelCheck.ok) {
+      return {
+        error: cancelCheck.error as
+          | "CANCEL_NOT_CREATOR"
+          | "CANCEL_WINDOW_EXPIRED"
+          | "REWORK_JOB_HAS_OPEN_CLAIM",
+      };
     }
   }
 
@@ -480,12 +506,26 @@ export async function transitionStatus(
     };
   }
 
-  const updated = await jobUpdate(
-    prisma,
-    id,
-    { status: newStatus, updatedBy: { connect: { id: userId } } },
-    JOB_INCLUDE
-  );
+  const updateData: Prisma.JobUpdateInput = {
+    status: newStatus,
+    updatedBy: { connect: { id: userId } },
+  };
+
+  if (newStatus === JobStatus.ON_HOLD && options?.reason) {
+    updateData.holdReason = options.reason;
+  }
+
+  if (newStatus === JobStatus.DONE && options?.actualLaborHours !== undefined) {
+    updateData.actualLaborHours = options.actualLaborHours;
+  }
+
+  let techAssigned = false;
+  if (newStatus === JobStatus.IN_REPAIR && !job.technicianId) {
+    updateData.technician = { connect: { id: userId } };
+    techAssigned = true;
+  }
+
+  const updated = await jobUpdate(prisma, id, updateData, JOB_INCLUDE);
 
   await createAuditLog(prisma, {
     action: AuditAction.STATUS_CHANGED,
@@ -496,6 +536,16 @@ export async function transitionStatus(
     toValue: newStatus,
     userId,
   });
+
+  if (techAssigned) {
+    await createAuditLog(prisma, {
+      action: AuditAction.TECHNICIAN_ASSIGNED,
+      fromValue: undefined,
+      jobId: id,
+      toValue: userId,
+      userId,
+    });
+  }
 
   const templateName = STATUS_TEMPLATE_MAP[newStatus];
   if (templateName) {
