@@ -187,7 +187,7 @@ export default function JobPhotosSection({
             <button
               aria-label={
                 confirmDelete === photo.id
-                  ? t("jobs_detail.confirm_remove")
+                  ? t("jobs_detail_confirm_remove")
                   : t("intake.remove_photo")
               }
               className={`absolute inset-0 flex items-center justify-center bg-on-surface/50 transition-opacity ${confirmDelete === photo.id || editMode ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
@@ -205,7 +205,7 @@ export default function JobPhotosSection({
               )}
               {!deleting.has(photo.id) && confirmDelete === photo.id && (
                 <span className="rounded-md bg-error px-2 py-1 font-bold font-label text-on-error text-xs">
-                  {t("jobs_detail.confirm_remove")}
+                  {t("jobs_detail_confirm_remove")}
                 </span>
               )}
               {!deleting.has(photo.id) && confirmDelete !== photo.id && (

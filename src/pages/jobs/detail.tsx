@@ -55,7 +55,7 @@ export default function JobDetailPage() {
         });
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : t("jobs.detail.load_error")
+        err instanceof Error ? err.message : t("jobs_detail_load_error")
       );
     } finally {
       setLoading(false);
@@ -136,7 +136,7 @@ export default function JobDetailPage() {
           error
         </span>
         <p className="mt-2 font-body text-error text-sm">
-          {error ?? t("jobs.detail.not_found")}
+          {error ?? t("jobs_detail_not_found")}
         </p>
         <div className="mt-4 flex items-center justify-center gap-3">
           <Link

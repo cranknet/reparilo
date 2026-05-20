@@ -51,7 +51,7 @@ const MORE_ITEMS: NavItem[] = [
   },
   {
     icon: "menu_book",
-    labelKey: "repairs",
+    labelKey: "repair_services",
     perm: { repairs: ["viewCatalog"] },
     to: "/repairs",
   },
